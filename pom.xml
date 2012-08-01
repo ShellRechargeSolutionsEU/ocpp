@@ -12,7 +12,10 @@
     <groupId>com.thenewmotion.chargenetwork</groupId>
     <artifactId>ocpp</artifactId>
     <version>2.5-SNAPSHOT</version>
-    <description>Open Charge Point Protocol v1.1</description>
+
+    <name>OCPP</name>
+    <url>http://github.com/thenewmotion/ocpp</url>
+    <description>Generated beans for Open Charge Point Protocol v1.1</description>
 
     <properties>
         <scala.version>2.9.2</scala.version>
