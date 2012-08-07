@@ -52,8 +52,8 @@
 
     <scm>
         <url>https://github.com/thenewmotion/ocpp</url>
-        <connection>scm:git:ssh://git@github.com:thenewmotion/ocpp.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com:thenewmotion/ocpp.git</developerConnection>
+        <connection>scm:git:ssh://git@github.com/thenewmotion/ocpp.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/thenewmotion/ocpp.git</developerConnection>
     </scm>
 
     <build>
