@@ -25,7 +25,7 @@
         <dependency>
             <groupId>com.thenewmotion</groupId>
             <artifactId>common_${scala.version}</artifactId>
-            <version>1.17-SNAPSHOT</version>
+            <version>1.17</version>
         </dependency>
 
         <dependency>
