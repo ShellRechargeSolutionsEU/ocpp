@@ -1,4 +1,4 @@
-# Open Charge Point Protocol v1.1
+# Open Charge Point Protocol v1.1 [![Build Status](https://secure.travis-ci.org/thenewmotion/ocpp.png)](http://travis-ci.org/thenewmotion/ocpp)
 
 You can find more details on the [official website](http://www.ocpp.nl/)
 
