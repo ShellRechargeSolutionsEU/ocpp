@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.thenewmotion</groupId>
-        <artifactId>parent</artifactId>
-        <version>1.6</version>
+        <groupId>ua.t3hnar</groupId>
+        <artifactId>scala-parent-pom</artifactId>
+        <version>1.1</version>
     </parent>
 
     <groupId>com.thenewmotion.chargenetwork</groupId>
@@ -16,28 +17,11 @@
     <url>http://github.com/thenewmotion/ocpp</url>
     <description>Generated beans for Open Charge Point Protocol v1.1</description>
 
-    <properties>
-        <scala.version>2.9.2</scala.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.thenewmotion</groupId>
-            <artifactId>common_${scala.version}</artifactId>
-            <version>1.17</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.specs2</groupId>
-            <artifactId>specs2_${scala.version}</artifactId>
-            <version>1.10</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.10</version>
-            <scope>test</scope>
+            <artifactId>common</artifactId>
+            <version>1.18</version>
         </dependency>
     </dependencies>
 
@@ -48,6 +32,14 @@
             <url>http://nexus.thenewmotion.com/content/groups/public/</url>
         </repository>
     </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>typesafe</id>
+            <name>Typesafe Repository</name>
+            <url>http://repo.typesafe.com/typesafe/releases/</url>
+        </pluginRepository>
+    </pluginRepositories>
 
     <scm>
         <url>https://github.com/thenewmotion/ocpp</url>
@@ -60,7 +52,7 @@
             <plugin>
                 <groupId>org.scalaxb</groupId>
                 <artifactId>scalaxb-maven-plugin</artifactId>
-                <version>0.7.1</version>
+                <version>0.7.3</version>
                 <executions>
                     <execution>
                         <id>scalaxb</id>
@@ -76,24 +68,6 @@
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>3.0.2</version>
-                <configuration>
-                    <scalaVersion>${scala.version}</scalaVersion>
-                    <args>
-                        <arg>-unchecked</arg>
-                        <arg>-deprecation</arg>
-                        <arg>-explaintypes</arg>
-                    </args>
-                    <charset>${project.build.sourceEncoding}</charset>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>testCompile</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
