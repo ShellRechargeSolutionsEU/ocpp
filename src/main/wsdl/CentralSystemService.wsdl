@@ -1,24 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Copyright Logica 2010
+OCPP Central System service description
 
-All rights reserved. This document is protected by international copyright law and may not be reprinted,
-reproduced, copied or utilised in whole or in part by any means including electronic, mechanical,
-or other means without the prior written consent of Logica.
+Copyright e-laad.nl. Free to use without modifications.
 
-
-Whilst reasonable care has been taken by Logica to ensure the information contained herein is
-reasonably accurate, Logica shall not, under any circumstances be liable for any loss or damage
-(direct or consequential) suffered by any party as a result of the contents of this publication or
-the reliance of any party thereon or any inaccuracy or omission therein. The information in this
-document is therefore provided on an "as is" basis without warranty and is subject to change
-without further notice and cannot be construed as a commitment by Logica.
-
-
-The products mentioned in this document are identified by the names, trademarks, service marks and
-logos of their respective companies or organisations and may not be used in any advertising or publicity
-or in any other way whatsoever without the prior written consent of those companies or organisations
-and Logica.
+See: http://ev-services.net/ocpp/
 -->
 <wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
 				 xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
@@ -327,7 +313,6 @@ and Logica.
 
   <wsdl:message name="Header">
     <wsdl:part name="ChargeBoxIdentity" element="tns:chargeBoxIdentity" />
-    <wsdl:part name="Action" element="wsaw:Action" />
   </wsdl:message>
 
   <wsdl:message name="AuthorizeInput">

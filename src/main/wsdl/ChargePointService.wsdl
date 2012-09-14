@@ -1,24 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-Copyright Logica 2010
+OCPP Charge Point service description
 
-All rights reserved. This document is protected by international copyright law and may not be reprinted,
-reproduced, copied or utilised in whole or in part by any means including electronic, mechanical,
-or other means without the prior written consent of Logica. 
+Copyright e-laad.nl. Free to use without modifications.
 
-
-Whilst reasonable care has been taken by Logica to ensure the information contained herein is
-reasonably accurate, Logica shall not, under any circumstances be liable for any loss or damage
-(direct or consequential) suffered by any party as a result of the contents of this publication or
-the reliance of any party thereon or any inaccuracy or omission therein. The information in this
-document is therefore provided on an "as is" basis without warranty and is subject to change
-without further notice and cannot be construed as a commitment by Logica. 
-
-
-The products mentioned in this document are identified by the names, trademarks, service marks and
-logos of their respective companies or organisations and may not be used in any advertising or publicity
-or in any other way whatsoever without the prior written consent of those companies or organisations
-and Logica.
+See: http://ev-services.net/ocpp/
 -->
 <wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
 				 xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
@@ -243,6 +229,7 @@ and Logica.
         </s:annotation>
         <s:sequence>
           <s:element name="idTag" type="s:string" minOccurs="1" maxOccurs="1" />
+          <s:element name="connectorId" type="s:int" minOccurs="0" maxOccurs="1" />
         </s:sequence>
       </s:complexType>
 

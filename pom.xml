@@ -14,13 +14,13 @@
 
     <name>OCPP</name>
     <url>http://github.com/thenewmotion/ocpp</url>
-    <description>Generated beans for Open Charge Point Protocol v1.1</description>
+    <description>Generated beans for Open Charge Point Protocol v1.2</description>
 
     <dependencies>
         <dependency>
             <groupId>com.thenewmotion</groupId>
             <artifactId>common</artifactId>
-            <version>1.18</version>
+            <version>1.19</version>
         </dependency>
     </dependencies>
 

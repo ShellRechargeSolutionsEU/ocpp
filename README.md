@@ -1,11 +1,11 @@
-# Open Charge Point Protocol v1.1 [![Build Status](https://secure.travis-ci.org/thenewmotion/ocpp.png)](http://travis-ci.org/thenewmotion/ocpp)
+# Open Charge Point Protocol v1.2 for Scala [![Build Status](https://secure.travis-ci.org/thenewmotion/ocpp.png)](http://travis-ci.org/thenewmotion/ocpp)
 
 You can find more details on the [official website](http://www.ocpp.nl/)
 
 ## Incudes
 
-* CentralSystemService-1.1.wsdl generated scala beans
-* ChargePointService-1.1.wsdl generated scala beans
+* CentralSystemService.wsdl generated scala beans
+* ChargePointService.wsdl generated scala beans
 * Helper methods to work with ocpp
 
 
