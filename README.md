@@ -26,6 +26,6 @@ You can find more details on the [official website](http://www.ocpp.nl/)
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
         <artifactId>ocpp</artifactId>
-        <version>2.6</version>
+        <version>2.7</version>
     </dependency>
 ```
