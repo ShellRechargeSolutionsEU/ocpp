@@ -2,7 +2,7 @@
 
 You can find more details on the [official website](http://www.ocpp.nl/)
 
-## Incudes
+## Includes
 
 * CentralSystemService.wsdl generated scala beans
 * ChargePointService.wsdl generated scala beans
