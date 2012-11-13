@@ -5,12 +5,12 @@
     <parent>
         <groupId>ua.t3hnar</groupId>
         <artifactId>scala-parent-pom</artifactId>
-        <version>1.1</version>
+        <version>2.0-SNAPSHOT</version>
     </parent>
 
     <groupId>com.thenewmotion.chargenetwork</groupId>
     <artifactId>ocpp</artifactId>
-    <version>2.8-SNAPSHOT</version>
+    <version>3.0-SNAPSHOT</version>
 
     <name>OCPP</name>
     <url>http://github.com/thenewmotion/ocpp</url>
@@ -18,12 +18,21 @@
 
     <dependencies>
         <dependency>
+            <groupId>net.databinder.dispatch</groupId>
+            <artifactId>dispatch-core_2.10</artifactId>
+            <version>0.9.4</version>
+        </dependency>
+        <dependency>
             <groupId>com.thenewmotion</groupId>
-            <artifactId>common</artifactId>
-            <version>1.19</version>
+            <artifactId>time</artifactId>
+            <version>2.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.scalaxb</groupId>
+            <artifactId>scalaxb_${scala.version}</artifactId>
+            <version>1.0.0-RC2</version>
         </dependency>
     </dependencies>
-
 
     <repositories>
         <repository>
@@ -51,7 +60,7 @@
             <plugin>
                 <groupId>org.scalaxb</groupId>
                 <artifactId>scalaxb-maven-plugin</artifactId>
-                <version>0.7.3</version>
+                <version>1.0.0-RC2</version>
                 <executions>
                     <execution>
                         <id>scalaxb</id>
