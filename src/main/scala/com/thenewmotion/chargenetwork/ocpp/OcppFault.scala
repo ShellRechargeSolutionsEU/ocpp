@@ -1,4 +1,4 @@
-package com.thenewmotion.chargenetwork.server.ocpp
+package com.thenewmotion.chargenetwork.ocpp
 
 import javax.xml.namespace.QName
 import soapenvelope12._
