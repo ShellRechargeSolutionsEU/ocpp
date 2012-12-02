@@ -25,7 +25,7 @@ You can find more details on the [official website](http://www.ocpp.nl/)
 ```xml
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
-        <artifactId>ocpp</artifactId>
-        <version>2.7</version>
+        <artifactId>ocpp_2.10.0-RC2</artifactId>
+        <version>3.0-SNAPSHOT</version>
     </dependency>
 ```
