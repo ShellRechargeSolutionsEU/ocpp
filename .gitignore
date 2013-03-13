@@ -8,3 +8,6 @@ target
 *.iws
 .buildpath
 *.ids
+
+# Mac
+.DS_Store
