@@ -23,7 +23,7 @@ You can find more details on the [official website](http://www.ocpp.nl/)
 
 2. Add dependency to your pom.xml:
 
-Ocpp 1.2
+OCPP 1.2
 ```xml
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
@@ -32,7 +32,7 @@ Ocpp 1.2
     </dependency>
 ```
 
-Ocpp 1.5
+OCPP 1.5
 ```xml
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
