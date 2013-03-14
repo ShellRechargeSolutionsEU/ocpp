@@ -1,13 +1,13 @@
-# Open Charge Point Protocol v1.2 for Scala [![Build Status](https://secure.travis-ci.org/thenewmotion/ocpp.png)](http://travis-ci.org/thenewmotion/ocpp)
+# Open Charge Point Protocol for Scala [![Build Status](https://secure.travis-ci.org/thenewmotion/ocpp.png)](http://travis-ci.org/thenewmotion/ocpp)
 
 You can find more details on the [official website](http://www.ocpp.nl/)
 
 ## Includes
-
 * CentralSystemService.wsdl generated scala beans
 * ChargePointService.wsdl generated scala beans
 * Helper methods to work with ocpp
-
+* OCPP 1.2
+* OCPP 1.5
 
 
 ## Setup
@@ -22,10 +22,21 @@ You can find more details on the [official website](http://www.ocpp.nl/)
 ```
 
 2. Add dependency to your pom.xml:
+
+Ocpp 1.2
 ```xml
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
-        <artifactId>ocpp</artifactId>
-        <version>2.7</version>
+        <artifactId>ocpp_1.2_2.9.2</artifactId>
+        <version>2.8-SNAPSHOT</version>
+    </dependency>
+```
+
+Ocpp 1.5
+```xml
+    <dependency>
+        <groupId>com.thenewmotion.chargenetwork</groupId>
+        <artifactId>ocpp_1.5_2.9.2</artifactId>
+        <version>2.8-SNAPSHOT</version>
     </dependency>
 ```

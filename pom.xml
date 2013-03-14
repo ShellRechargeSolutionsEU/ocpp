@@ -20,7 +20,7 @@
 
     <modules>
         <module>ocpp-1.2</module>
-        <!--<module>ocpp-1.5</module>-->
+        <module>ocpp-1.5</module>
     </modules>
 
     <dependencyManagement>
