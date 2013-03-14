@@ -1,4 +1,4 @@
-package com.thenewmotion.chargenetwork.server.ocpp
+package com.thenewmotion.chargenetwork.ocpp.v12
 
 import scalaxb.DataRecord
 import xml.{NamespaceBinding, NodeSeq}

@@ -1,5 +1,4 @@
-package com.thenewmotion.chargenetwork
-package server.ocpp
+package com.thenewmotion.chargenetwork.ocpp.v12
 
 import org.specs2.mutable.SpecificationWithJUnit
 import OcppCs._
