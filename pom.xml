@@ -21,6 +21,7 @@
     <modules>
         <module>ocpp-1.2</module>
         <module>ocpp-1.5</module>
+        <module>common</module>
     </modules>
 
     <dependencyManagement>
@@ -29,6 +30,16 @@
                 <groupId>com.thenewmotion</groupId>
                 <artifactId>common_${scala.version}</artifactId>
                 <version>1.22-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>ocpp-1.2_${scala.version}</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>ocpp-1.5_${scala.version}</artifactId>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
