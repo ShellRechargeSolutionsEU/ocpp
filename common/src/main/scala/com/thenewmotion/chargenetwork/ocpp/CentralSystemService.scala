@@ -68,7 +68,7 @@ case class IdTagInfo(status: AuthorizationStatus,
 
 case class TransactionData(values: List[Meter])
 
-case class Meter(timestamp: DateTime, value: List[Meter.Value] = Nil)
+case class Meter(timestamp: DateTime, values: List[Meter.Value] = Nil)
 
 object Meter {
 
