@@ -1,6 +1,7 @@
 package com.thenewmotion.chargenetwork.ocpp
 
 import org.joda.time.DateTime
+import java.net.URI
 
 /**
  * @author Yaroslav Klymko
@@ -15,7 +16,7 @@ trait ChargePointService {
 
   def unlockConnector(connectorId: Int): Accepted
 
-  def getDiagnostics(location: java.net.URI,
+  def getDiagnostics(location: URI,
                      startTime: Option[DateTime] = None,
                      stopTime: Option[DateTime] = None,
                      retries: Option[Int] = None,
@@ -30,7 +31,7 @@ trait ChargePointService {
   def reset(resetType: ResetType): Accepted
 
   def updateFirmware(retrieveDate: DateTime,
-                     location: java.net.URI,
+                     location: URI,
                      retries: Option[Int] = None,
                      retryInterval: Option[Int] = None)
 

@@ -129,8 +129,8 @@ object Meter {
 }
 
 case class BootNotificationResponse(registrationAccepted: Boolean,
-                                    currentTime: DateTime,
-                                    heartbeatInterval: Int)
+                                    currentTime: DateTime, // optional in OCPP 1.2
+                                    heartbeatInterval: Int) // optional in OCPP 1.2
 
 sealed trait ChargePointStatus
 case object Available extends ChargePointStatus

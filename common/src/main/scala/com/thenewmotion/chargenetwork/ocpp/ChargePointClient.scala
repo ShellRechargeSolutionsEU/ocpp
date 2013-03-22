@@ -23,7 +23,7 @@ trait ChargePointClient extends ChargePointService {
   }
 }
 
-class ChargePointClientV12(uri: java.net.URI, chargeBoxIdentity: String) extends ChargePointClient {
+class ChargePointClientV12(uri: URI, chargeBoxIdentity: String) extends ChargePointClient {
   import v12._
 
   private def id = chargeBoxIdentity
@@ -101,7 +101,7 @@ class ChargePointClientV12(uri: java.net.URI, chargeBoxIdentity: String) extends
   }
 }
 
-class ChargePointClientV15(uri: java.net.URI, chargeBoxIdentity: String) extends ChargePointClient {
+class ChargePointClientV15(uri: URI, chargeBoxIdentity: String) extends ChargePointClient {
   import v15._
 
   private def id = chargeBoxIdentity
