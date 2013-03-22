@@ -23,23 +23,24 @@ trait ChargePointService {
 
   def changeConfiguration(key: String, value: String): ConfigurationStatus
 
-  def changeAvailability(connectorId: Int, typeValue: AvailabilityType): AvailabilityStatus
+  def changeAvailability(connectorId: Int, availabilityType: AvailabilityType): AvailabilityStatus
 
   def clearCache: Boolean
 
-  def reset(value: ResetType): Accepted
+  def reset(resetType: ResetType): Accepted
 
   def updateFirmware(retrieveDate: DateTime,
                      location: java.net.URI,
                      retries: Option[Int] = None,
                      retryInterval: Option[Int] = None)
 
-  //  def sendLocalList[V <: V15.type](value: SendLocalListRequest)
-  //  def dataTransfer[V <: V15.type](value: DataTransferRequest)
-  //  def reserveNow(value: ReserveNowRequest)
-  //  def getLocalListVersion[V <: V15.type](value: GetLocalListVersionRequest)
-  //  def cancelReservation[V <: V15.type](value: CancelReservationRequest)
-  //  def getConfiguration[V <: V15.type](value: GetConfigurationRequest)
+  // since OCPP 1.5
+  //  def sendLocalList
+  //  def dataTransfer
+  //  def reserveNow
+  //  def getLocalListVersion
+  //  def cancelReservation
+  //  def getConfiguration
 }
 
 sealed trait ConfigurationStatus

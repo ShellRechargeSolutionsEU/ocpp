@@ -49,7 +49,7 @@ trait CentralSystemService {
 
   def diagnosticsStatusNotification(uploaded: Boolean)
 
-  // since 1.5
+  // since OCPP 1.5
   def dataTransfer(vendorId: String,
                    messageId: Option[String] = None,
                    data: Option[String] = None): DataTransferResponse
@@ -137,7 +137,7 @@ case object Available extends ChargePointStatus
 case object Occupied extends ChargePointStatus
 case object Faulted extends ChargePointStatus
 case object Unavailable extends ChargePointStatus
-// since 1.5
+// since OCPP 1.5
 case object Reserved extends ChargePointStatus
 
 sealed trait ChargePointErrorCode
@@ -148,7 +148,7 @@ case object PowerMeterFailure extends ChargePointErrorCode
 case object PowerSwitchFailure extends ChargePointErrorCode
 case object ReaderFailure extends ChargePointErrorCode
 case object ResetFailure extends ChargePointErrorCode
-// since 1.5
+// since OCPP 1.5
 case object GroundFailure extends ChargePointErrorCode
 case object OverCurrentFailure extends ChargePointErrorCode
 case object UnderVoltage extends ChargePointErrorCode
