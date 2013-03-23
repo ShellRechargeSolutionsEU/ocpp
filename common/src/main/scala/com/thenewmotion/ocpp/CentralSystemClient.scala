@@ -1,9 +1,9 @@
-package com.thenewmotion.chargenetwork.ocpp
+package com.thenewmotion.ocpp
 
 import com.thenewmotion.time.Imports._
 import java.net.URI
 import org.joda.time
-import com.thenewmotion.chargenetwork.ocpp
+import com.thenewmotion.ocpp
 import scalaxb.{SoapClients, Fault}
 import javax.xml.datatype.XMLGregorianCalendar
 import com.thenewmotion.Logging

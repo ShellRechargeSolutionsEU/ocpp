@@ -1,4 +1,4 @@
-package com.thenewmotion.chargenetwork.ocpp
+package com.thenewmotion.ocpp
 
 import scalaxb.HttpClients
 
