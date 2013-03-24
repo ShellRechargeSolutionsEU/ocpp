@@ -4,36 +4,18 @@ import com.thenewmotion.time.Imports._
 import java.net.URI
 import org.joda.time
 import com.thenewmotion.{ocpp, Logging}
-import scalaxb.{SoapClients, Fault}
-import javax.xml.datatype.XMLGregorianCalendar
+import scalaxb.SoapClients
+import dispatch.Http
 
 /**
  * @author Yaroslav Klymko
  */
-trait CentralSystemClient extends CentralSystemService {
+trait CentralSystemClient extends CentralSystemService with Client
 
-  //TODO duplication
-  protected def rightOrException[T](x: Either[Fault[Any], T]) = x match {
-    case Left(fault) => sys.error(fault.toString) // TODO
-    case Right(t) => t
-  }
-
-  // todo move to scalax, why it doesn't work directly?
-  protected implicit def fromOptionToOption[A, B](from: Option[A])(implicit conversion: A => B): Option[B] = from.map(conversion(_))
-
-  // todo
-  protected implicit def dateTime(x: Option[XMLGregorianCalendar]): Option[DateTime] = fromOptionToOption(x)
-
-  protected implicit def xmlGregorianCalendarOption(x: Option[DateTime]): Option[XMLGregorianCalendar] = fromOptionToOption(x)
-}
-
-class CentralSystemClientV12(uri: URI, chargeBoxIdentity: String) extends CentralSystemClient with Logging {
+class CentralSystemClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) extends CentralSystemClient with Logging {
   import v12._
 
-  //TODO duplication
-  private def id = chargeBoxIdentity
-
-  val bindings = new CentralSystemServiceSoapBindings with SoapClients with FixedDispatchHttpClients {
+  val bindings = new CustomDispatchHttpClients(http) with CentralSystemServiceSoapBindings with SoapClients {
     override def baseAddress = uri
   }
 
@@ -180,13 +162,10 @@ class CentralSystemClientV12(uri: URI, chargeBoxIdentity: String) extends Centra
 }
 
 
-class CentralSystemClientV15(uri: URI, chargeBoxIdentity: String) extends CentralSystemClient with Logging {
+class CentralSystemClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) extends CentralSystemClient with Logging {
   import v15._
 
-  //TODO duplication
-  private def id = chargeBoxIdentity
-
-  val bindings = new CentralSystemServiceSoapBindings with SoapClients with FixedDispatchHttpClients {
+  val bindings = new CustomDispatchHttpClients(http) with CentralSystemServiceSoapBindings with SoapClients {
     override def baseAddress = uri
   }
 

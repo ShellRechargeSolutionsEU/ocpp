@@ -1,34 +1,21 @@
 package com.thenewmotion.ocpp
 
 import java.net.URI
-import scalaxb.{Fault, SoapClients}
+import scalaxb.SoapClients
 import com.thenewmotion.ocpp
 import com.thenewmotion.time.Imports._
-import javax.xml.datatype.XMLGregorianCalendar
+import dispatch.Http
 
 
 /**
  * @author Yaroslav Klymko
  */
-trait ChargePointClient extends ChargePointService {
-  // todo move to scalax
-  protected implicit def fromOptionToOption[A, B](from: Option[A])(implicit conversion: A => B): Option[B] = from.map(conversion(_))
+trait ChargePointClient extends ChargePointService with Client
 
-  // todo
-  protected implicit def xmlGregorianCalendarOption(x: Option[DateTime]): Option[XMLGregorianCalendar] = fromOptionToOption(x)
-
-  protected def rightOrException[T](x: Either[Fault[Any], T]) = x match {
-    case Left(fault) => sys.error(fault.toString) // TODO
-    case Right(t) => t
-  }
-}
-
-class ChargePointClientV12(uri: URI, chargeBoxIdentity: String) extends ChargePointClient {
+class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) extends ChargePointClient {
   import v12._
 
-  private def id = chargeBoxIdentity
-
-  val bindings = new ChargePointServiceSoapBindings with SoapClients with FixedDispatchHttpClients {
+  val bindings = new CustomDispatchHttpClients(http) with ChargePointServiceSoapBindings with SoapClients {
     override def baseAddress = uri
   }
 
@@ -101,12 +88,10 @@ class ChargePointClientV12(uri: URI, chargeBoxIdentity: String) extends ChargePo
   }
 }
 
-class ChargePointClientV15(uri: URI, chargeBoxIdentity: String) extends ChargePointClient {
+class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) extends ChargePointClient {
   import v15._
 
-  private def id = chargeBoxIdentity
-
-  val bindings = new ChargePointServiceSoapBindings with SoapClients with FixedDispatchHttpClients {
+  val bindings = new CustomDispatchHttpClients(http) with ChargePointServiceSoapBindings with SoapClients {
     override def baseAddress = uri
   }
 
