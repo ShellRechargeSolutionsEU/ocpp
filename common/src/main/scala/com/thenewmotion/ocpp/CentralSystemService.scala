@@ -39,11 +39,8 @@ trait CentralSystemService {
 
   def statusNotification(connectorId: Int,
                          status: ChargePointStatus,
-                         errorCode: Option[ChargePointErrorCode],
-                         info: Option[String] = None,
                          timestamp: Option[DateTime] = None,
-                         vendorId: Option[String] = None,
-                         vendorErrorCode: Option[String] = None)
+                         vendorId: Option[String] = None)
 
   def firmwareStatusNotification(status: FirmwareStatus)
 
@@ -135,7 +132,9 @@ case class BootNotificationResponse(registrationAccepted: Boolean,
 sealed trait ChargePointStatus
 case object Available extends ChargePointStatus
 case object Occupied extends ChargePointStatus
-case object Faulted extends ChargePointStatus
+case class Faulted(errorCode: ChargePointErrorCode,
+                   info: Option[String] = None,
+                   vendorErrorCode: Option[String] = None) extends ChargePointStatus
 case object Unavailable extends ChargePointStatus
 // since OCPP 1.5
 case object Reserved extends ChargePointStatus

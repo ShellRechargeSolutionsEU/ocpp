@@ -3,10 +3,9 @@ package com.thenewmotion.ocpp
 import com.thenewmotion.time.Imports._
 import java.net.URI
 import org.joda.time
-import com.thenewmotion.ocpp
+import com.thenewmotion.{ocpp, Logging}
 import scalaxb.{SoapClients, Fault}
 import javax.xml.datatype.XMLGregorianCalendar
-import com.thenewmotion.Logging
 
 /**
  * @author Yaroslav Klymko
@@ -24,6 +23,8 @@ trait CentralSystemClient extends CentralSystemService {
 
   // todo
   protected implicit def dateTime(x: Option[XMLGregorianCalendar]): Option[DateTime] = fromOptionToOption(x)
+
+  protected implicit def xmlGregorianCalendarOption(x: Option[DateTime]): Option[XMLGregorianCalendar] = fromOptionToOption(x)
 }
 
 class CentralSystemClientV12(uri: URI, chargeBoxIdentity: String) extends CentralSystemClient with Logging {
@@ -121,21 +122,10 @@ class CentralSystemClientV12(uri: URI, chargeBoxIdentity: String) extends Centra
   // todo disallow passing Reserved status and error codes
   def statusNotification(connectorId: Int,
                          status: ocpp.ChargePointStatus,
-                         errorCode: Option[ocpp.ChargePointErrorCode],
-                         info: Option[String],
                          timestamp: Option[time.DateTime],
-                         vendorId: Option[String],
-                         vendorErrorCode: Option[String]) {
+                         vendorId: Option[String]) {
 
-    val chargePointStatus: ChargePointStatus = status match {
-      case ocpp.Available => Available
-      case ocpp.Occupied => Occupied
-      case ocpp.Faulted => Faulted
-      case ocpp.Unavailable => Unavailable
-      case Reserved => sys.error("TODO")
-    }
-
-    val code: Option[ChargePointErrorCode] = errorCode.map {
+    def toErrorCode(x: ocpp.ChargePointErrorCode): ChargePointErrorCode = x match {
       case ocpp.ConnectorLockFailure => ConnectorLockFailure
       case ocpp.HighTemperature => HighTemperature
       case ocpp.Mode3Error => Mode3Error
@@ -151,12 +141,23 @@ class CentralSystemClientV12(uri: URI, chargeBoxIdentity: String) extends Centra
       case ocpp.OtherError => sys.error("TODO")
     }
 
-    info.foreach(x => logNotSupported("statusNotification.info", x))
+    def noError(status: ChargePointStatus) = (status, NoError)
+
+    val (chargePointStatus, errorCode) = status match {
+      case ocpp.Available => noError(Available)
+      case ocpp.Occupied => noError(Occupied)
+      case ocpp.Unavailable => noError(Unavailable)
+      case ocpp.Reserved => sys.error("TODO")
+      case ocpp.Faulted(code, info, vendorCode) =>
+        info.foreach(x => logNotSupported("statusNotification.info", x))
+        vendorCode.foreach(x => logNotSupported("statusNotification.vendorErrorCode", x))
+        (Faulted, toErrorCode(code))
+    }
+
     timestamp.foreach(x => logNotSupported("statusNotification.timestamp", x))
     vendorId.foreach(x => logNotSupported("statusNotification.vendorId", x))
-    vendorErrorCode.foreach(x => logNotSupported("statusNotification.vendorErrorCode", x))
 
-    ?(_.statusNotification(StatusNotificationRequest(connectorId, chargePointStatus, code getOrElse NoError), id))
+    ?(_.statusNotification(StatusNotificationRequest(connectorId, chargePointStatus, errorCode), id))
   }
 
   def firmwareStatusNotification(status: ocpp.FirmwareStatus) {
@@ -334,21 +335,10 @@ class CentralSystemClientV15(uri: URI, chargeBoxIdentity: String) extends Centra
   // todo disallow passing Reserved status and error codes
   def statusNotification(connectorId: Int,
                          status: ocpp.ChargePointStatus,
-                         errorCode: Option[ocpp.ChargePointErrorCode],
-                         info: Option[String],
                          timestamp: Option[time.DateTime],
-                         vendorId: Option[String],
-                         vendorErrorCode: Option[String]) {
+                         vendorId: Option[String]) {
 
-    val chargePointStatus: ChargePointStatus = status match {
-      case ocpp.Available => Available
-      case ocpp.Occupied => OccupiedValue
-      case ocpp.Faulted => FaultedValue
-      case ocpp.Unavailable => UnavailableValue
-      case ocpp.Reserved => Reserved
-    }
-
-    val code: Option[ChargePointErrorCode] = errorCode.map {
+    def toErrorCode(x: ocpp.ChargePointErrorCode): ChargePointErrorCode = x match {
       case ocpp.ConnectorLockFailure => ConnectorLockFailure
       case ocpp.HighTemperature => HighTemperature
       case ocpp.Mode3Error => Mode3Error
@@ -356,20 +346,28 @@ class CentralSystemClientV15(uri: URI, chargeBoxIdentity: String) extends Centra
       case ocpp.PowerSwitchFailure => PowerSwitchFailure
       case ocpp.ReaderFailure => ReaderFailure
       case ocpp.ResetFailure => ResetFailure
-      // since OCPP 1.5
-      case ocpp.GroundFailure => sys.error("TODO")
-      case ocpp.OverCurrentFailure => sys.error("TODO")
-      case ocpp.UnderVoltage => sys.error("TODO")
-      case ocpp.WeakSignal => sys.error("TODO")
-      case ocpp.OtherError => sys.error("TODO")
+      case ocpp.GroundFailure => GroundFailure
+      case ocpp.OverCurrentFailure => OverCurrentFailure
+      case ocpp.UnderVoltage => UnderVoltage
+      case ocpp.WeakSignal => WeakSignal
+      case ocpp.OtherError => OtherError
     }
 
-    info.foreach(x => logNotSupported("statusNotification.info", x))
-    timestamp.foreach(x => logNotSupported("statusNotification.timestamp", x))
-    vendorId.foreach(x => logNotSupported("statusNotification.vendorId", x))
-    vendorErrorCode.foreach(x => logNotSupported("statusNotification.vendorErrorCode", x))
+    def noError(status: ChargePointStatus) = (status, NoError, None, None)
 
-    ?(_.statusNotification(StatusNotificationRequest(connectorId, chargePointStatus, code getOrElse NoError), id))
+    val (chargePointStatus, errorCode, errorInfo, vendorErrorCode) = status match {
+      case ocpp.Available => noError(Available)
+      case ocpp.Occupied => noError(OccupiedValue)
+      case ocpp.Faulted(code, info, vendorCode) => (FaultedValue, toErrorCode(code), info, vendorCode)
+      case ocpp.Unavailable => noError(UnavailableValue)
+      case ocpp.Reserved => noError(Reserved)
+    }
+
+    val req = StatusNotificationRequest(
+      connectorId, chargePointStatus, errorCode,
+      errorInfo, timestamp, vendorId, vendorErrorCode)
+
+    ?(_.statusNotification(req, id))
   }
 
   def firmwareStatusNotification(status: ocpp.FirmwareStatus) {
