@@ -22,13 +22,13 @@ trait ChargePointService {
                      retries: Option[Int] = None,
                      retryInterval: Option[Int] = None): Option[FileName]
 
-  def changeConfiguration(key: String, value: String): ConfigurationStatus
+  def changeConfiguration(key: String, value: String): ConfigurationStatus.Value
 
-  def changeAvailability(connectorId: Int, availabilityType: AvailabilityType): AvailabilityStatus
+  def changeAvailability(connectorId: Int, availabilityType: AvailabilityType.Value): AvailabilityStatus.Value
 
   def clearCache: Boolean
 
-  def reset(resetType: ResetType): Accepted
+  def reset(resetType: ResetType.Value): Accepted
 
   def updateFirmware(retrieveDate: DateTime,
                      location: URI,
@@ -44,20 +44,18 @@ trait ChargePointService {
   //  def getConfiguration
 }
 
-sealed trait ConfigurationStatus
-case object ConfigurationAccepted extends ConfigurationStatus
-case object ConfigurationRejected extends ConfigurationStatus
-case object ConfigurationNotSupported extends ConfigurationStatus
+object ConfigurationStatus extends Enumeration {
+  val Accepted, Rejected, NotSupported = Value
+}
 
-sealed trait AvailabilityType
-case object Operative extends AvailabilityType
-case object Inoperative extends AvailabilityType
+object AvailabilityStatus extends Enumeration {
+  val Accepted, Rejected, Scheduled = Value
+}
 
-trait AvailabilityStatus
-case object AvailabilityAccepted extends AvailabilityStatus
-case object AvailabilityRejected extends AvailabilityStatus
-case object AvailabilityScheduled extends AvailabilityStatus
+object AvailabilityType extends Enumeration {
+  val Operative, Inoperative = Value
+}
 
-sealed trait ResetType
-case object Hard extends ResetType
-case object Soft extends ResetType
+object ResetType extends Enumeration {
+  val Hard, Soft = Value
+}

@@ -50,20 +50,20 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
 
   def changeConfiguration(key: String, value: String) =
     ?(_.changeConfiguration(ChangeConfigurationRequest(key, value), id)) match {
-      case AcceptedValue => ConfigurationAccepted
-      case RejectedValue => ConfigurationRejected
-      case NotSupported => ConfigurationNotSupported
+      case AcceptedValue => ocpp.ConfigurationStatus.Accepted
+      case RejectedValue => ocpp.ConfigurationStatus.Rejected
+      case NotSupported => ocpp.ConfigurationStatus.NotSupported
     }
 
-  def changeAvailability(connectorId: Int, availabilityType: ocpp.AvailabilityType) = {
+  def changeAvailability(connectorId: Int, availabilityType: ocpp.AvailabilityType.Value) = {
     val availability = availabilityType match {
-      case ocpp.Operative => Operative
-      case ocpp.Inoperative => Inoperative
+      case ocpp.AvailabilityType.Operative => Operative
+      case ocpp.AvailabilityType.Inoperative => Inoperative
     }
     ?(_.changeAvailability(ChangeAvailabilityRequest(connectorId, availability), id)) match {
-      case AcceptedValue3 => AvailabilityAccepted
-      case RejectedValue3 => AvailabilityRejected
-      case Scheduled => AvailabilityScheduled
+      case AcceptedValue3 => ocpp.AvailabilityStatus.Accepted
+      case RejectedValue3 => ocpp.AvailabilityStatus.Rejected
+      case Scheduled => ocpp.AvailabilityStatus.Scheduled
     }
   }
 
@@ -72,10 +72,10 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
     case RejectedValue2 => false
   }
 
-  def reset(resetType: ocpp.ResetType) = {
+  def reset(resetType: ocpp.ResetType.Value) = {
     val x = resetType match {
-      case ocpp.Hard => Hard
-      case ocpp.Soft => Soft
+      case ocpp.ResetType.Hard => Hard
+      case ocpp.ResetType.Soft => Soft
     }
     ?(_.reset(ResetRequest(x), id)) match {
       case AcceptedValue4 => true
@@ -126,20 +126,20 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
 
   def changeConfiguration(key: String, value: String) =
     ?(_.changeConfiguration(ChangeConfigurationRequest(key, value), id)) match {
-      case AcceptedValue5 => ConfigurationAccepted
-      case RejectedValue4 => ConfigurationRejected
-      case NotSupportedValue => ConfigurationNotSupported
+      case AcceptedValue5 => ocpp.ConfigurationStatus.Accepted
+      case RejectedValue4 => ocpp.ConfigurationStatus.Rejected
+      case NotSupportedValue => ocpp.ConfigurationStatus.NotSupported
     }
 
-  def changeAvailability(connectorId: Int, availabilityType: ocpp.AvailabilityType) = {
+  def changeAvailability(connectorId: Int, availabilityType: ocpp.AvailabilityType.Value) = {
     val availability = availabilityType match {
-      case ocpp.Operative => Operative
-      case ocpp.Inoperative => Inoperative
+      case ocpp.AvailabilityType.Operative => Operative
+      case ocpp.AvailabilityType.Inoperative => Inoperative
     }
     ?(_.changeAvailability(ChangeAvailabilityRequest(connectorId, availability), id)) match {
-      case AcceptedValue7 => AvailabilityAccepted
-      case RejectedValue6 => AvailabilityRejected
-      case Scheduled => AvailabilityScheduled
+      case AcceptedValue7 => ocpp.AvailabilityStatus.Accepted
+      case RejectedValue6 => ocpp.AvailabilityStatus.Rejected
+      case Scheduled => ocpp.AvailabilityStatus.Scheduled
     }
   }
 
@@ -148,10 +148,10 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
     case RejectedValue5 => false
   }
 
-  def reset(resetType: ocpp.ResetType) = {
+  def reset(resetType: ocpp.ResetType.Value) = {
     val x = resetType match {
-      case ocpp.Hard => Hard
-      case ocpp.Soft => Soft
+      case ocpp.ResetType.Hard => Hard
+      case ocpp.ResetType.Soft => Soft
     }
     ?(_.reset(ResetRequest(x), id)) match {
       case AcceptedValue8 => true
