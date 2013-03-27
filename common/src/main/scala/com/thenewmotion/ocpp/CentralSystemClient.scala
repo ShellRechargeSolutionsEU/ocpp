@@ -38,13 +38,13 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: URI, http: Http
     log.warn("%s is not supported in OCPP 1.2, value: %s".format(name, value))
   }
 
-  def startTransaction(connectorId: Int,
+  def startTransaction(connector: ConnectorScope,
                        idTag: IdTag,
                        timestamp: DateTime,
                        meterStart: Int,
                        reservationId: Option[Int]) = {
     reservationId.foreach(x => logNotSupported("startTransaction.reservationId", x))
-    val req = StartTransactionRequest(connectorId, idTag, timestamp, meterStart)
+    val req = StartTransactionRequest(connector.toOcpp, idTag, timestamp, meterStart)
     val StartTransactionResponse(transactionId, idTagInfo) = ?(_.startTransaction(req, id))
     transactionId -> idTagInfo
   }
@@ -63,7 +63,7 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: URI, http: Http
 
   def heartbeat = xmlGregCalendar2DateTime(?(_.heartbeat(HeartbeatRequest(), id)))
 
-  def meterValues(connectorId: Int, values: List[Meter.Value]) {
+  def meterValues(scope: Scope, values: List[Meter.Value]) {
     // TODO need more details on this
     //    ?(_.meterValues())
     sys.error("TODO")
@@ -102,7 +102,7 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: URI, http: Http
   }
 
   // todo disallow passing Reserved status and error codes
-  def statusNotification(connectorId: Int,
+  def statusNotification(scope: Scope,
                          status: ocpp.ChargePointStatus,
                          timestamp: Option[time.DateTime],
                          vendorId: Option[String]) {
@@ -139,7 +139,7 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: URI, http: Http
     timestamp.foreach(x => logNotSupported("statusNotification.timestamp", x))
     vendorId.foreach(x => logNotSupported("statusNotification.vendorId", x))
 
-    ?(_.statusNotification(StatusNotificationRequest(connectorId, chargePointStatus, errorCode), id))
+    ?(_.statusNotification(StatusNotificationRequest(scope.toOcpp, chargePointStatus, errorCode), id))
   }
 
   def firmwareStatusNotification(status: ocpp.FirmwareStatus) {
@@ -188,13 +188,13 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: URI, http: Http
 
   def authorize(idTag: String) = ?[IdTagInfoType](_.authorize(AuthorizeRequest(idTag), id))
 
-  def startTransaction(connectorId: Int,
+  def startTransaction(connector: ConnectorScope,
                        idTag: IdTag,
                        timestamp: DateTime,
                        meterStart: Int,
                        reservationId: Option[Int]) = {
     reservationId.foreach(x => logNotSupported("startTransaction.reservationId", x))
-    val req = StartTransactionRequest(connectorId, idTag, timestamp, meterStart)
+    val req = StartTransactionRequest(connector.toOcpp, idTag, timestamp, meterStart)
     val StartTransactionResponse(transactionId, idTagInfo) = ?(_.startTransaction(req, id))
     transactionId -> idTagInfo
   }
@@ -276,7 +276,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: URI, http: Http
 
   def heartbeat = xmlGregCalendar2DateTime(?(_.heartbeat(HeartbeatRequest(), id)))
 
-  def meterValues(connectorId: Int, values: List[Meter.Value]) {
+  def meterValues(scope: Scope, values: List[Meter.Value]) {
     // TODO need more details on this
     //    ?(_.meterValues())
     sys.error("TODO")
@@ -312,7 +312,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: URI, http: Http
   }
 
   // todo disallow passing Reserved status and error codes
-  def statusNotification(connectorId: Int,
+  def statusNotification(scope: Scope,
                          status: ocpp.ChargePointStatus,
                          timestamp: Option[time.DateTime],
                          vendorId: Option[String]) {
@@ -343,7 +343,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: URI, http: Http
     }
 
     val req = StatusNotificationRequest(
-      connectorId, chargePointStatus, errorCode,
+      scope.toOcpp, chargePointStatus, errorCode,
       errorInfo, timestamp, vendorId, vendorErrorCode)
 
     ?(_.statusNotification(req, id))

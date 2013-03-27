@@ -11,7 +11,7 @@ trait CentralSystemService {
 
   def authorize(idTag: String): IdTagInfo
 
-  def startTransaction(connectorId: Int,
+  def startTransaction(connector: ConnectorScope,
                        idTag: IdTag,
                        timestamp: DateTime,
                        meterStart: Int,
@@ -25,7 +25,7 @@ trait CentralSystemService {
 
   def heartbeat: DateTime
 
-  def meterValues(connectorId: Int, values: List[Meter.Value] = Nil)
+  def meterValues(scope: Scope, values: List[Meter.Value] = Nil)
 
   def bootNotification(chargePointVendor: String,
                        chargePointModel: String,
@@ -37,7 +37,7 @@ trait CentralSystemService {
                        meterType: Option[String] = None,
                        meterSerialNumber: Option[String] = None): BootNotificationResponse
 
-  def statusNotification(connectorId: Int,
+  def statusNotification(scope: Scope,
                          status: ChargePointStatus,
                          timestamp: Option[DateTime] = None,
                          vendorId: Option[String] = None)

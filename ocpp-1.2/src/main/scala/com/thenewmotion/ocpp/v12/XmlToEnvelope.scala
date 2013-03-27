@@ -35,6 +35,6 @@ object EnvelopeToXml {
 
 
 object FaultToXml {
-  def apply(fault: Fault) =
+  def apply(fault: Fault): NodeSeq =
     scalaxb.toXML(fault, Some("http://www.w3.org/2003/05/soap-envelope"), Some("Fault"), soapenvelope12.defaultScope)
 }
