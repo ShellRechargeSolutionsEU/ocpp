@@ -41,6 +41,11 @@
                 <artifactId>ocpp-1.5_${scala.version}</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>ua.t3hnar.scalax</groupId>
+                <artifactId>scalax_${scala.version}</artifactId>
+                <version>1.2</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
