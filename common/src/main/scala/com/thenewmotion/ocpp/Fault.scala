@@ -1,12 +1,12 @@
-package com.thenewmotion.ocpp.v12
+package com.thenewmotion.ocpp
 
-import javax.xml.namespace.QName
 import soapenvelope12._
+import javax.xml.namespace.QName
 
 /**
  * @author Yaroslav Klymko
  */
-object OcppFault {
+object Fault {
   val SecurityError = apply(TnsSender, "SecurityError")
   val IdentityMismatch = apply(TnsSender, "IdentityMismatch")
   val UrlMismatch = apply(TnsSender, "UrlMismatch")
@@ -15,6 +15,6 @@ object OcppFault {
   val NotSupported = apply(TnsReceiver, "NotSupported")
 
   def apply(code: FaultcodeEnum, subcode: String): (String => Fault) = (reason: String) => {
-    Fault(Faultcode(code, Some(Subcode(new QName(subcode)))), Faultreason(Reasontext(reason, "en-US")))
+    soapenvelope12.Fault(Faultcode(code, Some(Subcode(new QName(subcode)))), Faultreason(Reasontext(reason, "en-US")))
   }
 }

@@ -22,5 +22,9 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>ocpp-1.5_${scala.version}</artifactId>
         </dependency>
+        <dependency>
+            <groupId>ua.t3hnar.scalax</groupId>
+            <artifactId>scalax_${scala.version}</artifactId>
+        </dependency>
     </dependencies>
 </project>
