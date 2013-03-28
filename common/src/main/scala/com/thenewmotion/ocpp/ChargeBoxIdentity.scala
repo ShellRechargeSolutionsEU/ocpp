@@ -11,7 +11,7 @@ object ChargeBoxIdentity {
   def unapply(env: Envelope): Option[String] = (for {
     header <- env.Header.toSeq
     data <- header.any
-    elem <- data.asInstanceOfOpt[Elem]
+    elem <- data.value.asInstanceOfOpt[Elem]
     text <- StringOption(elem.text) if (elem.label equalsIgnoreCase "chargeBoxIdentity")
   } yield text).headOption
 }
