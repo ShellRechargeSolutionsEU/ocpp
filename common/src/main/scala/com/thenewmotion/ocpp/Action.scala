@@ -18,8 +18,8 @@ object Action extends Enumeration {
   MeterValues,
   StatusNotification = Value
 
-  def fromHeader(headerValue: String): Option[Value] =
-    StringOption(headerValue).flatMap {
+  def fromHeader(header: String): Option[Value] =
+    StringOption(header).flatMap {
       value =>
         val name = value.substring(1)
         values.find(_.toString equalsIgnoreCase name)
@@ -28,9 +28,10 @@ object Action extends Enumeration {
   def fromBody(body: Body): Option[Action.Value] = (for {
     data <- body.any
     elem <- data.value.asInstanceOfOpt[Elem]
-    action <- values.find(_.requestLabel equalsIgnoreCase elem.label)
+    action <- fromElem(elem)
   } yield action).headOption
 
+  def fromElem(body: Elem): Option[Action.Value] = values.find(_.requestLabel equalsIgnoreCase body.label)
 
   private def labels(suffix: String): Map[Value, String] = values.map {
     value =>

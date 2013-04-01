@@ -8,7 +8,7 @@ case object ChargePointScope extends Scope
 case class ConnectorScope(id: Int) extends Scope
 
 object Scope {
-  def fromOcpp(connectorId: Int): Scope =
+  private[ocpp] def fromOcpp(connectorId: Int): Scope =
     if (connectorId <= 0) ChargePointScope else ConnectorScope.fromOcpp(connectorId)
 
   private[ocpp] implicit def reachScope(self: Scope) = new {
@@ -20,5 +20,5 @@ object Scope {
 }
 
 object ConnectorScope {
-  def fromOcpp(connectorId: Int): ConnectorScope = ConnectorScope(connectorId - 1)
+  private[ocpp] def fromOcpp(connectorId: Int): ConnectorScope = ConnectorScope(connectorId - 1)
 }

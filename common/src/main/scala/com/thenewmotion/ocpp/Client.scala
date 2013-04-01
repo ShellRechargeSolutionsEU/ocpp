@@ -2,7 +2,6 @@ package com.thenewmotion.ocpp
 
 import javax.xml.datatype.XMLGregorianCalendar
 import com.thenewmotion.time.Imports._
-import scalaxb.Fault
 
 /**
  * @author Yaroslav Klymko
@@ -12,7 +11,7 @@ trait Client {
 
   protected def id = chargeBoxIdentity
 
-  protected def rightOrException[T](x: Either[Fault[Any], T]) = x match {
+  protected def rightOrException[T](x: Either[scalaxb.Fault[Any], T]) = x match {
     case Left(fault) => sys.error(fault.original.toString)
     case Right(t) => t
   }

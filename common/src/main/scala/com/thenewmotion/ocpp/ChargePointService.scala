@@ -10,17 +10,17 @@ trait ChargePointService {
   type Accepted = Boolean
   type FileName = String
 
-  def remoteStartTransaction(idTag: String, connectorId: Option[Int] = None): Accepted
+  def remoteStartTransaction(idTag: String, connectorId: Option[Int]): Accepted
 
   def remoteStopTransaction(transactionId: Int): Accepted
 
   def unlockConnector(connectorId: Int): Accepted
 
   def getDiagnostics(location: URI,
-                     startTime: Option[DateTime] = None,
-                     stopTime: Option[DateTime] = None,
-                     retries: Option[Int] = None,
-                     retryInterval: Option[Int] = None): Option[FileName]
+                     startTime: Option[DateTime],
+                     stopTime: Option[DateTime],
+                     retries: Option[Int],
+                     retryInterval: Option[Int]): Option[FileName]
 
   def changeConfiguration(key: String, value: String): ConfigurationStatus.Value
 
@@ -32,8 +32,8 @@ trait ChargePointService {
 
   def updateFirmware(retrieveDate: DateTime,
                      location: URI,
-                     retries: Option[Int] = None,
-                     retryInterval: Option[Int] = None)
+                     retries: Option[Int],
+                     retryInterval: Option[Int])
 
   // since OCPP 1.5
   //  def sendLocalList

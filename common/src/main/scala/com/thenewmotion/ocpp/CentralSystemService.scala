@@ -15,114 +15,125 @@ trait CentralSystemService {
                        idTag: IdTag,
                        timestamp: DateTime,
                        meterStart: Int,
-                       reservationId: Option[Int] = None): (TransactionId, IdTagInfo)
+                       reservationId: Option[Int]): (TransactionId, IdTagInfo)
 
   def stopTransaction(transactionId: TransactionId,
-                      idTag: Option[IdTag] = None,
+                      idTag: Option[IdTag],
                       timestamp: DateTime,
                       meterStop: Int,
-                      transactionData: List[TransactionData] = Nil): Option[IdTagInfo]
+                      transactionData: List[TransactionData]): Option[IdTagInfo]
 
   def heartbeat: DateTime
 
-  def meterValues(scope: Scope, values: List[Meter.Value] = Nil)
+  def meterValues(scope: Scope, transactionId: Option[TransactionId], meters: List[Meter])
 
   def bootNotification(chargePointVendor: String,
                        chargePointModel: String,
-                       chargePointSerialNumber: Option[String] = None,
-                       chargeBoxSerialNumber: Option[String] = None,
-                       firmwareVersion: Option[String] = None,
-                       iccid: Option[String] = None,
-                       imsi: Option[String] = None,
-                       meterType: Option[String] = None,
-                       meterSerialNumber: Option[String] = None): BootNotificationResponse
+                       chargePointSerialNumber: Option[String],
+                       chargeBoxSerialNumber: Option[String],
+                       firmwareVersion: Option[String],
+                       iccid: Option[String],
+                       imsi: Option[String],
+                       meterType: Option[String],
+                       meterSerialNumber: Option[String]): BootNotificationResponse
 
-  def statusNotification(scope: Scope,
-                         status: ChargePointStatus,
-                         timestamp: Option[DateTime] = None,
-                         vendorId: Option[String] = None)
+  def statusNotification(scope: Scope, status: ChargePointStatus, timestamp: Option[DateTime], vendorId: Option[String])
 
-  def firmwareStatusNotification(status: FirmwareStatus)
+  def firmwareStatusNotification(status: FirmwareStatus.Value)
 
   def diagnosticsStatusNotification(uploaded: Boolean)
 
   // since OCPP 1.5
-  def dataTransfer(vendorId: String,
-                   messageId: Option[String] = None,
-                   data: Option[String] = None): DataTransferResponse
+  def dataTransfer(vendorId: String, messageId: Option[String], data: Option[String]): DataTransferResponse
 }
 
-sealed trait AuthorizationStatus
-case object AuthorizationAccepted extends AuthorizationStatus
-case object IdTagBlocked extends AuthorizationStatus
-case object IdTagExpired extends AuthorizationStatus
-case object IdTagInvalid extends AuthorizationStatus
-case object ConcurrentTx extends AuthorizationStatus
+object AuthorizationStatus extends Enumeration {
+  val Accepted,
+  IdTagBlocked,
+  IdTagExpired,
+  IdTagInvalid,
+  ConcurrentTx = Value
+}
 
-case class IdTagInfo(status: AuthorizationStatus,
+case class IdTagInfo(status: AuthorizationStatus.Value,
                      expiryDate: Option[DateTime] = None,
                      parentIdTag: Option[String] = None)
 
-case class TransactionData(values: List[Meter])
+case class TransactionData(meters: List[Meter])
 
 case class Meter(timestamp: DateTime, values: List[Meter.Value] = Nil)
 
 object Meter {
-
   case class Value(value: String,
-                   context: Option[ReadingContext] = None,
-                   format: Option[ValueFormat] = None,
-                   measurand: Option[Measurand] = None,
-                   location: Option[Location] = None,
-                   unit: Option[UnitOfMeasure] = None)
+                   context: ReadingContext.Value,
+                   format: ValueFormat.Value,
+                   measurand: Measurand.Value,
+                   location: Location.Value,
+                   unit: UnitOfMeasure.Value)
 
-  sealed trait Location
-  case object Inlet extends Location
-  case object Outlet extends Location
-  case object Body extends Location
+  object DefaultValue {
+    val readingContext = ReadingContext.SamplePeriodic
+    val format = ValueFormat.Raw
+    val measurand = Measurand.EnergyActiveImportRegister
+    val location = Location.Outlet
+    val unitOfMeasure = UnitOfMeasure.Wh
 
-  sealed trait Measurand
-  case object EnergyActiveExportRegister extends Measurand
-  case object EnergyActiveImportRegister extends Measurand
-  case object EnergyReactiveExportRegister extends Measurand
-  case object EnergyReactiveImportRegister extends Measurand
-  case object EnergyActiveExportInterval extends Measurand
-  case object EnergyActiveImportInterval extends Measurand
-  case object EnergyReactiveExportInterval extends Measurand
-  case object EnergyReactiveImportInterval extends Measurand
-  case object PowerActiveExport extends Measurand
-  case object PowerActiveImport extends Measurand
-  case object PowerReactiveExport extends Measurand
-  case object PowerReactiveImport extends Measurand
-  case object CurrentExport extends Measurand
-  case object CurrentImport extends Measurand
-  case object Voltage extends Measurand
-  case object Temperature extends Measurand
+    def apply(value: Int): Value = Value(value.toString, readingContext, format, measurand, location, unitOfMeasure)
 
-  sealed trait ValueFormat
-  case object RawFormat extends ValueFormat
-  case object SignedData extends ValueFormat
+    def unapply(x: Value): Option[Int] = PartialFunction.condOpt(x) {
+      case Value(value, `readingContext`, `format`, `measurand`, `location`, `unitOfMeasure`) => value.toFloat.round
+    }
+  }
 
-  sealed trait ReadingContext
-  case object InterruptionBegin extends ReadingContext
-  case object InterruptionEnd extends ReadingContext
-  case object SampleClock extends ReadingContext
-  case object SamplePeriodic extends ReadingContext
-  case object TransactionBegin extends ReadingContext
-  case object TransactionEnd extends ReadingContext
+  object Location extends Enumeration {
+    val Inlet, Outlet, Body = Value
+  }
 
-  sealed trait UnitOfMeasure
-  case object Wh extends UnitOfMeasure
-  case object KWh extends UnitOfMeasure
-  case object Varh extends UnitOfMeasure
-  case object Kvarh extends UnitOfMeasure
-  case object W extends UnitOfMeasure
-  case object KW extends UnitOfMeasure
-  case object Var extends UnitOfMeasure
-  case object Kvar extends UnitOfMeasure
-  case object Amp extends UnitOfMeasure
-  case object Volt extends UnitOfMeasure
-  case object Celsius extends UnitOfMeasure
+  object Measurand extends Enumeration {
+    val EnergyActiveExportRegister,
+    EnergyActiveImportRegister,
+    EnergyReactiveExportRegister,
+    EnergyReactiveImportRegister,
+    EnergyActiveExportInterval,
+    EnergyActiveImportInterval,
+    EnergyReactiveExportInterval,
+    EnergyReactiveImportInterval,
+    PowerActiveExport,
+    PowerActiveImport,
+    PowerReactiveExport,
+    PowerReactiveImport,
+    CurrentExport,
+    CurrentImport,
+    Voltage,
+    Temperature = Value
+  }
+
+  object ValueFormat extends Enumeration {
+    val Raw, Signed = Value
+  }
+
+  object ReadingContext extends Enumeration {
+    val InterruptionBegin,
+    InterruptionEnd,
+    SampleClock,
+    SamplePeriodic,
+    TransactionBegin,
+    TransactionEnd = Value
+  }
+
+  object UnitOfMeasure extends Enumeration {
+    val Wh = Value("Wh")
+    val Kwh = Value("kWh")
+    val Varh = Value("varh")
+    val Kvarh = Value("kvarh")
+    val W = Value("W")
+    val Kw = Value("kW")
+    val Var = Value("var")
+    val Kvar = Value("kvar")
+    val Amp = Value("Amp")
+    val Volt = Value("Volt")
+    val Celsius = Value("Celsius")
+  }
 }
 
 case class BootNotificationResponse(registrationAccepted: Boolean,
@@ -132,40 +143,42 @@ case class BootNotificationResponse(registrationAccepted: Boolean,
 sealed trait ChargePointStatus
 case object Available extends ChargePointStatus
 case object Occupied extends ChargePointStatus
-case class Faulted(errorCode: ChargePointErrorCode,
-                   info: Option[String] = None,
-                   vendorErrorCode: Option[String] = None) extends ChargePointStatus
+case class Faulted(errorCode: Option[ChargePointErrorCode.Value],
+                   info: Option[String],
+                   vendorErrorCode: Option[String]) extends ChargePointStatus
 case object Unavailable extends ChargePointStatus
 // since OCPP 1.5
 case object Reserved extends ChargePointStatus
 
-sealed trait ChargePointErrorCode
-case object ConnectorLockFailure extends ChargePointErrorCode
-case object HighTemperature extends ChargePointErrorCode
-case object Mode3Error extends ChargePointErrorCode
-case object PowerMeterFailure extends ChargePointErrorCode
-case object PowerSwitchFailure extends ChargePointErrorCode
-case object ReaderFailure extends ChargePointErrorCode
-case object ResetFailure extends ChargePointErrorCode
-// since OCPP 1.5
-case object GroundFailure extends ChargePointErrorCode
-case object OverCurrentFailure extends ChargePointErrorCode
-case object UnderVoltage extends ChargePointErrorCode
-case object WeakSignal extends ChargePointErrorCode
-case object OtherError extends ChargePointErrorCode
+object ChargePointErrorCode extends Enumeration {
+  val ConnectorLockFailure,
+  HighTemperature,
+  Mode3Error,
+  PowerMeterFailure,
+  PowerSwitchFailure,
+  ReaderFailure,
+  ResetFailure,
+  GroundFailure /*since OCPP 1.5*/ ,
+  OverCurrentFailure,
+  UnderVoltage,
+  WeakSignal,
+  OtherError = Value
+}
 
-sealed trait FirmwareStatus
-case object Downloaded extends FirmwareStatus
-case object DownloadFailed extends FirmwareStatus
-case object InstallationFailed extends FirmwareStatus
-case object Installed extends FirmwareStatus
+object FirmwareStatus extends Enumeration {
+  val Downloaded,
+  DownloadFailed,
+  InstallationFailed,
+  Installed = Value
+}
 
-case class DataTransferResponse(status: DataTransferResponse.Status, data: Option[String] = None)
+case class DataTransferResponse(status: DataTransferResponse.Status.Value, data: Option[String] = None)
 
 object DataTransferResponse {
-  sealed trait Status
-  case object Accepted extends Status
-  case object Rejected extends Status
-  case object UnknownMessageId extends Status
-  case object UnknownVendorId extends Status
+  object Status extends Enumeration {
+    val Accepted,
+    Rejected,
+    UnknownMessageId,
+    UnknownVendorId = Value
+  }
 }
