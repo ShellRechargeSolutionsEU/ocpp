@@ -1,5 +1,9 @@
 package com.thenewmotion.ocpp
 
+import xml.{Elem, NodeSeq}
+import scalax.richAny
+import soapenvelope12.Body
+
 /**
  * @author Yaroslav Klymko
  */
@@ -15,4 +19,16 @@ object Version extends Enumeration {
       case V15 => "urn://Ocpp/Cs/2012/06/"
     }
   }
+
+  def fromBody(body: NodeSeq): Option[Value] = for {
+    n <- body.headOption
+    e <- n.asInstanceOfOpt[Elem]
+    v <- values.find(_.namespace == e.namespace)
+  } yield v
+
+  def fromBody(body: Body): Option[Value] = (for {
+    data <- body.any
+    elem <- data.value.asInstanceOfOpt[Elem]
+    v <- fromBody(elem)
+  } yield v).headOption
 }

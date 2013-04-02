@@ -29,24 +29,31 @@ object CentralSystemDispatcher {
     data.headOption match {
       case None if body.any.isEmpty => ProtocolError("Body is empty")
       case None => NotSupported("No supported action found")
-      case Some((action, xml)) =>
-        val version = Version.V12
-        val reqRes = new ReqRes {
-          def apply[REQ: XMLFormat, RES: XMLFormat](f: REQ => RES) = fromXMLEither[REQ](xml) match {
-            case Left(msg) => ProtocolError(msg)
-            case Right(req) => try {
-              log(req)
-              val res = f(req)
-              log(res)
-              simpleBody(DataRecord(Some(version.namespace), Some(action.responseLabel), res))
-            } catch {
-              case FaultException(fault) =>
-                log(fault)
-                fault
+      case Some((action, xml)) => Version.fromBody(xml) match {
+        case None => ProtocolError("Can't find an ocpp version")
+        case Some(version) =>
+          val reqRes = new ReqRes {
+            def apply[REQ: XMLFormat, RES: XMLFormat](f: REQ => RES) = fromXMLEither[REQ](xml) match {
+              case Left(msg) => ProtocolError(msg)
+              case Right(req) => try {
+                log(req)
+                val res = f(req)
+                log(res)
+                simpleBody(DataRecord(Some(version.namespace), Some(action.responseLabel), res))
+              } catch {
+                case FaultException(fault) =>
+                  log(fault)
+                  fault
+              }
             }
           }
-        }
-        new CentralSystemDispatcherV12(action, reqRes, service(Version.V12)).dispatch
+
+          def dispatcher(service: => CentralSystemService) = version match {
+            case Version.V12 => new CentralSystemDispatcherV12(action, reqRes, service)
+            case Version.V15 => new CentralSystemDispatcherV15(action, reqRes, service)
+          }
+          dispatcher(service(version)).dispatch
+      }
     }
   }
 }
