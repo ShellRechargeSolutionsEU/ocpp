@@ -16,7 +16,7 @@ import ocpp.Meter.DefaultValue
  * @author Yaroslav Klymko
  */
 object CentralSystemDispatcher {
-  def apply(body: Body, service: => CentralSystemService, log: Any => Unit): Body = {
+  def apply(body: Body, service: Version.Value => CentralSystemService, log: Any => Unit): Body = {
 
     implicit def faultToBody(x: soapenvelope12.Fault) = x.asBody
 
@@ -46,7 +46,7 @@ object CentralSystemDispatcher {
             }
           }
         }
-        new CentralSystemDispatcherV12(action, reqRes, service).dispatch
+        new CentralSystemDispatcherV12(action, reqRes, service(Version.V12)).dispatch
     }
   }
 }
