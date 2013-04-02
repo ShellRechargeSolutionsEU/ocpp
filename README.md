@@ -5,6 +5,7 @@ You can find more details on the [official website](http://www.ocpp.nl/)
 ## Includes
 * CentralSystemService.wsdl generated scala beans
 * ChargePointService.wsdl generated scala beans
+* CentralSystemClient for both 1.2 and 1.5 versions
 * Helper methods to work with ocpp
 * OCPP 1.2
 * OCPP 1.5
