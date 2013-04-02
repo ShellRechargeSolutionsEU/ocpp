@@ -10,11 +10,11 @@ trait ChargePointService {
   type Accepted = Boolean
   type FileName = String
 
-  def remoteStartTransaction(idTag: String, connectorId: Option[Int]): Accepted
+  def remoteStartTransaction(idTag: String, connector: Option[ConnectorScope]): Accepted
 
   def remoteStopTransaction(transactionId: Int): Accepted
 
-  def unlockConnector(connectorId: Int): Accepted
+  def unlockConnector(connector: ConnectorScope): Accepted
 
   def getDiagnostics(location: URI,
                      startTime: Option[DateTime],
@@ -24,7 +24,7 @@ trait ChargePointService {
 
   def changeConfiguration(key: String, value: String): ConfigurationStatus.Value
 
-  def changeAvailability(connectorId: Int, availabilityType: AvailabilityType.Value): AvailabilityStatus.Value
+  def changeAvailability(scope: Scope, availabilityType: AvailabilityType.Value): AvailabilityStatus.Value
 
   def clearCache: Boolean
 

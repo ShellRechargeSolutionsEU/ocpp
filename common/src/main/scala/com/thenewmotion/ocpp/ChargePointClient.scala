@@ -26,14 +26,17 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
     case Rejected => false
   }
 
-  def remoteStartTransaction(idTag: String, connectorId: Option[Int]) =
-    ?[RemoteStartStopStatus](_.remoteStartTransaction(RemoteStartTransactionRequest(idTag, connectorId), id))
+  def remoteStartTransaction(idTag: String, connector: Option[ConnectorScope]) = {
+    val req = RemoteStartTransactionRequest(idTag, connector.map(_.toOcpp))
+    ?[RemoteStartStopStatus](_.remoteStartTransaction(req, id))
+  }
 
   def remoteStopTransaction(transactionId: Int) =
     ?[RemoteStartStopStatus](_.remoteStopTransaction(RemoteStopTransactionRequest(transactionId), id))
 
-  def unlockConnector(connectorId: Int) =
-    ?(_.unlockConnector(UnlockConnectorRequest(connectorId), id)) match {
+
+  def unlockConnector(connector: ConnectorScope) =
+    ?(_.unlockConnector(UnlockConnectorRequest(connector.toOcpp), id)) match {
       case AcceptedValue5 => true
       case RejectedValue5 => false
     }
@@ -55,12 +58,12 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
       case NotSupported => ocpp.ConfigurationStatus.NotSupported
     }
 
-  def changeAvailability(connectorId: Int, availabilityType: ocpp.AvailabilityType.Value) = {
+  def changeAvailability(scope: Scope, availabilityType: ocpp.AvailabilityType.Value) = {
     val availability = availabilityType match {
       case ocpp.AvailabilityType.Operative => Operative
       case ocpp.AvailabilityType.Inoperative => Inoperative
     }
-    ?(_.changeAvailability(ChangeAvailabilityRequest(connectorId, availability), id)) match {
+    ?(_.changeAvailability(ChangeAvailabilityRequest(scope.toOcpp, availability), id)) match {
       case AcceptedValue3 => ocpp.AvailabilityStatus.Accepted
       case RejectedValue3 => ocpp.AvailabilityStatus.Rejected
       case Scheduled => ocpp.AvailabilityStatus.Scheduled
@@ -102,14 +105,16 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
     case RejectedValue3 => false
   }
 
-  def remoteStartTransaction(idTag: String, connectorId: Option[Int]) =
-    ?[RemoteStartStopStatus](_.remoteStartTransaction(RemoteStartTransactionRequest(idTag, connectorId), id))
+  def remoteStartTransaction(idTag: String, connector: Option[ConnectorScope]) = {
+    val req = RemoteStartTransactionRequest(idTag, connector.map(_.toOcpp))
+    ?[RemoteStartStopStatus](_.remoteStartTransaction(req, id))
+  }
 
   def remoteStopTransaction(transactionId: Int) =
     ?[RemoteStartStopStatus](_.remoteStopTransaction(RemoteStopTransactionRequest(transactionId), id))
 
-  def unlockConnector(connectorId: Int) =
-    ?(_.unlockConnector(UnlockConnectorRequest(connectorId), id)) match {
+  def unlockConnector(connector: ConnectorScope) =
+    ?(_.unlockConnector(UnlockConnectorRequest(connector.toOcpp), id)) match {
       case AcceptedValue9 => true
       case RejectedValue8 => false
     }
@@ -131,12 +136,12 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
       case NotSupportedValue => ocpp.ConfigurationStatus.NotSupported
     }
 
-  def changeAvailability(connectorId: Int, availabilityType: ocpp.AvailabilityType.Value) = {
+  def changeAvailability(scope: Scope, availabilityType: ocpp.AvailabilityType.Value) = {
     val availability = availabilityType match {
       case ocpp.AvailabilityType.Operative => Operative
       case ocpp.AvailabilityType.Inoperative => Inoperative
     }
-    ?(_.changeAvailability(ChangeAvailabilityRequest(connectorId, availability), id)) match {
+    ?(_.changeAvailability(ChangeAvailabilityRequest(scope.toOcpp, availability), id)) match {
       case AcceptedValue7 => ocpp.AvailabilityStatus.Accepted
       case RejectedValue6 => ocpp.AvailabilityStatus.Rejected
       case Scheduled => ocpp.AvailabilityStatus.Scheduled
