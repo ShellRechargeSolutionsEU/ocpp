@@ -4,16 +4,12 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.thenewmotion.ocpp</groupId>
-        <artifactId>ocpp-parent_2.9.2</artifactId>
+        <artifactId>ocpp-parent_2.10</artifactId>
         <version>2.8-SNAPSHOT</version>
     </parent>
-    <artifactId>ocpp-common_2.9.2</artifactId>
+    <artifactId>ocpp-common_2.10</artifactId>
     <name>common</name>
     <dependencies>
-        <dependency>
-            <groupId>com.thenewmotion</groupId>
-            <artifactId>common_${scala.version}</artifactId>
-        </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>ocpp-1.2_${scala.version}</artifactId>
@@ -29,6 +25,18 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-all</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.databinder.dispatch</groupId>
+            <artifactId>dispatch-core_${scala.version}</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.thenewmotion</groupId>
+            <artifactId>time_${scala.version}</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe</groupId>
+            <artifactId>scalalogging-slf4j_${scala.version}</artifactId>
         </dependency>
     </dependencies>
 </project>

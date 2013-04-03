@@ -28,7 +28,7 @@ OCPP 1.2
 ```xml
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
-        <artifactId>ocpp_1.2_2.9.2</artifactId>
+        <artifactId>ocpp_1.2_2.10</artifactId>
         <version>2.8-SNAPSHOT</version>
     </dependency>
 ```
@@ -37,7 +37,16 @@ OCPP 1.5
 ```xml
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
-        <artifactId>ocpp_1.5_2.9.2</artifactId>
+        <artifactId>ocpp_1.5_2.10</artifactId>
+        <version>2.8-SNAPSHOT</version>
+    </dependency>
+```
+
+Common
+```xml
+    <dependency>
+        <groupId>com.thenewmotion.chargenetwork</groupId>
+        <artifactId>ocpp_common_1.5_2.10</artifactId>
         <version>2.8-SNAPSHOT</version>
     </dependency>
 ```

@@ -22,8 +22,8 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
   private def ?[T](f: ChargePointService => Either[scalaxb.Fault[Any], T]): T = rightOrException(f(bindings.service))
 
   private implicit def remoteStartStopStatusToAccepted(x: RemoteStartStopStatus): Accepted = x match {
-    case Accepted => true
-    case Rejected => false
+    case AcceptedValue5 => true
+    case RejectedValue5 => false
   }
 
   def remoteStartTransaction(idTag: String, connector: Option[ConnectorScope]) = {
@@ -37,8 +37,8 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
 
   def unlockConnector(connector: ConnectorScope) =
     ?(_.unlockConnector(UnlockConnectorRequest(connector.toOcpp), id)) match {
-      case AcceptedValue5 => true
-      case RejectedValue5 => false
+      case AcceptedValue3 => true
+      case RejectedValue3 => false
     }
 
   def getDiagnostics(location: URI,
@@ -53,8 +53,8 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
 
   def changeConfiguration(key: String, value: String) =
     ?(_.changeConfiguration(ChangeConfigurationRequest(key, value), id)) match {
-      case AcceptedValue => ocpp.ConfigurationStatus.Accepted
-      case RejectedValue => ocpp.ConfigurationStatus.Rejected
+      case Accepted => ocpp.ConfigurationStatus.Accepted
+      case Rejected => ocpp.ConfigurationStatus.Rejected
       case NotSupported => ocpp.ConfigurationStatus.NotSupported
     }
 
@@ -64,15 +64,15 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
       case ocpp.AvailabilityType.Inoperative => Inoperative
     }
     ?(_.changeAvailability(ChangeAvailabilityRequest(scope.toOcpp, availability), id)) match {
-      case AcceptedValue3 => ocpp.AvailabilityStatus.Accepted
-      case RejectedValue3 => ocpp.AvailabilityStatus.Rejected
+      case AcceptedValue => ocpp.AvailabilityStatus.Accepted
+      case RejectedValue => ocpp.AvailabilityStatus.Rejected
       case Scheduled => ocpp.AvailabilityStatus.Scheduled
     }
   }
 
   def clearCache = ?(_.clearCache(ClearCacheRequest(), id)) match {
-    case AcceptedValue2 => true
-    case RejectedValue2 => false
+    case AcceptedValue4 => true
+    case RejectedValue4 => false
   }
 
   def reset(resetType: ocpp.ResetType.Value) = {
@@ -81,8 +81,8 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
       case ocpp.ResetType.Soft => Soft
     }
     ?(_.reset(ResetRequest(x), id)) match {
-      case AcceptedValue4 => true
-      case RejectedValue4 => false
+      case AcceptedValue2 => true
+      case RejectedValue2 => false
     }
   }
 
@@ -101,8 +101,8 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
   private def ?[T](f: ChargePointService => Either[scalaxb.Fault[Any], T]): T = rightOrException(f(bindings.service))
 
   private implicit def remoteStartStopStatusToAccepted(x: RemoteStartStopStatus): Accepted = x match {
-    case AcceptedValue4 => true
-    case RejectedValue3 => false
+    case AcceptedValue2 => true
+    case RejectedValue2 => false
   }
 
   def remoteStartTransaction(idTag: String, connector: Option[ConnectorScope]) = {
@@ -115,8 +115,8 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
 
   def unlockConnector(connector: ConnectorScope) =
     ?(_.unlockConnector(UnlockConnectorRequest(connector.toOcpp), id)) match {
-      case AcceptedValue9 => true
-      case RejectedValue8 => false
+      case AcceptedValue4 => true
+      case RejectedValue4 => false
     }
 
   def getDiagnostics(location: URI,
@@ -131,9 +131,9 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
 
   def changeConfiguration(key: String, value: String) =
     ?(_.changeConfiguration(ChangeConfigurationRequest(key, value), id)) match {
-      case AcceptedValue5 => ocpp.ConfigurationStatus.Accepted
-      case RejectedValue4 => ocpp.ConfigurationStatus.Rejected
-      case NotSupportedValue => ocpp.ConfigurationStatus.NotSupported
+      case AcceptedValue8 => ocpp.ConfigurationStatus.Accepted
+      case RejectedValue7 => ocpp.ConfigurationStatus.Rejected
+      case NotSupported => ocpp.ConfigurationStatus.NotSupported
     }
 
   def changeAvailability(scope: Scope, availabilityType: ocpp.AvailabilityType.Value) = {
@@ -149,8 +149,8 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
   }
 
   def clearCache = ?(_.clearCache(ClearCacheRequest(), id)) match {
-    case AcceptedValue6 => true
-    case RejectedValue5 => false
+    case AcceptedValue3 => true
+    case RejectedValue3 => false
   }
 
   def reset(resetType: ocpp.ResetType.Value) = {
@@ -159,8 +159,8 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
       case ocpp.ResetType.Soft => Soft
     }
     ?(_.reset(ResetRequest(x), id)) match {
-      case AcceptedValue8 => true
-      case RejectedValue7 => false
+      case AcceptedValue6 => true
+      case RejectedValue5 => false
     }
   }
 

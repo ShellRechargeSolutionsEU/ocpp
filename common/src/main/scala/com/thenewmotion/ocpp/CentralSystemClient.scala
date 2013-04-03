@@ -3,9 +3,10 @@ package com.thenewmotion.ocpp
 import com.thenewmotion.time.Imports._
 import java.net.URI
 import org.joda.time
-import com.thenewmotion.{ocpp, Logging}
+import com.thenewmotion.ocpp
 import scalaxb.SoapClients
 import dispatch.Http
+import com.typesafe.scalalogging.slf4j.Logging
 
 /**
  * @author Yaroslav Klymko
@@ -25,7 +26,7 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: URI, http: Http
     val status = {
       import ocpp.{AuthorizationStatus => ocpp}
       x.status match {
-        case AcceptedValue7 => ocpp.Accepted
+        case AcceptedValue6 => ocpp.Accepted
         case Blocked => ocpp.IdTagBlocked
         case Expired => ocpp.IdTagExpired
         case Invalid => ocpp.IdTagInvalid
@@ -93,7 +94,7 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: URI, http: Http
 
     val BootNotificationResponse(status, currentTime, heartbeatInterval) = ?(_.bootNotification(req, id))
     val accepted = status match {
-      case AcceptedValue6 => true
+      case AcceptedValue7 => true
       case RejectedValue6 => false
     }
 
@@ -168,7 +169,7 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: URI, http: Http
     notSupported("CentralSystemClient.dataTransfer")
 
   private def logNotSupported(name: String, value: Any) {
-    log.warn("%s is not supported in OCPP 1.2, value: %s".format(name, value))
+    logger.warn("%s is not supported in OCPP 1.2, value: %s".format(name, value))
   }
 
   private def notSupported(x: String): Nothing =
@@ -188,7 +189,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: URI, http: Http
     val status = {
       import ocpp.{AuthorizationStatus => ocpp}
       x.status match {
-        case AcceptedValue13 => ocpp.Accepted
+        case AcceptedValue12 => ocpp.Accepted
         case BlockedValue => ocpp.IdTagBlocked
         case ExpiredValue => ocpp.IdTagExpired
         case InvalidValue => ocpp.IdTagInvalid
@@ -199,7 +200,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: URI, http: Http
   }
 
   def logNotSupported(name: String, value: Any) {
-    log.warn("%s is not supported in OCPP 1.2, value: %s".format(name, value))
+    logger.warn("%s is not supported in OCPP 1.2, value: %s".format(name, value))
   }
 
   def authorize(idTag: String) = ?[IdTagInfoType](_.authorize(AuthorizeRequest(idTag), id))
@@ -256,8 +257,8 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: URI, http: Http
 
     val BootNotificationResponse(status, currentTime, heartbeatInterval) = ?(_.bootNotification(req, id))
     val accepted = status match {
-      case AcceptedValue12 => true
-      case RejectedValue10 => false
+      case AcceptedValue11 => true
+      case RejectedValue9 => false
     }
 
     ocpp.BootNotificationResponse(accepted, currentTime, heartbeatInterval)
@@ -324,8 +325,8 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: URI, http: Http
     val status = {
       import ocpp.DataTransferResponse.{Status => ocpp}
       res.status match {
-        case AcceptedValue11 => ocpp.Accepted
-        case RejectedValue9 => ocpp.Rejected
+        case AcceptedValue13 => ocpp.Accepted
+        case RejectedValue10 => ocpp.Rejected
         case UnknownMessageIdValue => ocpp.UnknownMessageId
         case UnknownVendorIdValue => ocpp.UnknownVendorId
       }
@@ -337,12 +338,12 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: URI, http: Http
     implicit def toReadingContext(x: Meter.ReadingContext.Value): ReadingContext = {
       import Meter.{ReadingContext => ocpp}
       x match {
-        case ocpp.InterruptionBegin => InterruptionBegin
-        case ocpp.InterruptionEnd => InterruptionEnd
-        case ocpp.SampleClock => SampleClock
-        case ocpp.SamplePeriodic => SamplePeriodic
-        case ocpp.TransactionBegin => TransactionBegin
-        case ocpp.TransactionEnd => TransactionEnd
+        case ocpp.InterruptionBegin => Interruptionu46Begin
+        case ocpp.InterruptionEnd => Interruptionu46End
+        case ocpp.SampleClock => Sampleu46Clock
+        case ocpp.SamplePeriodic => Sampleu46Periodic
+        case ocpp.TransactionBegin => Transactionu46Begin
+        case ocpp.TransactionEnd => Transactionu46End
       }
     }
 
@@ -357,20 +358,20 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: URI, http: Http
     implicit def toMeasurand(x: Meter.Measurand.Value): Measurand = {
       import Meter.{Measurand => ocpp}
       x match {
-        case ocpp.EnergyActiveExportRegister => EnergyActiveExportRegister
-        case ocpp.EnergyActiveImportRegister => EnergyActiveImportRegister
-        case ocpp.EnergyReactiveExportRegister => EnergyReactiveExportRegister
-        case ocpp.EnergyReactiveImportRegister => EnergyReactiveImportRegister
-        case ocpp.EnergyActiveExportInterval => EnergyActiveExportInterval
-        case ocpp.EnergyActiveImportInterval => EnergyActiveImportInterval
-        case ocpp.EnergyReactiveExportInterval => EnergyReactiveExportInterval
-        case ocpp.EnergyReactiveImportInterval => EnergyReactiveImportInterval
-        case ocpp.PowerActiveExport => PowerActiveExport
-        case ocpp.PowerActiveImport => PowerActiveImport
-        case ocpp.PowerReactiveExport => PowerReactiveExport
-        case ocpp.PowerReactiveImport => PowerReactiveImport
-        case ocpp.CurrentExport => CurrentExport
-        case ocpp.CurrentImport => CurrentImport
+        case ocpp.EnergyActiveExportRegister => Energyu46Activeu46Exportu46Register
+        case ocpp.EnergyActiveImportRegister => Energyu46Activeu46Importu46Register
+        case ocpp.EnergyReactiveExportRegister => Energyu46Reactiveu46Exportu46Register
+        case ocpp.EnergyReactiveImportRegister => Energyu46Reactiveu46Importu46Register
+        case ocpp.EnergyActiveExportInterval => Energyu46Activeu46Exportu46Interval
+        case ocpp.EnergyActiveImportInterval => Energyu46Activeu46Importu46Interval
+        case ocpp.EnergyReactiveExportInterval => Energyu46Reactiveu46Exportu46Interval
+        case ocpp.EnergyReactiveImportInterval => Energyu46Reactiveu46Importu46Interval
+        case ocpp.PowerActiveExport => Poweru46Activeu46Export
+        case ocpp.PowerActiveImport => Poweru46Activeu46Import
+        case ocpp.PowerReactiveExport => Poweru46Reactiveu46Export
+        case ocpp.PowerReactiveImport => Poweru46Reactiveu46Import
+        case ocpp.CurrentExport => Currentu46Export
+        case ocpp.CurrentImport => Currentu46Import
         case ocpp.Voltage => Voltage
         case ocpp.Temperature => Temperature
       }

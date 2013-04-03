@@ -78,10 +78,10 @@ class CentralSystemDispatcherV12(val action: Value,
   def version = Version.V12
 
   implicit def toIdTagInfo(x: ocpp.IdTagInfo): IdTagInfo = {
-    val status = {
+    val status: AuthorizationStatus = {
       import ocpp.{AuthorizationStatus => ocpp}
       x.status match {
-        case ocpp.Accepted => AcceptedValue7
+        case ocpp.Accepted => AcceptedValue6
         case ocpp.IdTagBlocked => Blocked
         case ocpp.IdTagExpired => Expired
         case ocpp.IdTagInvalid => Invalid
@@ -111,7 +111,7 @@ class CentralSystemDispatcherV12(val action: Value,
             meterType,
             meterSerialNumber)
 
-        val registrationStatus = if (registrationAccepted) AcceptedValue6 else RejectedValue6
+        val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue7 else RejectedValue6
 
         BootNotificationResponse(registrationStatus, Some(currentTime), Some(heartbeatInterval))
     }
@@ -205,10 +205,10 @@ class CentralSystemDispatcherV15(val action: Value,
   def version = Version.V15
 
   implicit def toIdTagInfo(x: ocpp.IdTagInfo): IdTagInfoType = {
-    val status = {
+    val status: AuthorizationStatusType = {
       import ocpp.{AuthorizationStatus => ocpp}
       x.status match {
-        case ocpp.Accepted => AcceptedValue13
+        case ocpp.Accepted => AcceptedValue12
         case ocpp.IdTagBlocked => BlockedValue
         case ocpp.IdTagExpired => ExpiredValue
         case ocpp.IdTagInvalid => InvalidValue
@@ -238,7 +238,7 @@ class CentralSystemDispatcherV15(val action: Value,
             meterType,
             meterSerialNumber)
 
-        val registrationStatus = if (registrationAccepted) AcceptedValue12 else RejectedValue10
+        val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue11 else RejectedValue9
 
         BootNotificationResponse(registrationStatus, currentTime, heartbeatInterval)
     }
@@ -345,12 +345,12 @@ class CentralSystemDispatcherV15(val action: Value,
     def toReadingContext(x: ReadingContext): Meter.ReadingContext.Value = {
       import Meter.{ReadingContext => ocpp}
       x match {
-        case InterruptionBegin => ocpp.InterruptionBegin
-        case InterruptionEnd => ocpp.InterruptionEnd
-        case SampleClock => ocpp.SampleClock
-        case SamplePeriodic => ocpp.SamplePeriodic
-        case TransactionBegin => ocpp.TransactionBegin
-        case TransactionEnd => ocpp.TransactionEnd
+        case Interruptionu46Begin => ocpp.InterruptionBegin
+        case Interruptionu46End => ocpp.InterruptionEnd
+        case Sampleu46Clock => ocpp.SampleClock
+        case Sampleu46Periodic => ocpp.SamplePeriodic
+        case Transactionu46Begin => ocpp.TransactionBegin
+        case Transactionu46End => ocpp.TransactionEnd
       }
     }
 
@@ -365,20 +365,20 @@ class CentralSystemDispatcherV15(val action: Value,
     def toMeasurand(x: Measurand): Meter.Measurand.Value = {
       import Meter.{Measurand => ocpp}
       x match {
-        case EnergyActiveExportRegister => ocpp.EnergyActiveExportRegister
-        case EnergyActiveImportRegister => ocpp.EnergyActiveImportRegister
-        case EnergyReactiveExportRegister => ocpp.EnergyReactiveExportRegister
-        case EnergyReactiveImportRegister => ocpp.EnergyReactiveImportRegister
-        case EnergyActiveExportInterval => ocpp.EnergyActiveExportInterval
-        case EnergyActiveImportInterval => ocpp.EnergyActiveImportInterval
-        case EnergyReactiveExportInterval => ocpp.EnergyReactiveExportInterval
-        case EnergyReactiveImportInterval => ocpp.EnergyReactiveImportInterval
-        case PowerActiveExport => ocpp.PowerActiveExport
-        case PowerActiveImport => ocpp.PowerActiveImport
-        case PowerReactiveExport => ocpp.PowerReactiveExport
-        case PowerReactiveImport => ocpp.PowerReactiveImport
-        case CurrentExport => ocpp.CurrentExport
-        case CurrentImport => ocpp.CurrentImport
+        case Energyu46Activeu46Exportu46Register => ocpp.EnergyActiveExportRegister
+        case Energyu46Activeu46Importu46Register => ocpp.EnergyActiveImportRegister
+        case Energyu46Reactiveu46Exportu46Register => ocpp.EnergyReactiveExportRegister
+        case Energyu46Reactiveu46Importu46Register => ocpp.EnergyReactiveImportRegister
+        case Energyu46Activeu46Exportu46Interval => ocpp.EnergyActiveExportInterval
+        case Energyu46Activeu46Importu46Interval => ocpp.EnergyActiveImportInterval
+        case Energyu46Reactiveu46Exportu46Interval => ocpp.EnergyReactiveExportInterval
+        case Energyu46Reactiveu46Importu46Interval => ocpp.EnergyReactiveImportInterval
+        case Poweru46Activeu46Export => ocpp.PowerActiveExport
+        case Poweru46Activeu46Import => ocpp.PowerActiveImport
+        case Poweru46Reactiveu46Export => ocpp.PowerReactiveExport
+        case Poweru46Reactiveu46Import => ocpp.PowerReactiveImport
+        case Currentu46Export => ocpp.CurrentExport
+        case Currentu46Import => ocpp.CurrentImport
         case Voltage => ocpp.Voltage
         case Temperature => ocpp.Temperature
       }
