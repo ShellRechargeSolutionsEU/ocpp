@@ -2,7 +2,7 @@ package com.thenewmotion.ocpp
 
 import xml.Elem
 import soapenvelope12.Body
-import scalax.{StringOption, richAny}
+import scalax.{StringOption, RichAny}
 
 /**
  * @author Yaroslav Klymko

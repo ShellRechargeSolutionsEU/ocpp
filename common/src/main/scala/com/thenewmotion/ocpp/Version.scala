@@ -1,7 +1,7 @@
 package com.thenewmotion.ocpp
 
 import xml.{Elem, NodeSeq}
-import scalax.richAny
+import scalax.RichAny
 import soapenvelope12.Body
 
 /**

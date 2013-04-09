@@ -5,7 +5,7 @@ import scalaxb.{Fault => _, _}
 import javax.xml.datatype.XMLGregorianCalendar
 import com.thenewmotion.time.Imports._
 import soapenvelope12.Body
-import scalax.richAny
+import scalax.RichAny
 import Action._
 import com.thenewmotion.ocpp
 import com.thenewmotion.ocpp.Fault._
