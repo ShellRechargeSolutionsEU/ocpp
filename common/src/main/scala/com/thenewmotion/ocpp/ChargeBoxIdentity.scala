@@ -1,7 +1,7 @@
 package com.thenewmotion.ocpp
 
 import soapenvelope12.Envelope
-import scalax.{richAny, StringOption}
+import scalax.{RichAny, StringOption}
 import xml.Elem
 
 /**
