@@ -46,7 +46,7 @@ Common
 ```xml
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
-        <artifactId>ocpp_common_1.5_2.10</artifactId>
+        <artifactId>ocpp_common_2.10</artifactId>
         <version>2.8</version>
     </dependency>
 ```
