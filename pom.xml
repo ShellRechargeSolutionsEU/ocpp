@@ -29,7 +29,7 @@
             <dependency>
                 <groupId>com.thenewmotion</groupId>
                 <artifactId>common_${scala.version}</artifactId>
-                <version>1.22-SNAPSHOT</version>
+                <version>1.22</version>
             </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
