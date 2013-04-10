@@ -44,7 +44,7 @@
             <dependency>
                 <groupId>ua.t3hnar.scalax</groupId>
                 <artifactId>scalax_${scala.version}</artifactId>
-                <version>1.3-SNAPSHOT</version>
+                <version>1.3</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
