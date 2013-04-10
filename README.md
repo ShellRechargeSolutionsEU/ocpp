@@ -29,7 +29,7 @@ OCPP 1.2
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
         <artifactId>ocpp_1.2_2.10</artifactId>
-        <version>2.8-SNAPSHOT</version>
+        <version>2.8</version>
     </dependency>
 ```
 
@@ -38,7 +38,7 @@ OCPP 1.5
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
         <artifactId>ocpp_1.5_2.10</artifactId>
-        <version>2.8-SNAPSHOT</version>
+        <version>2.8</version>
     </dependency>
 ```
 
@@ -47,6 +47,6 @@ Common
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
         <artifactId>ocpp_common_1.5_2.10</artifactId>
-        <version>2.8-SNAPSHOT</version>
+        <version>2.8</version>
     </dependency>
 ```
