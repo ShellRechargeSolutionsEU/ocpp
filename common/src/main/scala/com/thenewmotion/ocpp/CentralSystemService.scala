@@ -37,13 +37,14 @@ trait CentralSystemService {
                        meterType: Option[String],
                        meterSerialNumber: Option[String]): BootNotificationResponse
 
+  @throws[ActionNotSupportedException]
   def statusNotification(scope: Scope, status: ChargePointStatus, timestamp: Option[DateTime], vendorId: Option[String])
 
   def firmwareStatusNotification(status: FirmwareStatus.Value)
 
   def diagnosticsStatusNotification(uploaded: Boolean)
 
-  // since OCPP 1.5
+  @throws[ActionNotSupportedException]
   def dataTransfer(vendorId: String, messageId: Option[String], data: Option[String]): DataTransferResponse
 }
 

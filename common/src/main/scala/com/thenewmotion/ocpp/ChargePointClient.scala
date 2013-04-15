@@ -12,6 +12,14 @@ import dispatch.Http
  */
 trait ChargePointClient extends ChargePointService with Client
 
+object ChargePointClient {
+  def apply(version: Version.Value)
+           (chargeBoxIdentity: String, uri: URI, http: Http): ChargePointService = version match {
+    case Version.V12 => new ChargePointClientV12(chargeBoxIdentity, uri, http)
+    case Version.V15 => new ChargePointClientV15(chargeBoxIdentity, uri, http)
+  }
+}
+
 class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) extends ChargePointClient {
   import v12._
 

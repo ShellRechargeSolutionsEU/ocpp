@@ -24,6 +24,9 @@ trait ChargePointService {
 
   def changeConfiguration(key: String, value: String): ConfigurationStatus.Value
 
+//  @throws[ActionNotSupportedException]
+//  def getConfiguration
+
   def changeAvailability(scope: Scope, availabilityType: AvailabilityType.Value): AvailabilityStatus.Value
 
   def clearCache: Boolean
@@ -35,13 +38,20 @@ trait ChargePointService {
                      retries: Option[Int],
                      retryInterval: Option[Int])
 
-  // since OCPP 1.5
-  //  def sendLocalList
-  //  def dataTransfer
-  //  def reserveNow
-  //  def getLocalListVersion
-  //  def cancelReservation
-  //  def getConfiguration
+//  @throws[ActionNotSupportedException]
+//  def sendLocalList
+
+//  @throws[ActionNotSupportedException]
+//  def getLocalListVersion
+
+//  @throws[ActionNotSupportedException]
+//  def dataTransfer
+
+//  @throws[ActionNotSupportedException]
+//  def reserveNow
+
+//  @throws[ActionNotSupportedException]
+//  def cancelReservation
 }
 
 object ConfigurationStatus extends Enumeration {

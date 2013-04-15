@@ -110,7 +110,7 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: URI, http: Http
                          vendorId: Option[String]) {
     def toErrorCode(x: ocpp.ChargePointErrorCode.Value): ChargePointErrorCode = {
       import ocpp.{ChargePointErrorCode => ocpp}
-      def notSupportedCode(x: ocpp.Value) = notSupported("ChargePointErrorCode.%s".format(x))
+      def notSupportedCode(x: ocpp.Value) = notSupported("statusNotification(ChargePointErrorCode.%s)".format(x))
       x match {
         case ocpp.ConnectorLockFailure => ConnectorLockFailure
         case ocpp.HighTemperature => HighTemperature
@@ -133,7 +133,7 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: URI, http: Http
       case ocpp.Available => noError(Available)
       case ocpp.Occupied => noError(Occupied)
       case ocpp.Unavailable => noError(Unavailable)
-      case ocpp.Reserved => throw new NotSupportedOperationException("ChargePointStatus.Reserved is not supported in ocpp 1.2")
+      case ocpp.Reserved => notSupported("statusNotification(Reserved)")
       case ocpp.Faulted(code, info, vendorCode) =>
         info.foreach(x => logNotSupported("statusNotification.info", x))
         vendorCode.foreach(x => logNotSupported("statusNotification.vendorErrorCode", x))
@@ -164,16 +164,14 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: URI, http: Http
     ?(_.diagnosticsStatusNotification(DiagnosticsStatusNotificationRequest(status), id))
   }
 
-  // since OCPP 1.5
-  def dataTransfer(vendorId: String, messageId: Option[String], data: Option[String]) =
-    notSupported("CentralSystemClient.dataTransfer")
+  def dataTransfer(vendorId: String, messageId: Option[String], data: Option[String]) = notSupported("dataTransfer")
 
   private def logNotSupported(name: String, value: Any) {
     logger.warn("%s is not supported in OCPP 1.2, value: %s".format(name, value))
   }
 
-  private def notSupported(x: String): Nothing =
-    throw new NotSupportedOperationException("%s is not supported in ocpp 1.2".format(x))
+  private def notSupported(action: String): Nothing =
+    throw new ActionNotSupportedException(Version.V12, action)
 }
 
 class CentralSystemClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) extends CentralSystemClient with Logging {
@@ -414,5 +412,3 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: URI, http: Http
     MeterValue(x.timestamp, x.values.map(toValue))
   }
 }
-
-class NotSupportedOperationException(msg: String) extends RuntimeException(msg)
