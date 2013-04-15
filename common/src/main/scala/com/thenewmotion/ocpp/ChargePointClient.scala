@@ -29,12 +29,15 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
 
   private def ?[T](f: ChargePointService => Either[scalaxb.Fault[Any], T]): T = rightOrException(f(bindings.service))
 
+  private def notSupported(action: String): Nothing =
+    throw new ActionNotSupportedException(Version.V12, action)
+
   private implicit def remoteStartStopStatusToAccepted(x: RemoteStartStopStatus): Accepted = x match {
     case AcceptedValue5 => true
     case RejectedValue5 => false
   }
 
-  def remoteStartTransaction(idTag: String, connector: Option[ConnectorScope]) = {
+  def remoteStartTransaction(idTag: IdTag, connector: Option[ConnectorScope]) = {
     val req = RemoteStartTransactionRequest(idTag, connector.map(_.toOcpp))
     ?[RemoteStartStopStatus](_.remoteStartTransaction(req, id))
   }
@@ -107,8 +110,10 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
 
   def getLocalListVersion = notSupported("getLocalListVersion")
 
-  private def notSupported(action: String): Nothing =
-    throw new ActionNotSupportedException(Version.V12, action)
+  def reserveNow(connector: Scope, expiryDate: DateTime, idTag: IdTag, parentIdTag: Option[String], reservationId: Int) =
+    notSupported("reserveNow")
+
+  def cancelReservation(reservationId: Int) = notSupported("cancelReservation")
 }
 
 class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) extends ChargePointClient {
@@ -126,7 +131,7 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
     case RejectedValue2 => false
   }
 
-  def remoteStartTransaction(idTag: String, connector: Option[ConnectorScope]) = {
+  def remoteStartTransaction(idTag: IdTag, connector: Option[ConnectorScope]) = {
     val req = RemoteStartTransactionRequest(idTag, connector.map(_.toOcpp))
     ?[RemoteStartStopStatus](_.remoteStartTransaction(req, id))
   }
@@ -226,4 +231,27 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
   }
 
   def getLocalListVersion = ?(_.getLocalListVersion(GetLocalListVersionRequest(), id))
+
+  def reserveNow(connector: Scope,
+                 expiryDate: DateTime,
+                 idTag: IdTag,
+                 parentIdTag: Option[String],
+                 reservationId: Int) = {
+    val req = ReserveNowRequest(connector.toOcpp, expiryDate, idTag, parentIdTag, reservationId)
+
+    import ocpp.{Reservation => ocpp}
+    ?(_.reserveNow(req, id)) match {
+      case Accepted => ocpp.Accepted
+      case Faulted => ocpp.Faulted
+      case Occupied => ocpp.Occupied
+      case Rejected => ocpp.Rejected
+      case Unavailable => ocpp.Unavailable
+    }
+  }
+
+  def cancelReservation(reservationId: Int) =
+    ?(_.cancelReservation(CancelReservationRequest(reservationId), id)) match {
+      case AcceptedValue9 => true
+      case RejectedValue8 => false
+    }
 }

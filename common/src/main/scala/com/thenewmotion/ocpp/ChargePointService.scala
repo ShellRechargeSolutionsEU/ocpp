@@ -10,8 +10,9 @@ trait ChargePointService {
   type Accepted = Boolean
   type FileName = String
   type ListVersion = Int
+  type IdTag = String
 
-  def remoteStartTransaction(idTag: String, connector: Option[ConnectorScope]): Accepted
+  def remoteStartTransaction(idTag: IdTag, connector: Option[ConnectorScope]): Accepted
 
   def remoteStopTransaction(transactionId: Int): Accepted
 
@@ -48,14 +49,18 @@ trait ChargePointService {
   @throws[ActionNotSupportedException]
   def getLocalListVersion: ListVersion
 
-  //  @throws[ActionNotSupportedException]
+//  @throws[ActionNotSupportedException]
 //  def dataTransfer
 
-//  @throws[ActionNotSupportedException]
-//  def reserveNow
+  @throws[ActionNotSupportedException]
+  def reserveNow(connector: Scope,
+                 expiryDate: DateTime,
+                 idTag: IdTag,
+                 parentIdTag: Option[String] = None,
+                 reservationId: Int): Reservation.Value
 
-//  @throws[ActionNotSupportedException]
-//  def cancelReservation
+  @throws[ActionNotSupportedException]
+  def cancelReservation(reservationId: Int): Boolean
 }
 
 object ConfigurationStatus extends Enumeration {
@@ -91,5 +96,9 @@ object UpdateStatus {
   case object VersionMismatch extends Value
 }
 
-
 case class AuthorisationData(idTag: String, idTagInfo: Option[IdTagInfo])
+
+
+object Reservation extends Enumeration {
+  val Accepted, Faulted, Occupied, Rejected, Unavailable = Value
+}
