@@ -321,7 +321,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: URI, http: Http
   def dataTransfer(vendorId: String, messageId: Option[String], data: Option[String]) = {
     val res = ?(_.dataTransfer(DataTransferRequestType(vendorId, messageId, data), id))
     val status = {
-      import ocpp.DataTransferResponse.{Status => ocpp}
+      import ocpp.{DataTransferStatus => ocpp}
       res.status match {
         case AcceptedValue13 => ocpp.Accepted
         case RejectedValue10 => ocpp.Rejected

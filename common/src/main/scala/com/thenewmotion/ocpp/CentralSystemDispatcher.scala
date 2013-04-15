@@ -194,6 +194,7 @@ class CentralSystemDispatcherV12(val action: Value,
         service.meterValues(ocpp.Scope.fromOcpp(req.connectorId), None, req.values.map(toMeter).toList)
         MeterValuesResponse()
     }
+    case DataTransfer => throw new ActionNotSupportedException(version, "dataTransfer")
   }
 }
 
@@ -338,6 +339,21 @@ class CentralSystemDispatcherV15(val action: Value,
         def toMeter(x: MeterValue): Meter = Meter(x.timestamp, x.value.map(toValue).toList)
         service.meterValues(ocpp.Scope.fromOcpp(req.connectorId), req.transactionId, req.values.map(toMeter).toList)
         MeterValuesResponse()
+    }
+
+    case DataTransfer => ?[DataTransferRequest, DataTransferResponse] {
+      req =>
+        val res = service.dataTransfer(req.vendorId, req.messageId, req.data)
+        val status: DataTransferStatus = {
+          import ocpp.{DataTransferStatus => ocpp}
+          res.status match {
+            case ocpp.Accepted => AcceptedValue
+            case ocpp.Rejected => RejectedValue
+            case ocpp.UnknownMessageId => UnknownMessageId
+            case ocpp.UnknownVendorId => UnknownVendorId
+          }
+        }
+        DataTransferResponse(status, res.data)
     }
   }
 

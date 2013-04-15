@@ -173,13 +173,11 @@ object FirmwareStatus extends Enumeration {
   Installed = Value
 }
 
-case class DataTransferResponse(status: DataTransferResponse.Status.Value, data: Option[String] = None)
+case class DataTransferResponse(status: DataTransferStatus.Value, data: Option[String] = None)
 
-object DataTransferResponse {
-  object Status extends Enumeration {
-    val Accepted,
-    Rejected,
-    UnknownMessageId,
-    UnknownVendorId = Value
-  }
+object DataTransferStatus extends Enumeration {
+  val Accepted,
+  Rejected,
+  UnknownMessageId,
+  UnknownVendorId = Value
 }

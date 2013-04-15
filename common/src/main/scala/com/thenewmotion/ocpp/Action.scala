@@ -16,7 +16,8 @@ object Action extends Enumeration {
   FirmwareStatusNotification,
   Heartbeat,
   MeterValues,
-  StatusNotification = Value
+  StatusNotification,
+  DataTransfer = Value
 
   def fromHeader(header: String): Option[Value] =
     StringOption(header).flatMap {
