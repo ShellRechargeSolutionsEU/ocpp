@@ -45,8 +45,8 @@ trait ChargePointService {
                     localAuthorisationList: List[AuthorisationData],
                     hash: Option[String]): UpdateStatus.Value
 
-//  @throws[ActionNotSupportedException]
-//  def getLocalListVersion
+  @throws[ActionNotSupportedException]
+  def getLocalListVersion: ListVersion
 
   //  @throws[ActionNotSupportedException]
 //  def dataTransfer

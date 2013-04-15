@@ -66,7 +66,7 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
       case NotSupported => ocpp.ConfigurationStatus.NotSupported
     }
 
-  def getConfiguration(keys: List[String]) = throw new ActionNotSupportedException(Version.V12, "getConfiguration")
+  def getConfiguration(keys: List[String]) = notSupported("getConfiguration")
 
   def changeAvailability(scope: Scope, availabilityType: ocpp.AvailabilityType.Value) = {
     val availability = availabilityType match {
@@ -103,8 +103,12 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
   def sendLocalList(updateType: UpdateType.Value,
                     listVersion: ListVersion,
                     localAuthorisationList: List[AuthorisationData],
-                    hash: Option[String]) =
-    throw new ActionNotSupportedException(Version.V12, "getConfiguration")
+                    hash: Option[String]) = notSupported("sendLocalList")
+
+  def getLocalListVersion = notSupported("getLocalListVersion")
+
+  private def notSupported(action: String): Nothing =
+    throw new ActionNotSupportedException(Version.V12, action)
 }
 
 class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) extends ChargePointClient {
@@ -220,4 +224,6 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
       case VersionMismatch => ocpp.VersionMismatch
     }
   }
+
+  def getLocalListVersion = ?(_.getLocalListVersion(GetLocalListVersionRequest(), id))
 }
