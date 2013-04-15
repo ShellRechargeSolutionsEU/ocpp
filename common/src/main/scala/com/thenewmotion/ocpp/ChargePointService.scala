@@ -49,8 +49,8 @@ trait ChargePointService {
   @throws[ActionNotSupportedException]
   def getLocalListVersion: ListVersion
 
-//  @throws[ActionNotSupportedException]
-//  def dataTransfer
+  @throws[ActionNotSupportedException]
+  def dataTransfer(vendorId: String, messageId: Option[String], data: Option[String]): DataTransferResponse
 
   @throws[ActionNotSupportedException]
   def reserveNow(connector: Scope,

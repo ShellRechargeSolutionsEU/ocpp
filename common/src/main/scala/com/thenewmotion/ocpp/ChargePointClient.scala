@@ -110,6 +110,9 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
 
   def getLocalListVersion = notSupported("getLocalListVersion")
 
+  def dataTransfer(vendorId: String, messageId: Option[String], data: Option[String]) =
+    notSupported("dataTransfer")
+
   def reserveNow(connector: Scope, expiryDate: DateTime, idTag: IdTag, parentIdTag: Option[String], reservationId: Int) =
     notSupported("reserveNow")
 
@@ -231,6 +234,20 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
   }
 
   def getLocalListVersion = ?(_.getLocalListVersion(GetLocalListVersionRequest(), id))
+
+  def dataTransfer(vendorId: String, messageId: Option[String], data: Option[String]) = {
+    val res = ?(_.dataTransfer(DataTransferRequest(vendorId, messageId, data), id))
+    val status: ocpp.DataTransferStatus.Value = {
+      import ocpp.{DataTransferStatus => ocpp}
+      res.status match {
+        case AcceptedValue => ocpp.Accepted
+        case RejectedValue => ocpp.Rejected
+        case UnknownMessageId => ocpp.UnknownMessageId
+        case UnknownVendorId => ocpp.UnknownVendorId
+      }
+    }
+    ocpp.DataTransferResponse(status, res.data)
+  }
 
   def reserveNow(connector: Scope,
                  expiryDate: DateTime,
