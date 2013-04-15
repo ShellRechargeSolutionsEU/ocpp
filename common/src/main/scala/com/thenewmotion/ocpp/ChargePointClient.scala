@@ -66,6 +66,8 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
       case NotSupported => ocpp.ConfigurationStatus.NotSupported
     }
 
+  def getConfiguration(keys: List[String]) = throw new ActionNotSupportedException(Version.V12, "getConfiguration")
+
   def changeAvailability(scope: Scope, availabilityType: ocpp.AvailabilityType.Value) = {
     val availability = availabilityType match {
       case ocpp.AvailabilityType.Operative => Operative
@@ -143,6 +145,14 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
       case RejectedValue7 => ocpp.ConfigurationStatus.Rejected
       case NotSupported => ocpp.ConfigurationStatus.NotSupported
     }
+
+  def getConfiguration(keys: List[String]) = {
+    val res = ?(_.getConfiguration(GetConfigurationRequest(keys: _*), id))
+    val values = res.configurationKey.map {
+      case KeyValue(key, readonly, value) => ocpp.KeyValue(key, readonly, value)
+    }.toList
+    Configuration(values, res.unknownKey.toList)
+  }
 
   def changeAvailability(scope: Scope, availabilityType: ocpp.AvailabilityType.Value) = {
     val availability = availabilityType match {

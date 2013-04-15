@@ -24,8 +24,8 @@ trait ChargePointService {
 
   def changeConfiguration(key: String, value: String): ConfigurationStatus.Value
 
-//  @throws[ActionNotSupportedException]
-//  def getConfiguration
+  @throws[ActionNotSupportedException]
+  def getConfiguration(keys: List[String]): Configuration
 
   def changeAvailability(scope: Scope, availabilityType: AvailabilityType.Value): AvailabilityStatus.Value
 
@@ -69,3 +69,6 @@ object AvailabilityType extends Enumeration {
 object ResetType extends Enumeration {
   val Hard, Soft = Value
 }
+
+case class KeyValue(key: String, readonly: Boolean, value: Option[String])
+case class Configuration(values: List[KeyValue] = Nil, unknownKeys: List[String])
