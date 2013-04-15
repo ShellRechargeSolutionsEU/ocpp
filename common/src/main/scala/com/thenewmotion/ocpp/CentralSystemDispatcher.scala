@@ -202,26 +202,12 @@ class CentralSystemDispatcherV15(val action: Value,
                                  val reqRes: ReqRes,
                                  service: => CentralSystemService) extends Dispatcher {
   import v15._
+  import ConvertersV15._
 
   def version = Version.V15
-
-  implicit def toIdTagInfo(x: ocpp.IdTagInfo): IdTagInfoType = {
-    val status: AuthorizationStatusType = {
-      import ocpp.{AuthorizationStatus => ocpp}
-      x.status match {
-        case ocpp.Accepted => AcceptedValue12
-        case ocpp.IdTagBlocked => BlockedValue
-        case ocpp.IdTagExpired => ExpiredValue
-        case ocpp.IdTagInvalid => InvalidValue
-        case ocpp.ConcurrentTx => ConcurrentTxValue
-      }
-    }
-    IdTagInfoType(status, x.expiryDate.map(implicitly[XMLGregorianCalendar](_)), x.parentIdTag)
-  }
-
   def dispatch = action match {
     case Authorize => ?[AuthorizeRequest, AuthorizeResponse] {
-      req => AuthorizeResponse(service.authorize(req.idTag))
+      req => AuthorizeResponse(service.authorize(req.idTag).toV15)
     }
 
     case BootNotification => ?[BootNotificationRequest, BootNotificationResponse] {
@@ -261,7 +247,7 @@ class CentralSystemDispatcherV15(val action: Value,
         val (transactionId, idTagInfo) = service.startTransaction(
           ocpp.ConnectorScope.fromOcpp(connectorId),
           idTag, timestamp, meterStart, None)
-        StartTransactionResponse(transactionId, idTagInfo)
+        StartTransactionResponse(transactionId, idTagInfo.toV15)
     }
 
     case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse] {
@@ -276,7 +262,7 @@ class CentralSystemDispatcherV15(val action: Value,
           timestamp,
           meterStop,
           transactionData.map(toTransactionData).toList)
-        StopTransactionResponse(idTagInfo.map(implicitly[IdTagInfoType](_)))
+        StopTransactionResponse(idTagInfo.map(_.toV15))
     }
 
     case Heartbeat => ?[HeartbeatRequest, HeartbeatResponse] {

@@ -9,6 +9,7 @@ import java.net.URI
 trait ChargePointService {
   type Accepted = Boolean
   type FileName = String
+  type ListVersion = Int
 
   def remoteStartTransaction(idTag: String, connector: Option[ConnectorScope]): Accepted
 
@@ -38,13 +39,16 @@ trait ChargePointService {
                      retries: Option[Int],
                      retryInterval: Option[Int])
 
-//  @throws[ActionNotSupportedException]
-//  def sendLocalList
+  @throws[ActionNotSupportedException]
+  def sendLocalList(updateType: UpdateType.Value,
+                    listVersion: ListVersion,
+                    localAuthorisationList: List[AuthorisationData],
+                    hash: Option[String]): UpdateStatus.Value
 
 //  @throws[ActionNotSupportedException]
 //  def getLocalListVersion
 
-//  @throws[ActionNotSupportedException]
+  //  @throws[ActionNotSupportedException]
 //  def dataTransfer
 
 //  @throws[ActionNotSupportedException]
@@ -72,3 +76,20 @@ object ResetType extends Enumeration {
 
 case class KeyValue(key: String, readonly: Boolean, value: Option[String])
 case class Configuration(values: List[KeyValue] = Nil, unknownKeys: List[String])
+
+
+object UpdateType extends Enumeration {
+  val Differential, Full = Value
+}
+
+object UpdateStatus {
+  sealed trait Value
+  case class UpdateAccepted(hash: Option[String]) extends Value
+  case object UpdateFailed extends Value
+  case object HashError extends Value
+  case object NotSupportedValue extends Value
+  case object VersionMismatch extends Value
+}
+
+
+case class AuthorisationData(idTag: String, idTagInfo: Option[IdTagInfo])

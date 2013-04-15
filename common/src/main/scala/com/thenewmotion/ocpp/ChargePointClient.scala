@@ -99,10 +99,17 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
   def updateFirmware(retrieveDate: DateTime, location: URI, retries: Option[Int], retryInterval: Option[Int]) {
     ?(_.updateFirmware(UpdateFirmwareRequest(retrieveDate, location, retries, retryInterval), id))
   }
+
+  def sendLocalList(updateType: UpdateType.Value,
+                    listVersion: ListVersion,
+                    localAuthorisationList: List[AuthorisationData],
+                    hash: Option[String]) =
+    throw new ActionNotSupportedException(Version.V12, "getConfiguration")
 }
 
 class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) extends ChargePointClient {
   import v15._
+  import ConvertersV15._
 
   val bindings = new CustomDispatchHttpClients(http) with ChargePointServiceSoapBindings with SoapClients {
     override def baseAddress = uri
@@ -184,5 +191,33 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
 
   def updateFirmware(retrieveDate: DateTime, location: URI, retries: Option[Int], retryInterval: Option[Int]) {
     ?(_.updateFirmware(UpdateFirmwareRequest(retrieveDate, location, retries, retryInterval), id))
+  }
+
+  def sendLocalList(updateType: ocpp.UpdateType.Value,
+                    listVersion: ListVersion,
+                    localAuthorisationList: List[ocpp.AuthorisationData],
+                    hash: Option[String]) = {
+    val update = {
+      import ocpp.{UpdateType => ocpp}
+      updateType match {
+        case ocpp.Differential => Differential
+        case ocpp.Full => Full
+      }
+    }
+
+    def authorisationData(x: ocpp.AuthorisationData): AuthorisationData =
+      AuthorisationData(x.idTag, x.idTagInfo.map(_.toIdTagInfo))
+
+    val req = SendLocalListRequest(update, listVersion, localAuthorisationList.map(authorisationData(_)), hash)
+    val res = ?(_.sendLocalList(req, id))
+
+    import ocpp.{UpdateStatus => ocpp}
+    res.status match {
+      case AcceptedValue10 => ocpp.UpdateAccepted(res.hash)
+      case Failed => ocpp.UpdateFailed
+      case HashError => ocpp.HashError
+      case NotSupportedValue => ocpp.NotSupportedValue
+      case VersionMismatch => ocpp.VersionMismatch
+    }
   }
 }
