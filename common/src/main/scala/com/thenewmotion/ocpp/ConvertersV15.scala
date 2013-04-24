@@ -1,12 +1,9 @@
 package com.thenewmotion.ocpp
 
-import com.thenewmotion.time.Imports._
-import javax.xml.datatype.XMLGregorianCalendar
-
 /**
  * @author Yaroslav Klymko
  */
-object ConvertersV15 {
+private[ocpp] object ConvertersV15 {
 
   import com.thenewmotion.ocpp
   import v15._
@@ -23,7 +20,7 @@ object ConvertersV15 {
           case ocpp.ConcurrentTx => ConcurrentTxValue
         }
       }
-      IdTagInfoType(status, self.expiryDate.map(implicitly[XMLGregorianCalendar](_)), self.parentIdTag)
+      IdTagInfoType(status, self.expiryDate.map(_.toXMLCalendar), self.parentIdTag)
     }
 
     def toIdTagInfo: IdTagInfo = {
@@ -37,8 +34,14 @@ object ConvertersV15 {
           case ocpp.ConcurrentTx => ConcurrentTx
         }
       }
-      IdTagInfo(status, self.expiryDate.map(implicitly[XMLGregorianCalendar](_)), self.parentIdTag)
+      IdTagInfo(status, self.expiryDate.map(_.toXMLCalendar), self.parentIdTag)
     }
   }
 
+  implicit class RichRemoteStartStopStatus(val self: RemoteStartStopStatus) extends AnyVal {
+    def toOcpp: Boolean = self match {
+      case AcceptedValue2 => true
+      case RejectedValue2 => false
+    }
+  }
 }

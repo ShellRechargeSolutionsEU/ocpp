@@ -2,8 +2,6 @@ package com.thenewmotion.ocpp
 
 import xml.Elem
 import scalaxb.{Fault => _, _}
-import javax.xml.datatype.XMLGregorianCalendar
-import com.thenewmotion.time.Imports._
 import soapenvelope12.Body
 import scalax.RichAny
 import Action._
@@ -74,26 +72,13 @@ class CentralSystemDispatcherV12(val action: Value,
                                  val reqRes: ReqRes,
                                  service: => CentralSystemService) extends Dispatcher {
   import v12._
+  import ConvertersV12._
 
   def version = Version.V12
 
-  implicit def toIdTagInfo(x: ocpp.IdTagInfo): IdTagInfo = {
-    val status: AuthorizationStatus = {
-      import ocpp.{AuthorizationStatus => ocpp}
-      x.status match {
-        case ocpp.Accepted => AcceptedValue6
-        case ocpp.IdTagBlocked => Blocked
-        case ocpp.IdTagExpired => Expired
-        case ocpp.IdTagInvalid => Invalid
-        case ocpp.ConcurrentTx => ConcurrentTx
-      }
-    }
-    IdTagInfo(status, x.expiryDate.map(implicitly[XMLGregorianCalendar](_)), x.parentIdTag)
-  }
-
   def dispatch = action match {
     case Authorize => ?[AuthorizeRequest, AuthorizeResponse] {
-      req => AuthorizeResponse(service.authorize(req.idTag))
+      req => AuthorizeResponse(service.authorize(req.idTag).toV12)
     }
 
     case BootNotification => ?[BootNotificationRequest, BootNotificationResponse] {
@@ -113,7 +98,7 @@ class CentralSystemDispatcherV12(val action: Value,
 
         val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue7 else RejectedValue6
 
-        BootNotificationResponse(registrationStatus, Some(currentTime), Some(heartbeatInterval))
+        BootNotificationResponse(registrationStatus, Some(currentTime.toXMLCalendar), Some(heartbeatInterval))
     }
 
     case DiagnosticsStatusNotification =>
@@ -132,19 +117,19 @@ class CentralSystemDispatcherV12(val action: Value,
         import req._
         val (transactionId, idTagInfo) = service.startTransaction(
           ocpp.ConnectorScope.fromOcpp(connectorId),
-          idTag, timestamp, meterStart, None)
-        StartTransactionResponse(transactionId, idTagInfo)
+          idTag, timestamp.toDateTime, meterStart, None)
+        StartTransactionResponse(transactionId, idTagInfo.toV12)
     }
 
     case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse] {
       req =>
         import req._
-        val idTagInfo = service.stopTransaction(transactionId, idTag, timestamp, meterStop, Nil)
-        StopTransactionResponse(idTagInfo.map(implicitly[IdTagInfo](_)))
+        val idTagInfo = service.stopTransaction(transactionId, idTag, timestamp.toDateTime, meterStop, Nil)
+        StopTransactionResponse(idTagInfo.map(_.toV12))
     }
 
     case Heartbeat => ?[HeartbeatRequest, HeartbeatResponse] {
-      _ => HeartbeatResponse(service.heartbeat)
+      _ => HeartbeatResponse(service.heartbeat.toXMLCalendar)
     }
 
     case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse] {
@@ -190,7 +175,7 @@ class CentralSystemDispatcherV12(val action: Value,
 
     case MeterValues => ?[MeterValuesRequest, MeterValuesResponse] {
       req =>
-        def toMeter(x: MeterValue): Meter = Meter(x.timestamp,List(Meter.DefaultValue(x.value)))
+        def toMeter(x: MeterValue): Meter = Meter(x.timestamp.toDateTime, List(Meter.DefaultValue(x.value)))
         service.meterValues(ocpp.Scope.fromOcpp(req.connectorId), None, req.values.map(toMeter).toList)
         MeterValuesResponse()
     }
@@ -227,7 +212,7 @@ class CentralSystemDispatcherV15(val action: Value,
 
         val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue11 else RejectedValue9
 
-        BootNotificationResponse(registrationStatus, currentTime, heartbeatInterval)
+        BootNotificationResponse(registrationStatus, currentTime.toXMLCalendar, heartbeatInterval)
     }
 
     case DiagnosticsStatusNotification =>
@@ -246,27 +231,27 @@ class CentralSystemDispatcherV15(val action: Value,
         import req._
         val (transactionId, idTagInfo) = service.startTransaction(
           ocpp.ConnectorScope.fromOcpp(connectorId),
-          idTag, timestamp, meterStart, None)
+          idTag, timestamp.toDateTime, meterStart, None)
         StartTransactionResponse(transactionId, idTagInfo.toV15)
     }
 
     case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse] {
       req =>
         import req._
-        def toMeter(x: MeterValue) = Meter(x.timestamp, x.value.map(toValue).toList)
+        def toMeter(x: MeterValue) = Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
         def toTransactionData(x: TransactionData) = ocpp.TransactionData(x.values.map(toMeter).toList)
 
         val idTagInfo = service.stopTransaction(
           transactionId,
           idTag,
-          timestamp,
+          timestamp.toDateTime,
           meterStop,
           transactionData.map(toTransactionData).toList)
         StopTransactionResponse(idTagInfo.map(_.toV15))
     }
 
     case Heartbeat => ?[HeartbeatRequest, HeartbeatResponse] {
-      _ => HeartbeatResponse(service.heartbeat)
+      _ => HeartbeatResponse(service.heartbeat.toXMLCalendar)
     }
 
     case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse] {
@@ -300,7 +285,7 @@ class CentralSystemDispatcherV15(val action: Value,
         service.statusNotification(
           ocpp.Scope.fromOcpp(req.connectorId),
           status,
-          req.timestamp.map(implicitly[DateTime](_)),
+          req.timestamp.map(_.toDateTime),
           req.vendorId)
         StatusNotificationResponse()
     }
@@ -322,7 +307,7 @@ class CentralSystemDispatcherV15(val action: Value,
 
     case MeterValues => ?[MeterValuesRequest, MeterValuesResponse] {
       req =>
-        def toMeter(x: MeterValue): Meter = Meter(x.timestamp, x.value.map(toValue).toList)
+        def toMeter(x: MeterValue): Meter = Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
         service.meterValues(ocpp.Scope.fromOcpp(req.connectorId), req.transactionId, req.values.map(toMeter).toList)
         MeterValuesResponse()
     }

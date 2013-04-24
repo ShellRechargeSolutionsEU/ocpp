@@ -3,8 +3,8 @@ package com.thenewmotion.ocpp
 import java.net.URI
 import scalaxb.SoapClients
 import com.thenewmotion.ocpp
-import com.thenewmotion.time.Imports._
 import dispatch.Http
+import org.joda.time.DateTime
 
 
 /**
@@ -20,34 +20,32 @@ object ChargePointClient {
   }
 }
 
-class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) extends ChargePointClient {
+private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http)
+  extends ChargePointClient
+  with ScalaxbClient {
+
   import v12._
+  import ConvertersV12._
 
-  val bindings = new CustomDispatchHttpClients(http) with ChargePointServiceSoapBindings with SoapClients {
+  def version = Version.V12
+
+  type Service = ChargePointService
+
+  val service = new CustomDispatchHttpClients(http) with ChargePointServiceSoapBindings with SoapClients {
     override def baseAddress = uri
-  }
-
-  private def ?[T](f: ChargePointService => Either[scalaxb.Fault[Any], T]): T = rightOrException(f(bindings.service))
-
-  private def notSupported(action: String): Nothing =
-    throw new ActionNotSupportedException(Version.V12, action)
-
-  private implicit def remoteStartStopStatusToAccepted(x: RemoteStartStopStatus): Accepted = x match {
-    case AcceptedValue5 => true
-    case RejectedValue5 => false
-  }
+  }.service
 
   def remoteStartTransaction(idTag: IdTag, connector: Option[ConnectorScope]) = {
     val req = RemoteStartTransactionRequest(idTag, connector.map(_.toOcpp))
-    ?[RemoteStartStopStatus](_.remoteStartTransaction(req, id))
+    ?(_.remoteStartTransaction, req).toOcpp
   }
 
   def remoteStopTransaction(transactionId: Int) =
-    ?[RemoteStartStopStatus](_.remoteStopTransaction(RemoteStopTransactionRequest(transactionId), id))
+    ?(_.remoteStopTransaction, RemoteStopTransactionRequest(transactionId)).toOcpp
 
 
   def unlockConnector(connector: ConnectorScope) =
-    ?(_.unlockConnector(UnlockConnectorRequest(connector.toOcpp), id)) match {
+    ?(_.unlockConnector, UnlockConnectorRequest(connector.toOcpp)) match {
       case AcceptedValue3 => true
       case RejectedValue3 => false
     }
@@ -57,13 +55,18 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
                      stopTime: Option[DateTime],
                      retries: Option[Int],
                      retryInterval: Option[Int]) = {
-    val req = GetDiagnosticsRequest(location, startTime, stopTime, retries, retryInterval)
-    val res = ?(_.getDiagnostics(req, id))
+    val req = GetDiagnosticsRequest(
+      location,
+      startTime.map(_.toXMLCalendar),
+      stopTime.map(_.toXMLCalendar),
+      retries,
+      retryInterval)
+    val res = ?(_.getDiagnostics, req)
     res.fileName
   }
 
   def changeConfiguration(key: String, value: String) =
-    ?(_.changeConfiguration(ChangeConfigurationRequest(key, value), id)) match {
+    ?(_.changeConfiguration, ChangeConfigurationRequest(key, value)) match {
       case Accepted => ocpp.ConfigurationStatus.Accepted
       case Rejected => ocpp.ConfigurationStatus.Rejected
       case NotSupported => ocpp.ConfigurationStatus.NotSupported
@@ -76,14 +79,14 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
       case ocpp.AvailabilityType.Operative => Operative
       case ocpp.AvailabilityType.Inoperative => Inoperative
     }
-    ?(_.changeAvailability(ChangeAvailabilityRequest(scope.toOcpp, availability), id)) match {
+    ?(_.changeAvailability, ChangeAvailabilityRequest(scope.toOcpp, availability)) match {
       case AcceptedValue => ocpp.AvailabilityStatus.Accepted
       case RejectedValue => ocpp.AvailabilityStatus.Rejected
       case Scheduled => ocpp.AvailabilityStatus.Scheduled
     }
   }
 
-  def clearCache = ?(_.clearCache(ClearCacheRequest(), id)) match {
+  def clearCache = ?(_.clearCache, ClearCacheRequest()) match {
     case AcceptedValue4 => true
     case RejectedValue4 => false
   }
@@ -93,14 +96,14 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
       case ocpp.ResetType.Hard => Hard
       case ocpp.ResetType.Soft => Soft
     }
-    ?(_.reset(ResetRequest(x), id)) match {
+    ?(_.reset, ResetRequest(x)) match {
       case AcceptedValue2 => true
       case RejectedValue2 => false
     }
   }
 
   def updateFirmware(retrieveDate: DateTime, location: URI, retries: Option[Int], retryInterval: Option[Int]) {
-    ?(_.updateFirmware(UpdateFirmwareRequest(retrieveDate, location, retries, retryInterval), id))
+    ?(_.updateFirmware, UpdateFirmwareRequest(retrieveDate.toXMLCalendar, location, retries, retryInterval))
   }
 
   def sendLocalList(updateType: UpdateType.Value,
@@ -119,31 +122,31 @@ class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http) 
   def cancelReservation(reservationId: Int) = notSupported("cancelReservation")
 }
 
-class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) extends ChargePointClient {
+private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http)
+  extends ChargePointClient
+  with ScalaxbClient {
+
   import v15._
   import ConvertersV15._
 
-  val bindings = new CustomDispatchHttpClients(http) with ChargePointServiceSoapBindings with SoapClients {
+  def version = Version.V15
+
+  type Service = ChargePointService
+
+  val service = new CustomDispatchHttpClients(http) with ChargePointServiceSoapBindings with SoapClients {
     override def baseAddress = uri
-  }
-
-  private def ?[T](f: ChargePointService => Either[scalaxb.Fault[Any], T]): T = rightOrException(f(bindings.service))
-
-  private implicit def remoteStartStopStatusToAccepted(x: RemoteStartStopStatus): Accepted = x match {
-    case AcceptedValue2 => true
-    case RejectedValue2 => false
-  }
+  }.service
 
   def remoteStartTransaction(idTag: IdTag, connector: Option[ConnectorScope]) = {
     val req = RemoteStartTransactionRequest(idTag, connector.map(_.toOcpp))
-    ?[RemoteStartStopStatus](_.remoteStartTransaction(req, id))
+    ?(_.remoteStartTransaction, req).toOcpp
   }
 
   def remoteStopTransaction(transactionId: Int) =
-    ?[RemoteStartStopStatus](_.remoteStopTransaction(RemoteStopTransactionRequest(transactionId), id))
+    ?(_.remoteStopTransaction, RemoteStopTransactionRequest(transactionId)).toOcpp
 
   def unlockConnector(connector: ConnectorScope) =
-    ?(_.unlockConnector(UnlockConnectorRequest(connector.toOcpp), id)) match {
+    ?(_.unlockConnector, UnlockConnectorRequest(connector.toOcpp)) match {
       case AcceptedValue4 => true
       case RejectedValue4 => false
     }
@@ -153,20 +156,25 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
                      stopTime: Option[DateTime],
                      retries: Option[Int],
                      retryInterval: Option[Int]) = {
-    val req = GetDiagnosticsRequest(location, startTime, stopTime, retries, retryInterval)
-    val res = ?(_.getDiagnostics(req, id))
+    val req = GetDiagnosticsRequest(
+      location,
+      startTime.map(_.toXMLCalendar),
+      stopTime.map(_.toXMLCalendar),
+      retries,
+      retryInterval)
+    val res = ?(_.getDiagnostics, req)
     res.fileName
   }
 
   def changeConfiguration(key: String, value: String) =
-    ?(_.changeConfiguration(ChangeConfigurationRequest(key, value), id)) match {
+    ?(_.changeConfiguration, ChangeConfigurationRequest(key, value)) match {
       case AcceptedValue8 => ocpp.ConfigurationStatus.Accepted
       case RejectedValue7 => ocpp.ConfigurationStatus.Rejected
       case NotSupported => ocpp.ConfigurationStatus.NotSupported
     }
 
   def getConfiguration(keys: List[String]) = {
-    val res = ?(_.getConfiguration(GetConfigurationRequest(keys: _*), id))
+    val res = ?(_.getConfiguration, GetConfigurationRequest(keys: _*))
     val values = res.configurationKey.map {
       case KeyValue(key, readonly, value) => ocpp.KeyValue(key, readonly, value)
     }.toList
@@ -178,14 +186,14 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
       case ocpp.AvailabilityType.Operative => Operative
       case ocpp.AvailabilityType.Inoperative => Inoperative
     }
-    ?(_.changeAvailability(ChangeAvailabilityRequest(scope.toOcpp, availability), id)) match {
+    ?(_.changeAvailability, ChangeAvailabilityRequest(scope.toOcpp, availability)) match {
       case AcceptedValue7 => ocpp.AvailabilityStatus.Accepted
       case RejectedValue6 => ocpp.AvailabilityStatus.Rejected
       case Scheduled => ocpp.AvailabilityStatus.Scheduled
     }
   }
 
-  def clearCache = ?(_.clearCache(ClearCacheRequest(), id)) match {
+  def clearCache = ?(_.clearCache, ClearCacheRequest()) match {
     case AcceptedValue3 => true
     case RejectedValue3 => false
   }
@@ -195,14 +203,14 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
       case ocpp.ResetType.Hard => Hard
       case ocpp.ResetType.Soft => Soft
     }
-    ?(_.reset(ResetRequest(x), id)) match {
+    ?(_.reset, ResetRequest(x)) match {
       case AcceptedValue6 => true
       case RejectedValue5 => false
     }
   }
 
   def updateFirmware(retrieveDate: DateTime, location: URI, retries: Option[Int], retryInterval: Option[Int]) {
-    ?(_.updateFirmware(UpdateFirmwareRequest(retrieveDate, location, retries, retryInterval), id))
+    ?(_.updateFirmware, UpdateFirmwareRequest(retrieveDate.toXMLCalendar, location, retries, retryInterval))
   }
 
   def sendLocalList(updateType: ocpp.UpdateType.Value,
@@ -221,7 +229,7 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
       AuthorisationData(x.idTag, x.idTagInfo.map(_.toIdTagInfo))
 
     val req = SendLocalListRequest(update, listVersion, localAuthorisationList.map(authorisationData(_)), hash)
-    val res = ?(_.sendLocalList(req, id))
+    val res = ?(_.sendLocalList, req)
 
     import ocpp.{UpdateStatus => ocpp}
     res.status match {
@@ -233,10 +241,10 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
     }
   }
 
-  def getLocalListVersion = ?(_.getLocalListVersion(GetLocalListVersionRequest(), id))
+  def getLocalListVersion = ?(_.getLocalListVersion, GetLocalListVersionRequest())
 
   def dataTransfer(vendorId: String, messageId: Option[String], data: Option[String]) = {
-    val res = ?(_.dataTransfer(DataTransferRequest(vendorId, messageId, data), id))
+    val res = ?(_.dataTransfer, DataTransferRequest(vendorId, messageId, data))
     val status: ocpp.DataTransferStatus.Value = {
       import ocpp.{DataTransferStatus => ocpp}
       res.status match {
@@ -254,10 +262,10 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
                  idTag: IdTag,
                  parentIdTag: Option[String],
                  reservationId: Int) = {
-    val req = ReserveNowRequest(connector.toOcpp, expiryDate, idTag, parentIdTag, reservationId)
+    val req = ReserveNowRequest(connector.toOcpp, expiryDate.toXMLCalendar, idTag, parentIdTag, reservationId)
 
     import ocpp.{Reservation => ocpp}
-    ?(_.reserveNow(req, id)) match {
+    ?(_.reserveNow, req) match {
       case Accepted => ocpp.Accepted
       case Faulted => ocpp.Faulted
       case Occupied => ocpp.Occupied
@@ -267,7 +275,7 @@ class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http) 
   }
 
   def cancelReservation(reservationId: Int) =
-    ?(_.cancelReservation(CancelReservationRequest(reservationId), id)) match {
+    ?(_.cancelReservation, CancelReservationRequest(reservationId)) match {
       case AcceptedValue9 => true
       case RejectedValue8 => false
     }

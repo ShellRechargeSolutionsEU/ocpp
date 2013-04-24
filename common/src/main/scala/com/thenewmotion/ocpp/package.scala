@@ -3,6 +3,8 @@ package com.thenewmotion
 import soapenvelope12.{Body, Fault, Envelope}
 import scalaxb.DataRecord
 import scala.xml.{NamespaceBinding, NodeSeq}
+import javax.xml.datatype.{XMLGregorianCalendar, DatatypeFactory}
+import org.joda.time.{DateTimeZone, DateTime}
 
 
 /**
@@ -29,10 +31,21 @@ package object ocpp {
 
       scalaxb.toXML(x, Some(soapEnvelopeUri), "Envelope", namespace) match {
         case elem: scala.xml.Elem => elem
-        case x => sys.error("unexpected non-elem: " + x.toString)
+        case error => sys.error("unexpected non-elem: " + error.toString)
       }
     }
   }
 
   def simpleBody(x: DataRecord[Any]) = Body(Seq(x), Map())
+
+  private val factory = DatatypeFactory.newInstance
+
+  implicit class RichXMLCalendar(val self: XMLGregorianCalendar) {
+    def toDateTime: DateTime = new DateTime(self.toGregorianCalendar.getTimeInMillis)
+  }
+
+  implicit class RichDateTime(val self: DateTime) extends AnyVal {
+    def toXMLCalendar: XMLGregorianCalendar =
+      factory.newXMLGregorianCalendar(self.toDateTime(DateTimeZone.UTC).toGregorianCalendar)
+  }
 }

@@ -3,7 +3,7 @@ package com.thenewmotion.ocpp
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.mock.Mockito
 import Version._
-import com.thenewmotion.time.Imports._
+import org.joda.time.DateTime
 
 /**
  * @author Yaroslav Klymko
@@ -18,7 +18,7 @@ class CentralSystemDispatchSpec extends SpecificationWithJUnit with Mockito with
       val req = bodyFrom("v12/heartbeatRequest.xml")
       val res = CentralSystemDispatcher(req, _ => service, _ => ()).any.head
 
-      res.value mustEqual HeartbeatResponse(dateTime)
+      res.value mustEqual HeartbeatResponse(dateTime.toXMLCalendar)
       res.namespace mustEqual Some(version.namespace)
       there was one(service).heartbeat
     }
@@ -29,7 +29,7 @@ class CentralSystemDispatchSpec extends SpecificationWithJUnit with Mockito with
       val req = bodyFrom("v15/heartbeatRequest.xml")
       val res = CentralSystemDispatcher(req, _ => service, _ => ()).any.head
 
-      res.value mustEqual HeartbeatResponse(dateTime)
+      res.value mustEqual HeartbeatResponse(dateTime.toXMLCalendar)
       res.namespace mustEqual Some(version.namespace)
       there was one(service).heartbeat
     }
