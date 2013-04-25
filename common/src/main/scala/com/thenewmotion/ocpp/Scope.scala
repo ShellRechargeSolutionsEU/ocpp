@@ -11,7 +11,7 @@ object Scope {
   private[ocpp] def fromOcpp(connectorId: Int): Scope =
     if (connectorId <= 0) ChargePointScope else ConnectorScope.fromOcpp(connectorId)
 
-  private[ocpp] implicit def reachScope(self: Scope) = new {
+  private[ocpp] implicit class RichScope(val self: Scope) extends AnyVal {
     def toOcpp: Int = self match {
       case ChargePointScope => 0
       case ConnectorScope(id) => id + 1
