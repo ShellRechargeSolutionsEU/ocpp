@@ -87,53 +87,56 @@ object Meter {
   }
 
   object Location extends Enumeration {
-    val Inlet, Outlet, Body = Value
+    val Inlet = Value(0)
+    val Outlet = Value(1)
+    val Body = Value(2)
   }
 
   object Measurand extends Enumeration {
-    val EnergyActiveExportRegister,
-    EnergyActiveImportRegister,
-    EnergyReactiveExportRegister,
-    EnergyReactiveImportRegister,
-    EnergyActiveExportInterval,
-    EnergyActiveImportInterval,
-    EnergyReactiveExportInterval,
-    EnergyReactiveImportInterval,
-    PowerActiveExport,
-    PowerActiveImport,
-    PowerReactiveExport,
-    PowerReactiveImport,
-    CurrentExport,
-    CurrentImport,
-    Voltage,
-    Temperature = Value
+    val EnergyActiveExportRegister = Value(0)
+    val EnergyActiveImportRegister= Value(1)
+    val EnergyReactiveExportRegister= Value(2)
+    val EnergyReactiveImportRegister= Value(3)
+    val EnergyActiveExportInterval= Value(4)
+    val EnergyActiveImportInterval= Value(5)
+    val EnergyReactiveExportInterval= Value(6)
+    val EnergyReactiveImportInterval= Value(7)
+    val PowerActiveExport= Value(8)
+    val PowerActiveImport= Value(9)
+    val PowerReactiveExport= Value(10)
+    val PowerReactiveImport= Value(11)
+    val CurrentExport= Value(12)
+    val CurrentImport= Value(13)
+    val Voltage= Value(14)
+    val Temperature = Value(15)
   }
 
   object ValueFormat extends Enumeration {
-    val Raw, Signed = Value
+    val Raw = Value(0)
+    val Signed = Value(1)
   }
 
   object ReadingContext extends Enumeration {
-    val InterruptionBegin,
-    InterruptionEnd,
-    SampleClock,
-    SamplePeriodic,
-    TransactionBegin,
-    TransactionEnd = Value
+    val InterruptionBegin = Value(0)
+    val InterruptionEnd= Value(1)
+    val SampleClock= Value(2)
+    val SamplePeriodic= Value(3)
+    val TransactionBegin= Value(4)
+    val TransactionEnd = Value(5)
   }
 
   object UnitOfMeasure extends Enumeration {
-    val Wh = Value("Wh")
-    val Kwh = Value("kWh")
-    val Varh = Value("varh")
-    val Kvarh = Value("kvarh")
-    val W = Value("W")
-    val Kw = Value("kW")
-    val Var = Value("var")
-    val Kvar = Value("kvar")
-    val Amp = Value("Amp")
-    val Volt = Value("Volt")
-    val Celsius = Value("Celsius")
+    val Wh = Value(0, "Wh")
+    val Kwh = Value(1, "kWh")
+    val Varh = Value(2, "varh")
+    val Kvarh = Value(3, "kvarh")
+    val W = Value(4, "W")
+    val Kw = Value(5, "kW")
+    val Var = Value(6, "var")
+    val Kvar = Value(7, "kvar")
+    val Amp = Value(8, "Amp")
+    val Volt = Value(9, "Volt")
+    val Celsius = Value(10, "Celsius")
   }
 }
 
