@@ -9,7 +9,6 @@ import java.net.URI
 trait ChargePointService {
   type Accepted = Boolean
   type FileName = String
-  type ListVersion = Int
   type IdTag = String
 
   def remoteStartTransaction(idTag: IdTag, connector: Option[ConnectorScope]): Accepted
@@ -42,12 +41,12 @@ trait ChargePointService {
 
   @throws[ActionNotSupportedException]
   def sendLocalList(updateType: UpdateType.Value,
-                    listVersion: ListVersion,
+                    listVersion: AuthListSupported,
                     localAuthorisationList: List[AuthorisationData],
                     hash: Option[String]): UpdateStatus.Value
 
   @throws[ActionNotSupportedException]
-  def getLocalListVersion: ListVersion
+  def getLocalListVersion: AuthListVersion
 
   @throws[ActionNotSupportedException]
   def dataTransfer(vendorId: String, messageId: Option[String], data: Option[String]): DataTransferResponse
@@ -96,9 +95,24 @@ object UpdateStatus {
   case object VersionMismatch extends Value
 }
 
-case class AuthorisationData(idTag: String, idTagInfo: Option[IdTagInfo])
+sealed trait AuthorisationData {
+  def idTag: String
+}
+
+case class AuthorisationAdd(idTag: String, idTagInfo: IdTagInfo) extends AuthorisationData
+case class AuthorisationRemove(idTag: String) extends AuthorisationData
 
 
 object Reservation extends Enumeration {
   val Accepted, Faulted, Occupied, Rejected, Unavailable = Value
+}
+
+object AuthListVersion {
+  def apply(version: Int): AuthListVersion =
+    if (version < 0) AuthListNotSupported else AuthListSupported(version)
+}
+sealed trait AuthListVersion
+case object AuthListNotSupported extends AuthListVersion
+case class AuthListSupported(version: Int) extends AuthListVersion {
+  require(version >= 0, s"version which is $version must be greater or equal than 0")
 }

@@ -107,7 +107,7 @@ private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI
   }
 
   def sendLocalList(updateType: UpdateType.Value,
-                    listVersion: ListVersion,
+                    listVersion: AuthListSupported,
                     localAuthorisationList: List[AuthorisationData],
                     hash: Option[String]) = notSupported("sendLocalList")
 
@@ -214,7 +214,7 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI
   }
 
   def sendLocalList(updateType: ocpp.UpdateType.Value,
-                    listVersion: ListVersion,
+                    listVersion: AuthListSupported,
                     localAuthorisationList: List[ocpp.AuthorisationData],
                     hash: Option[String]) = {
     val update = {
@@ -225,10 +225,12 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI
       }
     }
 
-    def authorisationData(x: ocpp.AuthorisationData): AuthorisationData =
-      AuthorisationData(x.idTag, x.idTagInfo.map(_.toIdTagInfo))
+    def authorisationData(x: ocpp.AuthorisationData): AuthorisationData = x match {
+      case AuthorisationAdd(idTag, idTagInfo) => AuthorisationData(idTag, Some(idTagInfo.toIdTagInfo))
+      case AuthorisationRemove(idTag) => AuthorisationData(idTag, None)
+    }
 
-    val req = SendLocalListRequest(update, listVersion, localAuthorisationList.map(authorisationData(_)), hash)
+    val req = SendLocalListRequest(update, listVersion.version, localAuthorisationList.map(authorisationData(_)), hash)
     val res = ?(_.sendLocalList, req)
 
     import ocpp.{UpdateStatus => ocpp}
@@ -241,7 +243,7 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI
     }
   }
 
-  def getLocalListVersion = ?(_.getLocalListVersion, GetLocalListVersionRequest())
+  def getLocalListVersion = AuthListVersion(?(_.getLocalListVersion, GetLocalListVersionRequest()))
 
   def dataTransfer(vendorId: String, messageId: Option[String], data: Option[String]) = {
     val res = ?(_.dataTransfer, DataTransferRequest(vendorId, messageId, data))
