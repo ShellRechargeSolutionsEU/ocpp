@@ -99,6 +99,13 @@ sealed trait AuthorisationData {
   def idTag: String
 }
 
+object AuthorisationData {
+  def apply(idTag: String, idTagInfo: Option[IdTagInfo]): AuthorisationData = idTagInfo match {
+    case Some(x) => AuthorisationAdd(idTag, x)
+    case None => AuthorisationRemove(idTag)
+  }
+}
+
 case class AuthorisationAdd(idTag: String, idTagInfo: IdTagInfo) extends AuthorisationData
 case class AuthorisationRemove(idTag: String) extends AuthorisationData
 
