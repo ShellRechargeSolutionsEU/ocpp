@@ -1,7 +1,5 @@
 package com.thenewmotion.ocpp
 
-import java.net.URI
-import scalaxb.SoapClients
 import com.thenewmotion.ocpp
 import dispatch.Http
 import org.joda.time.DateTime
@@ -13,14 +11,17 @@ import org.joda.time.DateTime
 trait ChargePointClient extends ChargePointService with Client
 
 object ChargePointClient {
-  def apply(version: Version.Value)
-           (chargeBoxIdentity: String, uri: URI, http: Http): ChargePointService = version match {
-    case Version.V12 => new ChargePointClientV12(chargeBoxIdentity, uri, http)
-    case Version.V15 => new ChargePointClientV15(chargeBoxIdentity, uri, http)
+  def apply(chargeBoxIdentity: String,
+            version: Version.Value,
+            uri: Uri,
+            http: Http,
+            endpoint: Option[Uri] = None): ChargePointService = version match {
+    case Version.V12 => new ChargePointClientV12(chargeBoxIdentity, uri, http, endpoint)
+    case Version.V15 => new ChargePointClientV15(chargeBoxIdentity, uri, http, endpoint)
   }
 }
 
-private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI, http: Http)
+private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http, endpoint: Option[Uri])
   extends ChargePointClient
   with ScalaxbClient {
 
@@ -31,8 +32,9 @@ private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI
 
   type Service = ChargePointService
 
-  val service = new CustomDispatchHttpClients(http) with ChargePointServiceSoapBindings with SoapClients {
+  val service = new CustomDispatchHttpClients(http) with ChargePointServiceSoapBindings with WsaAddressingSoapClients {
     override def baseAddress = uri
+    def endpoint = ChargePointClientV12.this.endpoint
   }.service
 
   def remoteStartTransaction(idTag: IdTag, connector: Option[ConnectorScope]) = {
@@ -50,7 +52,7 @@ private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI
       case RejectedValue3 => false
     }
 
-  def getDiagnostics(location: URI,
+  def getDiagnostics(location: Uri,
                      startTime: Option[DateTime],
                      stopTime: Option[DateTime],
                      retries: Option[Int],
@@ -102,7 +104,7 @@ private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI
     }
   }
 
-  def updateFirmware(retrieveDate: DateTime, location: URI, retries: Option[Int], retryInterval: Option[Int]) {
+  def updateFirmware(retrieveDate: DateTime, location: Uri, retries: Option[Int], retryInterval: Option[Int]) {
     ?(_.updateFirmware, UpdateFirmwareRequest(retrieveDate.toXMLCalendar, location, retries, retryInterval))
   }
 
@@ -122,7 +124,7 @@ private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: URI
   def cancelReservation(reservationId: Int) = notSupported("cancelReservation")
 }
 
-private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI, http: Http)
+private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http, endpoint: Option[Uri])
   extends ChargePointClient
   with ScalaxbClient {
 
@@ -133,8 +135,9 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI
 
   type Service = ChargePointService
 
-  val service = new CustomDispatchHttpClients(http) with ChargePointServiceSoapBindings with SoapClients {
+  val service = new CustomDispatchHttpClients(http) with ChargePointServiceSoapBindings with WsaAddressingSoapClients {
     override def baseAddress = uri
+    def endpoint = ChargePointClientV15.this.endpoint
   }.service
 
   def remoteStartTransaction(idTag: IdTag, connector: Option[ConnectorScope]) = {
@@ -151,7 +154,7 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI
       case RejectedValue4 => false
     }
 
-  def getDiagnostics(location: URI,
+  def getDiagnostics(location: Uri,
                      startTime: Option[DateTime],
                      stopTime: Option[DateTime],
                      retries: Option[Int],
@@ -209,7 +212,7 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: URI
     }
   }
 
-  def updateFirmware(retrieveDate: DateTime, location: URI, retries: Option[Int], retryInterval: Option[Int]) {
+  def updateFirmware(retrieveDate: DateTime, location: Uri, retries: Option[Int], retryInterval: Option[Int]) {
     ?(_.updateFirmware, UpdateFirmwareRequest(retrieveDate.toXMLCalendar, location, retries, retryInterval))
   }
 

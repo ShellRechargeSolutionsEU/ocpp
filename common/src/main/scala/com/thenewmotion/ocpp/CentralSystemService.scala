@@ -7,7 +7,6 @@ import org.joda.time.DateTime
  */
 trait CentralSystemService {
   type TransactionId = Int
-  type IdTag = String
 
   def authorize(idTag: String): IdTagInfo
 

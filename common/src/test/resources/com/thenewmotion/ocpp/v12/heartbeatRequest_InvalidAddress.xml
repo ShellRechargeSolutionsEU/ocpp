@@ -1,10 +1,10 @@
-<soap12:Envelope xmlns="urn://Ocpp/Cs/2012/06/"
+<soap12:Envelope xmlns="urn://Ocpp/Cs/2010/08/"
                  xmlns:soap12="http://www.w3.org/2003/05/soap-envelope"
                  xmlns:wsa="http://www.w3.org/2005/08/addressing">
     <soap12:Header>
         <chargeBoxIdentity>chargeBoxIdentity</chargeBoxIdentity>
         <wsa:ReplyTo>
-            <wsa:Address>http://address.com</wsa:Address>
+            <wsa:Address>invalid</wsa:Address>
         </wsa:ReplyTo>
     </soap12:Header>
     <soap12:Body>

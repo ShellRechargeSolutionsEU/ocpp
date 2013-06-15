@@ -5,12 +5,16 @@ import scalaxb.DataRecord
 import scala.xml.{NamespaceBinding, NodeSeq}
 import javax.xml.datatype.{XMLGregorianCalendar, DatatypeFactory}
 import org.joda.time.{DateTimeZone, DateTime}
+import java.net.URI
 
 
 /**
  * @author Yaroslav Klymko
  */
 package object ocpp {
+  type Uri = URI
+  type IdTag = String
+
   val soapEnvelopeUri = "http://www.w3.org/2003/05/soap-envelope"
   val defaultNamespace = scalaxb.toScope(
     Some("s") -> soapEnvelopeUri,

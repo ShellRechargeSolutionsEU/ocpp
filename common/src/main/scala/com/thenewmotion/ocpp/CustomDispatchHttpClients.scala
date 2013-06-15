@@ -2,7 +2,6 @@ package com.thenewmotion.ocpp
 
 import scalaxb.HttpClients
 import dispatch._
-import java.net.URI
 
 /**
  * @author Yaroslav Klymko
@@ -10,9 +9,9 @@ import java.net.URI
 abstract class CustomDispatchHttpClients(http: Http) extends HttpClients {
   val httpClient = new HttpClient {
 
-    def request(in: String, address: URI, headers: Map[String, String]): String = {
-      val saopAction = SoapActionHeader(headers)
-      val req = url(address.toString) << in <:< saopAction.fold(headers)(x => headers + x)
+    def request(in: String, address: Uri, headers: Map[String, String]): String = {
+      val soapAction = SoapActionHeader(headers)
+      val req = url(address.toString) << in <:< soapAction.fold(headers)(headers + _)
       http(req > as.String)()
     }
   }

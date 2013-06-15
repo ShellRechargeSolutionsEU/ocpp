@@ -1,9 +1,7 @@
 package com.thenewmotion.ocpp
 
-import java.net.URI
 import org.joda.time
 import com.thenewmotion.ocpp
-import scalaxb.SoapClients
 import dispatch.Http
 import org.joda.time.DateTime
 
@@ -13,14 +11,17 @@ import org.joda.time.DateTime
 trait CentralSystemClient extends CentralSystemService with Client
 
 object CentralSystemClient {
-  def apply(chargeBoxIdentity: String, version: Version.Value, uri: URI, http: Http): CentralSystemClient =
-    version match {
-      case Version.V12 => new CentralSystemClientV12(chargeBoxIdentity, uri, http)
-      case Version.V15 => new CentralSystemClientV15(chargeBoxIdentity, uri, http)
-    }
+  def apply(chargeBoxIdentity: String,
+            version: Version.Value,
+            uri: Uri,
+            http: Http,
+            endpoint: Option[Uri] = None): CentralSystemClient = version match {
+    case Version.V12 => new CentralSystemClientV12(chargeBoxIdentity, uri, http, endpoint)
+    case Version.V15 => new CentralSystemClientV15(chargeBoxIdentity, uri, http, endpoint)
+  }
 }
 
-private[ocpp] class CentralSystemClientV12(val chargeBoxIdentity: String, uri: URI, http: Http)
+private[ocpp] class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http, endpoint: Option[Uri])
   extends CentralSystemClient with ScalaxbClient {
   import v12._
   import ConvertersV12._
@@ -29,8 +30,9 @@ private[ocpp] class CentralSystemClientV12(val chargeBoxIdentity: String, uri: U
 
   type Service = CentralSystemService
 
-  val service = new CustomDispatchHttpClients(http) with CentralSystemServiceSoapBindings with SoapClients {
+  val service = new CustomDispatchHttpClients(http) with CentralSystemServiceSoapBindings with WsaAddressingSoapClients {
     override def baseAddress = uri
+    def endpoint = CentralSystemClientV12.this.endpoint
   }.service
 
   def authorize(idTag: String) = ?(_.authorize, AuthorizeRequest(idTag)).toOcpp
@@ -164,7 +166,7 @@ private[ocpp] class CentralSystemClientV12(val chargeBoxIdentity: String, uri: U
   def dataTransfer(vendorId: String, messageId: Option[String], data: Option[String]) = notSupported("dataTransfer")
 }
 
-private[ocpp] class CentralSystemClientV15(val chargeBoxIdentity: String, uri: URI, http: Http)
+private[ocpp] class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http, endpoint: Option[Uri])
   extends CentralSystemClient with ScalaxbClient {
   import v15._
 
@@ -172,8 +174,9 @@ private[ocpp] class CentralSystemClientV15(val chargeBoxIdentity: String, uri: U
 
   type Service = CentralSystemService
 
-  val service = new CustomDispatchHttpClients(http) with CentralSystemServiceSoapBindings with SoapClients {
+  val service = new CustomDispatchHttpClients(http) with CentralSystemServiceSoapBindings with WsaAddressingSoapClients {
     override def baseAddress = uri
+    def endpoint = CentralSystemClientV15.this.endpoint
   }.service
 
   private implicit def toIdTagInfo(x: IdTagInfoType): ocpp.IdTagInfo = {

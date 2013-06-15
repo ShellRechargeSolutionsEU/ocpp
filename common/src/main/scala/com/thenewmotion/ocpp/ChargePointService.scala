@@ -1,7 +1,6 @@
 package com.thenewmotion.ocpp
 
 import org.joda.time.DateTime
-import java.net.URI
 
 /**
  * @author Yaroslav Klymko
@@ -9,7 +8,6 @@ import java.net.URI
 trait ChargePointService {
   type Accepted = Boolean
   type FileName = String
-  type IdTag = String
 
   def remoteStartTransaction(idTag: IdTag, connector: Option[ConnectorScope]): Accepted
 
@@ -17,7 +15,7 @@ trait ChargePointService {
 
   def unlockConnector(connector: ConnectorScope): Accepted
 
-  def getDiagnostics(location: URI,
+  def getDiagnostics(location: Uri,
                      startTime: Option[DateTime],
                      stopTime: Option[DateTime],
                      retries: Option[Int],
@@ -35,7 +33,7 @@ trait ChargePointService {
   def reset(resetType: ResetType.Value): Accepted
 
   def updateFirmware(retrieveDate: DateTime,
-                     location: URI,
+                     location: Uri,
                      retries: Option[Int],
                      retryInterval: Option[Int])
 
