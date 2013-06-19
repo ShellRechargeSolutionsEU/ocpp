@@ -17,14 +17,24 @@
     <url>http://github.com/thenewmotion/ocpp</url>
     <description>Generated beans for Open Charge Point Protocol</description>
 
+    <properties>
+        <spray.version>1.1-M8</spray.version>
+    </properties>
+
     <modules>
         <module>ocpp-1.2</module>
         <module>ocpp-1.5</module>
         <module>common</module>
+        <module>ocpp-spray</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>ocpp-common_${scala.version}</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>ocpp-1.2_${scala.version}</artifactId>
@@ -59,6 +69,21 @@
                 <groupId>commons-validator</groupId>
                 <artifactId>commons-validator</artifactId>
                 <version>1.4.0</version>
+            </dependency>
+            <dependency>
+                <groupId>io.spray</groupId>
+                <artifactId>spray-routing</artifactId>
+                <version>${spray.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.spray</groupId>
+                <artifactId>spray-can</artifactId>
+                <version>${spray.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.thenewmotion</groupId>
+                <artifactId>common_${scala.version}</artifactId>
+                <version>1.22</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
