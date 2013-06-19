@@ -10,7 +10,7 @@ import org.apache.commons.validator.routines.UrlValidator
  * @author Yaroslav Klymko
  */
 object ChargeBoxAddress {
-  val validator = new UrlValidator()
+  val validator = UrlValidator.getInstance()
 
   def unapply(env: Envelope): Option[Uri] = {
     val headers = for {
