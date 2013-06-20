@@ -15,3 +15,4 @@ object OcppResponse {
     SoapResponse(env.toXml)
   }
 }
+

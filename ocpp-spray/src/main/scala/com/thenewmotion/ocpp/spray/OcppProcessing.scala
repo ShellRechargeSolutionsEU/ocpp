@@ -1,6 +1,6 @@
 package com.thenewmotion.ocpp.spray
 
-import xml.{XML, NodeSeq}
+import xml.{XML, NodeSeq, Elem}
 import com.thenewmotion.ocpp.Fault._
 import com.typesafe.scalalogging.slf4j.Logging
 import soapenvelope12.Body
@@ -11,6 +11,7 @@ import com.thenewmotion.ocpp._
 import _root_.spray.http.{StatusCodes, HttpResponse, HttpRequest}
 import StatusCodes._
 import java.io.ByteArrayInputStream
+import scalax.RichAny
 
 
 object OcppProcessing extends Logging {
@@ -21,11 +22,11 @@ object OcppProcessing extends Logging {
   type Result = Either[Response, (ChargerId, ChargerResponse)]
   /**
    * Function supplied by the user of this class. The function provides us the user's implementation of
-   * CentralSystemService, which we can call methods on to perform actions according to the OCPP requests we receive.
+   * an OCPP service, which we can call methods on to perform actions according to the OCPP requests we receive.
    */
-  type ServiceFunction = Option[Version.Value] => Option[URI] => ChargerId => CentralSystemService
+  type ServiceFunction[ServiceType] = Option[Version.Value] => Option[URI] => ChargerId => ServiceType
 
-  def apply(req: HttpRequest, serviceFunction: ServiceFunction): Result = safe {
+  def apply[ServiceType : OcppService](req: HttpRequest, serviceFunction: ServiceFunction[ServiceType]): Result = safe {
     for {
       post <- soapPost(req).right
       xml <- toXml(post).right
@@ -80,14 +81,36 @@ object OcppProcessing extends Logging {
       OcppResponse(ProtocolError(msg))
     }
 
-  private def responseBody(chargerId: String, protocol: Option[Version.Value],
-                           serviceFunction: ChargerId => CentralSystemService, body: Body): Body = {
-    def log(x: Any) {}
+  private def responseBody[ServiceType : OcppService](chargerId: String, version: Option[Version.Value],
+                                                      serviceFunction: ChargerId => ServiceType, body: Body): Body = {
+    dispatch(version, body, serviceFunction(chargerId))
+  }
 
-    CentralSystemDispatcher(body, _ => serviceFunction(chargerId), log)
+  private def dispatch[ServiceType : OcppService](version: Option[Version.Value], body: Body,
+                                                  service: => ServiceType): Body = {
+
+    implicit def faultToBody(x: soapenvelope12.Fault) = x.asBody
+
+    val data = for {
+      dataRecord <- body.any
+      elem <- dataRecord.value.asInstanceOfOpt[Elem]
+      action <- Action.fromElem(elem)
+    } yield action -> elem
+
+    data.headOption match {
+      case None if body.any.isEmpty => ProtocolError("Body is empty")
+      case None => NotSupported("No supported action found")
+      case Some((action, xml)) => version match {
+        case None => ProtocolError("Can't find an ocpp version")
+        case Some(v) =>
+          logger.info("Dispatching implicitly!")
+          implicitly[OcppService[ServiceType]].dispatcher(v).dispatch(action, xml, service)
+      }
+    }
   }
 
   implicit def errorToEither[T](x: Fault): Either[Response, T] = Left(OcppResponse(x))
+
 }
 
 /**
@@ -95,3 +118,21 @@ object OcppProcessing extends Logging {
  * request
  */
 class ChargeBoxIdentityException(val chargerId: String) extends Exception
+
+/**
+ * Type class for OCPP services that can be called via SOAP messages
+ */
+trait OcppService[T] {
+  def dispatcher(version: Version.Value): Dispatcher[T]
+}
+
+object OcppService {
+  implicit val centralSystemOcppService: OcppService[CentralSystemService] =
+    new OcppService[CentralSystemService] {
+      def dispatcher(version: Version.Value): Dispatcher[CentralSystemService] = version match {
+        case Version.V12 => new CentralSystemDispatcherV12
+        case Version.V15 => new CentralSystemDispatcherV15
+      }
+    }
+}
+
