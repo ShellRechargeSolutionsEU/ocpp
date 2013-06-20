@@ -1,87 +1,53 @@
 package com.thenewmotion.ocpp
 
-import xml.Elem
+import scala.xml.NodeSeq
 import scalaxb.{Fault => _, _}
 import soapenvelope12.Body
-import scalax.RichAny
 import Action._
 import com.thenewmotion.ocpp
 import com.thenewmotion.ocpp.Fault._
 import ocpp.Meter.DefaultValue
 
 
-/**
- * @author Yaroslav Klymko
- */
-object CentralSystemDispatcher {
-  def apply(body: Body, service: Version.Value => CentralSystemService, log: Any => Unit): Body = {
 
-    implicit def faultToBody(x: soapenvelope12.Fault) = x.asBody
+trait Dispatcher[T] {
+  implicit def faultToBody(x: soapenvelope12.Fault) = x.asBody
+  def version: Version.Value
+  def dispatch(action: Value, xml: NodeSeq, service: => T): Body
 
-    val data = for {
-      dataRecord <- body.any
-      elem <- dataRecord.value.asInstanceOfOpt[Elem]
-      action <- Action.fromElem(elem)
-    } yield action -> elem
-
-    data.headOption match {
-      case None if body.any.isEmpty => ProtocolError("Body is empty")
-      case None => NotSupported("No supported action found")
-      case Some((action, xml)) => Version.fromBody(xml) match {
-        case None => ProtocolError("Can't find an ocpp version")
-        case Some(version) =>
-          val reqRes = new ReqRes {
-            def apply[REQ: XMLFormat, RES: XMLFormat](f: REQ => RES) = fromXMLEither[REQ](xml) match {
-              case Left(msg) => ProtocolError(msg)
-              case Right(req) => try {
-                log(req)
-                val res = f(req)
-                log(res)
-                simpleBody(DataRecord(Some(version.namespace), Some(action.responseLabel), res))
-              } catch {
-                case FaultException(fault) =>
-                  log(fault)
-                  fault
-              }
-            }
-          }
-
-          def dispatcher(service: => CentralSystemService) = version match {
-            case Version.V12 => new CentralSystemDispatcherV12(action, reqRes, service)
-            case Version.V15 => new CentralSystemDispatcherV15(action, reqRes, service)
-          }
-          dispatcher(service(version)).dispatch
+  protected def reqRes: ReqRes = new ReqRes {
+    def apply[REQ: XMLFormat, RES: XMLFormat](action: Value, xml: NodeSeq)(f: REQ => RES) = fromXMLEither[REQ](xml) match {
+      case Left(msg) => ProtocolError(msg)
+      case Right(req) => try {
+        val res = f(req)
+        simpleBody(DataRecord(Some(version.namespace), Some(action.responseLabel), res))
+      } catch {
+        case FaultException(fault) =>
+          fault
       }
     }
   }
-}
 
-trait Dispatcher {
-  def version: Version.Value
-  def dispatch: Body
-  def reqRes: ReqRes
-  def ?[REQ: XMLFormat, RES: XMLFormat](f: REQ => RES): Body = reqRes(f)
-  def fault(x: soapenvelope12.Fault): Nothing = throw new FaultException(x)
+  protected def ?[REQ: XMLFormat, RES: XMLFormat](action: Value, xml: NodeSeq)(f: REQ => RES): Body = reqRes(action, xml)(f)
+  protected def fault(x: soapenvelope12.Fault): Nothing = throw new FaultException(x)
 }
 
 trait ReqRes {
-  def apply[REQ: XMLFormat, RES: XMLFormat](f: REQ => RES): Body
+  def apply[REQ: XMLFormat, RES: XMLFormat](action: Value, xml: NodeSeq)(f: REQ => RES): Body
 }
 
-class CentralSystemDispatcherV12(val action: Value,
-                                 val reqRes: ReqRes,
-                                 service: => CentralSystemService) extends Dispatcher {
-  import v12._
+class CentralSystemDispatcherV12 extends Dispatcher[CentralSystemService] {
+  import v12.{CentralSystemService => _, _}
   import ConvertersV12._
 
   def version = Version.V12
 
-  def dispatch = action match {
-    case Authorize => ?[AuthorizeRequest, AuthorizeResponse] {
+  def dispatch(action: Value, xml: NodeSeq, service: => CentralSystemService) = action match {
+    case Authorize => ?[AuthorizeRequest, AuthorizeResponse](action, xml) {
       req => AuthorizeResponse(service.authorize(req.idTag).toV12)
     }
 
-    case BootNotification => ?[BootNotificationRequest, BootNotificationResponse] {
+    case BootNotification => ?[BootNotificationRequest, BootNotificationResponse](action, xml) {
       req =>
         import req._
         val ocpp.BootNotificationResponse(registrationAccepted, currentTime, heartbeatInterval) =
@@ -102,7 +68,7 @@ class CentralSystemDispatcherV12(val action: Value,
     }
 
     case DiagnosticsStatusNotification =>
-      ?[DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse] {
+      ?[DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse](action, xml) {
         req =>
           val uploaded = req.status match {
             case Uploaded => true
@@ -112,7 +78,7 @@ class CentralSystemDispatcherV12(val action: Value,
           DiagnosticsStatusNotificationResponse()
       }
 
-    case StartTransaction => ?[StartTransactionRequest, StartTransactionResponse] {
+    case StartTransaction => ?[StartTransactionRequest, StartTransactionResponse](action, xml) {
       req =>
         import req._
         val (transactionId, idTagInfo) = service.startTransaction(
@@ -121,18 +87,18 @@ class CentralSystemDispatcherV12(val action: Value,
         StartTransactionResponse(transactionId, idTagInfo.toV12)
     }
 
-    case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse] {
+    case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse](action, xml) {
       req =>
         import req._
         val idTagInfo = service.stopTransaction(transactionId, idTag, timestamp.toDateTime, meterStop, Nil)
         StopTransactionResponse(idTagInfo.map(_.toV12))
     }
 
-    case Heartbeat => ?[HeartbeatRequest, HeartbeatResponse] {
+    case Heartbeat => ?[HeartbeatRequest, HeartbeatResponse](action, xml) {
       _ => HeartbeatResponse(service.heartbeat.toXMLCalendar)
     }
 
-    case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse] {
+    case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse](action, xml) {
       req =>
         val status = req.status match {
           case Available => ocpp.Available
@@ -158,7 +124,7 @@ class CentralSystemDispatcherV12(val action: Value,
         StatusNotificationResponse()
     }
 
-    case FirmwareStatusNotification => ?[FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse] {
+    case FirmwareStatusNotification => ?[FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse](action, xml) {
         req =>
           val status = {
             import ocpp.{FirmwareStatus => ocpp}
@@ -173,7 +139,7 @@ class CentralSystemDispatcherV12(val action: Value,
           FirmwareStatusNotificationResponse()
       }
 
-    case MeterValues => ?[MeterValuesRequest, MeterValuesResponse] {
+    case MeterValues => ?[MeterValuesRequest, MeterValuesResponse](action, xml) {
       req =>
         def toMeter(x: MeterValue): Meter = Meter(x.timestamp.toDateTime, List(Meter.DefaultValue(x.value)))
         service.meterValues(ocpp.Scope.fromOcpp(req.connectorId), None, req.values.map(toMeter).toList)
@@ -183,19 +149,17 @@ class CentralSystemDispatcherV12(val action: Value,
   }
 }
 
-class CentralSystemDispatcherV15(val action: Value,
-                                 val reqRes: ReqRes,
-                                 service: => CentralSystemService) extends Dispatcher {
-  import v15._
+class CentralSystemDispatcherV15 extends Dispatcher[CentralSystemService] {
+  import v15.{CentralSystemService => _, _}
   import ConvertersV15._
 
   def version = Version.V15
-  def dispatch = action match {
-    case Authorize => ?[AuthorizeRequest, AuthorizeResponse] {
+  def dispatch(action: Action.Value, xml: NodeSeq, service: => CentralSystemService) = action match {
+    case Authorize => ?[AuthorizeRequest, AuthorizeResponse](action, xml) {
       req => AuthorizeResponse(service.authorize(req.idTag).toV15)
     }
 
-    case BootNotification => ?[BootNotificationRequest, BootNotificationResponse] {
+    case BootNotification => ?[BootNotificationRequest, BootNotificationResponse](action, xml) {
       req =>
         import req._
         val ocpp.BootNotificationResponse(registrationAccepted, currentTime, heartbeatInterval) =
@@ -216,7 +180,7 @@ class CentralSystemDispatcherV15(val action: Value,
     }
 
     case DiagnosticsStatusNotification =>
-      ?[DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse] {
+      ?[DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse](action, xml) {
         req =>
           val uploaded = req.status match {
             case Uploaded => true
@@ -226,7 +190,7 @@ class CentralSystemDispatcherV15(val action: Value,
           DiagnosticsStatusNotificationResponse()
       }
 
-    case StartTransaction => ?[StartTransactionRequest, StartTransactionResponse] {
+    case StartTransaction => ?[StartTransactionRequest, StartTransactionResponse](action, xml) {
       req =>
         import req._
         val (transactionId, idTagInfo) = service.startTransaction(
@@ -235,7 +199,7 @@ class CentralSystemDispatcherV15(val action: Value,
         StartTransactionResponse(transactionId, idTagInfo.toV15)
     }
 
-    case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse] {
+    case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse](action, xml) {
       req =>
         import req._
         def toMeter(x: MeterValue) = Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
@@ -250,11 +214,11 @@ class CentralSystemDispatcherV15(val action: Value,
         StopTransactionResponse(idTagInfo.map(_.toV15))
     }
 
-    case Heartbeat => ?[HeartbeatRequest, HeartbeatResponse] {
+    case Heartbeat => ?[HeartbeatRequest, HeartbeatResponse](action, xml) {
       _ => HeartbeatResponse(service.heartbeat.toXMLCalendar)
     }
 
-    case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse] {
+    case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse](action, xml) {
       req =>
         val status = req.status match {
           case Available => ocpp.Available
@@ -290,7 +254,7 @@ class CentralSystemDispatcherV15(val action: Value,
         StatusNotificationResponse()
     }
 
-    case FirmwareStatusNotification => ?[FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse] {
+    case FirmwareStatusNotification => ?[FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse](action, xml) {
       req =>
         val status = {
           import ocpp.{FirmwareStatus => ocpp}
@@ -305,14 +269,14 @@ class CentralSystemDispatcherV15(val action: Value,
         FirmwareStatusNotificationResponse()
     }
 
-    case MeterValues => ?[MeterValuesRequest, MeterValuesResponse] {
+    case MeterValues => ?[MeterValuesRequest, MeterValuesResponse](action, xml) {
       req =>
         def toMeter(x: MeterValue): Meter = Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
         service.meterValues(ocpp.Scope.fromOcpp(req.connectorId), req.transactionId, req.values.map(toMeter).toList)
         MeterValuesResponse()
     }
 
-    case DataTransfer => ?[DataTransferRequest, DataTransferResponse] {
+    case DataTransfer => ?[DataTransferRequest, DataTransferResponse](action, xml) {
       req =>
         val res = service.dataTransfer(req.vendorId, req.messageId, req.data)
         val status: DataTransferStatus = {
