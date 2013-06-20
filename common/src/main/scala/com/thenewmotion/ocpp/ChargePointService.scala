@@ -1,6 +1,7 @@
 package com.thenewmotion.ocpp
 
 import org.joda.time.DateTime
+import scala.concurrent.duration.FiniteDuration
 
 /**
  * @author Yaroslav Klymko
@@ -18,8 +19,7 @@ trait ChargePointService {
   def getDiagnostics(location: Uri,
                      startTime: Option[DateTime],
                      stopTime: Option[DateTime],
-                     retries: Option[Int],
-                     retryInterval: Option[Int]): Option[FileName]
+                     retries: Option[GetDiagnosticsRetries]): Option[FileName]
 
   def changeConfiguration(key: String, value: String): ConfigurationStatus.Value
 
@@ -121,3 +121,5 @@ case object AuthListNotSupported extends AuthListVersion
 case class AuthListSupported(version: Int) extends AuthListVersion {
   require(version >= 0, s"version which is $version must be greater or equal than 0")
 }
+
+case class GetDiagnosticsRetries(numberOfRetries: Int, interval: FiniteDuration)

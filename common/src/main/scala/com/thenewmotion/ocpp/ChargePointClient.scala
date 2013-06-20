@@ -55,14 +55,13 @@ private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: Uri
   def getDiagnostics(location: Uri,
                      startTime: Option[DateTime],
                      stopTime: Option[DateTime],
-                     retries: Option[Int],
-                     retryInterval: Option[Int]) = {
+                     retries: Option[GetDiagnosticsRetries]) = {
     val req = GetDiagnosticsRequest(
       location,
       startTime.map(_.toXMLCalendar),
       stopTime.map(_.toXMLCalendar),
-      retries,
-      retryInterval)
+      retries.map(_.numberOfRetries),
+      retries.map(_.interval.toSeconds.toInt))
     val res = ?(_.getDiagnostics, req)
     res.fileName
   }
@@ -157,14 +156,13 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
   def getDiagnostics(location: Uri,
                      startTime: Option[DateTime],
                      stopTime: Option[DateTime],
-                     retries: Option[Int],
-                     retryInterval: Option[Int]) = {
+                     retries: Option[GetDiagnosticsRetries]) = {
     val req = GetDiagnosticsRequest(
       location,
       startTime.map(_.toXMLCalendar),
       stopTime.map(_.toXMLCalendar),
-      retries,
-      retryInterval)
+      retries.map(_.numberOfRetries),
+      retries.map(_.interval.toSeconds.toInt))
     val res = ?(_.getDiagnostics, req)
     res.fileName
   }
