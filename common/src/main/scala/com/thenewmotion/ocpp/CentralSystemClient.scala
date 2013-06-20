@@ -4,6 +4,7 @@ import org.joda.time
 import com.thenewmotion.ocpp
 import dispatch.Http
 import org.joda.time.DateTime
+import scala.concurrent.duration.{FiniteDuration, SECONDS, MINUTES}
 
 /**
  * @author Yaroslav Klymko
@@ -100,7 +101,7 @@ private[ocpp] class CentralSystemClientV12(val chargeBoxIdentity: String, uri: U
     ocpp.BootNotificationResponse(
       accepted,
       currentTime.fold(DateTime.now)(_.toDateTime),
-      heartbeatInterval getOrElse 900)
+      heartbeatInterval.fold(FiniteDuration(15, MINUTES))(FiniteDuration(_, SECONDS)))
   }
 
   def statusNotification(scope: Scope,
@@ -251,7 +252,7 @@ private[ocpp] class CentralSystemClientV15(val chargeBoxIdentity: String, uri: U
       case RejectedValue9 => false
     }
 
-    ocpp.BootNotificationResponse(accepted, currentTime.toDateTime, heartbeatInterval)
+    ocpp.BootNotificationResponse(accepted, currentTime.toDateTime, FiniteDuration(heartbeatInterval, SECONDS))
   }
 
   def statusNotification(scope: Scope,

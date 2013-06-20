@@ -98,7 +98,7 @@ class CentralSystemDispatcherV12(val action: Value,
 
         val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue7 else RejectedValue6
 
-        BootNotificationResponse(registrationStatus, Some(currentTime.toXMLCalendar), Some(heartbeatInterval))
+        BootNotificationResponse(registrationStatus, Some(currentTime.toXMLCalendar), Some(heartbeatInterval.toSeconds.toInt))
     }
 
     case DiagnosticsStatusNotification =>
@@ -212,7 +212,7 @@ class CentralSystemDispatcherV15(val action: Value,
 
         val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue11 else RejectedValue9
 
-        BootNotificationResponse(registrationStatus, currentTime.toXMLCalendar, heartbeatInterval)
+        BootNotificationResponse(registrationStatus, currentTime.toXMLCalendar, heartbeatInterval.toSeconds.toInt)
     }
 
     case DiagnosticsStatusNotification =>
