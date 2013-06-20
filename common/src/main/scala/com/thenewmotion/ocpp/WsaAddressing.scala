@@ -2,6 +2,7 @@ package com.thenewmotion.ocpp
 
 import scalaxb.{HttpClients, SoapClients}
 import scala.xml.{NamespaceBinding, NodeSeq}
+import java.util.UUID
 
 /**
  * @author Yaroslav Klymko
@@ -46,6 +47,7 @@ object WsaAddressing {
   }
 
   def headers(action: Uri, endpoint: Uri): NodeSeq = Seq(
+    <wsa:MessageID>{UUID.randomUUID().toString}</wsa:MessageID>,
     <wsa:Action>{action}</wsa:Action>,
     <wsa:ReplyTo>
       <wsa:Address>{endpoint}</wsa:Address>
