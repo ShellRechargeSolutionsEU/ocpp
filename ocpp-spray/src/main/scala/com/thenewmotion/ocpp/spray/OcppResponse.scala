@@ -10,7 +10,7 @@ import _root_.spray.http.HttpResponse
 object OcppResponse {
   def apply(fault: Fault): HttpResponse = apply(fault.asBody)
 
-  def apply(body: Body): HttpResponse = {
+  def apply(body: => Body): HttpResponse = {
     val env = soapenvelope12.Envelope(None, body, Map())
     SoapResponse(env.toXml)
   }

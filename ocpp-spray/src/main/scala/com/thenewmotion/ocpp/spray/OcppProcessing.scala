@@ -6,13 +6,18 @@ import com.typesafe.scalalogging.slf4j.Logging
 import soapenvelope12.Body
 import soapenvelope12.Fault
 import soapenvelope12.Envelope
-import java.net.URI
 import com.thenewmotion.ocpp._
 import _root_.spray.http.{StatusCodes, HttpResponse, HttpRequest}
 import StatusCodes._
 import java.io.ByteArrayInputStream
 import scalax.RichAny
 
+/**
+ * The information about the charge point available in an incoming request
+ */
+case class ChargerInfo(val ocppVersion: Option[Version.Value],
+                       val endpointUrl: Option[Uri],
+                       val chargerId:   String)
 
 object OcppProcessing extends Logging {
 
@@ -24,9 +29,17 @@ object OcppProcessing extends Logging {
    * Function supplied by the user of this class. The function provides us the user's implementation of
    * an OCPP service, which we can call methods on to perform actions according to the OCPP requests we receive.
    */
-  type ServiceFunction[ServiceType] = Option[Version.Value] => Option[URI] => ChargerId => ServiceType
+  type ServiceFunction[ServiceType] = ChargerInfo => ServiceType
 
   def apply[ServiceType : OcppService](req: HttpRequest, serviceFunction: ServiceFunction[ServiceType]): Result = safe {
+      parseRequest(req).right map { case (chargerInfo, body) =>
+        lazy val responseBody = dispatch(chargerInfo.ocppVersion, body, serviceFunction(chargerInfo))
+        val chargerResponse: ChargerResponse = () => safe(OcppResponse(responseBody)).merge
+        chargerInfo.chargerId -> chargerResponse
+      }
+  }.joinRight
+
+  private def parseRequest(req: HttpRequest): Either[HttpResponse, (ChargerInfo, Body)] = {
     for {
       post <- soapPost(req).right
       xml <- toXml(post).right
@@ -35,10 +48,10 @@ object OcppProcessing extends Logging {
     } yield {
       val version = Version.fromBody(env.Body)
       val chargerUrl = ChargeBoxAddress.unapply(env)
-      val chargerResponse = () => safe(OcppResponse(responseBody(chargerId, version, serviceFunction(version)(chargerUrl), env.Body))).merge
-      chargerId -> chargerResponse
+      val chargerInfo = ChargerInfo(version, chargerUrl, chargerId)
+      (chargerInfo, env.Body)
     }
-  }.joinRight
+  }
 
   private def safe[T](func: ⇒ T): Either[Response, T] =
     try Right(func) catch {
@@ -81,13 +94,8 @@ object OcppProcessing extends Logging {
       OcppResponse(ProtocolError(msg))
     }
 
-  private def responseBody[ServiceType : OcppService](chargerId: String, version: Option[Version.Value],
-                                                      serviceFunction: ChargerId => ServiceType, body: Body): Body = {
-    dispatch(version, body, serviceFunction(chargerId))
-  }
-
-  private def dispatch[ServiceType : OcppService](version: Option[Version.Value], body: Body,
-                                                  service: => ServiceType): Body = {
+  private[spray] def dispatch[ServiceType : OcppService](version: Option[Version.Value], body: Body,
+                                                         service: => ServiceType): Body = {
 
     implicit def faultToBody(x: soapenvelope12.Fault) = x.asBody
 
@@ -103,14 +111,12 @@ object OcppProcessing extends Logging {
       case Some((action, xml)) => version match {
         case None => ProtocolError("Can't find an ocpp version")
         case Some(v) =>
-          logger.info("Dispatching implicitly!")
           implicitly[OcppService[ServiceType]].dispatcher(v).dispatch(action, xml, service)
       }
     }
   }
 
   implicit def errorToEither[T](x: Fault): Either[Response, T] = Left(OcppResponse(x))
-
 }
 
 /**

@@ -33,5 +33,9 @@
             <groupId>com.thenewmotion</groupId>
             <artifactId>common_${scala.version}</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+        </dependency>
     </dependencies>
 </project>
