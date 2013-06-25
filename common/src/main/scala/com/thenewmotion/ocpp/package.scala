@@ -5,7 +5,9 @@ import scalaxb.DataRecord
 import scala.xml.{NamespaceBinding, NodeSeq}
 import javax.xml.datatype.{XMLGregorianCalendar, DatatypeFactory}
 import org.joda.time.{DateTimeZone, DateTime}
+import org.slf4j.LoggerFactory
 import java.net.URI
+import com.typesafe.scalalogging.slf4j.Logger
 
 
 /**
@@ -21,6 +23,7 @@ package object ocpp {
     Some("xs") -> "http://www.w3.org/2001/XMLSchema",
     Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance")
 
+  val httpLogger = Logger(LoggerFactory getLogger "com.thenewmotion.ocpp.http")
 
   implicit def reachFault(x: Fault) = new {
     def asBody: Body = simpleBody(DataRecord(Some(soapEnvelopeUri), Some("Fault"), x))

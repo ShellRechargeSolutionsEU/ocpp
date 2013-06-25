@@ -10,9 +10,14 @@ abstract class CustomDispatchHttpClients(http: Http) extends HttpClients {
   val httpClient = new HttpClient {
 
     def request(in: String, address: Uri, headers: Map[String, String]): String = {
-      val soapAction = SoapActionHeader(headers)
-      val req = url(address.toString) << in <:< soapAction.fold(headers)(headers + _)
-      http(req > as.String)()
+      def request(headers: Map[String, String]): String = {
+        httpLogger.debug(s">>\n\t${headers.toSeq.mkString("\n\t")}\n\t$in")
+        val req = url(address.toString) << in <:< headers
+        val out = http(req > as.String)()
+        httpLogger.debug(s"<<\n\t$out")
+        out
+      }
+      request(SoapActionHeader(headers).fold(headers)(headers + _))
     }
   }
 }
