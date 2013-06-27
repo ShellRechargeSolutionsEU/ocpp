@@ -8,6 +8,7 @@ import scalax.{StringOption, RichAny}
  * @author Yaroslav Klymko
  */
 object Action extends Enumeration {
+  /* Operations initiated by the charge point */
   val Authorize,
   StartTransaction,
   StopTransaction,
@@ -17,7 +18,24 @@ object Action extends Enumeration {
   Heartbeat,
   MeterValues,
   StatusNotification,
-  DataTransfer = Value
+  DataTransfer,
+
+  /* Operations initiated by the central system */
+  CancelReservation,
+  ChangeAvailability,
+  ChangeConfiguration,
+  ClearCache,
+  // DataTransfer can be initiated by both charge point and central system
+  GetConfiguration,
+  GetDiagnostics,
+  GetLocalListVersion,
+  RemoteStartTransaction,
+  RemoteStopTransaction,
+  ReserveNow,
+  Reset,
+  SendLocalList,
+  UnlockConnector,
+  UpdateFirmware = Value
 
   def fromHeader(header: String): Option[Value] =
     StringOption(header).flatMap {
