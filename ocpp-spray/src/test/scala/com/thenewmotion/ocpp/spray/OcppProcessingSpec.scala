@@ -23,10 +23,27 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
     }
 
     "report an identity mismatch fault if the service function throws a ChargeBoxIdentityException" in new TestScope {
-      val result = OcppProcessing(httpRequest, _ => throw new ChargeBoxIdentityException("bestaat niet"))
+      def serviceFunction(ci: ChargerInfo): CentralSystemService = throw new ChargeBoxIdentityException("bestaat niet")
+      val result = OcppProcessing[CentralSystemService](httpRequest, serviceFunction _)
 
       result must beRight
       result.right.get._2().entity.asString must beMatching(".*Fault.*bestaat niet.*")
+    }
+
+    "call the user-supplied ChargePointService according to the request" in {
+      val mockCPService = mock[ChargePointService]
+      mockCPService.getLocalListVersion returns AuthListSupported(0)
+      val httpRequest = mock[HttpRequest]
+      httpRequest.method returns HttpMethods.POST
+      httpRequest.headers returns List(`Content-Type`(MediaTypes.`application/soap+xml`))
+      val mockEntity = mock[HttpEntity]
+      mockEntity.buffer returns bytesOfResourceFile("v15/getLocalListVersionRequest.xml")
+      httpRequest.entity returns mockEntity
+
+      val result = OcppProcessing(httpRequest, _ => mockCPService)
+      result.right.get._2() // need to force lazy value
+
+      there was one(mockCPService).getLocalListVersion
     }
 
     "dispatch ocpp 1.2" in new TestScope {

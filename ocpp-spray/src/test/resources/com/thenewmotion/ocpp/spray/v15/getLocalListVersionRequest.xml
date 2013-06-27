@@ -1,0 +1,21 @@
+<soap12:Envelope xmlns:wsa="http://www.w3.org/2005/08/addressing"
+                 xmlns="urn://Ocpp/Cs/2012/06/"
+                 xmlns:tns0="urn://Ocpp/Cp/2012/06/"
+                 xmlns:tns="urn://Ocpp/Cs/2012/06/"
+                 xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
+    <soap12:Header>
+        <wsa:Action>/GetLocalListVersion</wsa:Action>
+        <wsa:ReplyTo>
+            <wsa:Address>http://localhost:8080/ocpp/</wsa:Address>
+        </wsa:ReplyTo>
+        <wsa:From>
+            <wsa:Address>http://localhost:8080/ocpp/</wsa:Address>
+        </wsa:From>
+        <tns0:chargeBoxIdentity>TestTwin1</tns0:chargeBoxIdentity>
+    </soap12:Header>
+    <soap12:Body>
+        <tns0:getLocalListVersionRequest/>
+    </soap12:Body>
+</soap12:Envelope>

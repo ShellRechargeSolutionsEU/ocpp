@@ -140,5 +140,13 @@ object OcppService {
         case Version.V15 => new CentralSystemDispatcherV15
       }
     }
+
+  implicit val chargePointOcppService: OcppService[ChargePointService] =
+    new OcppService[ChargePointService] {
+      def dispatcher(version: Version.Value): Dispatcher[ChargePointService] = version match {
+        case Version.V12 => sys.error("Requests to the charge point are not yet supported with OCPP 1.2")
+        case Version.V15 => new ChargePointDispatcherV15
+      }
+    }
 }
 
