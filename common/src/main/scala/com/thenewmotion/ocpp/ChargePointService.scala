@@ -16,6 +16,7 @@ trait ChargePointService {
 
   def unlockConnector(connector: ConnectorScope): Accepted
 
+  // FIXME: change method signature so it can handle the case that only one of retries and retryInterval is specified
   def getDiagnostics(location: Uri,
                      startTime: Option[DateTime],
                      stopTime: Option[DateTime],
@@ -119,7 +120,7 @@ object AuthListVersion {
 sealed trait AuthListVersion
 case object AuthListNotSupported extends AuthListVersion
 case class AuthListSupported(version: Int) extends AuthListVersion {
-  require(version >= 0, s"version which is $version must be greater or equal than 0")
+  require(version >= 0, s"version which is $version must be greater than or equal to 0")
 }
 
 case class GetDiagnosticsRetries(numberOfRetries: Int, interval: FiniteDuration)

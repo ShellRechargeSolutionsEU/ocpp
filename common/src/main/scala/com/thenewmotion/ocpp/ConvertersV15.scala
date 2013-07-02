@@ -38,10 +38,43 @@ private[ocpp] object ConvertersV15 {
     }
   }
 
+  implicit class RichV15IdTagInfo(self: IdTagInfo) {
+    def toOcpp: ocpp.IdTagInfo = {
+      val status: ocpp.AuthorizationStatus.Value = {
+          import ocpp.{AuthorizationStatus => ocpp}
+          self.status match {
+            case AcceptedValue5 => ocpp.Accepted
+            case Blocked        => ocpp.IdTagBlocked
+            case Expired        => ocpp.IdTagExpired
+            case Invalid        => ocpp.IdTagInvalid
+            case ConcurrentTx   => ocpp.ConcurrentTx
+        }
+      }
+      ocpp.IdTagInfo(status, self.expiryDate.map(_.toDateTime), self.parentIdTag)
+    }
+  }
+
+  implicit class RichV15AuthorisationData(self: AuthorisationData) {
+    def toOcpp: ocpp.AuthorisationData = ocpp.AuthorisationData(self.idTag, self.idTagInfo.map(_.toOcpp))
+  }
+
   implicit class RichRemoteStartStopStatus(val self: RemoteStartStopStatus) extends AnyVal {
     def toOcpp: Boolean = self match {
       case AcceptedValue2 => true
       case RejectedValue2 => false
+    }
+  }
+
+  implicit class RichUpdateStatus(self: ocpp.UpdateStatus.Value) {
+    def toV15: (UpdateStatus, Option[String]) = {
+      import ocpp.UpdateStatus._
+      self match {
+        case UpdateAccepted(h) => (AcceptedValue10,         h)
+        case UpdateFailed      => (Failed,                  None)
+        case HashError         => (v15.HashError,           None)
+        case NotSupportedValue => (v15.NotSupportedValue,   None)
+        case VersionMismatch   => (v15.VersionMismatch,     None)
+      }
     }
   }
 }
