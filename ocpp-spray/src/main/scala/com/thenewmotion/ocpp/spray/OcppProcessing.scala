@@ -15,9 +15,9 @@ import scalax.RichAny
 /**
  * The information about the charge point available in an incoming request
  */
-case class ChargerInfo(val ocppVersion: Option[Version.Value],
-                       val endpointUrl: Option[Uri],
-                       val chargerId:   String)
+case class ChargerInfo(ocppVersion: Option[Version.Value],
+                       endpointUrl: Option[Uri],
+                       chargerId: String)
 
 object OcppProcessing extends Logging {
 
@@ -94,15 +94,15 @@ object OcppProcessing extends Logging {
       OcppResponse(ProtocolError(msg))
     }
 
-  private[spray] def dispatch[ServiceType : OcppService](version: Option[Version.Value], body: Body,
-                                                         service: => ServiceType): Body = {
+  private[spray] def dispatch[T](version: Option[Version.Value], body: Body, service: => T)
+                                (implicit dispatcher: Version.Value => Dispatcher[T]): Body = {
 
     implicit def faultToBody(x: soapenvelope12.Fault) = x.asBody
 
     val data = for {
       dataRecord <- body.any
       elem <- dataRecord.value.asInstanceOfOpt[Elem]
-      action <- Action.fromElem(elem)
+      action <- CentralSystemAction.fromElem(elem) // TODO @Reinier, please fix this
     } yield action -> elem
 
     data.headOption match {
@@ -111,7 +111,7 @@ object OcppProcessing extends Logging {
       case Some((action, xml)) => version match {
         case None => ProtocolError("Can't find an ocpp version")
         case Some(v) =>
-          implicitly[OcppService[ServiceType]].dispatcher(v).dispatch(action, xml, service)
+          dispatcher(v).dispatch(action, xml, service)
       }
     }
   }
@@ -129,24 +129,16 @@ class ChargeBoxIdentityException(val chargerId: String) extends Exception
  * Type class for OCPP services that can be called via SOAP messages
  */
 trait OcppService[T] {
-  def dispatcher(version: Version.Value): Dispatcher[T]
+  def apply(version: Version.Value): Dispatcher[T]
 }
 
 object OcppService {
-  implicit val centralSystemOcppService: OcppService[CentralSystemService] =
-    new OcppService[CentralSystemService] {
-      def dispatcher(version: Version.Value): Dispatcher[CentralSystemService] = version match {
-        case Version.V12 => new CentralSystemDispatcherV12
-        case Version.V15 => new CentralSystemDispatcherV15
-      }
-    }
+  implicit val centralSystemOcppService: OcppService[CentralSystemService] = new OcppService[CentralSystemService] {
+    def apply(version: Version.Value): Dispatcher[CentralSystemService] = CentralSystemDispatcher(version)
+  }
 
-  implicit val chargePointOcppService: OcppService[ChargePointService] =
-    new OcppService[ChargePointService] {
-      def dispatcher(version: Version.Value): Dispatcher[ChargePointService] = version match {
-        case Version.V12 => sys.error("Requests to the charge point are not yet supported with OCPP 1.2")
-        case Version.V15 => new ChargePointDispatcherV15
-      }
-    }
+  implicit val chargePointOcppService: OcppService[ChargePointService] = new OcppService[ChargePointService] {
+    def apply(version: Version.Value): Dispatcher[ChargePointService] = ChargePointDispatcher(version)
+  }
 }
 

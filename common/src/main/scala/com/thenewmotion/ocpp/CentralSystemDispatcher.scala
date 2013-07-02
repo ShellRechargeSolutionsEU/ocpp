@@ -2,16 +2,23 @@ package com.thenewmotion.ocpp
 
 import scala.xml.NodeSeq
 import scalaxb.{Fault => _, _}
-import Action._
 import com.thenewmotion.ocpp
 import ocpp.Meter.DefaultValue
 
+object CentralSystemDispatcher {
+  def apply(version: Version.Value): Dispatcher[CentralSystemService] = version match {
+    case Version.V12 => new CentralSystemDispatcherV12
+    case Version.V15 => new CentralSystemDispatcherV15
+  }
+}
 
 class CentralSystemDispatcherV12 extends Dispatcher[CentralSystemService] {
   import v12.{CentralSystemService => _, _}
   import ConvertersV12._
 
   def version = Version.V12
+  val actions = CentralSystemAction
+  import actions._
 
   def dispatch(action: Value, xml: NodeSeq, service: => CentralSystemService) = action match {
     case Authorize => ?[AuthorizeRequest, AuthorizeResponse](action, xml) {
@@ -125,7 +132,11 @@ class CentralSystemDispatcherV15 extends Dispatcher[CentralSystemService] {
   import ConvertersV15._
 
   def version = Version.V15
-  def dispatch(action: Action.Value, xml: NodeSeq, service: => CentralSystemService) = action match {
+  val actions = CentralSystemAction
+  import actions._
+
+
+  def dispatch(action: actions.Value, xml: NodeSeq, service: => CentralSystemService) = action match {
     case Authorize => ?[AuthorizeRequest, AuthorizeResponse](action, xml) {
       req => AuthorizeResponse(service.authorize(req.idTag).toV15)
     }
@@ -263,7 +274,7 @@ class CentralSystemDispatcherV15 extends Dispatcher[CentralSystemService] {
     }
   }
 
-  def toValue(x: Value): Meter.Value = {
+  def toValue(x: v15.Value): Meter.Value = {
     def toReadingContext(x: ReadingContext): Meter.ReadingContext.Value = {
       import Meter.{ReadingContext => ocpp}
       x match {

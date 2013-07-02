@@ -2,7 +2,7 @@ package com.thenewmotion.ocpp
 
 import org.specs2.mock.Mockito
 import org.specs2.mutable.SpecificationWithJUnit
-import Action._
+import ChargePointAction._
 
 class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
 
