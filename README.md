@@ -9,6 +9,7 @@ You can find more details on the [official website](http://www.ocpp.nl/)
 * Helper methods to work with ocpp
 * OCPP 1.2
 * OCPP 1.5
+* [Spray](http://spray.io) based service to handle OCPP requests
 
 
 ## Setup
@@ -29,7 +30,7 @@ OCPP 1.2
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
         <artifactId>ocpp_1.2_2.10</artifactId>
-        <version>2.11</version>
+        <version>2.13-SNAPSHOT</version>
     </dependency>
 ```
 
@@ -38,7 +39,7 @@ OCPP 1.5
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
         <artifactId>ocpp_1.5_2.10</artifactId>
-        <version>2.11</version>
+        <version>2.13-SNAPSHOT</version>
     </dependency>
 ```
 
@@ -47,6 +48,15 @@ Common
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
         <artifactId>ocpp_common_2.10</artifactId>
-        <version>2.11</version>
+        <version>2.13-SNAPSHOT</version>
+    </dependency>
+```
+
+Spray OCPP
+```xml
+    <dependency>
+        <groupId>com.thenewmotion.chargenetwork</groupId>
+        <artifactId>ocpp_spray_2.10</artifactId>
+        <version>2.13-SNAPSHOT</version>
     </dependency>
 ```
