@@ -30,12 +30,11 @@ abstract class ActionEnumeration extends Enumeration {
       value -> label
   }.toMap
 
-  private val requestLabels: Map[Value, String] = labels("Request")
-  private val responseLabels: Map[Value, String] = labels("Response")
+  private lazy val requestLabels: Map[Value, String] = labels("Request")
+  private lazy val responseLabels: Map[Value, String] = labels("Response")
 
   implicit class RichValue(self: Value) {
     def requestLabel: String = requestLabels(self)
-
     def responseLabel: String = responseLabels(self)
   }
 }

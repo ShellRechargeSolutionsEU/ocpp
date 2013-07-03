@@ -1,9 +1,11 @@
 package com.thenewmotion.ocpp
 
-import scala.xml.NodeSeq
+import scala.language.implicitConversions
+import scala.xml.{Elem, NodeSeq}
 import scalaxb.{DataRecord, XMLFormat, fromXMLEither}
 import soapenvelope12.Body
 import com.thenewmotion.ocpp.Fault._
+
 
 
 trait Dispatcher[T] {
@@ -13,7 +15,23 @@ trait Dispatcher[T] {
   val actions: ActionEnumeration
   import actions.RichValue
 
-  def dispatch(action: actions.Value, xml: NodeSeq, service: => T): Body
+  import scalax.RichAny
+
+  def dispatch(body: Body, service: => T): Body = {
+    val data = for {
+      dataRecord <- body.any
+      elem <- dataRecord.value.asInstanceOfOpt[Elem]
+      action <- actions.fromElem(elem)
+    } yield action -> elem
+
+    data.headOption match {
+      case None if body.any.isEmpty => ProtocolError("Body is empty")
+      case None => NotSupported("No supported action found")
+      case Some((action, xml)) => dispatch(action, xml, service)
+    }
+  }
+
+  protected def dispatch(action: actions.Value, xml: NodeSeq, service: => T): Body
 
   protected def reqRes: ReqRes = new ReqRes {
     def apply[REQ: XMLFormat, RES: XMLFormat](action: actions.Value, xml: NodeSeq)(f: REQ => RES) = fromXMLEither[REQ](xml) match {

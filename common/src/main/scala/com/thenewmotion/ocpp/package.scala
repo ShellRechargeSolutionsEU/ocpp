@@ -25,18 +25,18 @@ package object ocpp {
 
   val httpLogger = Logger(LoggerFactory getLogger "com.thenewmotion.ocpp.http")
 
-  implicit def reachFault(x: Fault) = new {
-    def asBody: Body = simpleBody(DataRecord(Some(soapEnvelopeUri), Some("Fault"), x))
+  implicit class ReachFault(val self: Fault) extends AnyVal {
+    def asBody: Body = simpleBody(DataRecord(Some(soapEnvelopeUri), Some("Fault"), self))
   }
 
-  implicit def reachEnvelope(x: Envelope) = new {
+  implicit class ReachEnvelope(val self: Envelope) extends AnyVal {
     def toXml: NodeSeq = {
       val namespace = (for {
-        body <- x.Body.any.headOption
+        body <- self.Body.any.headOption
         ns <- body.namespace
       } yield NamespaceBinding(null, ns, defaultNamespace)) getOrElse defaultNamespace
 
-      scalaxb.toXML(x, Some(soapEnvelopeUri), "Envelope", namespace) match {
+      scalaxb.toXML(self, Some(soapEnvelopeUri), "Envelope", namespace) match {
         case elem: scala.xml.Elem => elem
         case error => sys.error("unexpected non-elem: " + error.toString)
       }

@@ -1,5 +1,6 @@
 package com.thenewmotion.ocpp
 
+import scala.language.implicitConversions
 import xml.{Elem, NodeSeq}
 import scalax.RichAny
 import soapenvelope12.Body

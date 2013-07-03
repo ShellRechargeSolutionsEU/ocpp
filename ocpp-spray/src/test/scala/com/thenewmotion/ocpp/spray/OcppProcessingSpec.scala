@@ -16,15 +16,14 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
   "OcppProcessing" should {
 
     "call the user-supplied CentralSystemService according to the request" in new TestScope {
-      val result = OcppProcessing(httpRequest, _ => mockCentralService)
+      val result = OcppProcessing(httpRequest, _ => Some(mockCentralService))
       result.right.get._2() // need to force lazy value
 
       there was one(mockCentralService).heartbeat
     }
 
     "report an identity mismatch fault if the service function throws a ChargeBoxIdentityException" in new TestScope {
-      def serviceFunction(ci: ChargerInfo): CentralSystemService = throw new ChargeBoxIdentityException("bestaat niet")
-      val result = OcppProcessing[CentralSystemService](httpRequest, serviceFunction _)
+      val result = OcppProcessing[CentralSystemService](httpRequest, _ => None)
 
       result must beRight
       result.right.get._2().entity.asString must beMatching(".*Fault.*bestaat niet.*")
@@ -40,7 +39,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
       mockEntity.buffer returns bytesOfResourceFile("v15/getLocalListVersionRequest.xml")
       httpRequest.entity returns mockEntity
 
-      val result = OcppProcessing(httpRequest, _ => mockCPService)
+      val result = OcppProcessing(httpRequest, _ => Some(mockCPService))
       result.right.get._2() // need to force lazy value
 
       there was one(mockCPService).getLocalListVersion
@@ -51,7 +50,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
       val version = V12
       val req = bodyFrom("v12/heartbeatRequest.xml")
-      val res = OcppProcessing.dispatch(Some(V12), req, mockCentralService).any.head
+      val res = OcppProcessing.dispatch(V12, req, mockCentralService).any.head
 
       res.value mustEqual HeartbeatResponse(dateTime.toXMLCalendar)
       res.namespace mustEqual Some(version.namespace)
@@ -63,7 +62,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
       val version = V15
       val req = bodyFrom("v15/heartbeatRequest.xml")
-      val res = OcppProcessing.dispatch(Some(V15), req, mockCentralService).any.head
+      val res = OcppProcessing.dispatch(V15, req, mockCentralService).any.head
 
       res.value mustEqual HeartbeatResponse(dateTime.toXMLCalendar)
       res.namespace mustEqual Some(version.namespace)
