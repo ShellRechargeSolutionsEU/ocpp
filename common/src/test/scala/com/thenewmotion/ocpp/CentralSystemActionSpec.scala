@@ -6,7 +6,7 @@ import xml.XML
 /**
  * @author Yaroslav Klymko
  */
-class ChargePointActionSpec extends SpecificationWithJUnit {
+class CentralSystemActionSpec extends SpecificationWithJUnit {
   "Action" should {
     "parse action from header" in {
       val headers = Set(
@@ -21,7 +21,7 @@ class ChargePointActionSpec extends SpecificationWithJUnit {
         "/statusnotification")
 
       val actions = headers.flatMap {
-        header => ChargePointAction.fromHeader(header)
+        header => CentralSystemAction.fromHeader(header)
       }
 
       actions.size mustEqual headers.size
