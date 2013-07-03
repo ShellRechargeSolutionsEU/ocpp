@@ -5,6 +5,7 @@ import com.thenewmotion.ocpp
 import dispatch.Http
 import org.joda.time.DateTime
 import scala.concurrent.duration.{FiniteDuration, SECONDS, MINUTES}
+import scala.language.implicitConversions
 
 /**
  * @author Yaroslav Klymko

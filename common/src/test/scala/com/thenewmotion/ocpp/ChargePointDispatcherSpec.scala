@@ -1,14 +1,14 @@
 package com.thenewmotion
 package ocpp
 
-import org.specs2.mock.Mockito
-import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.{Scope => SpecsScope}
-import Action._
 import soapenvelope12.Body
 import com.thenewmotion.time.Imports._
 import scala.concurrent.duration._
-import org.joda.time
+
+import org.specs2.mock.Mockito
+import org.specs2.mutable.SpecificationWithJUnit
+import ChargePointAction._
 
 class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
 

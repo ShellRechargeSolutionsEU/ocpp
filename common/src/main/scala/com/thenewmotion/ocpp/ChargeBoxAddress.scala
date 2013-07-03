@@ -1,5 +1,6 @@
 package com.thenewmotion.ocpp
 
+import scala.language.postfixOps
 import soapenvelope12.Envelope
 import scalax.{RichAny, StringOption}
 import xml.Elem

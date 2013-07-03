@@ -27,9 +27,7 @@ trait WsaAddressingSoapClients extends SoapClients {
 
 }
 
-object WsaAddressing extends WsaAddressing(() => UUID.randomUUID().toString)
-
-class WsaAddressing(messageId: () => String) {
+object WsaAddressing {
   val Uri = "http://www.w3.org/2005/08/addressing"
   val AnonymousUri = Uri + "/anonymous"
 
@@ -40,23 +38,17 @@ class WsaAddressing(messageId: () => String) {
                action: Option[Uri],
                headers: NodeSeq,
                scope: NamespaceBinding)(f: (NodeSeq, NamespaceBinding) => T): T = {
-    val withAddressing = for {
-      a <- action
-      e <- endpoint
-    } yield f(this.headers(action = a, endpoint = e) ++ headers, this.scope(scope))
 
-    withAddressing getOrElse f(headers, scope)
+    val wsaAddressing = this.headers(action, endpoint)
+
+    if (wsaAddressing.isEmpty) f(headers, scope)
+    else f(wsaAddressing ++ headers, this.scope(scope))
   }
 
-  def headers(action: Uri, endpoint: Uri): NodeSeq = Seq(
-    <wsa:MessageID>{messageId()}</wsa:MessageID>,
-    <wsa:Action>{action}</wsa:Action>,
-    <wsa:ReplyTo>
-      <wsa:Address>{endpoint}</wsa:Address>
-    </wsa:ReplyTo>,
-    <wsa:From>
-      <wsa:Address>{endpoint}</wsa:Address>
-    </wsa:From>
-  )
+  def headers(endpoint: Option[Uri], action: Option[Uri]) = {
+    val wsaAction = action.map(x => <wsa:Action>{x}</wsa:Action>) getOrElse NodeSeq.Empty
+    val wsaEndpoint = endpoint.map(x => <wsa:From><wsa:Address>{x}</wsa:Address></wsa:From>) getOrElse NodeSeq.Empty
+    wsaAction ++ wsaEndpoint
+  }
 }
 
