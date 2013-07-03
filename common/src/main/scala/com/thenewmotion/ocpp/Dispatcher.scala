@@ -7,7 +7,7 @@ import soapenvelope12.Body
 import com.thenewmotion.ocpp.Fault._
 
 
-trait Dispatcher[T] {
+abstract class Dispatcher[T](log: Option[LogFunc]) {
   implicit def faultToBody(x: soapenvelope12.Fault) = x.asBody
   def version: Version.Value
 
@@ -36,10 +36,13 @@ trait Dispatcher[T] {
     def apply[REQ: XMLFormat, RES: XMLFormat](action: actions.Value, xml: NodeSeq)(f: REQ => RES) = fromXMLEither[REQ](xml) match {
       case Left(msg) => ProtocolError(msg)
       case Right(req) => try {
+        log map (_.apply(req))
         val res = f(req)
+        log map (_.apply(res))
         simpleBody(DataRecord(Some(version.namespace), Some(action.responseLabel), res))
       } catch {
         case FaultException(fault) =>
+          log map (_.apply(fault))
           fault
       }
     }

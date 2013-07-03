@@ -1,16 +1,5 @@
 package com.thenewmotion.ocpp.spray
 
-import xml.{XML, NodeSeq, Elem}
-import com.thenewmotion.ocpp.Fault._
-import com.typesafe.scalalogging.slf4j.Logging
-import soapenvelope12.Body
-import soapenvelope12.Fault
-import soapenvelope12.Envelope
-import com.thenewmotion.ocpp._
-import _root_.spray.http.{StatusCodes, HttpResponse, HttpRequest}
-import StatusCodes._
-import java.io.ByteArrayInputStream
-import scalax.RichAny
 import xml.{XML, NodeSeq}
 import com.typesafe.scalalogging.slf4j.Logging
 import soapenvelope12.{Body, Fault, Envelope}
@@ -33,16 +22,19 @@ object OcppProcessing extends Logging {
   type ResponseFunc = () => HttpResponse
   type ChargerId = String
   type Result = Either[HttpResponse, (ChargerId, ResponseFunc)]
+  type OcppMessageLogger = (ChargerId, Version.Value, Any) => Unit
 
-  def apply[T: OcppService](req: HttpRequest, toService: ChargerInfo => Option[T]): Result = {
+  def apply[T: OcppService](req: HttpRequest, toService: ChargerInfo => Option[T],
+                            log: Option[OcppMessageLogger] = None): Result = {
     val (decoded, encode) = decodeEncode(req)
-    applyDecoded(decoded, toService) match {
+    applyDecoded(decoded, toService, log) match {
       case Right((id, res)) => Right((id, () => encode(res())))
       case Left(res) => Left(encode(res))
     }
   }
 
-  private[spray] def applyDecoded[T: OcppService](req: HttpRequest, toService: ChargerInfo => Option[T]): Result = safe {
+  private[spray] def applyDecoded[T: OcppService](req: HttpRequest, toService: ChargerInfo => Option[T],
+                                                  log: Option[OcppMessageLogger] = None): Result = safe {
 
     def withService(chargerInfo: ChargerInfo): Either[HttpResponse, T] = toService(chargerInfo) match {
       case Some(service) => Right(service)
@@ -60,7 +52,11 @@ object OcppProcessing extends Logging {
       version <- parseVersion(env.Body).right
       chargerInfo <- Right(ChargerInfo(version, ChargeBoxAddress.unapply(env), chargerId)).right
       service <- withService(chargerInfo).right
-    } yield (chargerInfo.chargerId, () => safe(OcppResponse(dispatch(chargerInfo.ocppVersion, env.Body, service))).merge)
+    } yield {
+      httpLogger.debug(s">>\n\t${req.headers.mkString("\n\t")}\n\t$xml")
+      val logForCharger = log.map((logger) => logger(chargerId, version, (_ : Any)))
+      (chargerInfo.chargerId, () => safe(OcppResponse(dispatch(chargerInfo.ocppVersion, env.Body, service, logForCharger))).merge)
+    }
   }.joinRight
 
   private def parseVersion(body: Body): Either[HttpResponse, Version.Value] = {
@@ -105,9 +101,10 @@ object OcppProcessing extends Logging {
       logger.warn(msg)
       OcppResponse(ProtocolError(msg))
     }
-  private[spray] def dispatch[T](version: Version.Value, body: Body, service: => T)
+
+  private[spray] def dispatch[T](version: Version.Value, body: Body, service: => T, log: Option[LogFunc] = None)
                                 (implicit ocppService: OcppService[T]): Body =
-    ocppService(version).dispatch(body, service)
+    ocppService(version, log).dispatch(body, service)
 
   implicit def errorToEither[T](x: Fault): Either[HttpResponse, T] = Left(OcppResponse(x))
 
@@ -132,16 +129,16 @@ object OcppProcessing extends Logging {
  * Type class for OCPP services that can be called via SOAP messages
  */
 trait OcppService[T] {
-  def apply(version: Version.Value): Dispatcher[T]
+  def apply(version: Version.Value, log: Option[LogFunc] = None): Dispatcher[T]
 }
 
 object OcppService {
   implicit val centralSystemOcppService: OcppService[CentralSystemService] = new OcppService[CentralSystemService] {
-    def apply(version: Version.Value) = CentralSystemDispatcher(version)
+    def apply(version: Version.Value, log: Option[LogFunc] = None) = CentralSystemDispatcher(version, log)
   }
 
   implicit val chargePointOcppService: OcppService[ChargePointService] = new OcppService[ChargePointService] {
-    def apply(version: Version.Value) = ChargePointDispatcher(version)
+    def apply(version: Version.Value, log: Option[LogFunc] = None) = ChargePointDispatcher(version, log)
   }
 }
 

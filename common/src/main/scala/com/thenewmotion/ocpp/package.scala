@@ -16,6 +16,7 @@ import com.typesafe.scalalogging.slf4j.Logger
 package object ocpp {
   type Uri = URI
   type IdTag = String
+  type LogFunc = Any => Unit
 
   val soapEnvelopeUri = "http://www.w3.org/2003/05/soap-envelope"
   val defaultNamespace = scalaxb.toScope(

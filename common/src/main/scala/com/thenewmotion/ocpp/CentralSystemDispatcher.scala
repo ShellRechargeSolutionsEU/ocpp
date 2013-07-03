@@ -5,13 +5,13 @@ import com.thenewmotion.ocpp
 import ocpp.Meter.DefaultValue
 
 object CentralSystemDispatcher {
-  def apply(version: Version.Value): Dispatcher[CentralSystemService] = version match {
-    case Version.V12 => new CentralSystemDispatcherV12
-    case Version.V15 => new CentralSystemDispatcherV15
+  def apply(version: Version.Value, log: Option[LogFunc] = None): Dispatcher[CentralSystemService] = version match {
+    case Version.V12 => new CentralSystemDispatcherV12(log)
+    case Version.V15 => new CentralSystemDispatcherV15(log)
   }
 }
 
-class CentralSystemDispatcherV12 extends Dispatcher[CentralSystemService] {
+class CentralSystemDispatcherV12(log: Option[LogFunc] = None) extends Dispatcher[CentralSystemService](log) {
   import v12.{CentralSystemService => _, _}
   import ConvertersV12._
 
@@ -126,7 +126,7 @@ class CentralSystemDispatcherV12 extends Dispatcher[CentralSystemService] {
   }
 }
 
-class CentralSystemDispatcherV15 extends Dispatcher[CentralSystemService] {
+class CentralSystemDispatcherV15(log: Option[LogFunc] = None) extends Dispatcher[CentralSystemService](log) {
   import v15.{CentralSystemService => _, _}
   import ConvertersV15._
 
