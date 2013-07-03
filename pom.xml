@@ -72,12 +72,12 @@
             </dependency>
             <dependency>
                 <groupId>io.spray</groupId>
-                <artifactId>spray-routing</artifactId>
+                <artifactId>spray-http</artifactId>
                 <version>${spray.version}</version>
             </dependency>
             <dependency>
                 <groupId>io.spray</groupId>
-                <artifactId>spray-can</artifactId>
+                <artifactId>spray-httpx</artifactId>
                 <version>${spray.version}</version>
             </dependency>
             <dependency>

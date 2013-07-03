@@ -27,7 +27,16 @@ object OcppProcessing extends Logging {
    * Function supplied by the user of this class. The function provides us the user's implementation of
    * an OCPP service, which we can call methods on to perform actions according to the OCPP requests we receive.
    */
-  def apply[T: OcppService](req: HttpRequest, toService: ChargerInfo => Option[T]): Result = safe {
+
+  def apply[T: OcppService](req: HttpRequest, toService: ChargerInfo => Option[T]): Result = {
+    val (decoded, encode) = decodeEncode(req)
+    applyDecoded(decoded, toService) match {
+      case Right((id, res)) => Right((id, () => encode(res())))
+      case Left(res) => Left(encode(res))
+    }
+  }
+
+  private[spray] def applyDecoded[T: OcppService](req: HttpRequest, toService: ChargerInfo => Option[T]): Result = safe {
 
     def withService(chargerInfo: ChargerInfo): Either[HttpResponse, T] = toService(chargerInfo) match {
       case Some(service) => Right(service)
@@ -96,6 +105,22 @@ object OcppProcessing extends Logging {
     ocppService(version).dispatch(body, service)
 
   implicit def errorToEither[T](x: Fault): Either[HttpResponse, T] = Left(OcppResponse(x))
+
+  def decodeEncode(request: HttpRequest): (HttpRequest, (HttpResponse => HttpResponse)) = {
+    import _root_.spray.httpx.encoding.{Gzip, Deflate, NoEncoding}
+    import _root_.spray.http.HttpEncodings.{gzip, deflate}
+
+    val encoder = request.headers.collectFirst {
+      case header if header is "content-encoding" => header.value
+    } match {
+      case Some(deflate.value) => Deflate
+      case Some(gzip.value) => Gzip
+      case _ => NoEncoding
+    }
+
+    val decoded = encoder.decode(request)
+    decoded -> encoder.encode[HttpResponse]
+  }
 }
 
 /**
