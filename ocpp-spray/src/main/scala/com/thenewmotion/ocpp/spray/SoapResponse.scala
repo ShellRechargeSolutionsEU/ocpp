@@ -12,5 +12,5 @@ object SoapResponse {
   val contentType = ContentType(MediaTypes.`application/soap+xml`, `UTF-8`)
 
   def apply(xml: NodeSeq) = HttpResponse(
-    entity = HttpEntity(contentType, xml.toString()))
+    entity = HttpBody(contentType, xml.toString()))
 }

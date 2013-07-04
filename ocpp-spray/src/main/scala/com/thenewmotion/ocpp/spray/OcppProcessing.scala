@@ -110,13 +110,12 @@ object OcppProcessing extends Logging {
 
   def decodeEncode(request: HttpRequest): (HttpRequest, (HttpResponse => HttpResponse)) = {
     import _root_.spray.httpx.encoding.{Gzip, Deflate, NoEncoding}
-    import _root_.spray.http.HttpEncodings.{gzip, deflate}
 
     val encoder = request.headers.collectFirst {
       case header if header is "content-encoding" => header.value
     } match {
-      case Some(deflate.value) => Deflate
-      case Some(gzip.value) => Gzip
+      case Some("deflate") => Deflate
+      case Some("gzip") => Gzip
       case _ => NoEncoding
     }
 
