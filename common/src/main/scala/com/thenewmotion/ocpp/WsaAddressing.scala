@@ -39,7 +39,7 @@ object WsaAddressing {
                headers: NodeSeq,
                scope: NamespaceBinding)(f: (NodeSeq, NamespaceBinding) => T): T = {
 
-    val wsaAddressing = this.headers(action, endpoint)
+    val wsaAddressing = this.headers(endpoint, action)
 
     if (wsaAddressing.isEmpty) f(headers, scope)
     else f(wsaAddressing ++ headers, this.scope(scope))
