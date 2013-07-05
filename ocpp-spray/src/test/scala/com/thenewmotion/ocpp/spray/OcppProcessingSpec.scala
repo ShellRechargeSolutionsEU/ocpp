@@ -17,9 +17,6 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
   "OcppProcessing" should {
 
-    /* -- some tests commented out because they can't run with spray 1.1-M7 because the HttpRequest class is final.
-          They work with 1.1-M8.
-
     "call the user-supplied CentralSystemService according to the request" in new TestScope {
       val result = OcppProcessing.applyDecoded(httpRequest, _ => Some(mockCentralService))
       result.right.get._2() // need to force lazy value
@@ -48,7 +45,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
       result.right.get._2() // need to force lazy value
 
       there was one(mockCPService).getLocalListVersion
-    }*/
+    }
 
     "dispatch ocpp 1.2" in new TestScope {
       import com.thenewmotion.ocpp.v12._
@@ -103,15 +100,12 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
     val mockChargePointService = mock[ChargePointService]
     val mockCentralService = mock[CentralSystemService]
     mockCentralService.heartbeat returns dateTime
-    /* Disabled because HttpRequest is unmockable, see above
-
     val httpRequest = mock[HttpRequest]
     httpRequest.method returns HttpMethods.POST
     httpRequest.headers returns List(`Content-Type`(MediaTypes.`application/soap+xml`))
     val mockEntity = mock[HttpEntity]
     mockEntity.buffer returns bytesOfResourceFile("v15/heartbeatRequest.xml")
     httpRequest.entity returns mockEntity
-    */
   }
 
   private def bytesOfResourceFile(filename: String) =
