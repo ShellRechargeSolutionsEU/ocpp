@@ -61,7 +61,6 @@ abstract class AbstractDispatcher[T](log: Option[LogFunc])(implicit evidence: Oc
     }
   }
 
-  protected def ?[REQ: XMLFormat, RES: XMLFormat](action: actions.Value, xml: NodeSeq)(f: REQ => RES): Body = reqRes(action, xml)(f)
   protected def fault(x: soapenvelope12.Fault): Nothing = throw new FaultException(x)
 
   trait ReqRes {

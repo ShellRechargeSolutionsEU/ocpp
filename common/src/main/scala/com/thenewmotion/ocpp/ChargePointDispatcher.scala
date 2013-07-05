@@ -4,6 +4,7 @@ package ocpp
 import scala.concurrent.duration._
 import scala.xml.NodeSeq
 import soapenvelope12.Body
+import scalaxb.XMLFormat
 
 object ChargePointDispatcher {
   def apply(version: Version.Value, log: Option[LogFunc] = None): Dispatcher[ChargePointService] = version match {
@@ -29,9 +30,11 @@ class ChargePointDispatcherV15(log: Option[LogFunc] = None) extends AbstractDisp
     def booleanToAcceptedString(b: Boolean) = if (b) "Accepted" else "Rejected"
     def booleanToRemoteStartStopStatus(b: Boolean) = RemoteStartStopStatus.fromString(booleanToAcceptedString(b))
 
+    def ?[REQ: XMLFormat, RES: XMLFormat](f: REQ => RES): Body = reqRes(action, xml)(f)
+
     action match {
 
-      case CancelReservation => ?[CancelReservationRequest, CancelReservationResponse](action, xml) {
+      case CancelReservation => ?[CancelReservationRequest, CancelReservationResponse] {
         req =>
           def booleanToCancelReservationStatus(s: Boolean) =
             CancelReservationStatus.fromString(booleanToAcceptedString(s))
@@ -39,27 +42,27 @@ class ChargePointDispatcherV15(log: Option[LogFunc] = None) extends AbstractDisp
           CancelReservationResponse(booleanToCancelReservationStatus(service.cancelReservation(req.reservationId)))
       }
 
-      case ChangeAvailability => ?[ChangeAvailabilityRequest, ChangeAvailabilityResponse](action, xml) {
+      case ChangeAvailability => ?[ChangeAvailabilityRequest, ChangeAvailabilityResponse] {
         req =>
           val result = service.changeAvailability(Scope.fromOcpp(req.connectorId),
                                                   ocpp.AvailabilityType.withName(req.typeValue.toString))
           ChangeAvailabilityResponse(AvailabilityStatus.fromString(result.toString))
       }
 
-      case ChangeConfiguration => ?[ChangeConfigurationRequest, ChangeConfigurationResponse](action, xml) {
+      case ChangeConfiguration => ?[ChangeConfigurationRequest, ChangeConfigurationResponse] {
         req =>
           val result = service.changeConfiguration(req.key, req.value)
           ChangeConfigurationResponse(ConfigurationStatus.fromString(result.toString))
       }
 
-      case ClearCache => ?[ClearCacheRequest, ClearCacheResponse](action, xml) {
+      case ClearCache => ?[ClearCacheRequest, ClearCacheResponse] {
         req =>
           def booleanToClearCacheStatus(b: Boolean) = ClearCacheStatus.fromString(booleanToAcceptedString(b))
 
           ClearCacheResponse(booleanToClearCacheStatus(service.clearCache))
       }
 
-      case GetConfiguration => ?[GetConfigurationRequest, GetConfigurationResponse](action, xml) {
+      case GetConfiguration => ?[GetConfigurationRequest, GetConfigurationResponse] {
         req =>
           def genericKVToV15KV(kv: ocpp.KeyValue) = v15.KeyValue(kv.key, kv.readonly, kv.value)
 
@@ -67,7 +70,7 @@ class ChargePointDispatcherV15(log: Option[LogFunc] = None) extends AbstractDisp
           GetConfigurationResponse(result.values.map(genericKVToV15KV), result.unknownKeys)
       }
 
-      case GetDiagnostics => ?[GetDiagnosticsRequest, GetDiagnosticsResponse](action, xml) {
+      case GetDiagnostics => ?[GetDiagnosticsRequest, GetDiagnosticsResponse] {
         req =>
           val retrySettings = (req.retries, req.retryInterval) match {
             case (Some(retries), Some(retryInterval)) =>
@@ -83,7 +86,7 @@ class ChargePointDispatcherV15(log: Option[LogFunc] = None) extends AbstractDisp
           )
       }
 
-      case GetLocalListVersion => ?[GetLocalListVersionRequest, GetLocalListVersionResponse](action, xml) {
+      case GetLocalListVersion => ?[GetLocalListVersionRequest, GetLocalListVersionResponse] {
         req =>
           def versionToInt(v: AuthListVersion): Int = v match {
             case AuthListNotSupported => -1
@@ -92,7 +95,7 @@ class ChargePointDispatcherV15(log: Option[LogFunc] = None) extends AbstractDisp
           GetLocalListVersionResponse(versionToInt(service.getLocalListVersion))
       }
 
-      case RemoteStartTransaction => ?[RemoteStartTransactionRequest, RemoteStartTransactionResponse](action, xml) {
+      case RemoteStartTransaction => ?[RemoteStartTransactionRequest, RemoteStartTransactionResponse] {
         req =>
           val connectorScope = req.connectorId.map(ConnectorScope.fromOcpp(_))
 
@@ -100,13 +103,13 @@ class ChargePointDispatcherV15(log: Option[LogFunc] = None) extends AbstractDisp
             booleanToRemoteStartStopStatus(service.remoteStartTransaction(req.idTag, connectorScope)))
       }
 
-      case RemoteStopTransaction => ?[RemoteStopTransactionRequest, RemoteStopTransactionResponse](action, xml) {
+      case RemoteStopTransaction => ?[RemoteStopTransactionRequest, RemoteStopTransactionResponse] {
         req =>
           RemoteStopTransactionResponse(
             booleanToRemoteStartStopStatus(service.remoteStopTransaction(req.transactionId)))
       }
 
-      case ReserveNow => ?[ReserveNowRequest, ReserveNowResponse](action, xml) {
+      case ReserveNow => ?[ReserveNowRequest, ReserveNowResponse] {
         req =>
           def genericStatusToV15Status(s: Reservation.Value) = ReservationStatus.fromString(s.toString)
 
@@ -117,7 +120,7 @@ class ChargePointDispatcherV15(log: Option[LogFunc] = None) extends AbstractDisp
           ReserveNowResponse(genericStatusToV15Status(status))
       }
 
-      case Reset => ?[ResetRequest, ResetResponse](action, xml) {
+      case Reset => ?[ResetRequest, ResetResponse] {
         req =>
           def v15ResetTypeToGenericResetType(resetType: ResetType) =
             com.thenewmotion.ocpp.ResetType.withName(resetType.toString)
@@ -128,7 +131,7 @@ class ChargePointDispatcherV15(log: Option[LogFunc] = None) extends AbstractDisp
           ResetResponse(booleanToResetStatus(result))
       }
 
-      case SendLocalList => ?[SendLocalListRequest, SendLocalListResponse](action, xml) {
+      case SendLocalList => ?[SendLocalListRequest, SendLocalListResponse] {
         req =>
           val updateType = ocpp.UpdateType.withName(req.updateType.toString)
           val listVersion = AuthListSupported(req.listVersion)
@@ -142,7 +145,7 @@ class ChargePointDispatcherV15(log: Option[LogFunc] = None) extends AbstractDisp
           SendLocalListResponse(v15StatusAndHash._1, v15StatusAndHash._2)
       }
 
-      case UnlockConnector => ?[UnlockConnectorRequest, UnlockConnectorResponse](action, xml) {
+      case UnlockConnector => ?[UnlockConnectorRequest, UnlockConnectorResponse] {
         req =>
           val connectorScope = ConnectorScope.fromOcpp(req.connectorId)
 
@@ -150,7 +153,7 @@ class ChargePointDispatcherV15(log: Option[LogFunc] = None) extends AbstractDisp
           UnlockConnectorResponse(UnlockStatus.fromString(booleanToAcceptedString(result)))
       }
 
-      case UpdateFirmware => ?[UpdateFirmwareRequest, UpdateFirmwareResponse](action, xml) {
+      case UpdateFirmware => ?[UpdateFirmwareRequest, UpdateFirmwareResponse] {
         req =>
           val retrieveDate = req.retrieveDate.toDateTime
 

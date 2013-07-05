@@ -3,6 +3,7 @@ package com.thenewmotion.ocpp
 import scala.xml.NodeSeq
 import com.thenewmotion.ocpp
 import ocpp.Meter.DefaultValue
+import scalaxb.XMLFormat
 
 object CentralSystemDispatcher {
   def apply(version: Version.Value, log: Option[LogFunc] = None): Dispatcher[CentralSystemService] = version match {
@@ -19,89 +20,93 @@ class CentralSystemDispatcherV12(log: Option[LogFunc] = None) extends AbstractDi
   val actions = CentralSystemAction
   import actions._
 
-  def dispatch(action: Value, xml: NodeSeq, service: => CentralSystemService) = action match {
-    case Authorize => ?[AuthorizeRequest, AuthorizeResponse](action, xml) {
-      req => AuthorizeResponse(service.authorize(req.idTag).toV12)
-    }
+  def dispatch(action: Value, xml: NodeSeq, service: => CentralSystemService) = {
+    def ?[REQ: XMLFormat, RES: XMLFormat](f: REQ => RES) = reqRes(action, xml)(f)
 
-    case BootNotification => ?[BootNotificationRequest, BootNotificationResponse](action, xml) {
-      req =>
-        import req._
-        val ocpp.BootNotificationResponse(registrationAccepted, currentTime, heartbeatInterval) =
-          service.bootNotification(
-            chargePointVendor,
-            chargePointModel,
-            chargePointSerialNumber,
-            chargeBoxSerialNumber,
-            firmwareVersion,
-            iccid,
-            imsi,
-            meterType,
-            meterSerialNumber)
+    action match {
 
-        val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue7 else RejectedValue6
-
-        BootNotificationResponse(registrationStatus, Some(currentTime.toXMLCalendar), Some(heartbeatInterval.toSeconds.toInt))
-    }
-
-    case DiagnosticsStatusNotification =>
-      ?[DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse](action, xml) {
-        req =>
-          val uploaded = req.status match {
-            case Uploaded => true
-            case UploadFailed => false
-          }
-          service.diagnosticsStatusNotification(uploaded)
-          DiagnosticsStatusNotificationResponse()
+      case Authorize => ?[AuthorizeRequest, AuthorizeResponse] {
+        req => AuthorizeResponse(service.authorize(req.idTag).toV12)
       }
 
-    case StartTransaction => ?[StartTransactionRequest, StartTransactionResponse](action, xml) {
-      req =>
-        import req._
-        val (transactionId, idTagInfo) = service.startTransaction(
-          ocpp.ConnectorScope.fromOcpp(connectorId),
-          idTag, timestamp.toDateTime, meterStart, None)
-        StartTransactionResponse(transactionId, idTagInfo.toV12)
-    }
+      case BootNotification => ?[BootNotificationRequest, BootNotificationResponse] {
+        req =>
+          import req._
+          val ocpp.BootNotificationResponse(registrationAccepted, currentTime, heartbeatInterval) =
+            service.bootNotification(
+              chargePointVendor,
+              chargePointModel,
+              chargePointSerialNumber,
+              chargeBoxSerialNumber,
+              firmwareVersion,
+              iccid,
+              imsi,
+              meterType,
+              meterSerialNumber)
 
-    case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse](action, xml) {
-      req =>
-        import req._
-        val idTagInfo = service.stopTransaction(transactionId, idTag, timestamp.toDateTime, meterStop, Nil)
-        StopTransactionResponse(idTagInfo.map(_.toV12))
-    }
+          val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue7 else RejectedValue6
 
-    case Heartbeat => ?[HeartbeatRequest, HeartbeatResponse](action, xml) {
-      _ => HeartbeatResponse(service.heartbeat.toXMLCalendar)
-    }
+          BootNotificationResponse(registrationStatus, Some(currentTime.toXMLCalendar), Some(heartbeatInterval.toSeconds.toInt))
+      }
 
-    case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse](action, xml) {
-      req =>
-        val status = req.status match {
-          case Available => ocpp.Available
-          case Occupied => ocpp.Occupied
-          case Unavailable => ocpp.Unavailable
-          case Faulted =>
-            val errorCode: Option[ocpp.ChargePointErrorCode.Value] = {
-              import ocpp.{ChargePointErrorCode => ocpp}
-              req.errorCode match {
-                case ConnectorLockFailure => Some(ocpp.ConnectorLockFailure)
-                case HighTemperature => Some(ocpp.HighTemperature)
-                case Mode3Error => Some(ocpp.Mode3Error)
-                case NoError => None
-                case PowerMeterFailure => Some(ocpp.PowerMeterFailure)
-                case PowerSwitchFailure => Some(ocpp.PowerSwitchFailure)
-                case ReaderFailure => Some(ocpp.ReaderFailure)
-                case ResetFailure => Some(ocpp.ResetFailure)
-              }
+      case DiagnosticsStatusNotification =>
+        ?[DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse] {
+          req =>
+            val uploaded = req.status match {
+              case Uploaded => true
+              case UploadFailed => false
             }
-            ocpp.Faulted(errorCode, None, None)
+            service.diagnosticsStatusNotification(uploaded)
+            DiagnosticsStatusNotificationResponse()
         }
-        service.statusNotification(ocpp.Scope.fromOcpp(req.connectorId), status, None, None)
-        StatusNotificationResponse()
-    }
 
-    case FirmwareStatusNotification => ?[FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse](action, xml) {
+      case StartTransaction => ?[StartTransactionRequest, StartTransactionResponse] {
+        req =>
+          import req._
+          val (transactionId, idTagInfo) = service.startTransaction(
+            ocpp.ConnectorScope.fromOcpp(connectorId),
+            idTag, timestamp.toDateTime, meterStart, None)
+          StartTransactionResponse(transactionId, idTagInfo.toV12)
+      }
+
+      case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse] {
+        req =>
+          import req._
+          val idTagInfo = service.stopTransaction(transactionId, idTag, timestamp.toDateTime, meterStop, Nil)
+          StopTransactionResponse(idTagInfo.map(_.toV12))
+      }
+
+      case Heartbeat => ?[HeartbeatRequest, HeartbeatResponse] {
+        _ => HeartbeatResponse(service.heartbeat.toXMLCalendar)
+      }
+
+      case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse] {
+        req =>
+          val status = req.status match {
+            case Available => ocpp.Available
+            case Occupied => ocpp.Occupied
+            case Unavailable => ocpp.Unavailable
+            case Faulted =>
+              val errorCode: Option[ocpp.ChargePointErrorCode.Value] = {
+                import ocpp.{ChargePointErrorCode => ocpp}
+                req.errorCode match {
+                  case ConnectorLockFailure => Some(ocpp.ConnectorLockFailure)
+                  case HighTemperature => Some(ocpp.HighTemperature)
+                  case Mode3Error => Some(ocpp.Mode3Error)
+                  case NoError => None
+                  case PowerMeterFailure => Some(ocpp.PowerMeterFailure)
+                  case PowerSwitchFailure => Some(ocpp.PowerSwitchFailure)
+                  case ReaderFailure => Some(ocpp.ReaderFailure)
+                  case ResetFailure => Some(ocpp.ResetFailure)
+                }
+              }
+              ocpp.Faulted(errorCode, None, None)
+          }
+          service.statusNotification(ocpp.Scope.fromOcpp(req.connectorId), status, None, None)
+          StatusNotificationResponse()
+      }
+
+      case FirmwareStatusNotification => ?[FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse] {
         req =>
           val status = {
             import ocpp.{FirmwareStatus => ocpp}
@@ -116,13 +121,14 @@ class CentralSystemDispatcherV12(log: Option[LogFunc] = None) extends AbstractDi
           FirmwareStatusNotificationResponse()
       }
 
-    case MeterValues => ?[MeterValuesRequest, MeterValuesResponse](action, xml) {
-      req =>
-        def toMeter(x: MeterValue): Meter = Meter(x.timestamp.toDateTime, List(Meter.DefaultValue(x.value)))
-        service.meterValues(ocpp.Scope.fromOcpp(req.connectorId), None, req.values.map(toMeter).toList)
-        MeterValuesResponse()
+      case MeterValues => ?[MeterValuesRequest, MeterValuesResponse] {
+        req =>
+          def toMeter(x: MeterValue): Meter = Meter(x.timestamp.toDateTime, List(Meter.DefaultValue(x.value)))
+          service.meterValues(ocpp.Scope.fromOcpp(req.connectorId), None, req.values.map(toMeter).toList)
+          MeterValuesResponse()
+      }
+      case DataTransfer => throw new ActionNotSupportedException(version, "dataTransfer")
     }
-    case DataTransfer => throw new ActionNotSupportedException(version, "dataTransfer")
   }
 }
 
@@ -135,141 +141,145 @@ class CentralSystemDispatcherV15(log: Option[LogFunc] = None) extends AbstractDi
   import actions._
 
 
-  def dispatch(action: actions.Value, xml: NodeSeq, service: => CentralSystemService) = action match {
-    case Authorize => ?[AuthorizeRequest, AuthorizeResponse](action, xml) {
-      req => AuthorizeResponse(service.authorize(req.idTag).toV15)
-    }
+  def dispatch(action: actions.Value, xml: NodeSeq, service: => CentralSystemService) = {
+    def ?[REQ: XMLFormat, RES: XMLFormat](f: REQ => RES) = reqRes(action, xml)(f)
 
-    case BootNotification => ?[BootNotificationRequest, BootNotificationResponse](action, xml) {
-      req =>
-        import req._
-        val ocpp.BootNotificationResponse(registrationAccepted, currentTime, heartbeatInterval) =
-          service.bootNotification(
-            chargePointVendor,
-            chargePointModel,
-            chargePointSerialNumber,
-            chargeBoxSerialNumber,
-            firmwareVersion,
-            iccid,
-            imsi,
-            meterType,
-            meterSerialNumber)
-
-        val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue11 else RejectedValue9
-
-        BootNotificationResponse(registrationStatus, currentTime.toXMLCalendar, heartbeatInterval.toSeconds.toInt)
-    }
-
-    case DiagnosticsStatusNotification =>
-      ?[DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse](action, xml) {
-        req =>
-          val uploaded = req.status match {
-            case Uploaded => true
-            case UploadFailed => false
-          }
-          service.diagnosticsStatusNotification(uploaded)
-          DiagnosticsStatusNotificationResponse()
+    action match {
+      case Authorize => ?[AuthorizeRequest, AuthorizeResponse] {
+        req => AuthorizeResponse(service.authorize(req.idTag).toV15)
       }
 
-    case StartTransaction => ?[StartTransactionRequest, StartTransactionResponse](action, xml) {
-      req =>
-        import req._
-        val (transactionId, idTagInfo) = service.startTransaction(
-          ocpp.ConnectorScope.fromOcpp(connectorId),
-          idTag, timestamp.toDateTime, meterStart, None)
-        StartTransactionResponse(transactionId, idTagInfo.toV15)
-    }
+      case BootNotification => ?[BootNotificationRequest, BootNotificationResponse] {
+        req =>
+          import req._
+          val ocpp.BootNotificationResponse(registrationAccepted, currentTime, heartbeatInterval) =
+            service.bootNotification(
+              chargePointVendor,
+              chargePointModel,
+              chargePointSerialNumber,
+              chargeBoxSerialNumber,
+              firmwareVersion,
+              iccid,
+              imsi,
+              meterType,
+              meterSerialNumber)
 
-    case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse](action, xml) {
-      req =>
-        import req._
-        def toMeter(x: MeterValue) = Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
-        def toTransactionData(x: TransactionData) = ocpp.TransactionData(x.values.map(toMeter).toList)
+          val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue11 else RejectedValue9
 
-        val idTagInfo = service.stopTransaction(
-          transactionId,
-          idTag,
-          timestamp.toDateTime,
-          meterStop,
-          transactionData.map(toTransactionData).toList)
-        StopTransactionResponse(idTagInfo.map(_.toV15))
-    }
+          BootNotificationResponse(registrationStatus, currentTime.toXMLCalendar, heartbeatInterval.toSeconds.toInt)
+      }
 
-    case Heartbeat => ?[HeartbeatRequest, HeartbeatResponse](action, xml) {
-      _ => HeartbeatResponse(service.heartbeat.toXMLCalendar)
-    }
-
-    case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse](action, xml) {
-      req =>
-        val status = req.status match {
-          case Available => ocpp.Available
-          case OccupiedValue => ocpp.Occupied
-          case UnavailableValue => ocpp.Unavailable
-          case FaultedValue =>
-            val errorCode = {
-              import ocpp.{ChargePointErrorCode => ocpp}
-              req.errorCode match {
-                case ConnectorLockFailure => Some(ocpp.ConnectorLockFailure)
-                case HighTemperature => Some(ocpp.HighTemperature)
-                case Mode3Error => Some(ocpp.Mode3Error)
-                case NoError => None
-                case PowerMeterFailure => Some(ocpp.PowerMeterFailure)
-                case PowerSwitchFailure => Some(ocpp.PowerSwitchFailure)
-                case ReaderFailure => Some(ocpp.ReaderFailure)
-                case ResetFailure => Some(ocpp.ResetFailure)
-                case GroundFailure => Some(ocpp.GroundFailure)
-                case OverCurrentFailure => Some(ocpp.OverCurrentFailure)
-                case UnderVoltage => Some(ocpp.UnderVoltage)
-                case WeakSignal => Some(ocpp.WeakSignal)
-                case OtherError => Some(ocpp.OtherError)
-              }
+      case DiagnosticsStatusNotification =>
+        ?[DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse] {
+          req =>
+            val uploaded = req.status match {
+              case Uploaded => true
+              case UploadFailed => false
             }
-            ocpp.Faulted(errorCode, req.info, req.vendorErrorCode)
-          case Reserved => ocpp.Reserved
+            service.diagnosticsStatusNotification(uploaded)
+            DiagnosticsStatusNotificationResponse()
         }
-        service.statusNotification(
-          ocpp.Scope.fromOcpp(req.connectorId),
-          status,
-          req.timestamp.map(_.toDateTime),
-          req.vendorId)
-        StatusNotificationResponse()
-    }
 
-    case FirmwareStatusNotification => ?[FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse](action, xml) {
-      req =>
-        val status = {
-          import ocpp.{FirmwareStatus => ocpp}
-          req.status match {
-            case Downloaded => ocpp.Downloaded
-            case DownloadFailed => ocpp.DownloadFailed
-            case InstallationFailed => ocpp.InstallationFailed
-            case Installed => ocpp.Installed
+      case StartTransaction => ?[StartTransactionRequest, StartTransactionResponse] {
+        req =>
+          import req._
+          val (transactionId, idTagInfo) = service.startTransaction(
+            ocpp.ConnectorScope.fromOcpp(connectorId),
+            idTag, timestamp.toDateTime, meterStart, None)
+          StartTransactionResponse(transactionId, idTagInfo.toV15)
+      }
+
+      case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse] {
+        req =>
+          import req._
+          def toMeter(x: MeterValue) = Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
+          def toTransactionData(x: TransactionData) = ocpp.TransactionData(x.values.map(toMeter).toList)
+
+          val idTagInfo = service.stopTransaction(
+            transactionId,
+            idTag,
+            timestamp.toDateTime,
+            meterStop,
+            transactionData.map(toTransactionData).toList)
+          StopTransactionResponse(idTagInfo.map(_.toV15))
+      }
+
+      case Heartbeat => ?[HeartbeatRequest, HeartbeatResponse] {
+        _ => HeartbeatResponse(service.heartbeat.toXMLCalendar)
+      }
+
+      case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse] {
+        req =>
+          val status = req.status match {
+            case Available => ocpp.Available
+            case OccupiedValue => ocpp.Occupied
+            case UnavailableValue => ocpp.Unavailable
+            case FaultedValue =>
+              val errorCode = {
+                import ocpp.{ChargePointErrorCode => ocpp}
+                req.errorCode match {
+                  case ConnectorLockFailure => Some(ocpp.ConnectorLockFailure)
+                  case HighTemperature => Some(ocpp.HighTemperature)
+                  case Mode3Error => Some(ocpp.Mode3Error)
+                  case NoError => None
+                  case PowerMeterFailure => Some(ocpp.PowerMeterFailure)
+                  case PowerSwitchFailure => Some(ocpp.PowerSwitchFailure)
+                  case ReaderFailure => Some(ocpp.ReaderFailure)
+                  case ResetFailure => Some(ocpp.ResetFailure)
+                  case GroundFailure => Some(ocpp.GroundFailure)
+                  case OverCurrentFailure => Some(ocpp.OverCurrentFailure)
+                  case UnderVoltage => Some(ocpp.UnderVoltage)
+                  case WeakSignal => Some(ocpp.WeakSignal)
+                  case OtherError => Some(ocpp.OtherError)
+                }
+              }
+              ocpp.Faulted(errorCode, req.info, req.vendorErrorCode)
+            case Reserved => ocpp.Reserved
           }
-        }
-        service.firmwareStatusNotification(status)
-        FirmwareStatusNotificationResponse()
-    }
+          service.statusNotification(
+            ocpp.Scope.fromOcpp(req.connectorId),
+            status,
+            req.timestamp.map(_.toDateTime),
+            req.vendorId)
+          StatusNotificationResponse()
+      }
 
-    case MeterValues => ?[MeterValuesRequest, MeterValuesResponse](action, xml) {
-      req =>
-        def toMeter(x: MeterValue): Meter = Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
-        service.meterValues(ocpp.Scope.fromOcpp(req.connectorId), req.transactionId, req.values.map(toMeter).toList)
-        MeterValuesResponse()
-    }
-
-    case DataTransfer => ?[DataTransferRequest, DataTransferResponse](action, xml) {
-      req =>
-        val res = service.dataTransfer(req.vendorId, req.messageId, req.data)
-        val status: DataTransferStatus = {
-          import ocpp.{DataTransferStatus => ocpp}
-          res.status match {
-            case ocpp.Accepted => AcceptedValue
-            case ocpp.Rejected => RejectedValue
-            case ocpp.UnknownMessageId => UnknownMessageId
-            case ocpp.UnknownVendorId => UnknownVendorId
+      case FirmwareStatusNotification => ?[FirmwareStatusNotificationRequest, FirmwareStatusNotificationResponse] {
+        req =>
+          val status = {
+            import ocpp.{FirmwareStatus => ocpp}
+            req.status match {
+              case Downloaded => ocpp.Downloaded
+              case DownloadFailed => ocpp.DownloadFailed
+              case InstallationFailed => ocpp.InstallationFailed
+              case Installed => ocpp.Installed
+            }
           }
-        }
-        DataTransferResponse(status, res.data)
+          service.firmwareStatusNotification(status)
+          FirmwareStatusNotificationResponse()
+      }
+
+      case MeterValues => ?[MeterValuesRequest, MeterValuesResponse] {
+        req =>
+          def toMeter(x: MeterValue): Meter = Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
+          service.meterValues(ocpp.Scope.fromOcpp(req.connectorId), req.transactionId, req.values.map(toMeter).toList)
+          MeterValuesResponse()
+      }
+
+      case DataTransfer => ?[DataTransferRequest, DataTransferResponse] {
+        req =>
+          val res = service.dataTransfer(req.vendorId, req.messageId, req.data)
+          val status: DataTransferStatus = {
+            import ocpp.{DataTransferStatus => ocpp}
+            res.status match {
+              case ocpp.Accepted => AcceptedValue
+              case ocpp.Rejected => RejectedValue
+              case ocpp.UnknownMessageId => UnknownMessageId
+              case ocpp.UnknownVendorId => UnknownVendorId
+            }
+          }
+          DataTransferResponse(status, res.data)
+      }
     }
   }
 
