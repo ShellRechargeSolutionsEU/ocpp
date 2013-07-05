@@ -124,20 +124,3 @@ object OcppProcessing extends Logging {
   }
 }
 
-/**
- * Type class for OCPP services that can be called via SOAP messages
- */
-trait OcppService[T] {
-  def apply(version: Version.Value, log: Option[LogFunc] = None): Dispatcher[T]
-}
-
-object OcppService {
-  implicit val centralSystemOcppService: OcppService[CentralSystemService] = new OcppService[CentralSystemService] {
-    def apply(version: Version.Value, log: Option[LogFunc] = None) = CentralSystemDispatcher(version, log)
-  }
-
-  implicit val chargePointOcppService: OcppService[ChargePointService] = new OcppService[ChargePointService] {
-    def apply(version: Version.Value, log: Option[LogFunc] = None) = ChargePointDispatcher(version, log)
-  }
-}
-

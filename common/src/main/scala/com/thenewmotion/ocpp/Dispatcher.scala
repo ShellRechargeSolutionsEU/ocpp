@@ -7,7 +7,7 @@ import soapenvelope12.Body
 import com.thenewmotion.ocpp.Fault._
 
 
-abstract class Dispatcher[T](log: Option[LogFunc]) {
+abstract class Dispatcher[T](log: Option[LogFunc])(implicit evidence: OcppService[T]){
   implicit def faultToBody(x: soapenvelope12.Fault) = x.asBody
   def version: Version.Value
 
@@ -39,7 +39,7 @@ abstract class Dispatcher[T](log: Option[LogFunc]) {
         log map (_.apply(req))
         val res = f(req)
         log map (_.apply(res))
-        simpleBody(DataRecord(Some(version.namespace), Some(action.responseLabel), res))
+        simpleBody(DataRecord(Some(evidence.namespace(version)), Some(action.responseLabel), res))
       } catch {
         case FaultException(fault) =>
           log map (_.apply(fault))

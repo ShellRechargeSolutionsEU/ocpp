@@ -12,15 +12,6 @@ object Version extends Enumeration {
   val V12 = Value("1.2")
   val V15 = Value("1.5")
 
-  implicit def richVersion(x: Value): RichVersion = new RichVersion(x)
-
-  class RichVersion(self: Value) {
-    def namespace: String = self match {
-      case V12 => "urn://Ocpp/Cs/2010/08/"
-      case V15 => "urn://Ocpp/Cs/2012/06/"
-    }
-  }
-
   private def fromNamespace(namespace: String): Option[Version.Value] = {
     val V12Regex = """^urn://Ocpp/C[sp]/2010/08/$""".r
     val V15Regex = """^urn://Ocpp/C[sp]/2012/06/$""".r

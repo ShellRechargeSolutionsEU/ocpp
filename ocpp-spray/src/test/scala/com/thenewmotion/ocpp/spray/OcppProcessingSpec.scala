@@ -57,9 +57,8 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
       val req = bodyFrom("v12/heartbeatRequest.xml")
       val res = OcppProcessing.dispatch(V12, req, mockCentralService).any.head
 
-      res.value mustEqual HeartbeatResponse(dateTime.toXMLCalendar)
-      res.namespace mustEqual Some(version.namespace)
       there was one(mockCentralService).heartbeat
+      res.value mustEqual HeartbeatResponse(dateTime.toXMLCalendar)
     }
 
     "dispatch ocpp 1.5" in new TestScope {
@@ -69,9 +68,8 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
       val req = bodyFrom("v15/heartbeatRequest.xml")
       val res = OcppProcessing.dispatch(V15, req, mockCentralService).any.head
 
-      res.value mustEqual HeartbeatResponse(dateTime.toXMLCalendar)
-      res.namespace mustEqual Some(version.namespace)
       there was one(mockCentralService).heartbeat
+      res.value mustEqual HeartbeatResponse(dateTime.toXMLCalendar)
     }
 
     "support GZIP encoding" in new EncodingSpec {
@@ -81,10 +79,28 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
     "support DEFLATE encoding" in new EncodingSpec {
       verify(Deflate)
     }
+
+    "return messages with charge point namespace when processing messages for charger" in new TestScope {
+      val req = bodyFrom("v15/getLocalListVersionRequest.xml")
+      mockChargePointService.getLocalListVersion returns AuthListNotSupported
+
+      val res = OcppProcessing.dispatch(V15, req, mockChargePointService).any.head
+
+      res.namespace mustEqual Some("urn://Ocpp/Cp/2012/06/")
+    }
+
+    "return messages with central system namespace when processing messages for central service" in new TestScope {
+      val req = bodyFrom("v15/heartbeatRequest.xml")
+
+      val res = OcppProcessing.dispatch(V15, req, mockCentralService).any.head
+
+      res.namespace mustEqual Some("urn://Ocpp/Cs/2012/06/")
+    }
   }
 
   private trait TestScope extends Scope {
     val dateTime = DateTime.now
+    val mockChargePointService = mock[ChargePointService]
     val mockCentralService = mock[CentralSystemService]
     mockCentralService.heartbeat returns dateTime
     /* Disabled because HttpRequest is unmockable, see above
