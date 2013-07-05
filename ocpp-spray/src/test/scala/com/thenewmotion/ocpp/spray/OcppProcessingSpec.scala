@@ -34,12 +34,10 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
     "call the user-supplied ChargePointService according to the request" in {
       val mockCPService = mock[ChargePointService]
       mockCPService.getLocalListVersion returns AuthListSupported(0)
-      val httpRequest = mock[HttpRequest]
-      httpRequest.method returns HttpMethods.POST
-      httpRequest.headers returns List(`Content-Type`(MediaTypes.`application/soap+xml`))
-      val mockEntity = mock[HttpEntity]
-      mockEntity.buffer returns bytesOfResourceFile("v15/getLocalListVersionRequest.xml")
-      httpRequest.entity returns mockEntity
+      val httpRequest = HttpRequest(HttpMethods.POST,
+                                    Uri("/"),
+                                    List(`Content-Type`(MediaTypes.`application/soap+xml`)),
+                                    HttpEntity(bytesOfResourceFile("v15/getLocalListVersionRequest.xml")))
 
       val result = OcppProcessing.applyDecoded(httpRequest, _ => Some(mockCPService))
       result.right.get._2() // need to force lazy value
@@ -100,12 +98,10 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
     val mockChargePointService = mock[ChargePointService]
     val mockCentralService = mock[CentralSystemService]
     mockCentralService.heartbeat returns dateTime
-    val httpRequest = mock[HttpRequest]
-    httpRequest.method returns HttpMethods.POST
-    httpRequest.headers returns List(`Content-Type`(MediaTypes.`application/soap+xml`))
-    val mockEntity = mock[HttpEntity]
-    mockEntity.buffer returns bytesOfResourceFile("v15/heartbeatRequest.xml")
-    httpRequest.entity returns mockEntity
+    val httpRequest = HttpRequest(HttpMethods.POST,
+                                  Uri("/"),
+                                  List(`Content-Type`(MediaTypes.`application/soap+xml`)),
+                                  HttpEntity(bytesOfResourceFile("v15/heartbeatRequest.xml")))
   }
 
   private def bytesOfResourceFile(filename: String) =

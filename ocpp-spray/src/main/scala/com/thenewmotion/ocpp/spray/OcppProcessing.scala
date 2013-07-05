@@ -25,7 +25,7 @@ object OcppProcessing extends Logging {
   type OcppMessageLogger = (ChargerId, Version.Value, Any) => Unit
 
   def apply[T: OcppService](req: HttpRequest, toService: ChargerInfo => Option[T],
-                            log: Option[OcppMessageLogger] = None): Result = {
+                            log: OcppMessageLogger = noOpLogger): Result = {
     val (decoded, encode) = decodeEncode(req)
     applyDecoded(decoded, toService, log) match {
       case Right((id, res)) => Right((id, () => encode(res())))
@@ -34,7 +34,7 @@ object OcppProcessing extends Logging {
   }
 
   private[spray] def applyDecoded[T: OcppService](req: HttpRequest, toService: ChargerInfo => Option[T],
-                                                  log: Option[OcppMessageLogger] = None): Result = safe {
+                                                  log: OcppMessageLogger = noOpLogger): Result = safe {
 
     def withService(chargerInfo: ChargerInfo): Either[HttpResponse, T] = toService(chargerInfo) match {
       case Some(service) => Right(service)
@@ -54,10 +54,12 @@ object OcppProcessing extends Logging {
       service <- withService(chargerInfo).right
     } yield {
       httpLogger.debug(s">>\n\t${req.headers.mkString("\n\t")}\n\t$xml")
-      val logForCharger = log.map((logger) => logger(chargerId, version, (_ : Any)))
+      val logForCharger = log(chargerId, version, (_ : Any))
       (chargerInfo.chargerId, () => safe(OcppResponse(dispatch(chargerInfo.ocppVersion, env.Body, service, logForCharger))).merge)
     }
   }.joinRight
+
+  private def noOpLogger(chargerId: ChargerId, ocppVersion: Version.Value, msg: Any) {}
 
   private def parseVersion(body: Body): Either[HttpResponse, Version.Value] = {
     Version.fromBody(body) match {
@@ -102,7 +104,7 @@ object OcppProcessing extends Logging {
       OcppResponse(ProtocolError(msg))
     }
 
-  private[spray] def dispatch[T](version: Version.Value, body: Body, service: => T, log: Option[LogFunc] = None)
+  private[spray] def dispatch[T](version: Version.Value, body: Body, service: => T, log: LogFunc = (_ => ()))
                                 (implicit ocppService: OcppService[T]): Body =
     ocppService(version, log).dispatch(body, service)
 

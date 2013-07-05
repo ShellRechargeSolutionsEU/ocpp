@@ -16,11 +16,6 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>ocpp-common_${scala.version}</artifactId>
         </dependency>
-        <!-- Needed to have SOAP 1.2 classes like Body, Envelope etc. -->
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>ocpp-1.5_${scala.version}</artifactId>
-        </dependency>
         <dependency>
             <groupId>io.spray</groupId>
             <artifactId>spray-http</artifactId>

@@ -48,7 +48,7 @@ package object ocpp {
 
   private val factory = DatatypeFactory.newInstance
 
-  implicit class RichXMLCalendar(val self: XMLGregorianCalendar) {
+  implicit class RichXMLCalendar(val self: XMLGregorianCalendar) extends AnyVal {
     def toDateTime: DateTime = new DateTime(self.toGregorianCalendar.getTimeInMillis)
   }
 

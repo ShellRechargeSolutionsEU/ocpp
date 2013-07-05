@@ -8,7 +8,7 @@ private[ocpp] object ConvertersV15 {
   import com.thenewmotion.ocpp
   import v15._
 
-  implicit class RichIdTagInfo(self: ocpp.IdTagInfo) {
+  implicit class RichIdTagInfo(val self: ocpp.IdTagInfo) extends AnyVal{
     def toV15: IdTagInfoType = {
       val status: AuthorizationStatusType = {
         import ocpp.{AuthorizationStatus => ocpp}
@@ -38,7 +38,7 @@ private[ocpp] object ConvertersV15 {
     }
   }
 
-  implicit class RichV15IdTagInfo(self: IdTagInfo) {
+  implicit class RichV15IdTagInfo(val self: IdTagInfo) extends AnyVal {
     def toOcpp: ocpp.IdTagInfo = {
       val status: ocpp.AuthorizationStatus.Value = {
           import ocpp.{AuthorizationStatus => ocpp}
@@ -54,7 +54,7 @@ private[ocpp] object ConvertersV15 {
     }
   }
 
-  implicit class RichV15AuthorisationData(self: AuthorisationData) {
+  implicit class RichV15AuthorisationData(val self: AuthorisationData) extends AnyVal {
     def toOcpp: ocpp.AuthorisationData = ocpp.AuthorisationData(self.idTag, self.idTagInfo.map(_.toOcpp))
   }
 
@@ -65,7 +65,7 @@ private[ocpp] object ConvertersV15 {
     }
   }
 
-  implicit class RichUpdateStatus(self: ocpp.UpdateStatus.Value) {
+  implicit class RichUpdateStatus(val self: ocpp.UpdateStatus.Value) extends AnyVal {
     def toV15: (UpdateStatus, Option[String]) = {
       import ocpp.UpdateStatus._
       self match {

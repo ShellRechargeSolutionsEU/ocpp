@@ -6,13 +6,13 @@ import ocpp.Meter.DefaultValue
 import scalaxb.XMLFormat
 
 object CentralSystemDispatcher {
-  def apply(version: Version.Value, log: Option[LogFunc] = None): Dispatcher[CentralSystemService] = version match {
+  def apply(version: Version.Value, log: LogFunc): Dispatcher[CentralSystemService] = version match {
     case Version.V12 => new CentralSystemDispatcherV12(log)
     case Version.V15 => new CentralSystemDispatcherV15(log)
   }
 }
 
-class CentralSystemDispatcherV12(log: Option[LogFunc] = None) extends AbstractDispatcher[CentralSystemService](log) {
+class CentralSystemDispatcherV12(log: LogFunc) extends AbstractDispatcher[CentralSystemService](log) {
   import v12.{CentralSystemService => _, _}
   import ConvertersV12._
 
@@ -132,7 +132,7 @@ class CentralSystemDispatcherV12(log: Option[LogFunc] = None) extends AbstractDi
   }
 }
 
-class CentralSystemDispatcherV15(log: Option[LogFunc] = None) extends AbstractDispatcher[CentralSystemService](log) {
+class CentralSystemDispatcherV15(log: LogFunc) extends AbstractDispatcher[CentralSystemService](log) {
   import v15.{CentralSystemService => _, _}
   import ConvertersV15._
 

@@ -15,7 +15,7 @@ object ConvertersV12 {
     }
   }
 
-  implicit class RichIdTagInfo(self: IdTagInfo) {
+  implicit class RichIdTagInfo(val self: IdTagInfo) extends AnyVal {
     def toOcpp: ocpp.IdTagInfo = {
       val status = {
         import ocpp.{AuthorizationStatus => ocpp}
