@@ -1,7 +1,7 @@
 package com.thenewmotion.ocpp
 
 import org.joda.time.DateTime
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.{Duration, FiniteDuration, SECONDS}
 
 /**
  * @author Yaroslav Klymko
@@ -16,11 +16,10 @@ trait ChargePointService {
 
   def unlockConnector(connector: ConnectorScope): Accepted
 
-  // FIXME: change method signature so it can handle the case that only one of retries and retryInterval is specified
   def getDiagnostics(location: Uri,
                      startTime: Option[DateTime],
                      stopTime: Option[DateTime],
-                     retries: Option[GetDiagnosticsRetries]): Option[FileName]
+                     retries: Retries): Option[FileName]
 
   def changeConfiguration(key: String, value: String): ConfigurationStatus.Value
 
@@ -35,8 +34,7 @@ trait ChargePointService {
 
   def updateFirmware(retrieveDate: DateTime,
                      location: Uri,
-                     retries: Option[Int],
-                     retryInterval: Option[Int])
+                     retries: Retries)
 
   @throws[ActionNotSupportedException]
   def sendLocalList(updateType: UpdateType.Value,
@@ -123,4 +121,12 @@ case class AuthListSupported(version: Int) extends AuthListVersion {
   require(version >= 0, s"version which is $version must be greater than or equal to 0")
 }
 
-case class GetDiagnosticsRetries(numberOfRetries: Int, interval: FiniteDuration)
+case class Retries(numberOfRetries: Option[Int], interval: Option[FiniteDuration]) {
+  def intervalInSeconds: Option[Int] = interval.map(_.toSeconds.toInt)
+}
+
+object Retries {
+  def fromInts(numberOfRetries: Option[Int], intervalInSeconds: Option[Int]): Retries = {
+    Retries(numberOfRetries, intervalInSeconds.map(Duration(_, SECONDS)))
+  }
+}

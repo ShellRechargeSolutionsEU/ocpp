@@ -142,11 +142,11 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
 
       val expectedStartTime = new DateTime(2013, 6, 4, 13, 30, DateTimeZone.UTC).toDateTime(DateTimeZone.getDefault)
       val expectedStopTime  = new DateTime(2013, 6, 4, 14, 30, DateTimeZone.UTC).toDateTime(DateTimeZone.getDefault)
-      val expectedRetries   = GetDiagnosticsRetries(4, scala.concurrent.duration.Duration(90, SECONDS))
+      val expectedRetries   = Retries(Some(4), Some(scala.concurrent.duration.Duration(90, SECONDS)))
       there was one(cpService).getDiagnostics(new Uri("ftp://example.org/uploaddir"),
                                               Some(expectedStartTime),
                                               Some(expectedStopTime),
-                                              Some(expectedRetries))
+                                              expectedRetries)
     }
 
     "call getDiagnostics with the right parameters if optional parameters are not specified" in new TestScope {
@@ -155,7 +155,7 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
 
       (new ChargePointDispatcherV15).dispatch(GetDiagnostics, xml, cpService)
 
-      there was one(cpService).getDiagnostics(new Uri("ftp://example.org/uploaddir"), None, None, None)
+      there was one(cpService).getDiagnostics(new Uri("ftp://example.org/uploaddir"), None, None, Retries(None, None))
     }
 
     "return upload URL reported by charge point service to client" in new TestScope {
@@ -354,8 +354,7 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
         new DateTime(2013, 6, 7, 12, 30, 0, DateTimeZone.UTC).toDateTime(DateTimeZone.getDefault)
       there was one(cpService).updateFirmware(expectedRetrieveDate,
                                               new Uri("ftp://example.org/exciting-new-stuff.tgz"),
-                                              Some(13),
-                                              Some(42))
+                                              Retries(Some(13), Some(scala.concurrent.duration.Duration(42, SECONDS))))
     }
   }
   

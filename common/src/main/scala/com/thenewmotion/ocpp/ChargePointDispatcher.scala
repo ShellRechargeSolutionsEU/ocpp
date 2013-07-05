@@ -72,12 +72,7 @@ class ChargePointDispatcherV15(log: LogFunc = (_ => ())) extends AbstractDispatc
 
       case GetDiagnostics => ?[GetDiagnosticsRequest, GetDiagnosticsResponse] {
         req =>
-          val retrySettings = (req.retries, req.retryInterval) match {
-            case (Some(retries), Some(retryInterval)) =>
-              Some(new GetDiagnosticsRetries(retries, Duration(retryInterval, SECONDS)))
-            case _ =>
-              None
-          }
+          val retrySettings = Retries.fromInts(req.retries, req.retryInterval)
           GetDiagnosticsResponse(
             service.getDiagnostics(req.location,
                                    req.startTime.map(_.toDateTime),
@@ -156,8 +151,9 @@ class ChargePointDispatcherV15(log: LogFunc = (_ => ())) extends AbstractDispatc
       case UpdateFirmware => ?[UpdateFirmwareRequest, UpdateFirmwareResponse] {
         req =>
           val retrieveDate = req.retrieveDate.toDateTime
+          val retrySettings = Retries.fromInts(req.retries, req.retryInterval)
 
-          service.updateFirmware(retrieveDate, req.location, req.retries, req.retryInterval)
+          service.updateFirmware(retrieveDate, req.location, retrySettings)
           UpdateFirmwareResponse()
       }
     }

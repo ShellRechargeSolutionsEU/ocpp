@@ -55,13 +55,13 @@ private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: Uri
   def getDiagnostics(location: Uri,
                      startTime: Option[DateTime],
                      stopTime: Option[DateTime],
-                     retries: Option[GetDiagnosticsRetries]) = {
+                     retries: Retries) = {
     val req = GetDiagnosticsRequest(
       location,
       startTime.map(_.toXMLCalendar),
       stopTime.map(_.toXMLCalendar),
-      retries.map(_.numberOfRetries),
-      retries.map(_.interval.toSeconds.toInt))
+      retries.numberOfRetries,
+      retries.intervalInSeconds)
     val res = ?(_.getDiagnostics, req)
     res.fileName
   }
@@ -103,8 +103,9 @@ private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: Uri
     }
   }
 
-  def updateFirmware(retrieveDate: DateTime, location: Uri, retries: Option[Int], retryInterval: Option[Int]) {
-    ?(_.updateFirmware, UpdateFirmwareRequest(retrieveDate.toXMLCalendar, location, retries, retryInterval))
+  def updateFirmware(retrieveDate: DateTime, location: Uri, retries: Retries) {
+    ?(_.updateFirmware, UpdateFirmwareRequest(retrieveDate.toXMLCalendar, location,
+                                              retries.numberOfRetries, retries.intervalInSeconds))
   }
 
   def sendLocalList(updateType: UpdateType.Value,
@@ -156,13 +157,13 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
   def getDiagnostics(location: Uri,
                      startTime: Option[DateTime],
                      stopTime: Option[DateTime],
-                     retries: Option[GetDiagnosticsRetries]) = {
+                     retries: Retries) = {
     val req = GetDiagnosticsRequest(
       location,
       startTime.map(_.toXMLCalendar),
       stopTime.map(_.toXMLCalendar),
-      retries.map(_.numberOfRetries),
-      retries.map(_.interval.toSeconds.toInt))
+      retries.numberOfRetries,
+      retries.intervalInSeconds)
     val res = ?(_.getDiagnostics, req)
     res.fileName
   }
@@ -210,8 +211,9 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
     }
   }
 
-  def updateFirmware(retrieveDate: DateTime, location: Uri, retries: Option[Int], retryInterval: Option[Int]) {
-    ?(_.updateFirmware, UpdateFirmwareRequest(retrieveDate.toXMLCalendar, location, retries, retryInterval))
+  def updateFirmware(retrieveDate: DateTime, location: Uri, retries: Retries) {
+    ?(_.updateFirmware, UpdateFirmwareRequest(retrieveDate.toXMLCalendar, location,
+                                              retries.numberOfRetries, retries.intervalInSeconds))
   }
 
   def sendLocalList(updateType: ocpp.UpdateType.Value,
