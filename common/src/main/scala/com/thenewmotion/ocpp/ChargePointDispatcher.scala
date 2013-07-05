@@ -16,7 +16,7 @@ object ChargePointDispatcher {
  * Can call the corresponding methods on a ChargePointService object when given a message containing a request sent to
  * a charge point.
  */
-class ChargePointDispatcherV15(log: Option[LogFunc] = None) extends Dispatcher[ChargePointService](log) {
+class ChargePointDispatcherV15(log: Option[LogFunc] = None) extends AbstractDispatcher[ChargePointService](log) {
   def version: Version.Value = Version.V15
 
   val actions = ChargePointAction

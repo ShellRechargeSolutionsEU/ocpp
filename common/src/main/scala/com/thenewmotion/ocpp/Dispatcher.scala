@@ -7,7 +7,20 @@ import soapenvelope12.Body
 import com.thenewmotion.ocpp.Fault._
 
 
-abstract class Dispatcher[T](log: Option[LogFunc])(implicit evidence: OcppService[T]){
+/**
+ * A dispatcher takes a SOAP message body and performs the requested action by calling a method on the given object of
+ * type T (the "service object").
+ *
+ * The task of the dispatcher is (1) finding out which method must be called on the service object and (2) deserializing
+ * the data in the SOAP message so that it can be passed to one of the methods of the service object.
+ *
+ * @tparam T The type of the service object
+ */
+trait Dispatcher[T] {
+  def dispatch(body: Body, service: => T): Body
+}
+
+abstract class AbstractDispatcher[T](log: Option[LogFunc])(implicit evidence: OcppService[T]) extends Dispatcher[T] {
   implicit def faultToBody(x: soapenvelope12.Fault) = x.asBody
   def version: Version.Value
 

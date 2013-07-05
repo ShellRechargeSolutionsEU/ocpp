@@ -11,7 +11,7 @@ object CentralSystemDispatcher {
   }
 }
 
-class CentralSystemDispatcherV12(log: Option[LogFunc] = None) extends Dispatcher[CentralSystemService](log) {
+class CentralSystemDispatcherV12(log: Option[LogFunc] = None) extends AbstractDispatcher[CentralSystemService](log) {
   import v12.{CentralSystemService => _, _}
   import ConvertersV12._
 
@@ -126,7 +126,7 @@ class CentralSystemDispatcherV12(log: Option[LogFunc] = None) extends Dispatcher
   }
 }
 
-class CentralSystemDispatcherV15(log: Option[LogFunc] = None) extends Dispatcher[CentralSystemService](log) {
+class CentralSystemDispatcherV15(log: Option[LogFunc] = None) extends AbstractDispatcher[CentralSystemService](log) {
   import v15.{CentralSystemService => _, _}
   import ConvertersV15._
 
