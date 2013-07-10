@@ -7,6 +7,15 @@ import javax.xml.namespace.QName
  * @author Yaroslav Klymko
  */
 object Fault {
+
+  object TnsSender extends FaultcodeEnum {
+    override def toString = "soap12:Sender"
+  }
+
+  object TnsReceiver extends FaultcodeEnum {
+    override def toString = "soap12:Receiver"
+  }
+
   val SecurityError = apply(TnsSender, "SecurityError")
   val IdentityMismatch = apply(TnsSender, "IdentityMismatch")
   val UrlMismatch = apply(TnsSender, "UrlMismatch")
