@@ -4,7 +4,7 @@
     <parent>
         <groupId>com.thenewmotion.ocpp</groupId>
         <artifactId>ocpp-parent_2.10</artifactId>
-        <version>2.13-SNAPSHOT</version>
+        <version>2.13</version>
     </parent>
     <artifactId>ocpp-common_2.10</artifactId>
     <name>common</name>
