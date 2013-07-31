@@ -152,7 +152,6 @@ case class Retries(numberOfRetries: Option[Int], interval: Option[FiniteDuration
 }
 
 object Retries {
-  def fromInts(numberOfRetries: Option[Int], intervalInSeconds: Option[Int]): Retries = {
-    Retries(numberOfRetries, intervalInSeconds.map(Duration(_, SECONDS)))
-  }
+  def fromInts(numberOfRetries: Option[Int], intervalInSeconds: Option[Int]): Retries =
+    Retries(numberOfRetries, intervalInSeconds.map(_.seconds))
 }
