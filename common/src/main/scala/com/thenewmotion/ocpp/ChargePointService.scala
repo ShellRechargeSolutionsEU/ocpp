@@ -7,6 +7,8 @@ import scala.concurrent.duration.{Duration, FiniteDuration, SECONDS}
  * @author Yaroslav Klymko
  */
 trait ChargePointService {
+  import ChargePointService._
+
   type Accepted = Boolean
   type FileName = String
 
@@ -46,7 +48,7 @@ trait ChargePointService {
   def getLocalListVersion: AuthListVersion
 
   @throws[ActionNotSupportedException]
-  def dataTransfer(vendorId: String, messageId: Option[String], data: Option[String]): DataTransferResponse
+  def dataTransfer(vendorId: String, messageId: Option[String], data: Option[String]): DataTransferRes
 
   @throws[ActionNotSupportedException]
   def reserveNow(connector: Scope,
@@ -58,6 +60,85 @@ trait ChargePointService {
   @throws[ActionNotSupportedException]
   def cancelReservation(reservationId: Int): Boolean
 }
+
+
+object ChargePointService {
+  sealed trait Message
+  sealed trait Req extends Message
+  sealed trait Res extends Message
+
+
+  case class RemoteStartTransactionReq(idTag: IdTag, connector: Option[ConnectorScope]) extends Req
+  case class RemoteStartTransactionRes(accepted: Boolean) extends Res
+
+
+  case class RemoteStopTransactionReq(transactionId: Int) extends Req
+  case class RemoteStopTransactionRes(accepted: Boolean) extends Res
+
+
+  case class UnlockConnectorReq(connector: ConnectorScope) extends Req
+  case class UnlockConnectorRes(accepted: Boolean) extends Res
+
+
+  case class GetDiagnosticsReq(location: Uri,
+                               startTime: Option[DateTime],
+                               stopTime: Option[DateTime],
+                               retries: Retries) extends Req
+  case class GetDiagnosticsRes(fileName: Option[String]) extends Res
+
+
+  case class ChangeConfigurationReq(key: String, value: String) extends Req
+  case class ChangeConfigurationRes(status: ConfigurationStatus.Value) extends Res
+
+
+  case class GetConfigurationReq(keys: List[String]) extends Req
+  case class GetConfigurationRes(configuration: Configuration) extends Res
+
+
+  case class ChangeAvailabilityReq(scope: Scope, availabilityType: AvailabilityType.Value) extends Req
+  case class ChangeAvailabilityRes(status: AvailabilityStatus.Value) extends Res
+
+
+  case object ClearCacheReq extends Req
+  case class ClearCacheRes(accepted: Boolean) extends Res
+
+
+  case class ResetReq(resetType: ResetType.Value) extends Req
+  case class ResetRes(accepted: Boolean) extends Res
+
+
+  case class UpdateFirmwareReq(retrieveDate: DateTime, location: Uri, retries: Retries) extends Req
+  case object UpdateFirmwareRes extends Res
+
+
+  case class SendLocalListReq(updateType: UpdateType.Value,
+                              listVersion: AuthListSupported,
+                              localAuthorisationList: List[AuthorisationData],
+                              hash: Option[String]) extends Req
+
+  case class SendLocalListRes(status: UpdateStatus.Value) extends Res
+
+
+  case object GetLocalListVersionReq extends Req
+  case class GetLocalListVersionRes(version: AuthListVersion) extends Res
+
+
+  case class DataTransferReq(vendorId: String, messageId: Option[String], data: Option[String]) extends Req
+  case class DataTransferRes(status: DataTransferStatus.Value, data: Option[String] = None) extends Res
+
+
+  case class ReserveNowReq(connector: Scope,
+                           expiryDate: DateTime,
+                           idTag: IdTag,
+                           parentIdTag: Option[String] = None,
+                           reservationId: Int) extends Req
+  case class ReserveNowRes(status: Reservation.Value) extends Res
+
+
+  case class CancelReservationReq(reservationId: Int) extends Req
+  case class CancelReservationRes(accepted: Boolean) extends Res
+}
+
 
 object ConfigurationStatus extends Enumeration {
   val Accepted, Rejected, NotSupported = Value

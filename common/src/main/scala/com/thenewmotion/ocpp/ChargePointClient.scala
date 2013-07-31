@@ -259,7 +259,7 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
         case UnknownVendorId => ocpp.UnknownVendorId
       }
     }
-    ocpp.DataTransferResponse(status, res.data)
+    ocpp.ChargePointService.DataTransferRes(status, res.data)
   }
 
   def reserveNow(connector: Scope,

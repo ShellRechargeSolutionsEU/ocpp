@@ -32,7 +32,7 @@ class CentralSystemDispatcherV12(log: LogFunc) extends AbstractDispatcher[Centra
       case BootNotification => ?[BootNotificationRequest, BootNotificationResponse] {
         req =>
           import req._
-          val ocpp.BootNotificationResponse(registrationAccepted, currentTime, heartbeatInterval) =
+          val ocpp.CentralSystemService.BootNotificationRes(registrationAccepted, currentTime, heartbeatInterval) =
             service.bootNotification(
               chargePointVendor,
               chargePointModel,
@@ -152,7 +152,7 @@ class CentralSystemDispatcherV15(log: LogFunc) extends AbstractDispatcher[Centra
       case BootNotification => ?[BootNotificationRequest, BootNotificationResponse] {
         req =>
           import req._
-          val ocpp.BootNotificationResponse(registrationAccepted, currentTime, heartbeatInterval) =
+          val ocpp.CentralSystemService.BootNotificationRes(registrationAccepted, currentTime, heartbeatInterval) =
             service.bootNotification(
               chargePointVendor,
               chargePointModel,
