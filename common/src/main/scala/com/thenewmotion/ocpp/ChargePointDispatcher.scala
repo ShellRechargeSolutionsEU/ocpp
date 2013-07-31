@@ -27,26 +27,33 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePoint] {
     import ConvertersV15._
     import v15._
 
-    def booleanToAcceptedString(b: Boolean) = if (b) "Accepted" else "Rejected"
-    def booleanToRemoteStartStopStatus(b: Boolean) = RemoteStartStopStatus.fromString(booleanToAcceptedString(b))
+    def remoteStartStopStatus(accepted: Boolean) = if (accepted) AcceptedValue2 else RejectedValue2
 
     def ?[REQ: XMLFormat, RES: XMLFormat](f: REQ => RES): Body = reqRes(action, xml)(f)
 
     action match {
       case CancelReservation => ?[CancelReservationRequest, CancelReservationResponse] {
         req =>
-          def booleanToCancelReservationStatus(s: Boolean) =
-            CancelReservationStatus.fromString(booleanToAcceptedString(s))
           val CancelReservationRes(accepted) = service(CancelReservationReq(req.reservationId))
-          CancelReservationResponse(booleanToCancelReservationStatus(accepted))
+          CancelReservationResponse(if (accepted) AcceptedValue9 else RejectedValue8)
       }
 
       case ChangeAvailability => ?[ChangeAvailabilityRequest, ChangeAvailabilityResponse] {
         req =>
+          val availabilityType = req.typeValue match {
+            case Inoperative => ocpp.AvailabilityType.Inoperative
+            case Operative => ocpp.AvailabilityType.Operative
+          }
+
           val ChangeAvailabilityRes(result) = service(ChangeAvailabilityReq(
             Scope.fromOcpp(req.connectorId),
-            ocpp.AvailabilityType.withName(req.typeValue.toString)))
-          ChangeAvailabilityResponse(AvailabilityStatus.fromString(result.toString))
+            availabilityType))
+
+          ChangeAvailabilityResponse(result match {
+            case ocpp.AvailabilityStatus.Accepted => AcceptedValue7
+            case ocpp.AvailabilityStatus.Rejected => RejectedValue6
+            case ocpp.AvailabilityStatus.Scheduled => Scheduled
+          })
       }
 
       case ChangeConfiguration => ?[ChangeConfigurationRequest, ChangeConfigurationResponse] {
@@ -57,16 +64,15 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePoint] {
 
       case ClearCache => ?[ClearCacheRequest, ClearCacheResponse] {
         req =>
-          def booleanToClearCacheStatus(b: Boolean) = ClearCacheStatus.fromString(booleanToAcceptedString(b))
-          val ClearCacheRes(result) = service(ClearCacheReq)
-          ClearCacheResponse(booleanToClearCacheStatus(result))
+          val ClearCacheRes(accepted) = service(ClearCacheReq)
+          ClearCacheResponse(if (accepted) AcceptedValue3 else RejectedValue3)
       }
 
       case GetConfiguration => ?[GetConfigurationRequest, GetConfigurationResponse] {
         req =>
-          def genericKVToV15KV(kv: ocpp.KeyValue) = v15.KeyValue(kv.key, kv.readonly, kv.value)
+          def keyValue(kv: ocpp.KeyValue) = v15.KeyValue(kv.key, kv.readonly, kv.value)
           val GetConfigurationRes(values, unknownKeys) = service(GetConfigurationReq(req.key.toList))
-          GetConfigurationResponse(values.map(genericKVToV15KV), unknownKeys)
+          GetConfigurationResponse(values.map(keyValue), unknownKeys)
       }
 
       case GetDiagnostics => ?[GetDiagnosticsRequest, GetDiagnosticsResponse] {
@@ -93,14 +99,14 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePoint] {
       case RemoteStartTransaction => ?[RemoteStartTransactionRequest, RemoteStartTransactionResponse] {
         req =>
           val connectorScope = req.connectorId.map(ConnectorScope.fromOcpp)
-          val RemoteStartTransactionRes(status) = service(RemoteStartTransactionReq(req.idTag, connectorScope))
-          RemoteStartTransactionResponse(booleanToRemoteStartStopStatus(status))
+          val RemoteStartTransactionRes(accepted) = service(RemoteStartTransactionReq(req.idTag, connectorScope))
+          RemoteStartTransactionResponse(remoteStartStopStatus(accepted))
       }
 
       case RemoteStopTransaction => ?[RemoteStopTransactionRequest, RemoteStopTransactionResponse] {
         req =>
-          val RemoteStopTransactionRes(status) = service(RemoteStopTransactionReq(req.transactionId))
-          RemoteStopTransactionResponse(booleanToRemoteStartStopStatus(status))
+          val RemoteStopTransactionRes(accepted) = service(RemoteStopTransactionReq(req.transactionId))
+          RemoteStopTransactionResponse(remoteStartStopStatus(accepted))
       }
 
       case ReserveNow => ?[ReserveNowRequest, ReserveNowResponse] {
@@ -115,18 +121,21 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePoint] {
 
       case Reset => ?[ResetRequest, ResetResponse] {
         req =>
-          def v15ResetTypeToGenericResetType(resetType: ResetType) =
-            com.thenewmotion.ocpp.ResetType.withName(resetType.toString)
-
-          def booleanToResetStatus(b: Boolean) = ResetStatus.fromString(booleanToAcceptedString(b))
-
-          val ResetRes(result) = service(ResetReq(v15ResetTypeToGenericResetType(req.typeValue)))
-          ResetResponse(booleanToResetStatus(result))
+          val resetType = req.typeValue match {
+            case Hard => ocpp.ResetType.Hard
+            case Soft => ocpp.ResetType.Soft
+          }
+          val ResetRes(accepted) = service(ResetReq(resetType))
+          ResetResponse(if (accepted) AcceptedValue6 else RejectedValue5)
       }
 
       case SendLocalList => ?[SendLocalListRequest, SendLocalListResponse] {
         req =>
-          val updateType = ocpp.UpdateType.withName(req.updateType.toString)
+
+          val updateType = req.updateType match {
+            case Differential => ocpp.UpdateType.Differential
+            case Full => ocpp.UpdateType.Full
+          }
           val listVersion = AuthListSupported(req.listVersion)
           val localAuthList = req.localAuthorisationList.map(_.toOcpp).toList
 
@@ -138,8 +147,8 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePoint] {
       case UnlockConnector => ?[UnlockConnectorRequest, UnlockConnectorResponse] {
         req =>
           val connectorScope = ConnectorScope.fromOcpp(req.connectorId)
-          val UnlockConnectorRes(result) = service(UnlockConnectorReq(connectorScope))
-          UnlockConnectorResponse(UnlockStatus.fromString(booleanToAcceptedString(result)))
+          val UnlockConnectorRes(accepted) = service(UnlockConnectorReq(connectorScope))
+          UnlockConnectorResponse(if (accepted) AcceptedValue4 else RejectedValue4)
       }
 
       case UpdateFirmware => ?[UpdateFirmwareRequest, UpdateFirmwareResponse] {
