@@ -1,15 +1,14 @@
 package com.thenewmotion
 package ocpp
 
-import scala.concurrent.duration._
 import scala.xml.NodeSeq
 import soapenvelope12.Body
 import scalaxb.XMLFormat
 
 object ChargePointDispatcher {
-  def apply(version: Version.Value, log: LogFunc): Dispatcher[ChargePointService] = version match {
+  def apply(version: Version.Value): Dispatcher[ChargePointService] = version match {
     case Version.V12 => sys.error("Requests to the charge point are not yet supported with OCPP 1.2")
-    case Version.V15 => new ChargePointDispatcherV15(log)
+    case Version.V15 => new ChargePointDispatcherV15
   }
 }
 
@@ -17,7 +16,7 @@ object ChargePointDispatcher {
  * Can call the corresponding methods on a ChargePointService object when given a message containing a request sent to
  * a charge point.
  */
-class ChargePointDispatcherV15(log: LogFunc = (_ => ())) extends AbstractDispatcher[ChargePointService](log) {
+class ChargePointDispatcherV15 extends AbstractDispatcher[ChargePointService] {
   def version: Version.Value = Version.V15
 
   val actions = ChargePointAction
@@ -92,7 +91,7 @@ class ChargePointDispatcherV15(log: LogFunc = (_ => ())) extends AbstractDispatc
 
       case RemoteStartTransaction => ?[RemoteStartTransactionRequest, RemoteStartTransactionResponse] {
         req =>
-          val connectorScope = req.connectorId.map(ConnectorScope.fromOcpp(_))
+          val connectorScope = req.connectorId.map(ConnectorScope.fromOcpp)
 
           RemoteStartTransactionResponse(
             booleanToRemoteStartStopStatus(service.remoteStartTransaction(req.idTag, connectorScope)))

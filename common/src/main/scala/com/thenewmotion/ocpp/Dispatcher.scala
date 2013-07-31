@@ -20,7 +20,7 @@ trait Dispatcher[T] {
   def dispatch(body: Body, service: => T): Body
 }
 
-abstract class AbstractDispatcher[T](log: LogFunc)(implicit evidence: OcppService[T]) extends Dispatcher[T] {
+abstract class AbstractDispatcher[T](implicit evidence: OcppService[T]) extends Dispatcher[T] {
   implicit def faultToBody(x: soapenvelope12.Fault) = x.asBody
   def version: Version.Value
 
@@ -49,14 +49,10 @@ abstract class AbstractDispatcher[T](log: LogFunc)(implicit evidence: OcppServic
     def apply[REQ: XMLFormat, RES: XMLFormat](action: actions.Value, xml: NodeSeq)(f: REQ => RES) = fromXMLEither[REQ](xml) match {
       case Left(msg) => ProtocolError(msg)
       case Right(req) => try {
-        log(req)
         val res = f(req)
-        log(res)
         simpleBody(DataRecord(Some(evidence.namespace(version)), Some(action.responseLabel), res))
       } catch {
-        case FaultException(fault) =>
-          log(fault)
-          fault
+        case FaultException(fault) => fault
       }
     }
   }

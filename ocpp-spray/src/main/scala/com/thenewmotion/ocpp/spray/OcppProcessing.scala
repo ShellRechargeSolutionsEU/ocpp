@@ -13,9 +13,7 @@ import scala.language.implicitConversions
 /**
  * The information about the charge point available in an incoming request
  */
-case class ChargerInfo(ocppVersion: Version.Value,
-                       endpointUrl: Option[Uri],
-                       chargerId: String)
+case class ChargerInfo(ocppVersion: Version.Value, endpointUrl: Option[Uri], chargerId: String)
 
 object OcppProcessing extends Logging {
 
@@ -24,17 +22,15 @@ object OcppProcessing extends Logging {
   type Result = Either[HttpResponse, (ChargerId, ResponseFunc)]
   type OcppMessageLogger = (ChargerId, Version.Value, Any) => Unit
 
-  def apply[T: OcppService](req: HttpRequest, toService: ChargerInfo => Option[T],
-                            log: OcppMessageLogger = noOpLogger): Result = {
+  def apply[T: OcppService](req: HttpRequest, toService: ChargerInfo => Option[T]): Result = {
     val (decoded, encode) = decodeEncode(req)
-    applyDecoded(decoded, toService, log) match {
+    applyDecoded(decoded, toService) match {
       case Right((id, res)) => Right((id, () => encode(res())))
       case Left(res) => Left(encode(res))
     }
   }
 
-  private[spray] def applyDecoded[T: OcppService](req: HttpRequest, toService: ChargerInfo => Option[T],
-                                                  log: OcppMessageLogger = noOpLogger): Result = safe {
+  private[spray] def applyDecoded[T: OcppService](req: HttpRequest, toService: ChargerInfo => Option[T]): Result = safe {
 
     def withService(chargerInfo: ChargerInfo): Either[HttpResponse, T] = toService(chargerInfo) match {
       case Some(service) => Right(service)
@@ -54,12 +50,9 @@ object OcppProcessing extends Logging {
       service <- withService(chargerInfo).right
     } yield {
       httpLogger.debug(s">>\n\t${req.headers.mkString("\n\t")}\n\t$xml")
-      val logForCharger = log(chargerId, version, (_ : Any))
-      (chargerInfo.chargerId, () => safe(OcppResponse(dispatch(chargerInfo.ocppVersion, env.Body, service, logForCharger))).merge)
+      (chargerInfo.chargerId, () => safe(OcppResponse(dispatch(chargerInfo.ocppVersion, env.Body, service))).merge)
     }
   }.joinRight
-
-  private def noOpLogger(chargerId: ChargerId, ocppVersion: Version.Value, msg: Any) {}
 
   private def parseVersion(body: Body): Either[HttpResponse, Version.Value] = {
     Version.fromBody(body) match {
@@ -104,9 +97,9 @@ object OcppProcessing extends Logging {
       OcppResponse(ProtocolError(msg))
     }
 
-  private[spray] def dispatch[T](version: Version.Value, body: Body, service: => T, log: LogFunc = (_ => ()))
+  private[spray] def dispatch[T](version: Version.Value, body: Body, service: => T)
                                 (implicit ocppService: OcppService[T]): Body =
-    ocppService(version, log).dispatch(body, service)
+    ocppService(version).dispatch(body, service)
 
   implicit def errorToEither[T](x: Fault): Either[HttpResponse, T] = Left(OcppResponse(x))
 
