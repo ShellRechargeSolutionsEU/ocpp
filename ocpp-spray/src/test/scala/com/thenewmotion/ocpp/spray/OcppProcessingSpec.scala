@@ -11,6 +11,8 @@ import com.thenewmotion.ocpp.{Scope => _, _}
 import Version._
 import org.joda.time.DateTime
 import scala.io.Source
+import CentralSystem._
+import ChargePoint._
 
 
 class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUtils {
@@ -21,19 +23,19 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
       val result = OcppProcessing.applyDecoded(httpRequest, _ => Some(mockCentralService))
       result.right.get._2() // need to force lazy value
 
-      there was one(mockCentralService).heartbeat
+      there was one(mockCentralService).apply(HeartbeatReq)
     }
 
     "report an identity mismatch fault if the service function returns None" in new TestScope {
-      val result = OcppProcessing.applyDecoded[CentralSystemService](httpRequest, _ => None)
+      val result = OcppProcessing.applyDecoded[CentralSystem](httpRequest, _ => None)
 
       result must beLeft
       result.left.get.entity.asString must beMatching(".*IdentityMismatch.*")
     }
 
     "call the user-supplied ChargePointService according to the request" in {
-      val mockCPService = mock[ChargePointService]
-      mockCPService.getLocalListVersion returns AuthListSupported(0)
+      val mockCPService = mock[ChargePoint]
+      mockCPService.apply(GetLocalListVersionReq) returns GetLocalListVersionRes(AuthListSupported(0))
       val httpRequest = HttpRequest(HttpMethods.POST,
                                     Uri("/"),
                                     List(`Content-Type`(MediaTypes.`application/soap+xml`)),
@@ -42,7 +44,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
       val result = OcppProcessing.applyDecoded(httpRequest, _ => Some(mockCPService))
       result.right.get._2() // need to force lazy value
 
-      there was one(mockCPService).getLocalListVersion
+      there was one(mockCPService).apply(GetLocalListVersionReq)
     }
 
     "dispatch ocpp 1.2" in new TestScope {
@@ -52,7 +54,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
       val req = bodyFrom("v12/heartbeatRequest.xml")
       val res = OcppProcessing.dispatch(V12, req, mockCentralService).any.head
 
-      there was one(mockCentralService).heartbeat
+      there was one(mockCentralService).apply(HeartbeatReq)
       res.value mustEqual HeartbeatResponse(dateTime.toXMLCalendar)
     }
 
@@ -63,7 +65,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
       val req = bodyFrom("v15/heartbeatRequest.xml")
       val res = OcppProcessing.dispatch(V15, req, mockCentralService).any.head
 
-      there was one(mockCentralService).heartbeat
+      there was one(mockCentralService).apply(HeartbeatReq)
       res.value mustEqual HeartbeatResponse(dateTime.toXMLCalendar)
     }
 
@@ -77,7 +79,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
     "return messages with charge point namespace when processing messages for charger" in new TestScope {
       val req = bodyFrom("v15/getLocalListVersionRequest.xml")
-      mockChargePointService.getLocalListVersion returns AuthListNotSupported
+      mockChargePointService.apply(GetLocalListVersionReq) returns GetLocalListVersionRes(AuthListNotSupported)
 
       val res = OcppProcessing.dispatch(V15, req, mockChargePointService).any.head
 
@@ -95,13 +97,14 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
   private trait TestScope extends Scope {
     val dateTime = DateTime.now
-    val mockChargePointService = mock[ChargePointService]
-    val mockCentralService = mock[CentralSystemService]
-    mockCentralService.heartbeat returns dateTime
-    val httpRequest = HttpRequest(HttpMethods.POST,
-                                  Uri("/"),
-                                  List(`Content-Type`(MediaTypes.`application/soap+xml`)),
-                                  HttpEntity(bytesOfResourceFile("v15/heartbeatRequest.xml")))
+    val mockChargePointService = mock[ChargePoint]
+    val mockCentralService = mock[CentralSystem]
+    mockCentralService.apply(HeartbeatReq) returns HeartbeatRes(dateTime)
+    val httpRequest = HttpRequest(
+      HttpMethods.POST,
+      Uri("/"),
+      List(`Content-Type`(MediaTypes.`application/soap+xml`)),
+      HttpEntity(bytesOfResourceFile("v15/heartbeatRequest.xml")))
   }
 
   private def bytesOfResourceFile(filename: String) =

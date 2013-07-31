@@ -9,7 +9,7 @@ trait OcppService[T] {
 }
 
 object OcppService {
-  implicit val centralSystemOcppService: OcppService[CentralSystemService] = new OcppService[CentralSystemService] {
+  implicit val centralSystemOcppService: OcppService[CentralSystem] = new OcppService[CentralSystem] {
     def apply(version: Version.Value) = CentralSystemDispatcher(version)
 
     def namespace(version: Version.Value) = version match {
@@ -18,7 +18,7 @@ object OcppService {
     }
   }
 
-  implicit val chargePointOcppService: OcppService[ChargePointService] = new OcppService[ChargePointService] {
+  implicit val chargePointOcppService: OcppService[ChargePoint] = new OcppService[ChargePoint] {
     def apply(version: Version.Value) = ChargePointDispatcher(version)
 
     def namespace(version: Version.Value) = version match {
@@ -27,4 +27,3 @@ object OcppService {
     }
   }
 }
-

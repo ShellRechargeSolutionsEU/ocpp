@@ -6,43 +6,42 @@ import ocpp.Meter.DefaultValue
 import scalaxb.XMLFormat
 
 object CentralSystemDispatcher {
-  def apply(version: Version.Value): Dispatcher[CentralSystemService] = version match {
-    case Version.V12 => new CentralSystemDispatcherV12
-    case Version.V15 => new CentralSystemDispatcherV15
+  def apply(version: Version.Value): Dispatcher[CentralSystem] = version match {
+    case Version.V12 => CentralSystemDispatcherV12
+    case Version.V15 => CentralSystemDispatcherV15
   }
 }
 
-class CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemService] {
+object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystem] {
   import v12.{CentralSystemService => _, _}
+  import ocpp.CentralSystem._
   import ConvertersV12._
 
   def version = Version.V12
   val actions = CentralSystemAction
   import actions._
 
-  def dispatch(action: Value, xml: NodeSeq, service: => CentralSystemService) = {
+  def dispatch(action: Value, xml: NodeSeq, service: => CentralSystem) = {
     def ?[REQ: XMLFormat, RES: XMLFormat](f: REQ => RES) = reqRes(action, xml)(f)
 
     action match {
-
       case Authorize => ?[AuthorizeRequest, AuthorizeResponse] {
-        req => AuthorizeResponse(service.authorize(req.idTag).toV12)
+        req => AuthorizeResponse(service(AuthorizeReq(req.idTag)).asInstanceOf[AuthorizeRes].idTag.toV12)
       }
 
       case BootNotification => ?[BootNotificationRequest, BootNotificationResponse] {
-        req =>
-          import req._
-          val ocpp.CentralSystemService.BootNotificationRes(registrationAccepted, currentTime, heartbeatInterval) =
-            service.bootNotification(
-              chargePointVendor,
-              chargePointModel,
-              chargePointSerialNumber,
-              chargeBoxSerialNumber,
-              firmwareVersion,
-              iccid,
-              imsi,
-              meterType,
-              meterSerialNumber)
+        x =>
+          val BootNotificationRes(registrationAccepted, currentTime, heartbeatInterval) =
+            service(BootNotificationReq(
+              chargePointVendor = x.chargePointVendor,
+              chargePointModel = x.chargePointModel,
+              chargePointSerialNumber = x.chargePointSerialNumber,
+              chargeBoxSerialNumber = x.chargeBoxSerialNumber,
+              firmwareVersion = x.firmwareVersion,
+              iccid = x.iccid,
+              imsi = x.imsi,
+              meterType = x.meterType,
+              meterSerialNumber = x.meterSerialNumber))
 
           val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue7 else RejectedValue6
 
@@ -56,28 +55,28 @@ class CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemService
               case Uploaded => true
               case UploadFailed => false
             }
-            service.diagnosticsStatusNotification(uploaded)
+            service(DiagnosticsStatusNotificationReq(uploaded))
             DiagnosticsStatusNotificationResponse()
         }
 
       case StartTransaction => ?[StartTransactionRequest, StartTransactionResponse] {
         req =>
           import req._
-          val (transactionId, idTagInfo) = service.startTransaction(
+          val StartTransactionRes(transactionId, idTagInfo) = service(StartTransactionReq(
             ocpp.ConnectorScope.fromOcpp(connectorId),
-            idTag, timestamp.toDateTime, meterStart, None)
+            idTag, timestamp.toDateTime, meterStart, None))
           StartTransactionResponse(transactionId, idTagInfo.toV12)
       }
 
       case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse] {
         req =>
           import req._
-          val idTagInfo = service.stopTransaction(transactionId, idTag, timestamp.toDateTime, meterStop, Nil)
+          val StopTransactionRes(idTagInfo) = service(StopTransactionReq(transactionId, idTag, timestamp.toDateTime, meterStop, Nil))
           StopTransactionResponse(idTagInfo.map(_.toV12))
       }
 
       case Heartbeat => ?[HeartbeatRequest, HeartbeatResponse] {
-        _ => HeartbeatResponse(service.heartbeat.toXMLCalendar)
+        _ => HeartbeatResponse(service(HeartbeatReq).asInstanceOf[HeartbeatRes].currentTime.toXMLCalendar)
       }
 
       case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse] {
@@ -102,7 +101,7 @@ class CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemService
               }
               ocpp.Faulted(errorCode, None, None)
           }
-          service.statusNotification(ocpp.Scope.fromOcpp(req.connectorId), status, None, None)
+          service(StatusNotificationReq(ocpp.Scope.fromOcpp(req.connectorId), status, None, None))
           StatusNotificationResponse()
       }
 
@@ -117,14 +116,14 @@ class CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemService
               case Installed => ocpp.Installed
             }
           }
-          service.firmwareStatusNotification(status)
+          service(FirmwareStatusNotificationReq(status))
           FirmwareStatusNotificationResponse()
       }
 
       case MeterValues => ?[MeterValuesRequest, MeterValuesResponse] {
         req =>
           def toMeter(x: MeterValue): Meter = Meter(x.timestamp.toDateTime, List(Meter.DefaultValue(x.value)))
-          service.meterValues(ocpp.Scope.fromOcpp(req.connectorId), None, req.values.map(toMeter).toList)
+          service(MeterValuesReq(ocpp.Scope.fromOcpp(req.connectorId), None, req.values.map(toMeter).toList))
           MeterValuesResponse()
       }
       case DataTransfer => throw new ActionNotSupportedException(version, "dataTransfer")
@@ -132,8 +131,9 @@ class CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemService
   }
 }
 
-class CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemService] {
+object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystem] {
   import v15.{CentralSystemService => _, _}
+  import CentralSystem._
   import ConvertersV15._
 
   def version = Version.V15
@@ -141,28 +141,29 @@ class CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemService
   import actions._
 
 
-  def dispatch(action: actions.Value, xml: NodeSeq, service: => CentralSystemService) = {
+  def dispatch(action: actions.Value, xml: NodeSeq, service: => CentralSystem) = {
     def ?[REQ: XMLFormat, RES: XMLFormat](f: REQ => RES) = reqRes(action, xml)(f)
 
     action match {
       case Authorize => ?[AuthorizeRequest, AuthorizeResponse] {
-        req => AuthorizeResponse(service.authorize(req.idTag).toV15)
+        req =>
+          val AuthorizeRes(idTag) = service(AuthorizeReq(req.idTag))
+          AuthorizeResponse(idTag.toV15)
       }
 
       case BootNotification => ?[BootNotificationRequest, BootNotificationResponse] {
         req =>
-          import req._
-          val ocpp.CentralSystemService.BootNotificationRes(registrationAccepted, currentTime, heartbeatInterval) =
-            service.bootNotification(
-              chargePointVendor,
-              chargePointModel,
-              chargePointSerialNumber,
-              chargeBoxSerialNumber,
-              firmwareVersion,
-              iccid,
-              imsi,
-              meterType,
-              meterSerialNumber)
+          val BootNotificationRes(registrationAccepted, currentTime, heartbeatInterval) =
+            service(BootNotificationReq(
+              chargePointVendor = req.chargePointVendor,
+              chargePointModel = req.chargePointModel,
+              chargePointSerialNumber = req.chargePointSerialNumber,
+              chargeBoxSerialNumber = req.chargeBoxSerialNumber,
+              firmwareVersion = req.firmwareVersion,
+              iccid = req.iccid,
+              imsi = req.imsi,
+              meterType = req.meterType,
+              meterSerialNumber = req.meterSerialNumber))
 
           val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue11 else RejectedValue9
 
@@ -176,16 +177,16 @@ class CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemService
               case Uploaded => true
               case UploadFailed => false
             }
-            service.diagnosticsStatusNotification(uploaded)
+            service(DiagnosticsStatusNotificationReq(uploaded))
             DiagnosticsStatusNotificationResponse()
         }
 
       case StartTransaction => ?[StartTransactionRequest, StartTransactionResponse] {
         req =>
           import req._
-          val (transactionId, idTagInfo) = service.startTransaction(
+          val StartTransactionRes(transactionId, idTagInfo) = service(StartTransactionReq(
             ocpp.ConnectorScope.fromOcpp(connectorId),
-            idTag, timestamp.toDateTime, meterStart, None)
+            idTag, timestamp.toDateTime, meterStart, None))
           StartTransactionResponse(transactionId, idTagInfo.toV15)
       }
 
@@ -195,17 +196,19 @@ class CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemService
           def toMeter(x: MeterValue) = Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
           def toTransactionData(x: TransactionData) = ocpp.TransactionData(x.values.map(toMeter).toList)
 
-          val idTagInfo = service.stopTransaction(
+          val StopTransactionRes(idTagInfo) = service(StopTransactionReq(
             transactionId,
             idTag,
             timestamp.toDateTime,
             meterStop,
-            transactionData.map(toTransactionData).toList)
+            transactionData.map(toTransactionData).toList))
           StopTransactionResponse(idTagInfo.map(_.toV15))
       }
 
       case Heartbeat => ?[HeartbeatRequest, HeartbeatResponse] {
-        _ => HeartbeatResponse(service.heartbeat.toXMLCalendar)
+        _ =>
+          val HeartbeatRes(currentTime) = service(HeartbeatReq)
+          HeartbeatResponse(currentTime.toXMLCalendar)
       }
 
       case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse] {
@@ -236,11 +239,11 @@ class CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemService
               ocpp.Faulted(errorCode, req.info, req.vendorErrorCode)
             case Reserved => ocpp.Reserved
           }
-          service.statusNotification(
+          service(StatusNotificationReq(
             ocpp.Scope.fromOcpp(req.connectorId),
             status,
             req.timestamp.map(_.toDateTime),
-            req.vendorId)
+            req.vendorId))
           StatusNotificationResponse()
       }
 
@@ -255,20 +258,20 @@ class CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemService
               case Installed => ocpp.Installed
             }
           }
-          service.firmwareStatusNotification(status)
+          service(FirmwareStatusNotificationReq(status))
           FirmwareStatusNotificationResponse()
       }
 
       case MeterValues => ?[MeterValuesRequest, MeterValuesResponse] {
         req =>
           def toMeter(x: MeterValue): Meter = Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
-          service.meterValues(ocpp.Scope.fromOcpp(req.connectorId), req.transactionId, req.values.map(toMeter).toList)
+          service(MeterValuesReq(ocpp.Scope.fromOcpp(req.connectorId), req.transactionId, req.values.map(toMeter).toList))
           MeterValuesResponse()
       }
 
       case DataTransfer => ?[DataTransferRequest, DataTransferResponse] {
         req =>
-          val res = service.dataTransfer(req.vendorId, req.messageId, req.data)
+          val res = service(DataTransferReq(req.vendorId, req.messageId, req.data)).asInstanceOf[DataTransferRes]
           val status: DataTransferStatus = {
             import ocpp.{DataTransferStatus => ocpp}
             res.status match {

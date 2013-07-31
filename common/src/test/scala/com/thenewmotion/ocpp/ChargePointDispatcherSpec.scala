@@ -9,6 +9,7 @@ import scala.concurrent.duration._
 import org.specs2.mock.Mockito
 import org.specs2.mutable.SpecificationWithJUnit
 import ChargePointAction._
+import ChargePoint._
 
 class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
 
@@ -16,45 +17,46 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
     import v15.{ChargePointService => _, AvailabilityStatus => _, AvailabilityType => _, _}
 
     "call cancelReservation and return its false result" in new TestScope {
-      cpService.cancelReservation(13) returns false
+      cpService.apply(CancelReservationReq(13)) returns CancelReservationRes(accepted = false)
 
       val xml = <CancelReservation xmlns={v15PointNamespace}><reservationId>13</reservationId></CancelReservation>
-      val body = (new ChargePointDispatcherV15).dispatch(CancelReservation, xml, cpService)
+      val body = ChargePointDispatcherV15.dispatch(CancelReservation, xml, cpService)
 
       body must beResponse(CancelReservationResponse(CancelReservationStatus.fromString("Rejected")))
     }
 
     "call cancelReservation and return its true result" in new TestScope {
-      cpService.cancelReservation(4) returns true
+      cpService.apply(CancelReservationReq(4)) returns CancelReservationRes(accepted = true)
 
       val xml = <CancelReservation xmlns={v15PointNamespace}><reservationId>4</reservationId></CancelReservation>
-      val body = (new ChargePointDispatcherV15).dispatch(CancelReservation, xml, cpService)
+      val body = ChargePointDispatcherV15.dispatch(CancelReservation, xml, cpService)
 
       body must beResponse(CancelReservationResponse(CancelReservationStatus.fromString("Accepted")))
     }
 
     "call changeAvailability with charge point scope if connector is 0" in new TestScope {
-      cpService.changeAvailability(any, any) returns AvailabilityStatus.Accepted
+      cpService.apply(any[ChangeAvailabilityReq]) returns ChangeAvailabilityRes(AvailabilityStatus.Accepted)
 
       val xml = <ChangeAvailability xmlns={v15PointNamespace}>
                   <connectorId>0</connectorId>
                   <type>Operative</type>
                 </ChangeAvailability>
-      new (ChargePointDispatcherV15).dispatch(ChangeAvailability, xml, cpService)
+      ChargePointDispatcherV15.dispatch(ChangeAvailability, xml, cpService)
 
-      there was one(cpService).changeAvailability(ChargePointScope, AvailabilityType.Operative)
+      there was one(cpService).apply(ChangeAvailabilityReq(ChargePointScope, AvailabilityType.Operative))
     }
 
     "return result of changeAvailability in the right way" in new TestScope {
-      cpService.changeAvailability(any, any).returns(AvailabilityStatus.Accepted)
-                                            .thenReturns(AvailabilityStatus.Scheduled)
-                                            .thenReturns(AvailabilityStatus.Rejected)
+      cpService.apply(any[ChangeAvailabilityReq])
+        .returns(ChangeAvailabilityRes(AvailabilityStatus.Accepted))
+        .thenReturns(ChangeAvailabilityRes(AvailabilityStatus.Scheduled))
+        .thenReturns(ChangeAvailabilityRes(AvailabilityStatus.Rejected))
 
       val xml = <ChangeAvailability xmlns={v15PointNamespace}>
                   <connectorId>0</connectorId>
                   <type>Operative</type>
                 </ChangeAvailability>
-      val dispatcher = new ChargePointDispatcherV15
+      val dispatcher = ChargePointDispatcherV15
       def dispatchChangeAv: Body =  dispatcher.dispatch(ChangeAvailability, xml, cpService)
       val result = (dispatchChangeAv, dispatchChangeAv, dispatchChangeAv)
 
@@ -64,25 +66,26 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
     }
 
     "call changeConfiguration with the right parameters" in new TestScope {
-      cpService.changeConfiguration(any, any) returns ocpp.ConfigurationStatus.Accepted
+      cpService.apply(any[ChangeConfigurationReq]) returns ChangeConfigurationRes(ocpp.ConfigurationStatus.Accepted)
 
       val xml = <ChangeConfiguration xmlns={v15PointNamespace}>
                   <key>aap</key><value>noot</value>
                 </ChangeConfiguration>
-      (new ChargePointDispatcherV15).dispatch(ChangeConfiguration, xml, cpService)
+      ChargePointDispatcherV15.dispatch(ChangeConfiguration, xml, cpService)
 
-      there was one(cpService).changeConfiguration("aap", "noot")
+      there was one(cpService).apply(ChangeConfigurationReq("aap", "noot"))
     }
 
     "return values from changeConfiguration" in new TestScope {
-      cpService.changeConfiguration(any, any).returns(ocpp.ConfigurationStatus.Accepted)
-                                             .thenReturns(ocpp.ConfigurationStatus.Rejected)
-                                             .thenReturns(ocpp.ConfigurationStatus.NotSupported)
+      cpService.apply(any[ChangeConfigurationReq])
+        .returns(ChangeConfigurationRes(ocpp.ConfigurationStatus.Accepted))
+        .thenReturns(ChangeConfigurationRes(ocpp.ConfigurationStatus.Rejected))
+        .thenReturns(ChangeConfigurationRes(ocpp.ConfigurationStatus.NotSupported))
 
       val xml = <ChangeConfiguration xmlns={v15PointNamespace}>
         <key>aap</key><value>noot</value>
       </ChangeConfiguration>
-      val dispatcher = new ChargePointDispatcherV15
+      val dispatcher = ChargePointDispatcherV15
       def dispatch = dispatcher.dispatch(ChangeConfiguration, xml, cpService)
       val result = (dispatch, dispatch, dispatch)
 
@@ -92,10 +95,10 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
     }
 
     "call clearCache and return its result" in new TestScope {
-      cpService.clearCache returns true thenReturns false
+      cpService.apply(ClearCacheReq) returns ClearCacheRes(accepted = true) thenReturns ClearCacheRes(accepted = false)
 
       val xml = <ClearCache xmlns={v15PointNamespace}/>
-      val dispatcher = new ChargePointDispatcherV15
+      val dispatcher = ChargePointDispatcherV15
       def dispatch = dispatcher.dispatch(ClearCache, xml, cpService)
       val result = (dispatch, dispatch)
 
@@ -104,31 +107,33 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
     }
 
     "call getConfiguration with the right parameters" in new TestScope {
-      cpService.getConfiguration(any) returns Configuration(List.empty, List.empty)
+      cpService.apply(any[GetConfigurationReq]) returns GetConfigurationRes(List.empty, List.empty)
 
       val xml = <GetConfiguration xmlns={v15PointNamespace}>
                   <key>sleutel</key><key>Schlüssel</key><key>clef</key>
                 </GetConfiguration>
-      (new ChargePointDispatcherV15).dispatch(GetConfiguration, xml, cpService)
+      ChargePointDispatcherV15.dispatch(GetConfiguration, xml, cpService)
 
-      there was one(cpService).getConfiguration(List("sleutel", "Schlüssel", "clef"))
+      there was one(cpService).apply(GetConfigurationReq(List("sleutel", "Schlüssel", "clef")))
     }
 
     "return the result of getConfiguration" in new TestScope {
-      cpService.getConfiguration(any) returns Configuration(List(ocpp.KeyValue("aap", readonly = false, None),
-                                                                 ocpp.KeyValue("noot", readonly = true, Some("mies"))),
-                                                            List("boom", "roos", "vis"))
+      cpService.apply(any[GetConfigurationReq]) returns GetConfigurationRes(
+        List(ocpp.KeyValue("aap", readonly = false, None), ocpp.KeyValue("noot", readonly = true, Some("mies"))),
+        List("boom", "roos", "vis"))
+
+//      cpService.getConfiguration(any) returns Configuration()
 
       val xml = <GetConfiguration/>
-      val result = (new ChargePointDispatcherV15).dispatch(GetConfiguration, xml, cpService)
+      val result = ChargePointDispatcherV15.dispatch(GetConfiguration, xml, cpService)
 
       result must beResponse(GetConfigurationResponse(List(v15.KeyValue("aap", readonly = false, None),
                                                            v15.KeyValue("noot", readonly = true, Some("mies"))),
                                                       List("boom", "roos", "vis")))
     }
 
-    "call getDiagnostics with the right parameters"  in new TestScope {
-      cpService.getDiagnostics(any, any, any, any) returns Some("aargh.xml")
+    "call getDiagnostics with the right parameters" in new TestScope {
+      cpService.apply(any[GetDiagnosticsReq]) returns GetDiagnosticsRes(Some("aargh.xml"))
 
       val xml = <GetDiagnostics xmlns={v15PointNamespace}>
                   <location>ftp://example.org/uploaddir</location>
@@ -138,50 +143,49 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
                   <retryInterval>90</retryInterval>
                 </GetDiagnostics>
 
-      (new ChargePointDispatcherV15).dispatch(GetDiagnostics, xml, cpService)
+      ChargePointDispatcherV15.dispatch(GetDiagnostics, xml, cpService)
 
       val expectedStartTime = new DateTime(2013, 6, 4, 13, 30, DateTimeZone.UTC).toDateTime(DateTimeZone.getDefault)
       val expectedStopTime  = new DateTime(2013, 6, 4, 14, 30, DateTimeZone.UTC).toDateTime(DateTimeZone.getDefault)
       val expectedRetries   = Retries(Some(4), Some(scala.concurrent.duration.Duration(90, SECONDS)))
-      there was one(cpService).getDiagnostics(new Uri("ftp://example.org/uploaddir"),
-                                              Some(expectedStartTime),
-                                              Some(expectedStopTime),
-                                              expectedRetries)
+      there was one(cpService).apply(GetDiagnosticsReq(
+        new Uri("ftp://example.org/uploaddir"),
+        Some(expectedStartTime),
+        Some(expectedStopTime),
+        expectedRetries))
     }
 
     "call getDiagnostics with the right parameters if optional parameters are not specified" in new TestScope {
-      cpService.getDiagnostics(any, any, any, any) returns Some("something.xml")
+      cpService.apply(any[GetDiagnosticsReq]) returns GetDiagnosticsRes(Some("something.xml"))
       val xml = simpleDiagnosticsReqXML
 
-      (new ChargePointDispatcherV15).dispatch(GetDiagnostics, xml, cpService)
+      ChargePointDispatcherV15.dispatch(GetDiagnostics, xml, cpService)
 
-      there was one(cpService).getDiagnostics(new Uri("ftp://example.org/uploaddir"), None, None, Retries(None, None))
+      there was one(cpService).apply(GetDiagnosticsReq(new Uri("ftp://example.org/uploaddir"), None, None, Retries(None, None)))
     }
 
     "return upload URL reported by charge point service to client" in new TestScope {
-      cpService.getDiagnostics(any, any, any, any) returns Some("test.xml")
+      cpService.apply(any[GetDiagnosticsReq]) returns GetDiagnosticsRes(Some("test.xml"))
       val xml = simpleDiagnosticsReqXML
 
-      val result = (new ChargePointDispatcherV15).dispatch(GetDiagnostics, xml, cpService)
+      val result = ChargePointDispatcherV15.dispatch(GetDiagnostics, xml, cpService)
 
       result must beResponse(GetDiagnosticsResponse(Some("test.xml")))
     }
 
     "return auth list version reported by charge point service to client" in new TestScope {
-      cpService.getLocalListVersion returns AuthListSupported(37)
+      cpService.apply(GetLocalListVersionReq) returns GetLocalListVersionRes(AuthListSupported(37))
 
       val xml = <GetLocalListVersion xmlns={v15PointNamespace}/>
-      val body = (new ChargePointDispatcherV15).dispatch(GetLocalListVersion, xml, cpService)
+      val body = ChargePointDispatcherV15.dispatch(GetLocalListVersion, xml, cpService)
       body must beResponse(GetLocalListVersionResponse(37))
     }
 
     "return auth list version -1 to client if service says local auth list is not supported" in new TestScope {
-      cpService.getLocalListVersion returns AuthListNotSupported
-
-      val dispatcher = new ChargePointDispatcherV15
+      cpService.apply(GetLocalListVersionReq) returns GetLocalListVersionRes(AuthListNotSupported)
 
       val xml = <GetLocalListVersion xmlns={v15PointNamespace}/>
-      val body = dispatcher.dispatch(GetLocalListVersion, xml, cpService)
+      val body = ChargePointDispatcherV15.dispatch(GetLocalListVersion, xml, cpService)
 
       body must beResponse(GetLocalListVersionResponse(-1))
     }
@@ -192,9 +196,9 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
                   <connectorId>3</connectorId>
                 </RemoteStartTransaction>
 
-      (new ChargePointDispatcherV15).dispatch(RemoteStartTransaction, xml, cpService)
+      ChargePointDispatcherV15.dispatch(RemoteStartTransaction, xml, cpService) must throwAn[Exception]
 
-      there was one(cpService).remoteStartTransaction("fedcba", Some(new ConnectorScope(2)))
+      there was one(cpService).apply(RemoteStartTransactionReq("fedcba", Some(new ConnectorScope(2))))
     }
 
     "call remoteStartTransaction with the right parameters if connectorId is not specified" in new TestScope {
@@ -202,21 +206,20 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
                   <idTag>123456</idTag>
                 </RemoteStartTransaction>
 
-      (new ChargePointDispatcherV15).dispatch(RemoteStartTransaction, xml, cpService)
+      ChargePointDispatcherV15.dispatch(RemoteStartTransaction, xml, cpService) must throwAn[Exception]
 
-      there was one(cpService).remoteStartTransaction("123456", None)
+      there was one(cpService).apply(RemoteStartTransactionReq("123456", None))
     }
 
 
     "return status of remote start transaction as reported by service to client" in new TestScope {
-      cpService.remoteStartTransaction(any, any) returns true thenReturns false
+      cpService.apply(any[RemoteStartTransactionReq]) returns RemoteStartTransactionRes(true) thenReturns RemoteStartTransactionRes(false)
 
       val xml = <RemoteStartTransaction xmlns={v15PointNamespace}>
                   <idTag>abcdef</idTag>
                 </RemoteStartTransaction>
 
-      val dispatcher = new ChargePointDispatcherV15
-      def dispatch = (new ChargePointDispatcherV15).dispatch(RemoteStartTransaction, xml, cpService)
+      def dispatch = ChargePointDispatcherV15.dispatch(RemoteStartTransaction, xml, cpService)
       val result = (dispatch, dispatch)
 
       result._1 must beResponse(RemoteStartTransactionResponse(RemoteStartStopStatus.fromString("Accepted")))
@@ -224,21 +227,22 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
     }
 
     "call remoteStopTransaction with the right parameters and return its status" in new TestScope {
-      cpService.remoteStopTransaction(42) returns true
+      cpService.apply(RemoteStopTransactionReq(42)) returns RemoteStopTransactionRes(true)
 
       val xml = <RemoteStopTransaction xmlns={v15PointNamespace}>
                   <transactionId>42</transactionId>
                 </RemoteStopTransaction>
 
-      val body = (new ChargePointDispatcherV15).dispatch(RemoteStopTransaction, xml, cpService)
+      val body = ChargePointDispatcherV15.dispatch(RemoteStopTransaction, xml, cpService)
 
       body must beResponse(RemoteStopTransactionResponse(RemoteStartStopStatus.fromString("Accepted")))
     }
 
     "call reserveNow with the right parameters and return its status" in new TestScope {
-      cpService.reserveNow(new ConnectorScope(0),
-                           new DateTime(2013, 4, 5, 6, 7, 0, DateTimeZone.UTC).toDateTime(DateTimeZone.getDefault()),
-                           "ababab", Some("acacac"), 42) returns Reservation.Occupied
+      cpService.apply(ReserveNowReq(
+        new ConnectorScope(0),
+        new DateTime(2013, 4, 5, 6, 7, 0, DateTimeZone.UTC).toDateTime(DateTimeZone.getDefault()),
+        "ababab", Some("acacac"), 42)) returns ReserveNowRes(Reservation.Occupied)
 
       val xml = <ReserveNow xmlns={v15PointNamespace}>
                   <connectorId>1</connectorId>
@@ -248,25 +252,25 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
                   <reservationId>42</reservationId>
                 </ReserveNow>
 
-      val body = (new ChargePointDispatcherV15).dispatch(ReserveNow, xml, cpService)
+      val body = ChargePointDispatcherV15.dispatch(ReserveNow, xml, cpService)
 
       body must beResponse(ReserveNowResponse(ReservationStatus.fromString("Occupied")))
     }
 
     "call reset with the right parameters and return its result" in new TestScope {
-      cpService.reset(com.thenewmotion.ocpp.ResetType.Hard) returns true
+      cpService.apply(ResetReq(com.thenewmotion.ocpp.ResetType.Hard)) returns ResetRes(accepted = true)
 
       val xml = <Reset xmlns={v15PointNamespace}>
                   <type>Hard</type>
                 </Reset>
 
-      val body = (new ChargePointDispatcherV15).dispatch(Reset, xml, cpService)
+      val body = ChargePointDispatcherV15.dispatch(Reset, xml, cpService)
 
       body must beResponse(ResetResponse(ResetStatus.fromString("Accepted")))
     }
 
     "call sendLocalList with the right parameters" in new TestScope {
-      cpService.sendLocalList(any, any, any, any) returns com.thenewmotion.ocpp.UpdateStatus.VersionMismatch
+      cpService.apply(any[SendLocalListReq]) returns SendLocalListRes(com.thenewmotion.ocpp.UpdateStatus.VersionMismatch)
 
       val xml = <SendLocalList xmlns={v15PointNamespace}>
                   <updateType>Differential</updateType>
@@ -285,7 +289,7 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
                   <hash>0123456789abcdef</hash>
                 </SendLocalList>
 
-      (new ChargePointDispatcherV15).dispatch(SendLocalList, xml, cpService)
+      ChargePointDispatcherV15.dispatch(SendLocalList, xml, cpService)
 
       val expectedExpiryDate = new DateTime(2013, 5, 7, 8, 30, 0, DateTimeZone.UTC).toDateTime(DateTimeZone.getDefault)
       val expectedAuthList =  List(AuthorisationRemove("ababab"),
@@ -294,32 +298,34 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
                                                                    Some(expectedExpiryDate),
                                                                    Some("adadad"))))
 
-      there was one(cpService).sendLocalList(ocpp.UpdateType.Differential,
-                                             AuthListSupported(233),
-                                             expectedAuthList,
-                                             Some("0123456789abcdef"))
+      there was one(cpService).apply(SendLocalListReq(
+        ocpp.UpdateType.Differential,
+        AuthListSupported(233),
+        expectedAuthList,
+        Some("0123456789abcdef")))
     }
 
     "call SendLocalList with the right parameters if everything optional is left out" in new TestScope {
-      cpService.sendLocalList(any, any, any, any) returns com.thenewmotion.ocpp.UpdateStatus.VersionMismatch
+      cpService.apply(any[SendLocalListReq]) returns SendLocalListRes(com.thenewmotion.ocpp.UpdateStatus.VersionMismatch)
 
-      (new ChargePointDispatcherV15).dispatch(SendLocalList, simpleSendLocalListXML, cpService)
+      ChargePointDispatcherV15.dispatch(SendLocalList, simpleSendLocalListXML, cpService)
 
       val expectedAuthList =  List(AuthorisationAdd("acacac",
                                    ocpp.IdTagInfo(ocpp.AuthorizationStatus.Accepted, None, None)))
-      there was one(cpService).sendLocalList(ocpp.UpdateType.Full, AuthListSupported(1), expectedAuthList, None)
+      there was one(cpService).apply(SendLocalListReq(ocpp.UpdateType.Full, AuthListSupported(1), expectedAuthList, None))
     }
 
     "return the update status as reported by sendLocalList to the client" in new TestScope {
       import ocpp.UpdateStatus._
-      cpService.sendLocalList(any, any, any, any).returns(UpdateAccepted(Some("binary blaargh")))
-                                                 .thenReturns(UpdateFailed)
-                                                 .thenReturns(HashError)
-                                                 .thenReturns(NotSupportedValue)
-                                                 .thenReturns(VersionMismatch)
 
-      val dispatcher = new ChargePointDispatcherV15
-      def dispatch = dispatcher.dispatch(SendLocalList, simpleSendLocalListXML, cpService)
+      cpService.apply(any[SendLocalListReq])
+        .returns(SendLocalListRes(UpdateAccepted(Some("binary blaargh"))))
+        .thenReturns(SendLocalListRes(UpdateFailed))
+        .thenReturns(SendLocalListRes(HashError))
+        .thenReturns(SendLocalListRes(NotSupportedValue))
+        .thenReturns(SendLocalListRes(VersionMismatch))
+
+      def dispatch = ChargePointDispatcherV15.dispatch(SendLocalList, simpleSendLocalListXML, cpService)
       val bodies = (dispatch, dispatch, dispatch, dispatch, dispatch)
 
       bodies._1 must beResponse(SendLocalListResponse(UpdateStatus.fromString("Accepted"), Some("binary blaargh")))
@@ -330,12 +336,12 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
     }
 
     "call unlockConnector with the right parameters and return its result" in new TestScope {
-      cpService.unlockConnector(ConnectorScope(2)) returns false
+      cpService.apply(UnlockConnectorReq(ConnectorScope(2))) returns UnlockConnectorRes(false)
       val xml = <UnlockConnector xmlns={v15PointNamespace}>
                   <connectorId>3</connectorId>
                 </UnlockConnector>
 
-      val body = (new ChargePointDispatcherV15).dispatch(UnlockConnector, xml, cpService)
+      val body = ChargePointDispatcherV15.dispatch(UnlockConnector, xml, cpService)
 
       body must beResponse(UnlockConnectorResponse(UnlockStatus.fromString("Rejected")))
     }
@@ -348,18 +354,19 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
                   <retryInterval>42</retryInterval>
                 </UpdateFirmware>
 
-      (new ChargePointDispatcherV15).dispatch(UpdateFirmware, xml, cpService)
+      ChargePointDispatcherV15.dispatch(UpdateFirmware, xml, cpService)
 
       val expectedRetrieveDate =
-        new DateTime(2013, 6, 7, 12, 30, 0, DateTimeZone.UTC).toDateTime(DateTimeZone.getDefault)
-      there was one(cpService).updateFirmware(expectedRetrieveDate,
-                                              new Uri("ftp://example.org/exciting-new-stuff.tgz"),
-                                              Retries(Some(13), Some(scala.concurrent.duration.Duration(42, SECONDS))))
+        new DateTime(2013, 6, 7, 12, 30, 0, DateTimeZone.UTC).toDateTime(DateTimeZone.getDefault())
+      there was one(cpService).apply(UpdateFirmwareReq(
+        expectedRetrieveDate,
+        new Uri("ftp://example.org/exciting-new-stuff.tgz"),
+        Retries(Some(13), Some(scala.concurrent.duration.Duration(42, SECONDS)))))
     }
   }
   
   private trait TestScope extends SpecsScope {
-    val cpService = mock[ChargePointService]
+    val cpService = mock[ChargePoint]
 
     val v15PointNamespace = "urn://Ocpp/Cp/2012/06/"
     val simpleDiagnosticsReqXML = <GetDiagnostics xmlns={v15PointNamespace}>

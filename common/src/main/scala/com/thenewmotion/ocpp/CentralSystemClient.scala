@@ -4,7 +4,7 @@ import org.joda.time
 import com.thenewmotion.ocpp
 import dispatch.Http
 import org.joda.time.DateTime
-import scala.concurrent.duration.{FiniteDuration, SECONDS, MINUTES}
+import scala.concurrent.duration._
 import scala.language.implicitConversions
 
 /**
@@ -37,10 +37,6 @@ private[ocpp] class CentralSystemClientV12(val chargeBoxIdentity: String, uri: U
     def endpoint = CentralSystemClientV12.this.endpoint
   }.service
 
-
-  /*def apply(req: Request) = req match {
-    case ocpp.AuthorizeRequest(idTag) => ocpp.AuthorizeResponse(authorize(idTag))
-  }*/
 
   def authorize(idTag: String) = ?(_.authorize, AuthorizeRequest(idTag)).toOcpp
 
@@ -104,10 +100,10 @@ private[ocpp] class CentralSystemClientV12(val chargeBoxIdentity: String, uri: U
       case RejectedValue6 => false
     }
 
-    ocpp.CentralSystemService.BootNotificationRes(
+    ocpp.CentralSystem.BootNotificationRes(
       accepted,
       currentTime.fold(DateTime.now)(_.toDateTime),
-      heartbeatInterval.fold(FiniteDuration(15, MINUTES))(FiniteDuration(_, SECONDS)))
+      heartbeatInterval.fold(15.minutes)(FiniteDuration(_, SECONDS)))
   }
 
   def statusNotification(scope: Scope,
@@ -258,7 +254,7 @@ private[ocpp] class CentralSystemClientV15(val chargeBoxIdentity: String, uri: U
       case RejectedValue9 => false
     }
 
-    ocpp.CentralSystemService.BootNotificationRes(accepted, currentTime.toDateTime, FiniteDuration(heartbeatInterval, SECONDS))
+    ocpp.CentralSystem.BootNotificationRes(accepted, currentTime.toDateTime, FiniteDuration(heartbeatInterval, SECONDS))
   }
 
   def statusNotification(scope: Scope,
@@ -328,7 +324,7 @@ private[ocpp] class CentralSystemClientV15(val chargeBoxIdentity: String, uri: U
         case UnknownVendorIdValue => ocpp.UnknownVendorId
       }
     }
-    ocpp.CentralSystemService.DataTransferRes(status, data)
+    ocpp.CentralSystem.DataTransferRes(status, data)
   }
 
   def toMeter(x: Meter): MeterValue = {
