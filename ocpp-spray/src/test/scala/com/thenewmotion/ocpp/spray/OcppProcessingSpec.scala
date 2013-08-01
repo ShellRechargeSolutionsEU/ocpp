@@ -7,12 +7,12 @@ import _root_.spray.http.HttpHeaders.`Content-Type`
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.Scope
 import org.specs2.mock.Mockito
-import com.thenewmotion.ocpp.{Scope => _, _}
-import Version._
 import org.joda.time.DateTime
 import scala.io.Source
-import CentralSystem._
-import ChargePoint._
+import com.thenewmotion.ocpp.Version._
+import com.thenewmotion.ocpp.centralsystem._
+import com.thenewmotion.ocpp.chargepoint._
+import com.thenewmotion.ocpp._
 
 
 class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUtils {

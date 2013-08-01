@@ -1,7 +1,8 @@
 package com.thenewmotion.ocpp
 
 import org.joda.time
-import com.thenewmotion.ocpp
+import centralsystem._
+import com.thenewmotion.ocpp.{centralsystem => ocpp}
 import dispatch.Http
 import org.joda.time.DateTime
 import scala.concurrent.duration._
@@ -100,7 +101,7 @@ private[ocpp] class CentralSystemClientV12(val chargeBoxIdentity: String, uri: U
       case RejectedValue6 => false
     }
 
-    ocpp.CentralSystem.BootNotificationRes(
+    BootNotificationRes(
       accepted,
       currentTime.fold(DateTime.now)(_.toDateTime),
       heartbeatInterval.fold(15.minutes)(FiniteDuration(_, SECONDS)))
@@ -254,7 +255,7 @@ private[ocpp] class CentralSystemClientV15(val chargeBoxIdentity: String, uri: U
       case RejectedValue9 => false
     }
 
-    ocpp.CentralSystem.BootNotificationRes(accepted, currentTime.toDateTime, FiniteDuration(heartbeatInterval, SECONDS))
+    BootNotificationRes(accepted, currentTime.toDateTime, FiniteDuration(heartbeatInterval, SECONDS))
   }
 
   def statusNotification(scope: Scope,
@@ -324,12 +325,12 @@ private[ocpp] class CentralSystemClientV15(val chargeBoxIdentity: String, uri: U
         case UnknownVendorIdValue => ocpp.UnknownVendorId
       }
     }
-    ocpp.CentralSystem.DataTransferRes(status, data)
+    DataTransferRes(status, data)
   }
 
   def toMeter(x: Meter): MeterValue = {
     implicit def toReadingContext(x: Meter.ReadingContext.Value): ReadingContext = {
-      import Meter.{ReadingContext => ocpp}
+      import ocpp.Meter.{ReadingContext => ocpp}
       x match {
         case ocpp.InterruptionBegin => Interruptionu46Begin
         case ocpp.InterruptionEnd => Interruptionu46End

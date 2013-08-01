@@ -1,8 +1,8 @@
 package com.thenewmotion.ocpp
 
-import com.thenewmotion.ocpp
+import com.thenewmotion.ocpp.{chargepoint => ocpp}
 import dispatch.Http
-import ChargePoint._
+import chargepoint._
 
 
 /**

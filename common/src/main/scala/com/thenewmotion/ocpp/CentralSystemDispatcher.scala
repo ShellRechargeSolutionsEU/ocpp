@@ -1,8 +1,8 @@
 package com.thenewmotion.ocpp
 
 import scala.xml.NodeSeq
-import com.thenewmotion.ocpp
-import ocpp.Meter.DefaultValue
+import centralsystem._
+import com.thenewmotion.ocpp.{centralsystem => ocpp}
 import scalaxb.XMLFormat
 
 object CentralSystemDispatcher {
@@ -14,7 +14,6 @@ object CentralSystemDispatcher {
 
 object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystem] {
   import v12.{CentralSystemService => _, _}
-  import ocpp.CentralSystem._
   import ConvertersV12._
 
   def version = Version.V12
@@ -63,7 +62,7 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystem] {
         req =>
           import req._
           val StartTransactionRes(transactionId, idTagInfo) = service(StartTransactionReq(
-            ocpp.ConnectorScope.fromOcpp(connectorId),
+            ConnectorScope.fromOcpp(connectorId),
             idTag, timestamp.toDateTime, meterStart, None))
           StartTransactionResponse(transactionId, idTagInfo.toV12)
       }
@@ -101,7 +100,7 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystem] {
               }
               ocpp.Faulted(errorCode, None, None)
           }
-          service(StatusNotificationReq(ocpp.Scope.fromOcpp(req.connectorId), status, None, None))
+          service(StatusNotificationReq(Scope.fromOcpp(req.connectorId), status, None, None))
           StatusNotificationResponse()
       }
 
@@ -133,7 +132,6 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystem] {
 
 object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystem] {
   import v15.{CentralSystemService => _, _}
-  import CentralSystem._
   import ConvertersV15._
 
   def version = Version.V15
@@ -357,10 +355,10 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystem] {
 
     Meter.Value(
       x.value,
-      x.context.map(toReadingContext) getOrElse DefaultValue.readingContext,
-      x.format.map(toValueFormat) getOrElse DefaultValue.format,
-      x.measurand.map(toMeasurand) getOrElse DefaultValue.measurand,
-      x.location.map(toLocation) getOrElse DefaultValue.location,
-      x.unit.map(toUnit) getOrElse DefaultValue.unitOfMeasure)
+      x.context.map(toReadingContext) getOrElse Meter.DefaultValue.readingContext,
+      x.format.map(toValueFormat) getOrElse Meter.DefaultValue.format,
+      x.measurand.map(toMeasurand) getOrElse Meter.DefaultValue.measurand,
+      x.location.map(toLocation) getOrElse Meter.DefaultValue.location,
+      x.unit.map(toUnit) getOrElse Meter.DefaultValue.unitOfMeasure)
   }
 }

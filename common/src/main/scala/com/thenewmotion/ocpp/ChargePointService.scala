@@ -1,13 +1,12 @@
 package com.thenewmotion.ocpp
 
 import org.joda.time.DateTime
+import chargepoint._
 
 /**
  * @author Yaroslav Klymko
  */
 trait ChargePointService extends ChargePoint {
-  import ChargePoint._
-
   type Accepted = Boolean
   type FileName = String
 

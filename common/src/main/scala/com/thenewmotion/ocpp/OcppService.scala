@@ -1,5 +1,9 @@
 package com.thenewmotion.ocpp
 
+import centralsystem.CentralSystem
+import chargepoint.ChargePoint
+
+
 /**
  * Type class for OCPP services that can be called via SOAP messages
  */

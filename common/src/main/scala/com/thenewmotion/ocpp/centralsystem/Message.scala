@@ -1,4 +1,5 @@
 package com.thenewmotion.ocpp
+package centralsystem
 
 import org.joda.time.DateTime
 import scala.concurrent.duration.FiniteDuration
@@ -6,90 +7,71 @@ import scala.concurrent.duration.FiniteDuration
 /**
  * @author Yaroslav Klymko
  */
-trait CentralSystem extends (CentralSystem.Req => CentralSystem.Res)
-
-object CentralSystem {
-
-  @SerialVersionUID(0)
-  sealed trait Message
-  sealed trait Req extends Message
-  sealed trait Res extends Message
+@SerialVersionUID(0)
+sealed trait Message
+sealed trait Req extends Message
+sealed trait Res extends Message
 
 
-  case class AuthorizeReq(idTag: String) extends Req
-  case class AuthorizeRes(idTag: IdTagInfo) extends Res
+case class AuthorizeReq(idTag: String) extends Req
+case class AuthorizeRes(idTag: IdTagInfo) extends Res
 
 
-  case class StartTransactionReq(connector: ConnectorScope,
-                                 idTag: IdTag,
-                                 timestamp: DateTime,
-                                 meterStart: Int,
-                                 reservationId: Option[Int]) extends Req
-  case class StartTransactionRes(transactionId: Int, idTag: IdTagInfo) extends Res
+case class StartTransactionReq(connector: ConnectorScope,
+                               idTag: IdTag,
+                               timestamp: DateTime,
+                               meterStart: Int,
+                               reservationId: Option[Int]) extends Req
+case class StartTransactionRes(transactionId: Int, idTag: IdTagInfo) extends Res
 
 
-  case class StopTransactionReq(transactionId: Int,
-                                idTag: Option[IdTag],
-                                timestamp: DateTime,
-                                meterStop: Int,
-                                transactionData: List[TransactionData]) extends Req
-  case class StopTransactionRes(idTag: Option[IdTagInfo]) extends Res
+case class StopTransactionReq(transactionId: Int,
+                              idTag: Option[IdTag],
+                              timestamp: DateTime,
+                              meterStop: Int,
+                              transactionData: List[TransactionData]) extends Req
+case class StopTransactionRes(idTag: Option[IdTagInfo]) extends Res
 
 
-  case object HeartbeatReq extends Req
-  case class HeartbeatRes(currentTime: DateTime) extends Res
+case object HeartbeatReq extends Req
+case class HeartbeatRes(currentTime: DateTime) extends Res
 
 
-  case class MeterValuesReq(scope: Scope, transactionId: Option[Int], meters: List[Meter]) extends Req
-  case object MeterValuesRes extends Res
+case class MeterValuesReq(scope: Scope, transactionId: Option[Int], meters: List[Meter]) extends Req
+case object MeterValuesRes extends Res
 
 
-  case class BootNotificationReq(chargePointVendor: String,
-                                 chargePointModel: String,
-                                 chargePointSerialNumber: Option[String],
-                                 chargeBoxSerialNumber: Option[String],
-                                 firmwareVersion: Option[String],
-                                 iccid: Option[String],
-                                 imsi: Option[String],
-                                 meterType: Option[String],
-                                 meterSerialNumber: Option[String]) extends Req
-  case class BootNotificationRes(registrationAccepted: Boolean,
-                                 currentTime: DateTime /*optional in OCPP 1.2*/ ,
-                                 heartbeatInterval: FiniteDuration /*optional in OCPP 1.2*/) extends Res
+case class BootNotificationReq(chargePointVendor: String,
+                               chargePointModel: String,
+                               chargePointSerialNumber: Option[String],
+                               chargeBoxSerialNumber: Option[String],
+                               firmwareVersion: Option[String],
+                               iccid: Option[String],
+                               imsi: Option[String],
+                               meterType: Option[String],
+                               meterSerialNumber: Option[String]) extends Req
+case class BootNotificationRes(registrationAccepted: Boolean,
+                               currentTime: DateTime /*optional in OCPP 1.2*/ ,
+                               heartbeatInterval: FiniteDuration /*optional in OCPP 1.2*/) extends Res
 
 
-  case class StatusNotificationReq(scope: Scope,
-                                   status: ChargePointStatus,
-                                   timestamp: Option[DateTime],
-                                   vendorId: Option[String]) extends Req
-  case object StatusNotificationRes extends Res
+case class StatusNotificationReq(scope: Scope,
+                                 status: ChargePointStatus,
+                                 timestamp: Option[DateTime],
+                                 vendorId: Option[String]) extends Req
+case object StatusNotificationRes extends Res
 
 
-  case class FirmwareStatusNotificationReq(status: FirmwareStatus.Value) extends Req
-  case object FirmwareStatusNotificationRes extends Res
+case class FirmwareStatusNotificationReq(status: FirmwareStatus.Value) extends Req
+case object FirmwareStatusNotificationRes extends Res
 
 
-  case class DiagnosticsStatusNotificationReq(uploaded: Boolean) extends Req
-  case object DiagnosticsStatusNotificationRes extends Res
+case class DiagnosticsStatusNotificationReq(uploaded: Boolean) extends Req
+case object DiagnosticsStatusNotificationRes extends Res
 
 
-  case class DataTransferReq(vendorId: String, messageId: Option[String], data: Option[String]) extends Req
-  case class DataTransferRes(status: DataTransferStatus.Value, data: Option[String] = None) extends Res
-}
-
-
-
-object AuthorizationStatus extends Enumeration {
-  val Accepted,
-  IdTagBlocked,
-  IdTagExpired,
-  IdTagInvalid,
-  ConcurrentTx = Value
-}
-
-case class IdTagInfo(status: AuthorizationStatus.Value,
-                     expiryDate: Option[DateTime] = None,
-                     parentIdTag: Option[String] = None)
+case class DataTransferReq(vendorId: String, messageId: Option[String], data: Option[String]) extends Req
+case class DataTransferRes(status: DataTransferStatus.Value, data: Option[String] = None) extends Res
 
 case class TransactionData(meters: List[Meter])
 
@@ -201,11 +183,4 @@ object FirmwareStatus extends Enumeration {
   DownloadFailed,
   InstallationFailed,
   Installed = Value
-}
-
-object DataTransferStatus extends Enumeration {
-  val Accepted,
-  Rejected,
-  UnknownMessageId,
-  UnknownVendorId = Value
 }

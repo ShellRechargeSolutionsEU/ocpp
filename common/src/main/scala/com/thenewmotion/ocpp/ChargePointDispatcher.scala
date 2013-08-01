@@ -4,7 +4,7 @@ package ocpp
 import scala.xml.NodeSeq
 import soapenvelope12.Body
 import scalaxb.XMLFormat
-import ChargePoint._
+import chargepoint._
 
 object ChargePointDispatcher {
   def apply(version: Version.Value): Dispatcher[ChargePoint] = version match {
@@ -41,8 +41,8 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePoint] {
       case ChangeAvailability => ?[ChangeAvailabilityRequest, ChangeAvailabilityResponse] {
         req =>
           val availabilityType = req.typeValue match {
-            case Inoperative => ocpp.AvailabilityType.Inoperative
-            case Operative => ocpp.AvailabilityType.Operative
+            case Inoperative => chargepoint.AvailabilityType.Inoperative
+            case Operative => chargepoint.AvailabilityType.Operative
           }
 
           val ChangeAvailabilityRes(result) = service(ChangeAvailabilityReq(
@@ -50,9 +50,9 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePoint] {
             availabilityType))
 
           ChangeAvailabilityResponse(result match {
-            case ocpp.AvailabilityStatus.Accepted => AcceptedValue7
-            case ocpp.AvailabilityStatus.Rejected => RejectedValue6
-            case ocpp.AvailabilityStatus.Scheduled => Scheduled
+            case chargepoint.AvailabilityStatus.Accepted => AcceptedValue7
+            case chargepoint.AvailabilityStatus.Rejected => RejectedValue6
+            case chargepoint.AvailabilityStatus.Scheduled => Scheduled
           })
       }
 
@@ -70,7 +70,7 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePoint] {
 
       case GetConfiguration => ?[GetConfigurationRequest, GetConfigurationResponse] {
         req =>
-          def keyValue(kv: ocpp.KeyValue) = v15.KeyValue(kv.key, kv.readonly, kv.value)
+          def keyValue(kv: chargepoint.KeyValue) = v15.KeyValue(kv.key, kv.readonly, kv.value)
           val GetConfigurationRes(values, unknownKeys) = service(GetConfigurationReq(req.key.toList))
           GetConfigurationResponse(values.map(keyValue), unknownKeys)
       }
@@ -122,8 +122,8 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePoint] {
       case Reset => ?[ResetRequest, ResetResponse] {
         req =>
           val resetType = req.typeValue match {
-            case Hard => ocpp.ResetType.Hard
-            case Soft => ocpp.ResetType.Soft
+            case Hard => chargepoint.ResetType.Hard
+            case Soft => chargepoint.ResetType.Soft
           }
           val ResetRes(accepted) = service(ResetReq(resetType))
           ResetResponse(if (accepted) AcceptedValue6 else RejectedValue5)
@@ -133,8 +133,8 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePoint] {
         req =>
 
           val updateType = req.updateType match {
-            case Differential => ocpp.UpdateType.Differential
-            case Full => ocpp.UpdateType.Full
+            case Differential => chargepoint.UpdateType.Differential
+            case Full => chargepoint.UpdateType.Full
           }
           val listVersion = AuthListSupported(req.listVersion)
           val localAuthList = req.localAuthorisationList.map(_.toOcpp).toList

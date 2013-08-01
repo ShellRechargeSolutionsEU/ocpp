@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 import org.specs2.mock.Mockito
 import org.specs2.mutable.SpecificationWithJUnit
 import ChargePointAction._
-import ChargePoint._
+import chargepoint._
 
 class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
 
@@ -66,7 +66,7 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
     }
 
     "call changeConfiguration with the right parameters" in new TestScope {
-      cpService.apply(any[ChangeConfigurationReq]) returns ChangeConfigurationRes(ocpp.ConfigurationStatus.Accepted)
+      cpService.apply(any[ChangeConfigurationReq]) returns ChangeConfigurationRes(chargepoint.ConfigurationStatus.Accepted)
 
       val xml = <ChangeConfiguration xmlns={v15PointNamespace}>
                   <key>aap</key><value>noot</value>
@@ -78,9 +78,9 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
 
     "return values from changeConfiguration" in new TestScope {
       cpService.apply(any[ChangeConfigurationReq])
-        .returns(ChangeConfigurationRes(ocpp.ConfigurationStatus.Accepted))
-        .thenReturns(ChangeConfigurationRes(ocpp.ConfigurationStatus.Rejected))
-        .thenReturns(ChangeConfigurationRes(ocpp.ConfigurationStatus.NotSupported))
+        .returns(ChangeConfigurationRes(chargepoint.ConfigurationStatus.Accepted))
+        .thenReturns(ChangeConfigurationRes(chargepoint.ConfigurationStatus.Rejected))
+        .thenReturns(ChangeConfigurationRes(chargepoint.ConfigurationStatus.NotSupported))
 
       val xml = <ChangeConfiguration xmlns={v15PointNamespace}>
         <key>aap</key><value>noot</value>
@@ -119,7 +119,7 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
 
     "return the result of getConfiguration" in new TestScope {
       cpService.apply(any[GetConfigurationReq]) returns GetConfigurationRes(
-        List(ocpp.KeyValue("aap", readonly = false, None), ocpp.KeyValue("noot", readonly = true, Some("mies"))),
+        List(chargepoint.KeyValue("aap", readonly = false, None), chargepoint.KeyValue("noot", readonly = true, Some("mies"))),
         List("boom", "roos", "vis"))
 
 //      cpService.getConfiguration(any) returns Configuration()
@@ -258,7 +258,7 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
     }
 
     "call reset with the right parameters and return its result" in new TestScope {
-      cpService.apply(ResetReq(com.thenewmotion.ocpp.ResetType.Hard)) returns ResetRes(accepted = true)
+      cpService.apply(ResetReq(chargepoint.ResetType.Hard)) returns ResetRes(accepted = true)
 
       val xml = <Reset xmlns={v15PointNamespace}>
                   <type>Hard</type>
@@ -270,7 +270,7 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
     }
 
     "call sendLocalList with the right parameters" in new TestScope {
-      cpService.apply(any[SendLocalListReq]) returns SendLocalListRes(com.thenewmotion.ocpp.UpdateStatus.VersionMismatch)
+      cpService.apply(any[SendLocalListReq]) returns SendLocalListRes(chargepoint.UpdateStatus.VersionMismatch)
 
       val xml = <SendLocalList xmlns={v15PointNamespace}>
                   <updateType>Differential</updateType>
@@ -299,24 +299,24 @@ class ChargePointDispatcherSpec extends SpecificationWithJUnit with Mockito {
                                                                    Some("adadad"))))
 
       there was one(cpService).apply(SendLocalListReq(
-        ocpp.UpdateType.Differential,
+        chargepoint.UpdateType.Differential,
         AuthListSupported(233),
         expectedAuthList,
         Some("0123456789abcdef")))
     }
 
     "call SendLocalList with the right parameters if everything optional is left out" in new TestScope {
-      cpService.apply(any[SendLocalListReq]) returns SendLocalListRes(com.thenewmotion.ocpp.UpdateStatus.VersionMismatch)
+      cpService.apply(any[SendLocalListReq]) returns SendLocalListRes(chargepoint.UpdateStatus.VersionMismatch)
 
       ChargePointDispatcherV15.dispatch(SendLocalList, simpleSendLocalListXML, cpService)
 
       val expectedAuthList =  List(AuthorisationAdd("acacac",
                                    ocpp.IdTagInfo(ocpp.AuthorizationStatus.Accepted, None, None)))
-      there was one(cpService).apply(SendLocalListReq(ocpp.UpdateType.Full, AuthListSupported(1), expectedAuthList, None))
+      there was one(cpService).apply(SendLocalListReq(chargepoint.UpdateType.Full, AuthListSupported(1), expectedAuthList, None))
     }
 
     "return the update status as reported by sendLocalList to the client" in new TestScope {
-      import ocpp.UpdateStatus._
+      import chargepoint.UpdateStatus._
 
       cpService.apply(any[SendLocalListReq])
         .returns(SendLocalListRes(UpdateAccepted(Some("binary blaargh"))))

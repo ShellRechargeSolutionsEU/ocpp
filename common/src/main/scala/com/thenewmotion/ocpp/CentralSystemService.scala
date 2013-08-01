@@ -1,12 +1,12 @@
 package com.thenewmotion.ocpp
 
 import org.joda.time.DateTime
+import centralsystem._
 
 /**
  * @author Yaroslav Klymko
  */
 trait CentralSystemService extends CentralSystem {
-  import CentralSystem._
 
   type TransactionId = Int
 
