@@ -60,7 +60,7 @@ private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: Uri
         retries = x.retries.numberOfRetries,
         retryInterval = x.retries.intervalInSeconds)
 
-      GetDiagnosticsRes(?(_.getDiagnostics, req).fileName)
+      GetDiagnosticsRes(stringOption(?(_.getDiagnostics, req).fileName))
 
     case x: ChangeConfigurationReq => ChangeConfigurationRes(
       ?(_.changeConfiguration, ChangeConfigurationRequest(x.key, x.value)) match {
@@ -163,7 +163,7 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
     case x: GetConfigurationReq =>
       val res = ?(_.getConfiguration, GetConfigurationRequest(x.keys: _*))
       val values = res.configurationKey.map {
-        case KeyValue(key, readonly, value) => ocpp.KeyValue(key, readonly, value)
+        case KeyValue(key, readonly, value) => ocpp.KeyValue(key, readonly, stringOption(value))
       }.toList
       GetConfigurationRes(values, res.unknownKey.toList)
 
@@ -220,7 +220,7 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
 
       import ocpp.{UpdateStatus => ocpp}
       SendLocalListRes(res.status match {
-        case AcceptedValue10 => ocpp.UpdateAccepted(res.hash)
+        case AcceptedValue10 => ocpp.UpdateAccepted(stringOption(res.hash))
         case Failed => ocpp.UpdateFailed
         case HashError => ocpp.HashError
         case NotSupportedValue => ocpp.NotSupportedValue
@@ -241,7 +241,7 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
           case UnknownVendorId => ocpp.UnknownVendorId
         }
       }
-      DataTransferRes(status, res.data)
+      DataTransferRes(status, stringOption(res.data))
 
     case x: ReserveNowReq =>
       val req = ReserveNowRequest(

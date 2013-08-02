@@ -8,6 +8,7 @@ import org.joda.time.{DateTimeZone, DateTime}
 import org.slf4j.LoggerFactory
 import java.net.URI
 import com.typesafe.scalalogging.slf4j.Logger
+import scalax.StringOption
 
 
 /**
@@ -55,4 +56,6 @@ package object ocpp {
     def toXMLCalendar: XMLGregorianCalendar =
       factory.newXMLGregorianCalendar(self.toDateTime(DateTimeZone.UTC).toGregorianCalendar)
   }
+
+  def stringOption(x: Option[String]): Option[String] = x.flatMap(StringOption.apply)
 }

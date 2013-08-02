@@ -34,13 +34,13 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystem] {
             service(BootNotificationReq(
               chargePointVendor = x.chargePointVendor,
               chargePointModel = x.chargePointModel,
-              chargePointSerialNumber = x.chargePointSerialNumber,
-              chargeBoxSerialNumber = x.chargeBoxSerialNumber,
-              firmwareVersion = x.firmwareVersion,
-              iccid = x.iccid,
-              imsi = x.imsi,
-              meterType = x.meterType,
-              meterSerialNumber = x.meterSerialNumber))
+              chargePointSerialNumber = stringOption(x.chargePointSerialNumber),
+              chargeBoxSerialNumber = stringOption(x.chargeBoxSerialNumber),
+              firmwareVersion = stringOption(x.firmwareVersion),
+              iccid = stringOption(x.iccid),
+              imsi = stringOption(x.imsi),
+              meterType = stringOption(x.meterType),
+              meterSerialNumber = stringOption(x.meterSerialNumber)))
 
           val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue7 else RejectedValue6
 
@@ -70,7 +70,7 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystem] {
       case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse] {
         req =>
           import req._
-          val StopTransactionRes(idTagInfo) = service(StopTransactionReq(transactionId, idTag, timestamp.toDateTime, meterStop, Nil))
+          val StopTransactionRes(idTagInfo) = service(StopTransactionReq(transactionId, stringOption(idTag), timestamp.toDateTime, meterStop, Nil))
           StopTransactionResponse(idTagInfo.map(_.toV12))
       }
 
@@ -155,13 +155,13 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystem] {
             service(BootNotificationReq(
               chargePointVendor = req.chargePointVendor,
               chargePointModel = req.chargePointModel,
-              chargePointSerialNumber = req.chargePointSerialNumber,
-              chargeBoxSerialNumber = req.chargeBoxSerialNumber,
-              firmwareVersion = req.firmwareVersion,
-              iccid = req.iccid,
-              imsi = req.imsi,
-              meterType = req.meterType,
-              meterSerialNumber = req.meterSerialNumber))
+              chargePointSerialNumber = stringOption(req.chargePointSerialNumber),
+              chargeBoxSerialNumber = stringOption(req.chargeBoxSerialNumber),
+              firmwareVersion = stringOption(req.firmwareVersion),
+              iccid = stringOption(req.iccid),
+              imsi = stringOption(req.imsi),
+              meterType = stringOption(req.meterType),
+              meterSerialNumber = stringOption(req.meterSerialNumber)))
 
           val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue11 else RejectedValue9
 
@@ -196,7 +196,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystem] {
 
           val StopTransactionRes(idTagInfo) = service(StopTransactionReq(
             transactionId,
-            idTag,
+            stringOption(idTag),
             timestamp.toDateTime,
             meterStop,
             transactionData.map(toTransactionData).toList))
@@ -241,7 +241,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystem] {
             ocpp.Scope.fromOcpp(req.connectorId),
             status,
             req.timestamp.map(_.toDateTime),
-            req.vendorId))
+            stringOption(req.vendorId)))
           StatusNotificationResponse()
       }
 
@@ -269,7 +269,10 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystem] {
 
       case DataTransfer => ?[DataTransferRequest, DataTransferResponse] {
         req =>
-          val res = service(DataTransferReq(req.vendorId, req.messageId, req.data)).asInstanceOf[DataTransferRes]
+          val res = service(DataTransferReq(
+            req.vendorId,
+            stringOption(req.messageId),
+            stringOption(req.data))).asInstanceOf[DataTransferRes]
           val status: DataTransferStatus = {
             import ocpp.{DataTransferStatus => ocpp}
             res.status match {
