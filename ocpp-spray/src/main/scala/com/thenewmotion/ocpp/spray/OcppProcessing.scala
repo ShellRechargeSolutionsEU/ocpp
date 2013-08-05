@@ -63,8 +63,7 @@ object OcppProcessing extends Logging {
 
   private def safe[T](func: => T): Either[HttpResponse, T] = try Right(func) catch {
     case e: Exception =>
-      if (logger.underlying.isDebugEnabled) logger.error(e.getMessage, e)
-      else logger.error(e.getMessage)
+      logger.error(e.getMessage, e)
       InternalError(e.getMessage)
   }
 
