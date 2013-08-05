@@ -25,22 +25,23 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystem] {
 
     action match {
       case Authorize => ?[AuthorizeRequest, AuthorizeResponse] {
-        req => AuthorizeResponse(service(AuthorizeReq(req.idTag)).asInstanceOf[AuthorizeRes].idTag.toV12)
+        req => AuthorizeResponse(service.authorize(AuthorizeReq(req.idTag)).idTag.toV12)
       }
 
       case BootNotification => ?[BootNotificationRequest, BootNotificationResponse] {
         x =>
-          val BootNotificationRes(registrationAccepted, currentTime, heartbeatInterval) =
-            service(BootNotificationReq(
-              chargePointVendor = x.chargePointVendor,
-              chargePointModel = x.chargePointModel,
-              chargePointSerialNumber = stringOption(x.chargePointSerialNumber),
-              chargeBoxSerialNumber = stringOption(x.chargeBoxSerialNumber),
-              firmwareVersion = stringOption(x.firmwareVersion),
-              iccid = stringOption(x.iccid),
-              imsi = stringOption(x.imsi),
-              meterType = stringOption(x.meterType),
-              meterSerialNumber = stringOption(x.meterSerialNumber)))
+          val res = service(BootNotificationReq(
+            chargePointVendor = x.chargePointVendor,
+            chargePointModel = x.chargePointModel,
+            chargePointSerialNumber = stringOption(x.chargePointSerialNumber),
+            chargeBoxSerialNumber = stringOption(x.chargeBoxSerialNumber),
+            firmwareVersion = stringOption(x.firmwareVersion),
+            iccid = stringOption(x.iccid),
+            imsi = stringOption(x.imsi),
+            meterType = stringOption(x.meterType),
+            meterSerialNumber = stringOption(x.meterSerialNumber)))
+
+          import res._
 
           val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue7 else RejectedValue6
 
@@ -75,7 +76,7 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystem] {
       }
 
       case Heartbeat => ?[HeartbeatRequest, HeartbeatResponse] {
-        _ => HeartbeatResponse(service(HeartbeatReq).asInstanceOf[HeartbeatRes].currentTime.toXMLCalendar)
+        _ => HeartbeatResponse(service(HeartbeatReq).currentTime.toXMLCalendar)
       }
 
       case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse] {
@@ -272,7 +273,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystem] {
           val res = service(DataTransferReq(
             req.vendorId,
             stringOption(req.messageId),
-            stringOption(req.data))).asInstanceOf[DataTransferRes]
+            stringOption(req.data)))
           val status: DataTransferStatus = {
             import ocpp.{DataTransferStatus => ocpp}
             res.status match {

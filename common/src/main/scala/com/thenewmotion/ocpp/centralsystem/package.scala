@@ -4,8 +4,6 @@ package com.thenewmotion.ocpp
  * @author Yaroslav Klymko
  */
 package object centralsystem {
-  trait CentralSystem extends (Req => Res)
-
   type Scope = com.thenewmotion.ocpp.Scope
   val Scope = com.thenewmotion.ocpp.Scope
 
