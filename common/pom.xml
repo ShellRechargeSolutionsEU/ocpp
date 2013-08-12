@@ -37,9 +37,5 @@
             <groupId>com.typesafe</groupId>
             <artifactId>scalalogging-slf4j_${scala.version}</artifactId>
         </dependency>
-        <dependency>
-            <groupId>commons-validator</groupId>
-            <artifactId>commons-validator</artifactId>
-        </dependency>
     </dependencies>
 </project>

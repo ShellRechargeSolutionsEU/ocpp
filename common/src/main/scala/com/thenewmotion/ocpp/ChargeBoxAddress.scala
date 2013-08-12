@@ -5,14 +5,11 @@ import soapenvelope12.Envelope
 import scalax.{RichAny, StringOption}
 import xml.Elem
 import scala.util.Try
-import org.apache.commons.validator.routines.UrlValidator
 
 /**
  * @author Yaroslav Klymko
  */
 object ChargeBoxAddress {
-  val validator = UrlValidator.getInstance()
-
   def unapply(env: Envelope): Option[Uri] = {
     val headers = for {
       header <- env.Header.toSeq
@@ -24,7 +21,7 @@ object ChargeBoxAddress {
       case Nil => None
       case h :: t => StringOption(h) match {
         case Some(WsaAddressing.AnonymousUri) => loop(t)
-        case Some(uri) if validator.isValid(uri) => Try(new Uri(uri)).toOption orElse loop(t)
+        case Some(uri) => Try(new Uri(uri)).toOption orElse loop(t)
         case _ => loop(t)
       }
     }

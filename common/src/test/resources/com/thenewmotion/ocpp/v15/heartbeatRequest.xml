@@ -4,7 +4,7 @@
     <soap12:Header>
         <chargeBoxIdentity>chargeBoxIdentity</chargeBoxIdentity>
         <wsa:ReplyTo>
-            <wsa:Address>http://address.com</wsa:Address>
+            <wsa:Address>http://address.com:8081</wsa:Address>
         </wsa:ReplyTo>
     </soap12:Header>
     <soap12:Body>
