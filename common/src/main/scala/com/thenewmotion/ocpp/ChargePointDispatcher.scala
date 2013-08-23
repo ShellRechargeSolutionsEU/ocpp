@@ -59,7 +59,11 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePoint] {
       case ChangeConfiguration => ?[ChangeConfigurationRequest, ChangeConfigurationResponse] {
         req =>
           val ChangeConfigurationRes(result) = service(ChangeConfigurationReq(req.key, req.value))
-          ChangeConfigurationResponse(ConfigurationStatus.fromString(result.toString))
+          ChangeConfigurationResponse(result match {
+            case chargepoint.ConfigurationStatus.Accepted => AcceptedValue8
+            case chargepoint.ConfigurationStatus.Rejected => RejectedValue7
+            case chargepoint.ConfigurationStatus.NotSupported => NotSupported
+          })
       }
 
       case ClearCache => ?[ClearCacheRequest, ClearCacheResponse] {
@@ -111,7 +115,13 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePoint] {
 
       case ReserveNow => ?[ReserveNowRequest, ReserveNowResponse] {
         req =>
-          def genericStatusToV15Status(s: Reservation.Value) = ReservationStatus.fromString(s.toString)
+          def genericStatusToV15Status(x: Reservation.Value) = x match {
+            case Reservation.Accepted => Accepted
+            case Reservation.Faulted => Faulted
+            case Reservation.Occupied => Occupied
+            case Reservation.Rejected => Rejected
+            case Reservation.Unavailable => Unavailable
+          }
 
           val ReserveNowRes(status) = service(ReserveNowReq(ConnectorScope.fromOcpp(req.connectorId),
             req.expiryDate.toDateTime,

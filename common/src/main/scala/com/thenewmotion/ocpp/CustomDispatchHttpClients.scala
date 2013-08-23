@@ -2,6 +2,9 @@ package com.thenewmotion.ocpp
 
 import scalaxb.HttpClients
 import dispatch._
+import scala.concurrent.duration._
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * @author Yaroslav Klymko
@@ -13,7 +16,7 @@ abstract class CustomDispatchHttpClients(http: Http) extends HttpClients {
       def request(headers: Map[String, String]): String = {
         httpLogger.debug(s">>\n\t${headers.toSeq.mkString("\n\t")}\n\t$in")
         val req = url(address.toString) << in <:< headers
-        val out = http(req > as.String)()
+        val out = Await.result(http(req > as.String), 3 seconds)
         httpLogger.debug(s"<<\n\t$out")
         out
       }
