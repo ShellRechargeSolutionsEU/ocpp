@@ -16,13 +16,17 @@ abstract class CustomDispatchHttpClients(http: Http) extends HttpClients {
       def request(headers: Map[String, String]): String = {
         httpLogger.debug(s">>\n\t${headers.toSeq.mkString("\n\t")}\n\t$in")
         val req = url(address.toString) << in <:< headers
-        val out = Await.result(http(req > as.String), 3 seconds)
+        val out = Await.result(http(req > as.String), CustomDispatchHttpClients.httpRequestTimeout)
         httpLogger.debug(s"<<\n\t$out")
         out
       }
       request(SoapActionHeader(headers).fold(headers)(headers + _))
     }
   }
+}
+
+object CustomDispatchHttpClients {
+  val httpRequestTimeout = 45 seconds
 }
 
 object SoapActionHeader {
