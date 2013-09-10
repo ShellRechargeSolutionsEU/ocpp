@@ -10,7 +10,7 @@
 
     <groupId>com.thenewmotion.ocpp</groupId>
     <artifactId>ocpp-parent_2.10</artifactId>
-    <version>3.3-SNAPSHOT</version>
+    <version>3.3</version>
     <packaging>pom</packaging>
 
     <name>OCPP</name>
@@ -101,7 +101,8 @@
         <url>https://github.com/thenewmotion/ocpp</url>
         <connection>scm:git:ssh://git@github.com/thenewmotion/ocpp.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/thenewmotion/ocpp.git</developerConnection>
-    </scm>
+      <tag>ocpp-parent_2.10-3.3</tag>
+  </scm>
 
     <build>
         <pluginManagement>
