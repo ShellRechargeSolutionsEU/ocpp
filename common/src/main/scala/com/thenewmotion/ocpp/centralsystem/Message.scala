@@ -100,42 +100,42 @@ object Meter {
   }
 
   object Location extends Enumeration {
-    val Inlet = Value(0)
-    val Outlet = Value(1)
-    val Body = Value(2)
+    val Inlet = Value(0, "Inlet")
+    val Outlet = Value(1, "Outlet")
+    val Body = Value(2, "Body")
   }
 
   object Measurand extends Enumeration {
-    val EnergyActiveExportRegister = Value(0)
-    val EnergyActiveImportRegister = Value(1)
-    val EnergyReactiveExportRegister = Value(2)
-    val EnergyReactiveImportRegister = Value(3)
-    val EnergyActiveExportInterval = Value(4)
-    val EnergyActiveImportInterval = Value(5)
-    val EnergyReactiveExportInterval = Value(6)
-    val EnergyReactiveImportInterval = Value(7)
-    val PowerActiveExport = Value(8)
-    val PowerActiveImport = Value(9)
-    val PowerReactiveExport = Value(10)
-    val PowerReactiveImport = Value(11)
-    val CurrentExport = Value(12)
-    val CurrentImport = Value(13)
-    val Voltage = Value(14)
-    val Temperature = Value(15)
+    val EnergyActiveExportRegister = Value(0, "Energy.Active.Export.Register")
+    val EnergyActiveImportRegister = Value(1, "Energy.Active.Import.Register")
+    val EnergyReactiveExportRegister = Value(2, "Energy.Reactive.Export.Register")
+    val EnergyReactiveImportRegister = Value(3, "Energy.ReactiveImport.Register")
+    val EnergyActiveExportInterval = Value(4, "Energy.Active.Export.Interval")
+    val EnergyActiveImportInterval = Value(5, "Energy.Active.Import.Interval")
+    val EnergyReactiveExportInterval = Value(6, "Energy.Reactive.Export.Interval")
+    val EnergyReactiveImportInterval = Value(7, "Energy.Reactive.Import.Interval")
+    val PowerActiveExport = Value(8, "Power.Active.Export")
+    val PowerActiveImport = Value(9, "Power.Active.Import")
+    val PowerReactiveExport = Value(10, "Power.Reactive.Export")
+    val PowerReactiveImport = Value(11, "Power.Reactive.Import")
+    val CurrentExport = Value(12, "Current.Export")
+    val CurrentImport = Value(13, "Current.Import")
+    val Voltage = Value(14, "Voltage")
+    val Temperature = Value(15, "Temperature")
   }
 
   object ValueFormat extends Enumeration {
-    val Raw = Value(0)
-    val Signed = Value(1)
+    val Raw = Value(0, "Raw")
+    val Signed = Value(1, "Signed")
   }
 
   object ReadingContext extends Enumeration {
-    val InterruptionBegin = Value(0)
-    val InterruptionEnd= Value(1)
-    val SampleClock= Value(2)
-    val SamplePeriodic= Value(3)
-    val TransactionBegin= Value(4)
-    val TransactionEnd = Value(5)
+    val InterruptionBegin = Value(0, "Interruption.Begin")
+    val InterruptionEnd = Value(1, "Interruption.End")
+    val SampleClock = Value(2, "Sample.Clock")
+    val SamplePeriodic = Value(3, "Sample.Periodic")
+    val TransactionBegin = Value(4, "Transaction.Begin")
+    val TransactionEnd = Value(5, "Transaction.End")
   }
 
   object UnitOfMeasure extends Enumeration {
