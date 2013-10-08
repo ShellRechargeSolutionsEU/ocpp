@@ -17,29 +17,20 @@ case class ChargerInfo(ocppVersion: Version.Value, endpointUrl: Option[Uri], cha
 
 object OcppProcessing extends Logging {
 
-  type ResponseFunc = () => HttpResponse
+  type ResponseFunc[T] = Option[T] => HttpResponse
   type ChargerId = String
-  type Result = Either[HttpResponse, (ChargerId, ResponseFunc)]
+  type Result[T] = Either[HttpResponse, (ChargerInfo, ResponseFunc[T])]
   type OcppMessageLogger = (ChargerId, Version.Value, Any) => Unit
 
-  def apply[T: OcppService](req: HttpRequest, toService: ChargerInfo => Option[T]): Result = {
+  def apply[T: OcppService](req: HttpRequest): Result[T] = {
     val (decoded, encode) = decodeEncode(req)
-    applyDecoded(decoded, toService) match {
-      case Right((id, res)) => Right((id, () => encode(res())))
+    applyDecoded(decoded) match {
+      case Right((id, f)) => Right((id, (x: Option[T]) => encode(f(x))))
       case Left(res) => Left(encode(res))
     }
   }
 
-  private[spray] def applyDecoded[T: OcppService](req: HttpRequest, toService: ChargerInfo => Option[T]): Result = safe {
-
-    def withService(chargerInfo: ChargerInfo): Either[HttpResponse, T] = toService(chargerInfo) match {
-      case Some(service) => Right(service)
-      case None =>
-        val msg = s"Charge box ${chargerInfo.chargerId} not found"
-        logger.warn(msg)
-        IdentityMismatch(msg)
-    }
-
+  private[spray] def applyDecoded[T: OcppService](req: HttpRequest): Result[T] = safe {
     for {
       post <- soapPost(req).right
       xml <- toXml(post).right
@@ -47,10 +38,20 @@ object OcppProcessing extends Logging {
       chargerId <- chargerId(env).right
       version <- parseVersion(env.Body).right
       chargerInfo <- Right(ChargerInfo(version, ChargeBoxAddress.unapply(env), chargerId)).right
-      service <- withService(chargerInfo).right
     } yield {
-      httpLogger.debug(s">>\n\t${req.headers.mkString("\n\t")}\n\t$xml")
-      (chargerInfo.chargerId, () => safe(OcppResponse(dispatch(chargerInfo.ocppVersion, env.Body, service))).merge)
+
+      val f: ResponseFunc[T] = {
+        case None =>
+          val msg = s"Charge box ${chargerInfo.chargerId} not found"
+          logger.warn(msg)
+          OcppResponse(IdentityMismatch(msg))
+
+        case Some(service) =>
+          httpLogger.debug(s">>\n\t${req.headers.mkString("\n\t")}\n\t$xml")
+          safe(OcppResponse(dispatch(chargerInfo.ocppVersion, env.Body, service))).merge
+      }
+
+      chargerInfo -> f
     }
   }.joinRight
 

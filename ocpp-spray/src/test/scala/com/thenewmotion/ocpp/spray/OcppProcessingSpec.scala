@@ -20,17 +20,16 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
   "OcppProcessing" should {
 
     "call the user-supplied CentralSystemService according to the request" in new TestScope {
-      val result = OcppProcessing.applyDecoded(httpRequest, _ => Some(mockCentralService))
-      result.right.get._2() // need to force lazy value
-
+      val Right((_, f)) = OcppProcessing.applyDecoded[CentralSystem](httpRequest)
+      f(Some(mockCentralService))
       there was one(mockCentralService).apply(HeartbeatReq)
     }
 
     "report an identity mismatch fault if the service function returns None" in new TestScope {
-      val result = OcppProcessing.applyDecoded[CentralSystem](httpRequest, _ => None)
-
-      result must beLeft
-      result.left.get.entity.asString must beMatching(".*IdentityMismatch.*")
+      val Right((_, f)) = OcppProcessing.applyDecoded[CentralSystem](httpRequest)
+      val result = OcppProcessing.applyDecoded[CentralSystem](httpRequest)
+      val response = f(None)
+      response.entity.asString must beMatching(".*IdentityMismatch.*")
     }
 
     "call the user-supplied ChargePointService according to the request" in {
@@ -40,9 +39,9 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
                                     Uri("/"),
                                     List(`Content-Type`(MediaTypes.`application/soap+xml`)),
                                     HttpEntity(bytesOfResourceFile("v15/getLocalListVersionRequest.xml")))
+      val Right((_, f)) = OcppProcessing.applyDecoded[ChargePoint](httpRequest)
 
-      val result = OcppProcessing.applyDecoded(httpRequest, _ => Some(mockCPService))
-      result.right.get._2() // need to force lazy value
+      f(Some(mockCPService))
 
       there was one(mockCPService).apply(GetLocalListVersionReq)
     }
