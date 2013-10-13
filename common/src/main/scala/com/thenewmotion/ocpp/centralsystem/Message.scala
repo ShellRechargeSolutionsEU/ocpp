@@ -109,7 +109,7 @@ object Meter {
     val EnergyActiveExportRegister = Value(0, "Energy.Active.Export.Register")
     val EnergyActiveImportRegister = Value(1, "Energy.Active.Import.Register")
     val EnergyReactiveExportRegister = Value(2, "Energy.Reactive.Export.Register")
-    val EnergyReactiveImportRegister = Value(3, "Energy.ReactiveImport.Register")
+    val EnergyReactiveImportRegister = Value(3, "Energy.Reactive.Import.Register")
     val EnergyActiveExportInterval = Value(4, "Energy.Active.Export.Interval")
     val EnergyActiveImportInterval = Value(5, "Energy.Active.Import.Interval")
     val EnergyReactiveExportInterval = Value(6, "Energy.Reactive.Export.Interval")
