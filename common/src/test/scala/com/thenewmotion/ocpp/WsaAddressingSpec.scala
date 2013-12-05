@@ -13,17 +13,21 @@ class WsaAddressingSpec extends SpecificationWithJUnit with Mockito {
       val scope = TopScope
       val headers = NodeSeq.Empty
 
-      for {
+      val values = for {
         endpoint <- List(Some(new Uri("http://address.com")), None)
         action <- List(Some(new Uri("/action")), None)
-      } {
-        val f = mock[(NodeSeq, NamespaceBinding) => Unit]
-        WsaAddressing(endpoint, action, headers, scope)(f)
+      } yield endpoint -> action
 
-        (endpoint, action) match {
-          case (None, None) => there was one(f).apply(headers, scope)
-          case (e, a) => there was one(f).apply(WsaAddressing.headers(e, a), WsaAddressing.scope(scope))
-        }
+
+      foreach(values) {
+        case (endpoint, action) =>
+          val f = mock[(NodeSeq, NamespaceBinding) => Unit]
+          WsaAddressing(endpoint, action, headers, scope)(f)
+
+          (endpoint, action) match {
+            case (None, None) => there was one(f).apply(headers, scope)
+            case (e, a) => there was one(f).apply(WsaAddressing.headers(e, a), WsaAddressing.scope(scope))
+          }
       }
     }
   }

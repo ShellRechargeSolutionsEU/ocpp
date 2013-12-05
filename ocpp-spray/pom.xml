@@ -15,6 +15,10 @@
             <artifactId>ocpp-common_${scala.version}</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-actor_${scala.version}</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.spray</groupId>
             <artifactId>spray-http</artifactId>
         </dependency>

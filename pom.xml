@@ -5,7 +5,7 @@
     <parent>
         <groupId>ua.t3hnar</groupId>
         <artifactId>scala-parent-pom_2.10</artifactId>
-        <version>2.2</version>
+        <version>2.4</version>
     </parent>
 
     <groupId>com.thenewmotion.ocpp</groupId>
@@ -18,7 +18,7 @@
     <description>Generated beans for Open Charge Point Protocol</description>
 
     <properties>
-        <spray.version>1.1-M8</spray.version>
+        <spray.version>1.2.0</spray.version>
     </properties>
 
     <modules>
@@ -48,7 +48,7 @@
             <dependency>
                 <groupId>ua.t3hnar.scalax</groupId>
                 <artifactId>scalax_${scala.version}</artifactId>
-                <version>1.4</version>
+                <version>1.7</version>
             </dependency>
             <dependency>
                 <groupId>net.databinder.dispatch</groupId>
@@ -64,6 +64,11 @@
                 <groupId>com.typesafe</groupId>
                 <artifactId>scalalogging-slf4j_${scala.version}</artifactId>
                 <version>1.0.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.typesafe.akka</groupId>
+                <artifactId>akka-actor_${scala.version}</artifactId>
+                <version>2.2.3</version>
             </dependency>
             <dependency>
                 <groupId>io.spray</groupId>

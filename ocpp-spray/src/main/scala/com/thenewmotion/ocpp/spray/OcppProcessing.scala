@@ -75,7 +75,7 @@ object OcppProcessing extends Logging {
     }
 
   private def toXml(req: HttpRequest): Either[HttpResponse, NodeSeq] = {
-    try XML.load(new ByteArrayInputStream(req.entity.buffer)) match {
+    try XML.load(new ByteArrayInputStream(req.entity.data.toByteArray)) match {
       case NodeSeq.Empty => ProtocolError("Body is empty")
       case xml =>
         logger.debug(">> " + xml.toString())
