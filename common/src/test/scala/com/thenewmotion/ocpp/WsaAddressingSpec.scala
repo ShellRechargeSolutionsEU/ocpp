@@ -8,7 +8,9 @@ import org.specs2.mock.Mockito
  * @author Yaroslav Klymko
  */
 class WsaAddressingSpec extends SpecificationWithJUnit with Mockito {
+
   "WsaAddressing.apply" should {
+
     "add wsa:addressing header if action and replyTo defined" in {
       val scope = TopScope
       val headers = NodeSeq.Empty
@@ -16,7 +18,7 @@ class WsaAddressingSpec extends SpecificationWithJUnit with Mockito {
       for {
         endpoint <- List(Some(new Uri("http://address.com")), None)
         action <- List(Some(new Uri("/action")), None)
-      } {
+      } yield {
         val f = mock[(NodeSeq, NamespaceBinding) => Unit]
         WsaAddressing(endpoint, action, headers, scope)(f)
 
