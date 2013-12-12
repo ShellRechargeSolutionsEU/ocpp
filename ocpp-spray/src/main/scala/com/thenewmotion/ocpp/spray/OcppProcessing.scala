@@ -31,17 +31,18 @@ object OcppProcessing extends Logging {
 
   private[spray] def applyDecoded[REQ, RES](req: HttpRequest)(f: ProcessingFunc[REQ, RES])
                                            (implicit ocppService: OcppService[REQ, RES], ec: ExecutionContext): Future[HttpResponse] = {
-    val errorResponseOrFuture = for {
-      post <- soapPost(req).right
-      xml <- toXml(post).right
-      env <- envelope(xml).right
-      chargerId <- chargerId(env).right
-      version <- parseVersion(env.Body).right
-      chargerInfo <- Right(ChargerInfo(version, ChargeBoxAddress.unapply(env), chargerId)).right
-    } yield {
-
-      httpLogger.debug(s">>\n\t${req.headers.mkString("\n\t")}\n\t$xml")
-      dispatch(chargerInfo.ocppVersion, env.Body, f(chargerInfo, _: REQ)) map (OcppResponse(_))
+    val errorResponseOrFuture = safe {
+      for {
+        post <- soapPost(req).right
+        xml <- toXml(post).right
+        env <- envelope(xml).right
+        chargerId <- chargerId(env).right
+        version <- parseVersion(env.Body).right
+        chargerInfo <- Right(ChargerInfo(version, ChargeBoxAddress.unapply(env), chargerId)).right
+      } yield {
+        httpLogger.debug(s">>\n\t${req.headers.mkString("\n\t")}\n\t$xml")
+        dispatch(chargerInfo.ocppVersion, env.Body, f(chargerInfo, _: REQ)) map (OcppResponse(_))
+      }
     }
 
     val futureResponse = errorResponseOrFuture match {
@@ -61,10 +62,10 @@ object OcppProcessing extends Logging {
     }
   }
 
-  private def safe[T](func: => T): Either[HttpResponse, T] = try Right(func) catch {
+  private def safe[T](func: => Either[HttpResponse, T]): Either[HttpResponse, T] = try func catch {
     case e: Exception =>
       logger.error(e.getMessage, e)
-      InternalError(e.getMessage)
+      errorToEither(InternalError(e.getMessage))
   }
 
   private def soapPost(req: HttpRequest): Either[HttpResponse, HttpRequest] =
