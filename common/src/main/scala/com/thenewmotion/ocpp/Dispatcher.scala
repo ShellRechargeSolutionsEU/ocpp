@@ -5,22 +5,24 @@ import scala.xml.{Elem, NodeSeq}
 import scalaxb.{DataRecord, XMLFormat, fromXMLEither}
 import soapenvelope12.Body
 import com.thenewmotion.ocpp.Fault._
+import scala.concurrent.{ExecutionContext, Future}
 
 
 /**
- * A dispatcher takes a SOAP message body and performs the requested action by calling a method on the given object of
- * type T (the "service object").
+ * A dispatcher takes a SOAP message body and performs the requested action by calling the given function, and returns
+ * the result as a SOAP message body again.
  *
- * The task of the dispatcher is (1) finding out which method must be called on the service object and (2) deserializing
- * the data in the SOAP message so that it can be passed to one of the methods of the service object.
+ * Thus the task of the dispatcher is deserializing the data in the SOAP message so that it can be passed to one of the
+ * methods of the service object.
  *
- * @tparam T The type of the service object
+ * @tparam REQ The type of request that the processing function takes
+ * @tparam RES The type of response that the processing function produces
  */
-trait Dispatcher[T] {
-  def dispatch(body: Body, service: => T): Body
+trait Dispatcher[REQ, RES] {
+  def dispatch(body: Body, f: REQ => Future[RES])(implicit ec: ExecutionContext): Future[Body]
 }
 
-abstract class AbstractDispatcher[T](implicit evidence: OcppService[T]) extends Dispatcher[T] {
+abstract class AbstractDispatcher[REQ, RES](implicit evidence: OcppService[REQ, RES]) extends Dispatcher[REQ, RES] {
   implicit def faultToBody(x: soapenvelope12.Fault) = x.asBody
   def version: Version.Value
 
@@ -29,7 +31,8 @@ abstract class AbstractDispatcher[T](implicit evidence: OcppService[T]) extends 
 
   import scalax.RichAny
 
-  def dispatch(body: Body, service: => T): Body = {
+  def dispatch(body: Body, f: REQ => Future[RES])
+              (implicit ec: ExecutionContext): Future[Body] = {
     val data = for {
       dataRecord <- body.any
       elem <- dataRecord.value.asInstanceOfOpt[Elem]
@@ -37,30 +40,46 @@ abstract class AbstractDispatcher[T](implicit evidence: OcppService[T]) extends 
     } yield action -> elem
 
     data.headOption match {
-      case None if body.any.isEmpty => ProtocolError("Body is empty")
-      case None => NotSupported("No supported action found")
-      case Some((action, xml)) => dispatch(action, xml, service)
+      case None if body.any.isEmpty => Future.successful(ProtocolError("Body is empty"))
+      case None => Future.successful(NotSupported("No supported action found"))
+      case Some((action, xml)) => dispatch(action, xml, f)
     }
   }
 
-  protected def dispatch(action: actions.Value, xml: NodeSeq, service: => T): Body
+  protected def dispatch(action: actions.Value, xml: NodeSeq, f: REQ => Future[RES])
+                        (implicit ec: ExecutionContext): Future[Body]
 
   protected def reqRes: ReqRes = new ReqRes {
-    def apply[REQ: XMLFormat, RES: XMLFormat](action: actions.Value, xml: NodeSeq)(f: REQ => RES) = fromXMLEither[REQ](xml) match {
-      case Left(msg) => ProtocolError(msg)
-      case Right(req) => try {
-        val res = f(req)
-        simpleBody(DataRecord(Some(evidence.namespace(version)), Some(action.responseLabel), res))
-      } catch {
-        case FaultException(fault) => fault
+    def apply[XMLREQ, XMLRES](action: actions.Value, xml: NodeSeq, f: REQ => Future[RES])
+                                                   (reqTrans: XMLREQ => REQ)
+                                                   (resTrans: RES => XMLRES)
+                                                   (implicit ec: ExecutionContext,
+                                                    reqEv: XMLFormat[XMLREQ],
+                                                    resEv: XMLFormat[XMLRES]) =
+      fromXMLEither[XMLREQ](xml) match {
+        case Left(msg) => Future.successful(ProtocolError(msg))
+        case Right(xmlReq) => try {
+          val req = reqTrans(xmlReq)
+          f(req) map { res =>
+            val xmlRes = resTrans(res)
+            simpleBody(DataRecord(Some(evidence.namespace(version)), Some(action.responseLabel), xmlRes))
+          } recover {
+            // TODO test for this
+            case FaultException(fault) => fault
+          }
+        }
       }
-    }
   }
 
   protected def fault(x: soapenvelope12.Fault): Nothing = throw new FaultException(x)
 
   trait ReqRes {
-    def apply[REQ: XMLFormat, RES: XMLFormat](action: actions.Value, xml: NodeSeq)(f: REQ => RES): Body
+    def apply[XMLREQ, XMLRES](action: actions.Value, xml: NodeSeq, f: REQ => Future[RES])
+                                                   (reqTrans: XMLREQ => REQ)
+                                                   (resTrans: RES => XMLRES)
+                                                   (implicit ec: ExecutionContext,
+                                                    reqEv: XMLFormat[XMLREQ],
+                                                    resEv: XMLFormat[XMLRES]): Future[Body]
   }
 }
 

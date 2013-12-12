@@ -1,19 +1,19 @@
 package com.thenewmotion.ocpp
 
-import centralsystem.CentralSystem
-import chargepoint.ChargePoint
+import centralsystem.{Req => CsReq, Res => CsRes}
+import chargepoint.{Req => CpReq, Res => CpRes}
 
 
 /**
  * Type class for OCPP services that can be called via SOAP messages
  */
-trait OcppService[T] {
-  def apply(version: Version.Value): Dispatcher[T]
+trait OcppService[REQ, RES] {
+  def apply(version: Version.Value): Dispatcher[REQ, RES]
   def namespace(version: Version.Value): String
 }
 
 object OcppService {
-  implicit val centralSystemOcppService: OcppService[CentralSystem] = new OcppService[CentralSystem] {
+  implicit val centralSystemOcppService: OcppService[CsReq, CsRes] = new OcppService[CsReq, CsRes] {
     def apply(version: Version.Value) = CentralSystemDispatcher(version)
 
     def namespace(version: Version.Value) = version match {
@@ -22,7 +22,7 @@ object OcppService {
     }
   }
 
-  implicit val chargePointOcppService: OcppService[ChargePoint] = new OcppService[ChargePoint] {
+  implicit val chargePointOcppService: OcppService[CpReq, CpRes] = new OcppService[CpReq, CpRes] {
     def apply(version: Version.Value) = ChargePointDispatcher(version)
 
     def namespace(version: Version.Value) = version match {

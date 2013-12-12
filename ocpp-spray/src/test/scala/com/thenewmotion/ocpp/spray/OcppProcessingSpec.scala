@@ -10,40 +10,49 @@ import org.specs2.mock.Mockito
 import org.joda.time.DateTime
 import scala.io.Source
 import com.thenewmotion.ocpp.Version._
-import com.thenewmotion.ocpp.centralsystem._
-import com.thenewmotion.ocpp.chargepoint._
+import com.thenewmotion.ocpp.centralsystem.{Req => CsReq, Res => CsRes, _}
+import com.thenewmotion.ocpp.chargepoint.{Req => CpReq, Res => CpRes, _}
 import com.thenewmotion.ocpp._
+import scala.concurrent.{Await, Future, ExecutionContext}
+import scala.concurrent.duration.Duration
+import ExecutionContext.Implicits.global
+import java.net.URI
 
 
 class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUtils {
 
   "OcppProcessing" should {
 
-    "call the user-supplied CentralSystemService according to the request" in new TestScope {
-      val Right((_, f)) = OcppProcessing.applyDecoded[CentralSystem](httpRequest)
-      f(Some(mockCentralService))
-      there was one(mockCentralService).apply(HeartbeatReq)
+    "call the user-supplied function with the parsed request" in new TestScope {
+      val mockProcessingFunction = mock[(ChargerInfo, CsReq) => Future[CsRes]]
+      mockProcessingFunction(any, any) returns Future.successful(HeartbeatRes(DateTime.now))
+
+      Await.result(OcppProcessing.applyDecoded[CsReq, CsRes](httpRequest)(mockProcessingFunction), Duration(2, "seconds"))
+
+      val expectedChargerInfo = ChargerInfo(Version.V15, Some(new URI("http://address.com")), "chargeBoxIdentity")
+      there was one(mockProcessingFunction).apply(expectedChargerInfo, HeartbeatReq)
     }
 
+    /* TODO
     "report an identity mismatch fault if the service function returns None" in new TestScope {
-      val Right((_, f)) = OcppProcessing.applyDecoded[CentralSystem](httpRequest)
-      val result = OcppProcessing.applyDecoded[CentralSystem](httpRequest)
+      val Right((_, f)) = OcppProcessing.applyDecoded[CsReq, CsRes](httpRequest)
       val response = f(None)
       response.entity.asString must beMatching(".*IdentityMismatch.*")
     }
+    */
 
     "call the user-supplied ChargePointService according to the request" in {
-      val mockCPService = mock[ChargePoint]
-      mockCPService.apply(GetLocalListVersionReq) returns GetLocalListVersionRes(AuthListSupported(0))
+      val mockProcessingFunction = mock[(ChargerInfo, CpReq) => Future[CpRes]]
+      mockProcessingFunction.apply(any, any) returns Future.successful(GetLocalListVersionRes(AuthListSupported(0)))
       val httpRequest = HttpRequest(HttpMethods.POST,
                                     Uri("/"),
                                     List(`Content-Type`(MediaTypes.`application/soap+xml`)),
                                     HttpEntity(bytesOfResourceFile("v15/getLocalListVersionRequest.xml")))
-      val Right((_, f)) = OcppProcessing.applyDecoded[ChargePoint](httpRequest)
 
-      f(Some(mockCPService))
+      Await.result(OcppProcessing.applyDecoded[CpReq, CpRes](httpRequest)(mockProcessingFunction), Duration(2, "seconds"))
 
-      there was one(mockCPService).apply(GetLocalListVersionReq)
+      val expectedChargerInfo = ChargerInfo(Version.V15, Some(new URI("http://localhost:8080/ocpp/")), "TestTwin1")
+      there was one(mockProcessingFunction).apply(expectedChargerInfo, GetLocalListVersionReq)
     }
 
     "dispatch ocpp 1.2" in new TestScope {
@@ -51,9 +60,9 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
       val version = V12
       val req = bodyFrom("v12/heartbeatRequest.xml")
-      val res = OcppProcessing.dispatch(V12, req, mockCentralService).any.head
+      val res = Await.result(OcppProcessing.dispatch(V12, req, mockFunction), Duration(2, "seconds")).any.head
 
-      there was one(mockCentralService).apply(HeartbeatReq)
+      there was one(mockFunction).apply(HeartbeatReq)
       res.value mustEqual HeartbeatResponse(dateTime.toXMLCalendar)
     }
 
@@ -62,9 +71,9 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
       val version = V15
       val req = bodyFrom("v15/heartbeatRequest.xml")
-      val res = OcppProcessing.dispatch(V15, req, mockCentralService).any.head
+      val res = Await.result(OcppProcessing.dispatch(V15, req, mockFunction), Duration(2, "seconds")).any.head
 
-      there was one(mockCentralService).apply(HeartbeatReq)
+      there was one(mockFunction).apply(HeartbeatReq)
       res.value mustEqual HeartbeatResponse(dateTime.toXMLCalendar)
     }
 
@@ -78,9 +87,10 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
     "return messages with charge point namespace when processing messages for charger" in new TestScope {
       val req = bodyFrom("v15/getLocalListVersionRequest.xml")
-      mockChargePointService.apply(GetLocalListVersionReq) returns GetLocalListVersionRes(AuthListNotSupported)
+      val mockCPFunction = mock[CpReq => Future[CpRes]]
+      mockCPFunction.apply(GetLocalListVersionReq) returns Future.successful(GetLocalListVersionRes(AuthListNotSupported))
 
-      val res = OcppProcessing.dispatch(V15, req, mockChargePointService).any.head
+      val res = Await.result(OcppProcessing.dispatch(V15, req, mockCPFunction), Duration(2, "seconds")).any.head
 
       res.namespace mustEqual Some("urn://Ocpp/Cp/2012/06/")
     }
@@ -88,7 +98,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
     "return messages with central system namespace when processing messages for central service" in new TestScope {
       val req = bodyFrom("v15/heartbeatRequest.xml")
 
-      val res = OcppProcessing.dispatch(V15, req, mockCentralService).any.head
+      val res = Await.result(OcppProcessing.dispatch(V15, req, mockFunction), Duration(2, "seconds")).any.head
 
       res.namespace mustEqual Some("urn://Ocpp/Cs/2012/06/")
     }
@@ -96,9 +106,9 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
   private trait TestScope extends Scope {
     val dateTime = DateTime.now
-    val mockChargePointService = mock[ChargePoint]
-    val mockCentralService = mock[CentralSystem]
-    mockCentralService.apply(HeartbeatReq) returns HeartbeatRes(dateTime)
+    val mockFunction = mock[CsReq => Future[CsRes]]
+    mockFunction.apply(any) returns Future.successful(HeartbeatRes(dateTime))
+
     val httpRequest = HttpRequest(
       HttpMethods.POST,
       Uri("/"),

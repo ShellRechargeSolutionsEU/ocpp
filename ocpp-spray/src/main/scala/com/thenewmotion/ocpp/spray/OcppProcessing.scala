@@ -9,6 +9,7 @@ import _root_.spray.http.{StatusCodes, HttpResponse, HttpRequest}
 import StatusCodes._
 import java.io.ByteArrayInputStream
 import scala.language.implicitConversions
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * The information about the charge point available in an incoming request
@@ -19,19 +20,18 @@ object OcppProcessing extends Logging {
 
   type ResponseFunc[T] = Option[T] => HttpResponse
   type ChargerId = String
-  type Result[T] = Either[HttpResponse, (ChargerInfo, ResponseFunc[T])]
+  type ProcessingFunc[REQ, RES] = (ChargerInfo, REQ) => Future[RES]
   type OcppMessageLogger = (ChargerId, Version.Value, Any) => Unit
 
-  def apply[T: OcppService](req: HttpRequest): Result[T] = {
+  def apply[REQ, RES](req: HttpRequest)(f: ProcessingFunc[REQ, RES])
+                     (implicit ocppService: OcppService[REQ, RES], ec: ExecutionContext): Future[HttpResponse] = {
     val (decoded, encode) = decodeEncode(req)
-    applyDecoded(decoded) match {
-      case Right((id, f)) => Right((id, (x: Option[T]) => encode(f(x))))
-      case Left(res) => Left(encode(res))
-    }
+    applyDecoded(decoded)(f) map encode
   }
 
-  private[spray] def applyDecoded[T: OcppService](req: HttpRequest): Result[T] = safe {
-    for {
+  private[spray] def applyDecoded[REQ, RES](req: HttpRequest)(f: ProcessingFunc[REQ, RES])
+                                           (implicit ocppService: OcppService[REQ, RES], ec: ExecutionContext): Future[HttpResponse] = {
+    val errorResponseOrFuture = for {
       post <- soapPost(req).right
       xml <- toXml(post).right
       env <- envelope(xml).right
@@ -40,20 +40,19 @@ object OcppProcessing extends Logging {
       chargerInfo <- Right(ChargerInfo(version, ChargeBoxAddress.unapply(env), chargerId)).right
     } yield {
 
-      val f: ResponseFunc[T] = {
-        case None =>
-          val msg = s"Charge box ${chargerInfo.chargerId} not found"
-          logger.warn(msg)
-          OcppResponse(IdentityMismatch(msg))
-
-        case Some(service) =>
-          httpLogger.debug(s">>\n\t${req.headers.mkString("\n\t")}\n\t$xml")
-          safe(OcppResponse(dispatch(chargerInfo.ocppVersion, env.Body, service))).merge
-      }
-
-      chargerInfo -> f
+      httpLogger.debug(s">>\n\t${req.headers.mkString("\n\t")}\n\t$xml")
+      dispatch(chargerInfo.ocppVersion, env.Body, f(chargerInfo, _: REQ)) map (OcppResponse(_))
     }
-  }.joinRight
+
+    val futureResponse = errorResponseOrFuture match {
+      case Right(future) => future
+      case Left(response) => Future.successful(response)
+    }
+
+    futureResponse recover {
+      case e: Exception => OcppResponse(InternalError(e.getMessage))
+    }
+  }
 
   private def parseVersion(body: Body): Either[HttpResponse, Version.Value] = {
     Version.fromBody(body) match {
@@ -97,9 +96,9 @@ object OcppProcessing extends Logging {
       OcppResponse(ProtocolError(msg))
     }
 
-  private[spray] def dispatch[T](version: Version.Value, body: Body, service: => T)
-                                (implicit ocppService: OcppService[T]): Body =
-    ocppService(version).dispatch(body, service)
+  private[spray] def dispatch[REQ, RES](version: Version.Value, body: Body, f: REQ => Future[RES])
+                                (implicit ocppService: OcppService[REQ, RES], ec: ExecutionContext): Future[Body] =
+    ocppService(version).dispatch(body, f)
 
   implicit def errorToEither[T](x: Fault): Either[HttpResponse, T] = Left(OcppResponse(x))
 
