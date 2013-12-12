@@ -33,13 +33,25 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
       there was one(mockProcessingFunction).apply(expectedChargerInfo, HeartbeatReq)
     }
 
-    /* TODO
-    "report an identity mismatch fault if the service function returns None" in new TestScope {
-      val Right((_, f)) = OcppProcessing.applyDecoded[CsReq, CsRes](httpRequest)
-      val response = f(None)
-      response.entity.asString must beMatching(".*IdentityMismatch.*")
+    "produce a Fault response if the processing function returns a failed future" in new TestScope {
+      val failingProcessingFunction = mock[(ChargerInfo, CsReq) => Future[CsRes]]
+      failingProcessingFunction(any, any) returns Future.failed(new RuntimeException("b0rk! b0rk!"))
+
+      val response = Await.result(OcppProcessing.applyDecoded[CsReq, CsRes](httpRequest)(failingProcessingFunction),
+        Duration(2, "seconds"))
+
+      response.entity.asString must beMatching(".*Fault.*") and beMatching(".*b0rk! b0rk!.*")
     }
-    */
+    
+    "produce a Fault response if the processing function throws" in new TestScope {
+      val throwingProcessingFunction = mock[(ChargerInfo, CsReq) => Future[CsRes]]
+      throwingProcessingFunction(any, any) throws new RuntimeException("b0rk! b0rk!")
+
+      val response = Await.result(OcppProcessing.applyDecoded[CsReq, CsRes](httpRequest)(throwingProcessingFunction),
+        Duration(2, "seconds"))
+
+      response.entity.asString must beMatching(".*Fault.*") and beMatching(".*b0rk! b0rk!.*")
+    }
 
     "call the user-supplied ChargePointService according to the request" in {
       val mockProcessingFunction = mock[(ChargerInfo, CpReq) => Future[CpRes]]

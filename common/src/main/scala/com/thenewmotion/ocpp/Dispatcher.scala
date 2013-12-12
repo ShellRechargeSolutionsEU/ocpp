@@ -64,7 +64,6 @@ abstract class AbstractDispatcher[REQ, RES](implicit evidence: OcppService[REQ, 
             val xmlRes = resTrans(res)
             simpleBody(DataRecord(Some(evidence.namespace(version)), Some(action.responseLabel), xmlRes))
           } recover {
-            // TODO test for this
             case FaultException(fault) => fault
           }
         }
