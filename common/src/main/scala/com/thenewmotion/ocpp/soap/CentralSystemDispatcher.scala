@@ -2,10 +2,11 @@ package com.thenewmotion.ocpp
 package soap
 
 import scala.xml.NodeSeq
-import com.thenewmotion.ocpp.{centralsystem => ocpp, Scope, ConnectorScope}
+import com.thenewmotion.ocpp.{Scope, ConnectorScope}
+import com.thenewmotion.ocpp.messages.{centralsystem => ocpp}
 import scalaxb.XMLFormat
 import scala.concurrent.{Future, ExecutionContext}
-import centralsystem._
+import messages.centralsystem._
 
 object CentralSystemDispatcher {
   def apply(version: Version.Value): Dispatcher[Req, Res] = version match {

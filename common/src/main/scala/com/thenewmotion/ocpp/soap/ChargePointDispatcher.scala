@@ -6,7 +6,8 @@ import soapenvelope12.Body
 import scalaxb.XMLFormat
 import scala.concurrent.{ExecutionContext, Future}
 import com.thenewmotion.ocpp.{Scope, ConnectorScope}
-import chargepoint._
+import messages.chargepoint
+import messages.chargepoint._
 
 object ChargePointDispatcher {
   def apply(version: Version.Value): Dispatcher[Req, Res] = version match {

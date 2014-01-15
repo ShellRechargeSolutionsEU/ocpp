@@ -1,4 +1,5 @@
 package com.thenewmotion.ocpp
+package messages
 package centralsystem
 
 import org.joda.time.DateTime

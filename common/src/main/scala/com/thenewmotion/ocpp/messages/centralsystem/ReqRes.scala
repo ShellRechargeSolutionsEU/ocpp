@@ -1,4 +1,4 @@
-package com.thenewmotion.ocpp.centralsystem
+package com.thenewmotion.ocpp.messages.centralsystem
 
 /**
  * @author Yaroslav Klymko

@@ -1,7 +1,7 @@
 package com.thenewmotion.ocpp
 
-import centralsystem._
-import com.thenewmotion.ocpp.{centralsystem => ocpp}
+import messages.centralsystem._
+import com.thenewmotion.ocpp.messages.{centralsystem => ocpp}
 import dispatch.Http
 import org.joda.time.DateTime
 import scala.concurrent.duration._

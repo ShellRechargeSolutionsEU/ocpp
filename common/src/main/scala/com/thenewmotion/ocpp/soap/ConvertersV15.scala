@@ -1,7 +1,8 @@
 package com.thenewmotion.ocpp
 package soap
 
-import com.thenewmotion.ocpp.{chargepoint, v15}
+import com.thenewmotion.ocpp.v15
+import messages.chargepoint
 
 /**
  * @author Yaroslav Klymko
