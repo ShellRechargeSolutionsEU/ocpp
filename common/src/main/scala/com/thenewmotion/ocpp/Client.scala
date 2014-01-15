@@ -1,6 +1,7 @@
 package com.thenewmotion.ocpp
 
 import com.typesafe.scalalogging.slf4j.Logging
+import com.thenewmotion.ocpp.soap.Version
 
 /**
  * @author Yaroslav Klymko

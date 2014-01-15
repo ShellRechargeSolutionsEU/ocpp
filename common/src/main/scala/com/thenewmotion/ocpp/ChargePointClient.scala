@@ -3,6 +3,7 @@ package com.thenewmotion.ocpp
 import com.thenewmotion.ocpp.{chargepoint => ocpp}
 import dispatch.Http
 import chargepoint._
+import com.thenewmotion.ocpp.soap.{Version, WsaAddressingSoapClients, ConvertersV15, ConvertersV12}
 
 
 /**

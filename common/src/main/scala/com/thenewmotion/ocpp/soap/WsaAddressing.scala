@@ -1,8 +1,9 @@
-package com.thenewmotion.ocpp
+package com.thenewmotion.ocpp.soap
 
 import scalaxb.{HttpClients, SoapClients}
-import scala.xml.{NamespaceBinding, NodeSeq}
-import java.util.UUID
+import scala.xml.NodeSeq
+import com.thenewmotion.ocpp._
+import scala.xml.NamespaceBinding
 
 /**
  * @author Yaroslav Klymko

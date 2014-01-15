@@ -1,4 +1,4 @@
-package com.thenewmotion.ocpp
+package com.thenewmotion.ocpp.soap
 
 import soapenvelope12.Envelope
 import scalax.{RichAny, StringOption}

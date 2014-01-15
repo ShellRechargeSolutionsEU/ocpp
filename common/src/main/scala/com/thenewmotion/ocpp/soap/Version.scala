@@ -1,4 +1,4 @@
-package com.thenewmotion.ocpp
+package com.thenewmotion.ocpp.soap
 
 import scala.language.implicitConversions
 import xml.{Elem, NodeSeq}

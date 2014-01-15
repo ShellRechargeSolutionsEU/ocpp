@@ -1,6 +1,7 @@
 package com.thenewmotion.ocpp
 
 import org.specs2.mutable.SpecificationWithJUnit
+import com.thenewmotion.ocpp.soap.{ChargeBoxIdentity, SoapUtils}
 
 /**
  * @author Yaroslav Klymko

@@ -1,4 +1,7 @@
 package com.thenewmotion.ocpp
+package soap
+
+import com.thenewmotion.ocpp.v12
 
 /**
  * @author Yaroslav Klymko

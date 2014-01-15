@@ -1,10 +1,11 @@
 package com.thenewmotion.ocpp
+package soap
 
 import scala.language.implicitConversions
 import scala.xml.{Elem, NodeSeq}
 import scalaxb.{DataRecord, XMLFormat, fromXMLEither}
 import soapenvelope12.Body
-import com.thenewmotion.ocpp.Fault._
+import Fault._
 import scala.concurrent.{ExecutionContext, Future}
 
 
@@ -27,9 +28,9 @@ abstract class AbstractDispatcher[REQ, RES](implicit evidence: OcppService[REQ, 
   def version: Version.Value
 
   val actions: ActionEnumeration
-  import actions.RichValue
 
   import scalax.RichAny
+  import actions.RichValue
 
   def dispatch(body: Body, f: REQ => Future[RES])
               (implicit ec: ExecutionContext): Future[Body] = {

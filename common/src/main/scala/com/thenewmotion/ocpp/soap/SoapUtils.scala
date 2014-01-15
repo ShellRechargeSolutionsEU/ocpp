@@ -1,4 +1,4 @@
-package com.thenewmotion.ocpp
+package com.thenewmotion.ocpp.soap
 
 import scala.xml.{NodeSeq, XML}
 import soapenvelope12.{Envelope, Body}

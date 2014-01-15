@@ -1,4 +1,5 @@
 package com.thenewmotion.ocpp
+package soap
 
 import soapenvelope12._
 import javax.xml.namespace.QName

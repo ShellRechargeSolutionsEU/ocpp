@@ -1,15 +1,17 @@
-package com.thenewmotion.ocpp.spray
+package com.thenewmotion.ocpp
+package spray
 
 import xml.{XML, NodeSeq}
 import com.typesafe.scalalogging.slf4j.Logging
 import soapenvelope12.{Body, Fault, Envelope}
 import com.thenewmotion.ocpp._
-import com.thenewmotion.ocpp.Fault._
+import com.thenewmotion.ocpp.soap.Fault._
 import _root_.spray.http.{StatusCodes, HttpResponse, HttpRequest}
 import StatusCodes._
 import java.io.ByteArrayInputStream
 import scala.language.implicitConversions
 import scala.concurrent.{ExecutionContext, Future}
+import com.thenewmotion.ocpp.soap._
 
 /**
  * The information about the charge point available in an incoming request

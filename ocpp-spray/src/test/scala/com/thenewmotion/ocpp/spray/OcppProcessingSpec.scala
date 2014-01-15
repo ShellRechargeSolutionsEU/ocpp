@@ -9,7 +9,8 @@ import org.specs2.specification.Scope
 import org.specs2.mock.Mockito
 import org.joda.time.DateTime
 import scala.io.Source
-import com.thenewmotion.ocpp.Version._
+import com.thenewmotion.ocpp.soap.Version._
+import com.thenewmotion.ocpp.soap.SoapUtils
 import com.thenewmotion.ocpp.centralsystem.{Req => CsReq, Res => CsRes, _}
 import com.thenewmotion.ocpp.chargepoint.{Req => CpReq, Res => CpRes, _}
 import com.thenewmotion.ocpp._
@@ -29,7 +30,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
       Await.result(OcppProcessing.applyDecoded[CsReq, CsRes](httpRequest)(mockProcessingFunction), Duration(2, "seconds"))
 
-      val expectedChargerInfo = ChargerInfo(Version.V15, Some(new URI("http://address.com")), "chargeBoxIdentity")
+      val expectedChargerInfo = ChargerInfo(V15, Some(new URI("http://address.com")), "chargeBoxIdentity")
       there was one(mockProcessingFunction).apply(expectedChargerInfo, HeartbeatReq)
     }
 
@@ -63,7 +64,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
       Await.result(OcppProcessing.applyDecoded[CpReq, CpRes](httpRequest)(mockProcessingFunction), Duration(2, "seconds"))
 
-      val expectedChargerInfo = ChargerInfo(Version.V15, Some(new URI("http://localhost:8080/ocpp/")), "TestTwin1")
+      val expectedChargerInfo = ChargerInfo(V15, Some(new URI("http://localhost:8080/ocpp/")), "TestTwin1")
       there was one(mockProcessingFunction).apply(expectedChargerInfo, GetLocalListVersionReq)
     }
 

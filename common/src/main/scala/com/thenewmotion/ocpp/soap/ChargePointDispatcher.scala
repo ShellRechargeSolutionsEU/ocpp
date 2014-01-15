@@ -1,11 +1,12 @@
-package com.thenewmotion
-package ocpp
+package com.thenewmotion.ocpp
+package soap
 
 import scala.xml.NodeSeq
 import soapenvelope12.Body
 import scalaxb.XMLFormat
-import chargepoint._
 import scala.concurrent.{ExecutionContext, Future}
+import com.thenewmotion.ocpp.{Scope, ConnectorScope}
+import chargepoint._
 
 object ChargePointDispatcher {
   def apply(version: Version.Value): Dispatcher[Req, Res] = version match {
@@ -19,15 +20,15 @@ object ChargePointDispatcher {
  * a charge point.
  */
 object ChargePointDispatcherV15 extends AbstractDispatcher[Req, Res] {
-  def version: Version.Value = Version.V15
+  import v15.{ChargePointService => _, Value => _, _}
+  import ConvertersV15._
 
+  def version: Version.Value = Version.V15
   val actions = ChargePointAction
   import actions._
 
   def dispatch(action: Value, xml: NodeSeq, service: Req => Future[Res])
               (implicit ec: ExecutionContext): Future[Body] = {
-    import ConvertersV15._
-    import v15._
 
     def remoteStartStopStatus(accepted: Boolean) = if (accepted) AcceptedValue2 else RejectedValue2
 

@@ -1,7 +1,8 @@
 package com.thenewmotion.ocpp
+package soap
 
-import centralsystem.{Req => CsReq, Res => CsRes}
 import chargepoint.{Req => CpReq, Res => CpRes}
+import centralsystem.{Req => CsReq, Res => CsRes}
 
 
 /**

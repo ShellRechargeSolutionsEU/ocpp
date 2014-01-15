@@ -6,6 +6,7 @@ import dispatch.Http
 import org.joda.time.DateTime
 import scala.concurrent.duration._
 import scala.language.implicitConversions
+import com.thenewmotion.ocpp.soap.{Version, WsaAddressingSoapClients, ConvertersV12}
 
 /**
  * @author Yaroslav Klymko

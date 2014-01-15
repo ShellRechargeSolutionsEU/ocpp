@@ -1,10 +1,11 @@
 package com.thenewmotion.ocpp
+package soap
 
 import scala.xml.NodeSeq
-import centralsystem._
-import com.thenewmotion.ocpp.{centralsystem => ocpp}
+import com.thenewmotion.ocpp.{centralsystem => ocpp, Scope, ConnectorScope}
 import scalaxb.XMLFormat
 import scala.concurrent.{Future, ExecutionContext}
+import centralsystem._
 
 object CentralSystemDispatcher {
   def apply(version: Version.Value): Dispatcher[Req, Res] = version match {
@@ -291,8 +292,8 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[Req, Res] {
   }
 
   def toValue(x: v15.Value): Meter.Value = {
+    import Meter.{ReadingContext => ocpp}
     def toReadingContext(x: ReadingContext): Meter.ReadingContext.Value = {
-      import Meter.{ReadingContext => ocpp}
       x match {
         case Interruptionu46Begin => ocpp.InterruptionBegin
         case Interruptionu46End => ocpp.InterruptionEnd
