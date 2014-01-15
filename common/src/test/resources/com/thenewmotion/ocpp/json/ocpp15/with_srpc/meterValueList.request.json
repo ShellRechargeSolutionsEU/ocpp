@@ -1,0 +1,46 @@
+{"meta" : { "id": "Dev02", "action": "meterValues", "from": "http://88.159.83.233:13013"},
+"connectorId": 1, "transactionId": 433, "values": [{
+"timestamp": 1357479024, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479041, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479055, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479070, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479085, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479100, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479115, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479130, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479145, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479160, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479175, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479190, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479205, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479220, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479235, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479250, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479265, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479280, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479295, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479310, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479325, "value": [{"item": "0"}]},
+{
+"timestamp": 1357479331, "value": [{"item": "0"}]}]}
+

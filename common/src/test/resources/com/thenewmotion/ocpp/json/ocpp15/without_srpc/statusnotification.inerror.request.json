@@ -1,0 +1,9 @@
+{
+    "connectorId": 2,
+    "status": "Faulted",
+    "errorCode": "PowerMeterFailure",
+    "info": "Die meter is kats doorgefikt joh",
+    "timestamp": "2013-02-01T15:09:18Z",
+    "vendorId": "TNM",
+    "vendorErrorCode": "MeterB0rk3d"
+}

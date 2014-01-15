@@ -1,0 +1,3 @@
+{"meta" : { "id": "Dev02", "action": "meterValues", "from": "http://88.159.83.233:13013"},
+"connectorId": 1, "transactionId": 432, "values": [{
+"timestamp": 1357476966, "value": [{"item": "0"}]}]}
