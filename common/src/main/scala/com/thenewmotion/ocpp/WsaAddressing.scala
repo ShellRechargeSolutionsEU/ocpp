@@ -46,10 +46,9 @@ object WsaAddressing {
   }
 
   def headers(endpoint: Option[Uri], action: Option[Uri]) = {
-    val wsaMessageId = <wsa:MessageId>uuid:{UUID.randomUUID().toString}</wsa:MessageId>
     val wsaAction = action.map(x => <wsa:Action>{x}</wsa:Action>) getOrElse NodeSeq.Empty
     val wsaEndpoint = endpoint.map(x => <wsa:From><wsa:Address>{x}</wsa:Address></wsa:From>) getOrElse NodeSeq.Empty
-    wsaMessageId ++ wsaAction ++ wsaEndpoint
+    wsaAction ++ wsaEndpoint
   }
 }
 
