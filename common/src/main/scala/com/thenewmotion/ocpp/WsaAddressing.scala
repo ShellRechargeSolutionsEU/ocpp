@@ -27,7 +27,9 @@ trait WsaAddressingSoapClients extends SoapClients {
 
 }
 
-object WsaAddressing {
+object WsaAddressing extends WsaAddressing(() => UUID.randomUUID().toString)
+
+class WsaAddressing(messageId: () => String) {
   val Uri = "http://www.w3.org/2005/08/addressing"
   val AnonymousUri = Uri + "/anonymous"
 
@@ -46,9 +48,13 @@ object WsaAddressing {
   }
 
   def headers(endpoint: Option[Uri], action: Option[Uri]) = {
+    val wsaMessageId = if (action.isDefined || endpoint.isDefined)
+      <wsa:MessageId>uuid:{messageId()}</wsa:MessageId>
+    else NodeSeq.Empty
+
     val wsaAction = action.map(x => <wsa:Action>{x}</wsa:Action>) getOrElse NodeSeq.Empty
     val wsaEndpoint = endpoint.map(x => <wsa:From><wsa:Address>{x}</wsa:Address></wsa:From>) getOrElse NodeSeq.Empty
-    wsaAction ++ wsaEndpoint
+    wsaMessageId ++ wsaAction ++ wsaEndpoint
   }
 }
 

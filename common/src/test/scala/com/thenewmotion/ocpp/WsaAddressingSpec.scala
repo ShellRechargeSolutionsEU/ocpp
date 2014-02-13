@@ -14,6 +14,7 @@ class WsaAddressingSpec extends SpecificationWithJUnit with Mockito {
     "add wsa:addressing header if action and replyTo defined" in {
       val scope = TopScope
       val headers = NodeSeq.Empty
+      val wsaAddressing = new WsaAddressing(() => "aaa-bbb-ccc-ddd")
 
       val values = for {
         endpoint <- List(Some(new Uri("http://address.com")), None)
@@ -24,11 +25,11 @@ class WsaAddressingSpec extends SpecificationWithJUnit with Mockito {
       foreach(values) {
         case (endpoint, action) =>
           val f = mock[(NodeSeq, NamespaceBinding) => Unit]
-          WsaAddressing(endpoint, action, headers, scope)(f)
+          wsaAddressing(endpoint, action, headers, scope)(f)
 
           (endpoint, action) match {
             case (None, None) => there was one(f).apply(headers, scope)
-            case (e, a) => there was one(f).apply(WsaAddressing.headers(e, a), WsaAddressing.scope(scope))
+            case (e, a) => there was one(f).apply(wsaAddressing.headers(e, a), wsaAddressing.scope(scope))
           }
       }
     }
