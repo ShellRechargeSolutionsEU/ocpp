@@ -23,7 +23,7 @@ object CentralSystemClient {
   }
 }
 
-private[ocpp] class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http, endpoint: Option[Uri])
+class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http, endpoint: Option[Uri])
   extends CentralSystemClient with ScalaxbClient {
   import v12._
   import ConvertersV12._
@@ -157,7 +157,7 @@ private[ocpp] class CentralSystemClientV12(val chargeBoxIdentity: String, uri: U
 }
 
 
-private[ocpp] class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http, endpoint: Option[Uri])
+class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http, endpoint: Option[Uri])
   extends CentralSystemClient with ScalaxbClient {
   import v15._
 
