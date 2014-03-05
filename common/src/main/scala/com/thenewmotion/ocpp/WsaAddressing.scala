@@ -49,7 +49,7 @@ class WsaAddressing(messageId: () => String) {
 
   def headers(endpoint: Option[Uri], action: Option[Uri]) = {
     val wsaMessageId = if (action.isDefined || endpoint.isDefined)
-      <wsa:MessageId>uuid:{messageId()}</wsa:MessageId>
+      <wsa:MessageID>uuid:{messageId()}</wsa:MessageID>
     else NodeSeq.Empty
 
     val wsaAction = action.map(x => <wsa:Action>{x}</wsa:Action>) getOrElse NodeSeq.Empty
