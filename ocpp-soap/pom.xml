@@ -7,7 +7,7 @@
         <version>4.0-SNAPSHOT</version>
     </parent>
     <artifactId>ocpp-soap_2.10</artifactId>
-    <name>common</name>
+    <name>ocpp-soap</name>
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -16,6 +16,10 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>ocpp-1.5_${scala.version}</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>ocpp-messages_${scala.version}</artifactId>
         </dependency>
         <dependency>
             <groupId>ua.t3hnar.scalax</groupId>

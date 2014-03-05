@@ -8,7 +8,7 @@ import com.thenewmotion.ocpp.v12
  */
 object ConvertersV12 {
 
-  import com.thenewmotion.ocpp
+  import com.thenewmotion.ocpp.messages
   import v12._
 
   implicit class RichRemoteStartStopStatus(val self: RemoteStartStopStatus) extends AnyVal {
@@ -19,9 +19,9 @@ object ConvertersV12 {
   }
 
   implicit class RichIdTagInfo(val self: IdTagInfo) extends AnyVal {
-    def toOcpp: ocpp.IdTagInfo = {
+    def toOcpp: messages.IdTagInfo = {
       val status = {
-        import ocpp.{AuthorizationStatus => ocpp}
+        import messages.{AuthorizationStatus => ocpp}
         self.status match {
           case AcceptedValue6 => ocpp.Accepted
           case Blocked => ocpp.IdTagBlocked
@@ -30,14 +30,14 @@ object ConvertersV12 {
           case ConcurrentTx => ocpp.ConcurrentTx
         }
       }
-      ocpp.IdTagInfo(status, self.expiryDate.map(_.toDateTime), self.parentIdTag)
+      messages.IdTagInfo(status, self.expiryDate.map(_.toDateTime), self.parentIdTag)
     }
   }
 
-  implicit class RichOcppIdTagInfo(val self: ocpp.IdTagInfo) extends AnyVal {
+  implicit class RichOcppIdTagInfo(val self: messages.IdTagInfo) extends AnyVal {
     def toV12: IdTagInfo = {
       val status: AuthorizationStatus = {
-        import ocpp.{AuthorizationStatus => ocpp}
+        import messages.{AuthorizationStatus => ocpp}
         self.status match {
           case ocpp.Accepted => AcceptedValue6
           case ocpp.IdTagBlocked => Blocked

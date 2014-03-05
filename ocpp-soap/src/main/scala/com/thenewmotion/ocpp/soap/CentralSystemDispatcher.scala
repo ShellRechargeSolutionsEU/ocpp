@@ -2,8 +2,7 @@ package com.thenewmotion.ocpp
 package soap
 
 import scala.xml.NodeSeq
-import com.thenewmotion.ocpp.{Scope, ConnectorScope}
-import com.thenewmotion.ocpp.messages.{centralsystem => ocpp}
+import com.thenewmotion.ocpp.messages.{centralsystem => ocpp, Scope, ConnectorScope}
 import scalaxb.XMLFormat
 import scala.concurrent.{Future, ExecutionContext}
 import messages.centralsystem._

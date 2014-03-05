@@ -1,4 +1,5 @@
 package com.thenewmotion.ocpp
+package messages
 
 /**
  * @author Yaroslav Klymko

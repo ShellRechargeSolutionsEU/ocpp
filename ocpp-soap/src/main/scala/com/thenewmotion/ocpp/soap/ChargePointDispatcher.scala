@@ -5,7 +5,7 @@ import scala.xml.NodeSeq
 import soapenvelope12.Body
 import scalaxb.XMLFormat
 import scala.concurrent.{ExecutionContext, Future}
-import com.thenewmotion.ocpp.{Scope, ConnectorScope}
+import messages.{Scope, ConnectorScope}
 import messages.chargepoint
 import messages.chargepoint._
 

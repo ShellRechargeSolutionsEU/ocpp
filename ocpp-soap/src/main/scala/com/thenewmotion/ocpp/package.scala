@@ -6,9 +6,9 @@ import scala.xml.{NamespaceBinding, NodeSeq}
 import javax.xml.datatype.{XMLGregorianCalendar, DatatypeFactory}
 import org.joda.time.{DateTimeZone, DateTime}
 import org.slf4j.LoggerFactory
-import java.net.URI
 import com.typesafe.scalalogging.slf4j.Logger
 import scalax.StringOption
+import java.net.URI
 
 
 /**
@@ -16,7 +16,6 @@ import scalax.StringOption
  */
 package object ocpp {
   type Uri = URI
-  type IdTag = String
 
   val soapEnvelopeUri = "http://www.w3.org/2003/05/soap-envelope"
   val defaultNamespace = scalaxb.toScope(

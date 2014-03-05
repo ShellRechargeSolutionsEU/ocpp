@@ -6,10 +6,10 @@ import net.liftweb.json.JsonDSL._
 import net.liftweb.json.ext.EnumNameSerializer
 import messages.centralsystem._
 import messages.chargepoint._
+import messages.centralsystem.Meter._
+import messages.{Scope, ConnectorScope, AuthorizationStatus}
 import com.thenewmotion.time.Imports._
 import org.joda.time.format.ISODateTimeFormat
-import com.thenewmotion.ocpp.messages.centralsystem.Meter._
-import com.thenewmotion.ocpp.{Scope, ConnectorScope, AuthorizationStatus}
 import scala.concurrent.duration.FiniteDuration
 import java.net.URI
 

@@ -4,6 +4,7 @@ package chargepoint
 
 import org.joda.time.DateTime
 import scala.concurrent.duration._
+import java.net.URI
 
 /**
  * @author Yaroslav Klymko
@@ -26,7 +27,7 @@ case class UnlockConnectorReq(connector: ConnectorScope) extends Req
 case class UnlockConnectorRes(accepted: Boolean) extends Res
 
 
-case class GetDiagnosticsReq(location: Uri,
+case class GetDiagnosticsReq(location: URI,
                              startTime: Option[DateTime],
                              stopTime: Option[DateTime],
                              retries: Retries) extends Req
@@ -53,7 +54,7 @@ case class ResetReq(resetType: ResetType.Value) extends Req
 case class ResetRes(accepted: Boolean) extends Res
 
 
-case class UpdateFirmwareReq(retrieveDate: DateTime, location: Uri, retries: Retries) extends Req
+case class UpdateFirmwareReq(retrieveDate: DateTime, location: URI, retries: Retries) extends Req
 case object UpdateFirmwareRes extends Res
 
 

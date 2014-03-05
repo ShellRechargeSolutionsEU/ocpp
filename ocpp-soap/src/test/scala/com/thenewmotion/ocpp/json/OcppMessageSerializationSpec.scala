@@ -1,17 +1,18 @@
-package com.thenewmotion.ocpp.json
+package com.thenewmotion.ocpp
+package json
 
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.Scope
 import scala.io.Source
 import net.liftweb.json._
-import com.thenewmotion.ocpp.{ ChargePointScope, ConnectorScope, IdTagInfo, AuthorizationStatus }
 import com.thenewmotion.time.Imports._
 import scala.concurrent.duration.FiniteDuration
 import net.liftweb.json.JsonDSL._
 import java.net.URI
-import com.thenewmotion.ocpp.messages.chargepoint.{IdTagInfo => _, Scope => _, ChargePointScope => _, ConnectorScope => _, AuthorizationStatus => _, _}
-import com.thenewmotion.ocpp.messages.centralsystem.{IdTagInfo => _, Scope => _, ChargePointScope => _, ConnectorScope => _, AuthorizationStatus => _, _}
-import com.thenewmotion.ocpp.messages.centralsystem.Meter._
+import messages.{ ChargePointScope, ConnectorScope, IdTagInfo, AuthorizationStatus }
+import messages.chargepoint.{IdTagInfo => _, Scope => _, ChargePointScope => _, ConnectorScope => _, AuthorizationStatus => _, _}
+import messages.centralsystem.{IdTagInfo => _, Scope => _, ChargePointScope => _, ConnectorScope => _, AuthorizationStatus => _, _}
+import messages.centralsystem.Meter._
 
 class OcppMessageSerializationSpec extends SpecificationWithJUnit {
 
