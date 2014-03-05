@@ -10,7 +10,7 @@
 
     <groupId>com.thenewmotion.ocpp</groupId>
     <artifactId>ocpp-parent_2.10</artifactId>
-    <version>3.8-SNAPSHOT</version>
+    <version>4.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>OCPP</name>
@@ -24,7 +24,7 @@
     <modules>
         <module>ocpp-1.2</module>
         <module>ocpp-1.5</module>
-        <module>common</module>
+        <module>ocpp-soap</module>
         <module>ocpp-spray</module>
     </modules>
 
@@ -32,7 +32,7 @@
         <dependencies>
             <dependency>
                 <groupId>${project.groupId}</groupId>
-                <artifactId>ocpp-common_${scala.version}</artifactId>
+                <artifactId>ocpp-soap_${scala.version}</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

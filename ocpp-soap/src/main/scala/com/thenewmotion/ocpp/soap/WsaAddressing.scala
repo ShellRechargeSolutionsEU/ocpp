@@ -4,6 +4,7 @@ import scalaxb.{HttpClients, SoapClients}
 import scala.xml.NodeSeq
 import com.thenewmotion.ocpp._
 import scala.xml.NamespaceBinding
+import java.util.UUID
 
 /**
  * @author Yaroslav Klymko
