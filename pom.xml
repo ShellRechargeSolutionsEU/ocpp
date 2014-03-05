@@ -27,6 +27,7 @@
         <module>ocpp-soap</module>
         <module>ocpp-spray</module>
         <module>ocpp-messages</module>
+        <module>ocpp-json</module>
     </modules>
 
     <dependencyManagement>
