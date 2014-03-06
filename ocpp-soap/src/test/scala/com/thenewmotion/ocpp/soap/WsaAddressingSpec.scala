@@ -1,9 +1,9 @@
 package com.thenewmotion.ocpp
+package soap
 
 import org.specs2.mutable.SpecificationWithJUnit
 import scala.xml.{NamespaceBinding, TopScope, NodeSeq}
 import org.specs2.mock.Mockito
-import com.thenewmotion.ocpp.soap.WsaAddressing
 
 /**
  * @author Yaroslav Klymko

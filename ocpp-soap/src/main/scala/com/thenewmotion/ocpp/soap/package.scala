@@ -1,4 +1,4 @@
-package com.thenewmotion
+package com.thenewmotion.ocpp
 
 import soapenvelope12.{Body, Fault, Envelope}
 import scalaxb.DataRecord
@@ -14,7 +14,7 @@ import java.net.URI
 /**
  * @author Yaroslav Klymko
  */
-package object ocpp {
+package object soap {
   type Uri = URI
 
   val soapEnvelopeUri = "http://www.w3.org/2003/05/soap-envelope"

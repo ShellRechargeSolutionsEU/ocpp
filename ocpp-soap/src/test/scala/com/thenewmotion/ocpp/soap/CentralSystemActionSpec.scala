@@ -1,7 +1,7 @@
 package com.thenewmotion.ocpp
+package soap
 
 import org.specs2.mutable.SpecificationWithJUnit
-import xml.XML
 
 /**
  * @author Yaroslav Klymko

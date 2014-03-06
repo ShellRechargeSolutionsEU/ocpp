@@ -1,9 +1,8 @@
 package com.thenewmotion.ocpp
+package soap
 
 import org.specs2.mutable.SpecificationWithJUnit
-import com.thenewmotion.ocpp.soap.{ChargeBoxAddress, SoapUtils}
 import ChargeBoxAddress.unapply
-import com.thenewmotion.ocpp.soap.SoapUtils
 
 /**
  * @author Yaroslav Klymko

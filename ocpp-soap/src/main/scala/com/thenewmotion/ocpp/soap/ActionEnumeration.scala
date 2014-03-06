@@ -1,4 +1,5 @@
 package com.thenewmotion.ocpp
+package soap
 
 import scalax._
 import soapenvelope12.Body

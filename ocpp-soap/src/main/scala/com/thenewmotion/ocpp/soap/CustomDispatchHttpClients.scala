@@ -1,4 +1,5 @@
 package com.thenewmotion.ocpp
+package soap
 
 import scalaxb.HttpClients
 import dispatch._

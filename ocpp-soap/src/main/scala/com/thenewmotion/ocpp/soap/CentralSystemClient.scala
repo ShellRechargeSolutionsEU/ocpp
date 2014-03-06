@@ -1,4 +1,5 @@
 package com.thenewmotion.ocpp
+package soap
 
 import messages.centralsystem._
 import com.thenewmotion.ocpp.messages.{centralsystem => ocpp}
@@ -6,7 +7,6 @@ import dispatch.Http
 import org.joda.time.DateTime
 import scala.concurrent.duration._
 import scala.language.implicitConversions
-import com.thenewmotion.ocpp.soap.{Version, WsaAddressingSoapClients, ConvertersV12}
 
 /**
  * @author Yaroslav Klymko
