@@ -1,4 +1,5 @@
-package com.thenewmotion.ocpp.soap
+package com.thenewmotion.ocpp
+package soap
 
 import scala.language.implicitConversions
 import xml.{Elem, NodeSeq}
@@ -8,9 +9,9 @@ import soapenvelope12.Body
 /**
  * @author Yaroslav Klymko
  */
-object Version extends Enumeration {
-  val V12 = Value("1.2")
-  val V15 = Value("1.5")
+object VersionFromBody {
+
+  import Version._
 
   private def fromNamespace(namespace: String): Option[Version.Value] = {
     val V12Regex = """^urn://Ocpp/C[sp]/2010/08/$""".r
@@ -24,16 +25,16 @@ object Version extends Enumeration {
     }
   }
 
-  def fromBody(body: NodeSeq): Option[Value] =
+  def apply(body: NodeSeq): Option[Value] =
     for {
       n <- body.headOption
       e <- n.asInstanceOfOpt[Elem]
       v <- fromNamespace(e.namespace)
     } yield v
 
-  def fromBody(body: Body): Option[Value] = (for {
+  def apply(body: Body): Option[Value] = (for {
     data <- body.any
     elem <- data.value.asInstanceOfOpt[Elem]
-    v <- fromBody(elem)
+    v <- apply(elem)
   } yield v).headOption
 }

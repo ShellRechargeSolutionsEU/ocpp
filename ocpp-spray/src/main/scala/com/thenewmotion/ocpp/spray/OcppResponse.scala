@@ -1,8 +1,9 @@
-package com.thenewmotion.ocpp.spray
+package com.thenewmotion.ocpp
+package spray
 
 import soapenvelope12.{Fault, Body}
-import com.thenewmotion.ocpp._
 import _root_.spray.http.HttpResponse
+import soap.{ReachEnvelope, ReachFault}
 
 /**
  * @author Yaroslav Klymko

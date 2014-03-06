@@ -4,7 +4,6 @@ package soap
 import com.thenewmotion.ocpp.messages.{chargepoint => ocpp}
 import dispatch.Http
 import messages.chargepoint._
-import com.thenewmotion.ocpp.soap.{Version, WsaAddressingSoapClients, ConvertersV15, ConvertersV12}
 
 
 /**

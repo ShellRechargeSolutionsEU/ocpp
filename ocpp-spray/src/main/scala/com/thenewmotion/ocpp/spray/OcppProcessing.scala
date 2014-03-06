@@ -4,7 +4,6 @@ package spray
 import xml.{XML, NodeSeq}
 import com.typesafe.scalalogging.slf4j.Logging
 import soapenvelope12.{Body, Fault, Envelope}
-import com.thenewmotion.ocpp._
 import com.thenewmotion.ocpp.soap.Fault._
 import _root_.spray.http.{StatusCodes, HttpResponse, HttpRequest}
 import StatusCodes._
@@ -58,7 +57,7 @@ object OcppProcessing extends Logging {
   }
 
   private def parseVersion(body: Body): Either[HttpResponse, Version.Value] = {
-    Version.fromBody(body) match {
+    VersionFromBody(body) match {
       case Some(version) => Right(version)
       case None => ProtocolError("Can't find an ocpp version")
     }

@@ -1,4 +1,5 @@
-package com.thenewmotion.ocpp.spray
+package com.thenewmotion.ocpp
+package spray
 
 import _root_.spray.http._
 import _root_.spray.http.HttpRequest
@@ -9,15 +10,15 @@ import org.specs2.specification.Scope
 import org.specs2.mock.Mockito
 import org.joda.time.DateTime
 import scala.io.Source
-import com.thenewmotion.ocpp.soap.Version._
+import com.thenewmotion.ocpp.Version._
 import com.thenewmotion.ocpp.soap.SoapUtils
 import com.thenewmotion.ocpp.messages.centralsystem.{Req => CsReq, Res => CsRes, _}
 import com.thenewmotion.ocpp.messages.chargepoint.{Req => CpReq, Res => CpRes, _}
-import com.thenewmotion.ocpp._
 import scala.concurrent.{Await, Future, ExecutionContext}
 import scala.concurrent.duration.Duration
 import ExecutionContext.Implicits.global
 import java.net.URI
+import soap.RichDateTime
 
 
 class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUtils {

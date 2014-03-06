@@ -9,6 +9,7 @@ import scala.xml.Elem
  * @author Yaroslav Klymko
  */
 abstract class ActionEnumeration extends Enumeration {
+
   def fromHeader(header: String): Option[Value] =
     StringOption(header).flatMap {
       value =>
