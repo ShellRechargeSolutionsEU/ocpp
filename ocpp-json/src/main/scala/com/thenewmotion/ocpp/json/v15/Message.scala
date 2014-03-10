@@ -1,0 +1,119 @@
+package com.thenewmotion.ocpp.json.v15
+
+import org.joda.time.DateTime
+import java.net.URI
+
+sealed trait Message
+
+sealed trait CentralSystemReq extends Message
+sealed trait CentralSystemRes extends Message
+
+case class AuthorizeReq(idTag: String) extends CentralSystemReq
+case class AuthorizeRes(idTagInfo: IdTagInfo) extends CentralSystemRes
+case class StartTransactionReq(connectorId: Int,
+                               idTag: String,
+                               timestamp: DateTime,
+                               meterStart: Int,
+                               reservationId: Option[Int]) extends CentralSystemReq
+case class StartTransactionRes(transactionId: Int, idTagInfo: IdTagInfo) extends CentralSystemRes
+case class StopTransactionReq(transactionId: Int,
+                              idTag: Option[String],
+                              timestamp: DateTime,
+                              meterStop: Int,
+                              transactionData: Option[List[MeterValues]]) extends CentralSystemReq
+case object HeartbeatReq extends CentralSystemReq
+case class HeartbeatRes(currentTime: DateTime) extends CentralSystemRes
+case class MeterValuesReq(connectorId: Int,
+                          transactionId: Option[Int],
+                          values: Option[List[MeterValueSample]]) extends CentralSystemReq
+case object MeterValuesRes extends CentralSystemRes
+case class BootNotificationReq(chargePointVendor: String,
+                               chargePointModel: String,
+                               chargePointSerialNumber: Option[String],
+                               chargeBoxSerialNumber: Option[String],
+                               firmwareVersion: Option[String],
+                               iccid: Option[String],
+                               imsi: Option[String],
+                               meterType: Option[String],
+                               meterSerialNumber: Option[String]) extends CentralSystemReq
+case class BootNotificationRes(status: String,
+                               currentTime: DateTime,
+                               heartbeatInterval: Int) extends CentralSystemRes
+case class StatusNotificationReq(connectorId: Int,
+                                 status: String,
+                                 errorCode: String,
+                                 info: Option[String],
+                                 timestamp: Option[DateTime],
+                                 vendorId: Option[String],
+                                 vendorErrorCode: Option[String]) extends CentralSystemReq
+case object StatusNotificationRes extends CentralSystemRes
+case class FirmwareStatusNotificationReq(status: String) extends CentralSystemReq
+case object FirmwareStatusNotificationRes extends CentralSystemRes
+case class DiagnosticsStatusNotificationReq(status: String) extends CentralSystemReq
+case object DiagnosticsStatusNotificationRes extends CentralSystemRes
+
+sealed trait ChargePointReq extends Message
+sealed trait ChargePointRes extends Message
+
+case class UnlockConnectorReq(connectorId: Int) extends ChargePointReq
+case class UnlockConnectorRes(status: String) extends ChargePointRes
+case class ResetReq(`type`: String) extends ChargePointReq
+case class ResetRes(status: String) extends ChargePointRes
+case class ChangeAvailabilityReq(connectorId: Int, `type`: String) extends ChargePointReq
+case class ChangeAvailabilityRes(status: String) extends ChargePointRes
+case class GetDiagnosticsReq(location: URI,
+                             startTime: Option[DateTime],
+                             stopTime: Option[DateTime],
+                             retries: Option[Int],
+                             retryInterval: Option[Int]) extends ChargePointReq
+case class GetDiagnosticsRes(fileName: Option[String]) extends ChargePointRes
+case object ClearCacheReq extends ChargePointReq
+case class ClearCacheRes(status: String) extends ChargePointRes
+case class UpdateFirmwareReq(retrieveDate: DateTime,
+                             location: URI,
+                             retries: Int,
+                             retryInterval: Int) extends ChargePointReq
+case object UpdateFirmwareRes extends ChargePointRes
+case class ChangeConfigurationReq(key: String, value:String) extends ChargePointReq
+case class ChangeConfigurationRes(status: String) extends ChargePointRes
+case class RemoteStartTransactionReq(idTag: String, connectorId: Option[Int]) extends ChargePointReq
+case class RemoteStartTransactionRes(status: String) extends ChargePointRes
+case class RemoteStopTransactionReq(transactionId: Int) extends ChargePointReq
+case class RemoteStopTransactionRes(status: String) extends ChargePointRes
+case class CancelReservationReq(reservationId: Int) extends ChargePointReq
+case class CancelReservationRes(status: String) extends ChargePointRes
+case class DataTransferReq(vendorId: String,
+                           messageId: Option[String],
+                           data: Option[String]) extends CentralSystemReq with ChargePointReq
+case class DataTransferRes(status: String,
+                           data: Option[String]) extends CentralSystemRes with ChargePointRes
+case class GetConfigurationReq(key: Option[List[String]]) extends ChargePointReq
+case class GetConfigurationRes(configurationKey: Option[List[ConfigurationEntry]],
+                               unknownKey: Option[List[String]]) extends ChargePointRes
+case object GetLocalListVersionReq extends ChargePointReq
+case class GetLocalListVersionRes(listVersion: Int) extends ChargePointRes
+case class ReserveNowReq(connectorId: Int,
+                         expiryDate: DateTime,
+                         idTag: String,
+                         parentIdTag: Option[String],
+                         reservationId: Int) extends ChargePointReq
+case class ReserveNowRes(status: String) extends ChargePointRes
+case class SendLocalListReq(updateType: String,
+                            listVersion: Int,
+                            localAuthorisationList: Option[List[LocalAuthListElem]],
+                            hash: Option[String]) extends ChargePointReq
+
+
+case class IdTagInfo(status: String, expiryDate: Option[DateTime], parentIdTag: Option[String])
+case class MeterValues(values: Option[List[MeterValueSample]])
+case class MeterValueSample(timestamp: Option[DateTime], items: List[MeterValueItem])
+case class MeterValueItem(value: String,
+                          context: Option[String],
+                          format: Option[String],
+                          measurand: Option[String],
+                          location: Option[String],
+                          unit: Option[String])
+case class ConfigurationEntry(key: String,
+                              readonly: Boolean,
+                              value: Option[String])
+case class LocalAuthListElem(idTag: String, idTagInfo: Option[IdTagInfo])
