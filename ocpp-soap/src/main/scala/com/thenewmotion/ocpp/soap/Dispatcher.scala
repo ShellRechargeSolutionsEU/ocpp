@@ -27,17 +27,16 @@ abstract class AbstractDispatcher[REQ, RES](implicit evidence: OcppService[REQ, 
   implicit def faultToBody(x: soapenvelope12.Fault) = x.asBody
   def version: Version.Value
 
-  val actions: ActionEnumeration
+  val actions: Enumeration
 
   import scalax.RichAny
-  import actions.RichValue
 
   def dispatch(body: Body, f: REQ => Future[RES])
               (implicit ec: ExecutionContext): Future[Body] = {
     val data = for {
       dataRecord <- body.any
       elem <- dataRecord.value.asInstanceOfOpt[Elem]
-      action <- actions.fromElem(elem)
+      action <- SoapActionEnumeration.fromElem(actions, elem)
     } yield action -> elem
 
     data.headOption match {
@@ -63,7 +62,7 @@ abstract class AbstractDispatcher[REQ, RES](implicit evidence: OcppService[REQ, 
           val req = reqTrans(xmlReq)
           f(req) map { res =>
             val xmlRes = resTrans(res)
-            simpleBody(DataRecord(Some(evidence.namespace(version)), Some(action.responseLabel), xmlRes))
+            simpleBody(DataRecord(Some(evidence.namespace(version)), Some(SoapActionEnumeration.responseLabels(actions)(action)), xmlRes))
           } recover {
             case FaultException(fault) => fault
           }

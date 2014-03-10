@@ -1,10 +1,9 @@
-package com.thenewmotion.ocpp
-package soap
+package com.thenewmotion.ocpp.messages.centralsystem
 
 /**
  * @author Yaroslav Klymko
  */
-object CentralSystemAction extends ActionEnumeration {
+object CentralSystemAction extends Enumeration {
   val Authorize,
   StartTransaction,
   StopTransaction,

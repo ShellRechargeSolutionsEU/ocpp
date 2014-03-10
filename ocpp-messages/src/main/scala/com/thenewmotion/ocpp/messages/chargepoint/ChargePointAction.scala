@@ -1,10 +1,9 @@
-package com.thenewmotion.ocpp
-package soap
+package com.thenewmotion.ocpp.messages.chargepoint
 
 /**
  * @author Yaroslav Klymko
  */
-object ChargePointAction extends ActionEnumeration {
+object ChargePointAction extends Enumeration {
   val CancelReservation,
   ChangeAvailability,
   ChangeConfiguration,
