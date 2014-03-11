@@ -1,9 +1,10 @@
-package com.thenewmotion.ocpp.messages.centralsystem
+package com.thenewmotion.ocpp.messages
+package centralsystem
 
 /**
  * @author Yaroslav Klymko
  */
-trait ReqRes[REQ <: Req, RES <: Res] {
+trait ReqRes[REQ <: CentralSystemReq, RES <: CentralSystemRes] {
   def apply(req: REQ)(implicit service: CentralSystem): RES
 }
 
@@ -60,8 +61,8 @@ object ReqRes {
     def apply(req: DataTransferReq)(implicit service: CentralSystem) = service.dataTransfer(req)
   }
 
-  implicit object ReqRes extends ReqRes[Req, Res] {
-    def apply(req: Req)(implicit service: CentralSystem) = req match {
+  implicit object ReqRes extends ReqRes[CentralSystemReq, CentralSystemRes] {
+    def apply(req: CentralSystemReq)(implicit service: CentralSystem) = req match {
       case x: AuthorizeReq => AuthorizeReqRes(x)
       case x: StartTransactionReq => StartTransactionReqRes(x)
       case x: StopTransactionReq => StopTransactionReqRes(x)

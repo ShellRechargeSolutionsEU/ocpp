@@ -2,19 +2,20 @@ package com.thenewmotion.ocpp
 package soap
 
 import scala.xml.NodeSeq
-import com.thenewmotion.ocpp.messages.{centralsystem => ocpp, Scope, ConnectorScope}
 import scalaxb.XMLFormat
 import scala.concurrent.{Future, ExecutionContext}
+import com.thenewmotion.ocpp.{messages => ocpp}
+import messages._
 import messages.centralsystem._
 
 object CentralSystemDispatcher {
-  def apply(version: Version.Value): Dispatcher[Req, Res] = version match {
+  def apply(version: Version.Value): Dispatcher[CentralSystemReq, CentralSystemRes] = version match {
     case Version.V12 => CentralSystemDispatcherV12
     case Version.V15 => CentralSystemDispatcherV15
   }
 }
 
-object CentralSystemDispatcherV12 extends AbstractDispatcher[Req, Res] {
+object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemReq, CentralSystemRes] {
   import v12.{CentralSystemService => _, _}
   import ConvertersV12._
 
@@ -22,8 +23,8 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[Req, Res] {
   val actions = CentralSystemAction
   import actions._
 
-  def dispatch(action: Value, xml: NodeSeq, service: Req => Future[Res])(implicit ec: ExecutionContext) = {
-    def ?[XMLREQ: XMLFormat, XMLRES: XMLFormat](reqTrans: XMLREQ => Req)(resTrans: Res => XMLRES) =
+  def dispatch(action: Value, xml: NodeSeq, service: CentralSystemReq => Future[CentralSystemRes])(implicit ec: ExecutionContext) = {
+    def ?[XMLREQ: XMLFormat, XMLRES: XMLFormat](reqTrans: XMLREQ => CentralSystemReq)(resTrans: CentralSystemRes => XMLRES) =
       reqRes(action, xml, service)(reqTrans)(resTrans)
 
     action match {
@@ -138,7 +139,7 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[Req, Res] {
   }
 }
 
-object CentralSystemDispatcherV15 extends AbstractDispatcher[Req, Res] {
+object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, CentralSystemRes] {
   import v15.{CentralSystemService => _, _}
   import ConvertersV15._
 
@@ -147,8 +148,8 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[Req, Res] {
   import actions._
 
 
-  def dispatch(action: actions.Value, xml: NodeSeq, service: Req => Future[Res])(implicit ec: ExecutionContext) = {
-    def ?[XMLREQ: XMLFormat, XMLRES: XMLFormat](reqTrans: XMLREQ => Req)(resTrans: Res => XMLRES) =
+  def dispatch(action: actions.Value, xml: NodeSeq, service: CentralSystemReq => Future[CentralSystemRes])(implicit ec: ExecutionContext) = {
+    def ?[XMLREQ: XMLFormat, XMLRES: XMLFormat](reqTrans: XMLREQ => CentralSystemReq)(resTrans: CentralSystemRes => XMLRES) =
       reqRes(action, xml, service)(reqTrans)(resTrans)
 
     action match {

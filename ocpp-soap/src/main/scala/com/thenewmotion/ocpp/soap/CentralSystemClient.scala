@@ -1,8 +1,8 @@
 package com.thenewmotion.ocpp
 package soap
 
+import com.thenewmotion.ocpp.messages
 import messages.centralsystem._
-import com.thenewmotion.ocpp.messages.{centralsystem => ocpp}
 import dispatch.Http
 import org.joda.time.DateTime
 import scala.concurrent.duration._
@@ -39,38 +39,38 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
   }.service
 
 
-  def authorize(req: AuthorizeReq) = AuthorizeRes(?(_.authorize, AuthorizeRequest(req.idTag)).toOcpp)
+  def authorize(req: messages.AuthorizeReq) = messages.AuthorizeRes(?(_.authorize, AuthorizeRequest(req.idTag)).toOcpp)
 
-  def startTransaction(x: StartTransactionReq) = {
+  def startTransaction(x: messages.StartTransactionReq) = {
     import x._
     reservationId.foreach(x => logNotSupported("startTransaction.reservationId", x))
     val req = StartTransactionRequest(connector.toOcpp, idTag, timestamp.toXMLCalendar, meterStart)
     val StartTransactionResponse(transactionId, idTagInfo) = ?(_.startTransaction, req)
-    StartTransactionRes(transactionId, idTagInfo.toOcpp)
+    messages.StartTransactionRes(transactionId, idTagInfo.toOcpp)
   }
 
-  def stopTransaction(req: StopTransactionReq) = {
+  def stopTransaction(req: messages.StopTransactionReq) = {
     import req._
     if (transactionData.nonEmpty)
       logNotSupported("stopTransaction.transactionData", transactionData.mkString("\n", "\n", "\n"))
 
     val x = StopTransactionRequest(transactionId, idTag, timestamp.toXMLCalendar, meterStop)
-    StopTransactionRes(?(_.stopTransaction, x).idTagInfo.map(_.toOcpp))
+    messages.StopTransactionRes(?(_.stopTransaction, x).idTagInfo.map(_.toOcpp))
   }
 
-  def heartbeat = HeartbeatRes(?(_.heartbeat, HeartbeatRequest()).toDateTime)
+  def heartbeat = messages.HeartbeatRes(?(_.heartbeat, HeartbeatRequest()).toDateTime)
 
-  def meterValues(req: MeterValuesReq) {
+  def meterValues(req: messages.MeterValuesReq) {
     import req._
-    def toMeter(x: Meter): Option[MeterValue] = {
+    def toMeter(x: messages.Meter): Option[MeterValue] = {
       x.values.collectFirst {
-        case Meter.DefaultValue(value) => MeterValue(x.timestamp.toXMLCalendar, value)
+        case messages.Meter.DefaultValue(value) => MeterValue(x.timestamp.toXMLCalendar, value)
       }
     }
     ?(_.meterValues, MeterValuesRequest(scope.toOcpp, meters.flatMap(toMeter)))
   }
 
-  def bootNotification(req: BootNotificationReq) = {
+  def bootNotification(req: messages.BootNotificationReq) = {
     import req._
     val x = BootNotificationRequest(
       chargePointVendor,
@@ -89,17 +89,19 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
       case RejectedValue6 => false
     }
 
-    BootNotificationRes(
+    messages.BootNotificationRes(
       accepted,
       currentTime.fold(DateTime.now)(_.toDateTime),
       heartbeatInterval.fold(15.minutes)(FiniteDuration(_, SECONDS)))
   }
 
-  def statusNotification(req: StatusNotificationReq) {
+  def statusNotification(req: messages.StatusNotificationReq) {
     import req._
-    def toErrorCode(x: ocpp.ChargePointErrorCode.Value): ChargePointErrorCode = {
-      import ocpp.{ChargePointErrorCode => ocpp}
-      def notSupportedCode(x: ocpp.Value) = notSupported("statusNotification(ChargePointErrorCode.%s)".format(x))
+    def toErrorCode(x: messages.ChargePointErrorCode.Value): ChargePointErrorCode = {
+      import messages.{ChargePointErrorCode => ocpp}
+      def notSupportedCode(x: messages.ChargePointErrorCode.Value) =
+        notSupported("statusNotification(ChargePointErrorCode.%s)".format(x))
+
       x match {
         case ocpp.ConnectorLockFailure => ConnectorLockFailure
         case ocpp.HighTemperature => HighTemperature
@@ -119,11 +121,11 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
     def noError(status: ChargePointStatus) = (status, NoError)
 
     val (chargePointStatus, errorCode) = status match {
-      case ocpp.Available => noError(Available)
-      case ocpp.Occupied => noError(Occupied)
-      case ocpp.Unavailable => noError(Unavailable)
-      case ocpp.Reserved => notSupported("statusNotification(Reserved)")
-      case ocpp.Faulted(code, info, vendorCode) =>
+      case messages.Available => noError(Available)
+      case messages.Occupied => noError(Occupied)
+      case messages.Unavailable => noError(Unavailable)
+      case messages.Reserved => notSupported("statusNotification(Reserved)")
+      case messages.Faulted(code, info, vendorCode) =>
         info.foreach(x => logNotSupported("statusNotification.info", x))
         vendorCode.foreach(x => logNotSupported("statusNotification.vendorErrorCode", x))
         (Faulted, code.map(toErrorCode) getOrElse NoError)
@@ -135,9 +137,9 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
     ?(_.statusNotification, StatusNotificationRequest(scope.toOcpp, chargePointStatus, errorCode))
   }
 
-  def firmwareStatusNotification(req: FirmwareStatusNotificationReq) {
+  def firmwareStatusNotification(req: messages.FirmwareStatusNotificationReq) {
     val firmwareStatus = {
-      import ocpp.{FirmwareStatus => ocpp}
+      import messages.{FirmwareStatus => ocpp}
       req.status match {
         case ocpp.Downloaded => Downloaded
         case ocpp.DownloadFailed => DownloadFailed
@@ -148,13 +150,13 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
     ?(_.firmwareStatusNotification, FirmwareStatusNotificationRequest(firmwareStatus))
   }
 
-  def diagnosticsStatusNotification(req: DiagnosticsStatusNotificationReq) = {
+  def diagnosticsStatusNotification(req: messages.DiagnosticsStatusNotificationReq) = {
     val status = if (req.uploaded) Uploaded else UploadFailed
     ?(_.diagnosticsStatusNotification, DiagnosticsStatusNotificationRequest(status))
-    DiagnosticsStatusNotificationRes
+    messages.DiagnosticsStatusNotificationRes
   }
 
-  def dataTransfer(req: DataTransferReq) = notSupported("dataTransfer")
+  def dataTransfer(req: messages.DataTransferReq) = notSupported("dataTransfer")
 }
 
 
@@ -172,9 +174,9 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
   }.service
 
 
-  private implicit def toIdTagInfo(x: IdTagInfoType): ocpp.IdTagInfo = {
+  private implicit def toIdTagInfo(x: IdTagInfoType): messages.IdTagInfo = {
     val status = {
-      import ocpp.{AuthorizationStatus => ocpp}
+      import messages.{AuthorizationStatus => ocpp}
       x.status match {
         case AcceptedValue12 => ocpp.Accepted
         case BlockedValue => ocpp.IdTagBlocked
@@ -183,37 +185,37 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
         case ConcurrentTxValue => ocpp.ConcurrentTx
       }
     }
-    ocpp.IdTagInfo(status, x.expiryDate.map(_.toDateTime), x.parentIdTag)
+    messages.IdTagInfo(status, x.expiryDate.map(_.toDateTime), x.parentIdTag)
   }
 
-  def authorize(req: AuthorizeReq) =
-    AuthorizeRes(?[AuthorizeRequest, IdTagInfoType](_.authorize, AuthorizeRequest(req.idTag)))
+  def authorize(req: messages.AuthorizeReq) =
+    messages.AuthorizeRes(?[AuthorizeRequest, IdTagInfoType](_.authorize, AuthorizeRequest(req.idTag)))
 
-  def startTransaction(req: StartTransactionReq) = {
+  def startTransaction(req: messages.StartTransactionReq) = {
     import req._
     reservationId.foreach(x => logNotSupported("startTransaction.reservationId", x))
     val x = StartTransactionRequest(connector.toOcpp, idTag, timestamp.toXMLCalendar, meterStart)
     val StartTransactionResponse(transactionId, idTagInfo) = ?(_.startTransaction, x)
-    StartTransactionRes(transactionId, idTagInfo)
+    messages.StartTransactionRes(transactionId, idTagInfo)
   }
 
-  def stopTransaction(req: StopTransactionReq) = {
+  def stopTransaction(req: messages.StopTransactionReq) = {
     import req._
-    def toTransactionData(x: ocpp.TransactionData): TransactionData = TransactionData(x.meters.map(toMeter): _*)
+    def toTransactionData(x: messages.TransactionData): TransactionData = TransactionData(x.meters.map(toMeter): _*)
 
     val x = StopTransactionRequest(transactionId, idTag, timestamp.toXMLCalendar, meterStop, transactionData.map(toTransactionData))
-    StopTransactionRes(?(_.stopTransaction, x).idTagInfo.map(toIdTagInfo))
+    messages.StopTransactionRes(?(_.stopTransaction, x).idTagInfo.map(toIdTagInfo))
   }
 
-  def heartbeat = HeartbeatRes(?(_.heartbeat, HeartbeatRequest()).toDateTime)
+  def heartbeat = messages.HeartbeatRes(?(_.heartbeat, HeartbeatRequest()).toDateTime)
 
-  def meterValues(req: MeterValuesReq) {
+  def meterValues(req: messages.MeterValuesReq) {
     import req._
     val x = MeterValuesRequest(scope.toOcpp, transactionId, meters.map(toMeter))
     ?(_.meterValues, x)
   }
 
-  def bootNotification(req: BootNotificationReq) = {
+  def bootNotification(req: messages.BootNotificationReq) = {
     import req._
     val x = BootNotificationRequest(
       chargePointVendor,
@@ -232,13 +234,13 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       case RejectedValue9 => false
     }
 
-    BootNotificationRes(accepted, currentTime.toDateTime, FiniteDuration(heartbeatInterval, SECONDS))
+    messages.BootNotificationRes(accepted, currentTime.toDateTime, FiniteDuration(heartbeatInterval, SECONDS))
   }
 
-  def statusNotification(req: StatusNotificationReq) {
+  def statusNotification(req: messages.StatusNotificationReq) {
     import req._
-    def toErrorCode(x: ocpp.ChargePointErrorCode.Value): ChargePointErrorCode = {
-      import ocpp.{ChargePointErrorCode => ocpp}
+    def toErrorCode(x: messages.ChargePointErrorCode.Value): ChargePointErrorCode = {
+      import messages.{ChargePointErrorCode => ocpp}
       x match {
         case ocpp.ConnectorLockFailure => ConnectorLockFailure
         case ocpp.HighTemperature => HighTemperature
@@ -258,12 +260,12 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
     def noError(status: ChargePointStatus) = (status, NoError, None, None)
 
     val (chargePointStatus, errorCode, errorInfo, vendorErrorCode) = status match {
-      case ocpp.Available => noError(Available)
-      case ocpp.Occupied => noError(OccupiedValue)
-      case ocpp.Faulted(code, info, vendorCode) =>
+      case messages.Available => noError(Available)
+      case messages.Occupied => noError(OccupiedValue)
+      case messages.Faulted(code, info, vendorCode) =>
         (FaultedValue, code.map(toErrorCode) getOrElse NoError, info, vendorCode)
-      case ocpp.Unavailable => noError(UnavailableValue)
-      case ocpp.Reserved => noError(Reserved)
+      case messages.Unavailable => noError(UnavailableValue)
+      case messages.Reserved => noError(Reserved)
     }
 
     val x = StatusNotificationRequest(
@@ -273,9 +275,9 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
     ?(_.statusNotification, x)
   }
 
-  def firmwareStatusNotification(req: FirmwareStatusNotificationReq) {
+  def firmwareStatusNotification(req: messages.FirmwareStatusNotificationReq) {
     import req._
-    import ocpp.{FirmwareStatus => ocpp}
+    import messages.{FirmwareStatus => ocpp}
     val firmwareStatus = status match {
       case ocpp.Downloaded => Downloaded
       case ocpp.DownloadFailed => DownloadFailed
@@ -285,16 +287,16 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
     ?(_.firmwareStatusNotification, FirmwareStatusNotificationRequest(firmwareStatus))
   }
 
-  def diagnosticsStatusNotification(req: DiagnosticsStatusNotificationReq) {
+  def diagnosticsStatusNotification(req: messages.DiagnosticsStatusNotificationReq) {
     val status = if (req.uploaded) Uploaded else UploadFailed
     ?(_.diagnosticsStatusNotification, DiagnosticsStatusNotificationRequest(status))
   }
 
-  def dataTransfer(req: DataTransferReq) = {
+  def dataTransfer(req: messages.DataTransferReq) = {
     import req._
     val res = ?(_.dataTransfer, DataTransferRequestType(vendorId, messageId, data))
     val status = {
-      import ocpp.{DataTransferStatus => ocpp}
+      import messages.{DataTransferStatus => ocpp}
       res.status match {
         case AcceptedValue13 => ocpp.Accepted
         case RejectedValue10 => ocpp.Rejected
@@ -302,13 +304,13 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
         case UnknownVendorIdValue => ocpp.UnknownVendorId
       }
     }
-    DataTransferRes(status, stringOption(res.data))
+    messages.DataTransferRes(status, stringOption(res.data))
   }
 
 
-  def toMeter(x: Meter): MeterValue = {
-    implicit def toReadingContext(x: Meter.ReadingContext.Value): ReadingContext = {
-      import ocpp.Meter.{ReadingContext => ocpp}
+  def toMeter(x: messages.Meter): MeterValue = {
+    implicit def toReadingContext(x: messages.Meter.ReadingContext.Value): ReadingContext = {
+      import messages.Meter.{ReadingContext => ocpp}
       x match {
         case ocpp.InterruptionBegin => Interruptionu46Begin
         case ocpp.InterruptionEnd => Interruptionu46End
@@ -319,16 +321,16 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       }
     }
 
-    implicit def toValueFormat(x: Meter.ValueFormat.Value): ValueFormat = {
-      import Meter.{ValueFormat => ocpp}
+    implicit def toValueFormat(x: messages.Meter.ValueFormat.Value): ValueFormat = {
+      import messages.Meter.{ValueFormat => ocpp}
       x match {
         case ocpp.Raw => Raw
         case ocpp.Signed => SignedData
       }
     }
 
-    implicit def toMeasurand(x: Meter.Measurand.Value): Measurand = {
-      import Meter.{Measurand => ocpp}
+    implicit def toMeasurand(x: messages.Meter.Measurand.Value): Measurand = {
+      import messages.Meter.{Measurand => ocpp}
       x match {
         case ocpp.EnergyActiveExportRegister => Energyu46Activeu46Exportu46Register
         case ocpp.EnergyActiveImportRegister => Energyu46Activeu46Importu46Register
@@ -349,8 +351,8 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       }
     }
 
-    implicit def toLocation(x: Meter.Location.Value): Location = {
-      import Meter.{Location => ocpp}
+    implicit def toLocation(x: messages.Meter.Location.Value): Location = {
+      import messages.Meter.{Location => ocpp}
       x match {
         case ocpp.Inlet => Inlet
         case ocpp.Outlet => Outlet
@@ -358,8 +360,8 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       }
     }
 
-    implicit def toUnit(x: Meter.UnitOfMeasure.Value): UnitOfMeasure = {
-      import Meter.{UnitOfMeasure => ocpp}
+    implicit def toUnit(x: messages.Meter.UnitOfMeasure.Value): UnitOfMeasure = {
+      import messages.Meter.{UnitOfMeasure => ocpp}
       x match {
         case ocpp.Wh => Wh
         case ocpp.Kwh => KWh
@@ -375,7 +377,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       }
     }
 
-    def toValue(x: Meter.Value): Value = Value(
+    def toValue(x: messages.Meter.Value): Value = Value(
       x.value,
       Some(x.context),
       Some(x.format),

@@ -6,7 +6,7 @@ import com.thenewmotion.ocpp.v12
 /**
  * @author Yaroslav Klymko
  */
-object ConvertersV12 {
+private[soap] object ConvertersV12 {
 
   import com.thenewmotion.ocpp.messages
   import v12._

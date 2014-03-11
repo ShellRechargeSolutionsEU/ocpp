@@ -4,10 +4,8 @@ package json
 import net.liftweb.json._
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.ext.EnumNameSerializer
-import messages.centralsystem._
-import messages.chargepoint._
-import messages.centralsystem.Meter._
-import messages.{Scope, ConnectorScope, AuthorizationStatus}
+import messages._
+import messages.Meter._
 import com.thenewmotion.time.Imports._
 import org.joda.time.format.ISODateTimeFormat
 import scala.concurrent.duration.FiniteDuration

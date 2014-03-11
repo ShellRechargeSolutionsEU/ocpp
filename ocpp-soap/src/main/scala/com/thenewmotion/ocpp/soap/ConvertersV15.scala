@@ -3,11 +3,12 @@ package soap
 
 import com.thenewmotion.ocpp.v15
 import messages.chargepoint
+import com.thenewmotion.ocpp.messages
 
 /**
  * @author Yaroslav Klymko
  */
-private[ocpp] object ConvertersV15 {
+private[soap] object ConvertersV15 {
 
   import com.thenewmotion.ocpp.messages
   import v15._
@@ -59,7 +60,7 @@ private[ocpp] object ConvertersV15 {
   }
 
   implicit class RichV15AuthorisationData(val self: AuthorisationData) extends AnyVal {
-    def toOcpp: chargepoint.AuthorisationData = chargepoint.AuthorisationData(self.idTag, self.idTagInfo.map(_.toOcpp))
+    def toOcpp: messages.AuthorisationData = messages.AuthorisationData(self.idTag, self.idTagInfo.map(_.toOcpp))
   }
 
   implicit class RichRemoteStartStopStatus(val self: RemoteStartStopStatus) extends AnyVal {
@@ -69,9 +70,9 @@ private[ocpp] object ConvertersV15 {
     }
   }
 
-  implicit class RichUpdateStatus(val self: chargepoint.UpdateStatus.Value) extends AnyVal {
+  implicit class RichUpdateStatus(val self: messages.UpdateStatus.Value) extends AnyVal {
     def toV15: (UpdateStatus, Option[String]) = {
-      import chargepoint.UpdateStatus._
+      import messages.UpdateStatus._
       self match {
         case UpdateAccepted(h) => (AcceptedValue10,         h)
         case UpdateFailed      => (Failed,                  None)

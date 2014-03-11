@@ -1,8 +1,9 @@
 package com.thenewmotion.ocpp
 package soap
 
-import com.thenewmotion.ocpp.messages.{chargepoint => ocpp}
+import com.thenewmotion.ocpp.{messages => ocpp}
 import dispatch.Http
+import messages._
 import messages.chargepoint._
 
 

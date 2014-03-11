@@ -2,11 +2,12 @@ package com.thenewmotion.ocpp
 package soap
 
 import org.specs2.mutable.SpecificationWithJUnit
+import messages.centralsystem.CentralSystemAction
 
 /**
  * @author Yaroslav Klymko
  */
-class CentralSystemActionSpec extends SpecificationWithJUnit {
+class SoapActionEnumerationSpec extends SpecificationWithJUnit {
   "Action" should {
     "parse action from header" in {
       val headers = Set(
@@ -21,7 +22,7 @@ class CentralSystemActionSpec extends SpecificationWithJUnit {
         "/statusnotification")
 
       val actions = headers.flatMap {
-        header => CentralSystemAction.fromHeader(header)
+        header => SoapActionEnumeration.fromHeader(CentralSystemAction, header)
       }
 
       actions.size mustEqual headers.size

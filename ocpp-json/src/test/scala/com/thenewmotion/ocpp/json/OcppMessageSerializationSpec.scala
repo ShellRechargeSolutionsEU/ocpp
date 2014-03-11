@@ -9,10 +9,8 @@ import com.thenewmotion.time.Imports._
 import scala.concurrent.duration.FiniteDuration
 import net.liftweb.json.JsonDSL._
 import java.net.URI
-import messages.{ ChargePointScope, ConnectorScope, IdTagInfo, AuthorizationStatus }
-import messages.chargepoint.{IdTagInfo => _, Scope => _, ChargePointScope => _, ConnectorScope => _, AuthorizationStatus => _, _}
-import messages.centralsystem.{IdTagInfo => _, Scope => _, ChargePointScope => _, ConnectorScope => _, AuthorizationStatus => _, _}
-import messages.centralsystem.Meter._
+import messages._
+import messages.Meter._
 
 class OcppMessageSerializationSpec extends SpecificationWithJUnit {
 

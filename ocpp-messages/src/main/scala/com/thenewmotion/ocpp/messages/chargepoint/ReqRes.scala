@@ -5,7 +5,7 @@ package chargepoint
 /**
  * @author Yaroslav Klymko
  */
-trait ReqRes[REQ <: Req, RES <: Res] {
+trait ReqRes[REQ <: ChargePointReq, RES <: ChargePointRes] {
   def apply(req: REQ)(implicit service: ChargePoint): RES
 }
 
@@ -73,8 +73,8 @@ object ReqRes {
     def apply(req: CancelReservationReq)(implicit service: ChargePoint) = service.cancelReservation(req)
   }
 
-  implicit object ReqRes extends ReqRes[Req, Res] {
-    def apply(req: Req)(implicit service: ChargePoint) = req match {
+  implicit object ReqRes extends ReqRes[ChargePointReq, ChargePointRes] {
+    def apply(req: ChargePointReq)(implicit service: ChargePoint) = req match {
       case x: RemoteStartTransactionReq => RemoteStartTransactionReqRes(x)
       case x: RemoteStopTransactionReq => RemoteStopTransactionReqRes(x)
       case x: UnlockConnectorReq => UnlockConnectorReqRes(x)

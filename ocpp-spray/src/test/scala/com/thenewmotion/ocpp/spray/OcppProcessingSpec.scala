@@ -12,8 +12,8 @@ import org.joda.time.DateTime
 import scala.io.Source
 import com.thenewmotion.ocpp.Version._
 import com.thenewmotion.ocpp.soap.SoapUtils
-import com.thenewmotion.ocpp.messages.centralsystem.{Req => CsReq, Res => CsRes, _}
-import com.thenewmotion.ocpp.messages.chargepoint.{Req => CpReq, Res => CpRes, _}
+import com.thenewmotion.ocpp.messages.{CentralSystemReq => CsReq, CentralSystemRes => CsRes, ChargePointReq => CpReq,
+                                       ChargePointRes => CpRes, _}
 import scala.concurrent.{Await, Future, ExecutionContext}
 import scala.concurrent.duration.Duration
 import ExecutionContext.Implicits.global

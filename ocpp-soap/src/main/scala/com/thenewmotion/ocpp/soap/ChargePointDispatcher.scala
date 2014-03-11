@@ -5,12 +5,12 @@ import scala.xml.NodeSeq
 import soapenvelope12.Body
 import scalaxb.XMLFormat
 import scala.concurrent.{ExecutionContext, Future}
-import messages.{Scope, ConnectorScope}
-import messages.chargepoint
+import com.thenewmotion.ocpp.messages
+import messages._
 import messages.chargepoint._
 
 object ChargePointDispatcher {
-  def apply(version: Version.Value): Dispatcher[Req, Res] = version match {
+  def apply(version: Version.Value): Dispatcher[ChargePointReq, ChargePointRes] = version match {
     case Version.V12 => sys.error("Requests to the charge point are not yet supported with OCPP 1.2")
     case Version.V15 => ChargePointDispatcherV15
   }
@@ -20,7 +20,7 @@ object ChargePointDispatcher {
  * Can call the corresponding methods on a ChargePointService object when given a message containing a request sent to
  * a charge point.
  */
-object ChargePointDispatcherV15 extends AbstractDispatcher[Req, Res] {
+object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePointReq, ChargePointRes] {
   import v15.{ChargePointService => _, Value => _, _}
   import ConvertersV15._
 
@@ -28,12 +28,12 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[Req, Res] {
   val actions = ChargePointAction
   import actions._
 
-  def dispatch(action: Value, xml: NodeSeq, service: Req => Future[Res])
+  def dispatch(action: Value, xml: NodeSeq, service: ChargePointReq => Future[ChargePointRes])
               (implicit ec: ExecutionContext): Future[Body] = {
 
     def remoteStartStopStatus(accepted: Boolean) = if (accepted) AcceptedValue2 else RejectedValue2
 
-    def ?[XMLREQ: XMLFormat, XMLRES: XMLFormat](reqTrans: XMLREQ => Req)(resTrans: Res => XMLRES): Future[Body] =
+    def ?[XMLREQ: XMLFormat, XMLRES: XMLFormat](reqTrans: XMLREQ => ChargePointReq)(resTrans: ChargePointRes => XMLRES): Future[Body] =
       reqRes(action, xml, service)(reqTrans)(resTrans)
 
     action match {
@@ -46,8 +46,8 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[Req, Res] {
 
       case ChangeAvailability => ?[ChangeAvailabilityRequest, ChangeAvailabilityResponse] { req =>
           val availabilityType = req.typeValue match {
-            case Inoperative => chargepoint.AvailabilityType.Inoperative
-            case Operative => chargepoint.AvailabilityType.Operative
+            case Inoperative => messages.AvailabilityType.Inoperative
+            case Operative => messages.AvailabilityType.Operative
           }
 
           ChangeAvailabilityReq(Scope.fromOcpp(req.connectorId), availabilityType)
@@ -55,9 +55,9 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[Req, Res] {
         case ChangeAvailabilityRes(result) =>
 
           ChangeAvailabilityResponse(result match {
-            case chargepoint.AvailabilityStatus.Accepted => AcceptedValue7
-            case chargepoint.AvailabilityStatus.Rejected => RejectedValue6
-            case chargepoint.AvailabilityStatus.Scheduled => Scheduled
+            case messages.AvailabilityStatus.Accepted => AcceptedValue7
+            case messages.AvailabilityStatus.Rejected => RejectedValue6
+            case messages.AvailabilityStatus.Scheduled => Scheduled
           })
       }
 
@@ -66,9 +66,9 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[Req, Res] {
       } {
         case ChangeConfigurationRes(result) =>
           ChangeConfigurationResponse(result match {
-            case chargepoint.ConfigurationStatus.Accepted => AcceptedValue8
-            case chargepoint.ConfigurationStatus.Rejected => RejectedValue7
-            case chargepoint.ConfigurationStatus.NotSupported => NotSupported
+            case messages.ConfigurationStatus.Accepted => AcceptedValue8
+            case messages.ConfigurationStatus.Rejected => RejectedValue7
+            case messages.ConfigurationStatus.NotSupported => NotSupported
           })
       }
 
@@ -83,7 +83,7 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[Req, Res] {
           GetConfigurationReq(req.key.toList)
       } {
         case GetConfigurationRes(values, unknownKeys) =>
-          def keyValue(kv: chargepoint.KeyValue) = v15.KeyValue(kv.key, kv.readonly, kv.value)
+          def keyValue(kv: messages.KeyValue) = v15.KeyValue(kv.key, kv.readonly, kv.value)
 
           GetConfigurationResponse(values.map(keyValue), unknownKeys)
       }
@@ -143,8 +143,8 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[Req, Res] {
 
       case Reset => ?[ResetRequest, ResetResponse] { req =>
         val resetType = req.typeValue match {
-          case Hard => chargepoint.ResetType.Hard
-          case Soft => chargepoint.ResetType.Soft
+          case Hard => messages.ResetType.Hard
+          case Soft => messages.ResetType.Soft
         }
         ResetReq(resetType)
       } {
@@ -154,8 +154,8 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[Req, Res] {
 
       case SendLocalList => ?[SendLocalListRequest, SendLocalListResponse] { req =>
         val updateType = req.updateType match {
-          case Differential => chargepoint.UpdateType.Differential
-          case Full => chargepoint.UpdateType.Full
+          case Differential => messages.UpdateType.Differential
+          case Full => messages.UpdateType.Full
         }
         val listVersion = AuthListSupported(req.listVersion)
         val localAuthList = req.localAuthorisationList.map(_.toOcpp).toList
