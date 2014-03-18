@@ -21,6 +21,7 @@ case class StopTransactionReq(transactionId: Int,
                               timestamp: DateTime,
                               meterStop: Int,
                               transactionData: Option[List[MeterValues]]) extends CentralSystemReq
+case class StopTransactionRes(idTagInfo: Option[IdTagInfo]) extends CentralSystemRes
 case object HeartbeatReq extends CentralSystemReq
 case class HeartbeatRes(currentTime: DateTime) extends CentralSystemRes
 case class MeterValuesReq(connectorId: Int,
@@ -102,11 +103,12 @@ case class SendLocalListReq(updateType: String,
                             listVersion: Int,
                             localAuthorisationList: Option[List[LocalAuthListElem]],
                             hash: Option[String]) extends ChargePointReq
+case class SendLocalListRes(status: String, hash: Option[String]) extends ChargePointRes
 
 
 case class IdTagInfo(status: String, expiryDate: Option[DateTime], parentIdTag: Option[String])
 case class MeterValues(values: Option[List[MeterValueSample]])
-case class MeterValueSample(timestamp: Option[DateTime], items: List[MeterValueItem])
+case class MeterValueSample(timestamp: Option[DateTime], values: List[MeterValueItem])
 case class MeterValueItem(value: String,
                           context: Option[String],
                           format: Option[String],
