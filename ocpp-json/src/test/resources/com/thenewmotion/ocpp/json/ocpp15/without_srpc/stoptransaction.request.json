@@ -11,13 +11,11 @@
                     "values": [
                         {
                             "value": "0",
-                            "unit": "Wh",
-                            "measurand": "Energy.Active.Import.Register"
                         },
                         {
                             "value": "0",
-                            "unit": "varh",
-                            "measurand": "Energy.Reactive.Import.Register"
+                            "measurand": "Energy.Reactive.Import.Register",
+                            "unit": "varh"
                         }
                     ]
                 }
@@ -30,13 +28,11 @@
                     "values": [
                         {
                             "value": "0",
-                            "unit": "Wh",
-                            "measurand": "Energy.Active.Import.Register"
                         },
                         {
                             "value": "0",
-                            "unit": "varh",
-                            "measurand": "Energy.Reactive.Import.Register"
+                            "measurand": "Energy.Reactive.Import.Register",
+                            "unit": "varh"
                         }
                     ]
                 }

@@ -326,7 +326,18 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
 
   // copy of beEqualTo that has the argument type set to JValue, so we can use Lift's JSON DSL without type annotations
   // everywhere
-  private def beEqualToJson(jval: JValue) = beTypedEqualTo[JValue](jval)
+  private def beEqualToJson(jval: JValue) = beTypedEqualTo[JValue](jval) ^^^ stripJNothingFields
+
+  private def stripJNothingFields(jval: JValue): JValue =
+    jval match {
+      case JArray(xs) => JArray(xs.map(stripJNothingFields))
+      case JObject(xs) => JObject(xs.collect(stripJNothingInJField))
+      case x => x
+    }
+
+  private def stripJNothingInJField: PartialFunction[JField, JField] = {
+    case JField(field, value) if value != JNothing => JField(field, stripJNothingFields(value))
+  }
 
   private def beEmptyJObject = beTypedEqualTo[JValue](JObject(List()))
 

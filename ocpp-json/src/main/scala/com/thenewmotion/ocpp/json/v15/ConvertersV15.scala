@@ -208,16 +208,16 @@ object ConvertersV15 {
   }
 
   implicit class RichTransactionData(self: messages.TransactionData) {
-    def toV15: MeterValues = MeterValues(values = Some(self.meters.map(_.toV15): List[MeterValueSample]))
+    def toV15: TransactionData = TransactionData(values = Some(self.meters.map(_.toV15): List[Meter]))
   }
 
   implicit class RichMeter(self: messages.Meter) {
-    def toV15: MeterValueSample =
-      MeterValueSample(timestamp = self.timestamp,
+    def toV15: Meter =
+      Meter(timestamp = self.timestamp,
                        values = self.values.map(valueToV15))
 
-    def valueToV15(v: messages.Meter.Value): MeterValueItem =
-      MeterValueItem(value = v.value,
+    def valueToV15(v: messages.Meter.Value): MeterValue =
+      MeterValue(value = v.value,
                      measurand = noneIfDefault(Measurand.EnergyActiveImportRegister, v.measurand),
                      context = noneIfDefault(ReadingContext.SamplePeriodic, v.context),
                      format = noneIfDefault(ValueFormat.Raw, v.format),
@@ -228,17 +228,17 @@ object ConvertersV15 {
       if (actual == default) None else Some(actual.toString)
   }
 
-  def transactionDataFromV15(v15td: Option[List[MeterValues]]): List[messages.TransactionData] =
-    v15td.fold(List.empty[messages.TransactionData])(_.map(metersFromV15).map(messages.TransactionData))
+  def transactionDataFromV15(v15td: Option[List[TransactionData]]): List[messages.TransactionData] =
+    v15td.fold(List.empty[messages.TransactionData])(_.map(metersFromV15))
 
-  def metersFromV15(v15mv: MeterValues): List[messages.Meter] =
-    v15mv.values getOrElse List.empty[MeterValueSample] map meterFromV15
+  def metersFromV15(v15mv: TransactionData): messages.TransactionData =
+    messages.TransactionData(v15mv.values getOrElse List.empty[Meter] map meterFromV15)
 
-  def meterFromV15(v15m: MeterValueSample): messages.Meter = {
+  def meterFromV15(v15m: Meter): messages.Meter = {
     messages.Meter(v15m.timestamp, v15m.values.map(meterValueFromV15))
   }
 
-  def meterValueFromV15(v15m: MeterValueItem): messages.Meter.Value = {
+  def meterValueFromV15(v15m: MeterValue): messages.Meter.Value = {
     import v15m._
     import messages.Meter._
 

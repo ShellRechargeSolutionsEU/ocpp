@@ -7,8 +7,6 @@
             "values": [
                 {
                     "value": "0",
-                    "unit": "Wh",
-                    "measurand": "Energy.Active.Import.Register"
                 },
                 {
                     "value": "0",
@@ -22,8 +20,6 @@
             "values": [
                 {
                     "value": "20",
-                    "unit": "Wh",
-                    "measurand": "Energy.Active.Import.Register"
                 },
                 {
                     "value": "20",
