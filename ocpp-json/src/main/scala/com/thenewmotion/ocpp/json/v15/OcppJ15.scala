@@ -3,7 +3,8 @@ package json.v15
 
 import net.liftweb.json._
 import ConvertersV15._
-import com.thenewmotion.ocpp.json.OcppMessageJsonSerializers
+import com.thenewmotion.ocpp.json.{JsonSerializable, OcppMessageJsonSerializers}
+import JsonSerializable._
 
 /** Reading and writing OCPP 1.5 messages encoded with JSON */
 object OcppJ15 {
@@ -14,10 +15,10 @@ object OcppJ15 {
 
   def write(msg: messages.Message): String = compact(render(serialize(msg)))
 
-  // todo: add typeclass to be able to pass generic type here
-  def deserialize[M <: Message : Manifest](json: JValue): messages.Message = fromV15(Extraction.extract[M](json))
+  def deserialize[M <: messages.Message : JsonSerializable](json: JValue): M =
+    jsonSerializable[M].deserializeV15(json)
 
-  def read(s: String) = deserialize(JsonParser.parse(s))
+  def read[M <: messages.Message : JsonSerializable](s: String) = deserialize[M](JsonParser.parse(s))
 
   val version: Version.Value = Version.V15
 

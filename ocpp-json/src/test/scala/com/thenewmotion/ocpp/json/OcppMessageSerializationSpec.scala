@@ -12,20 +12,19 @@ import java.net.URI
 import messages._
 import messages.Meter._
 import com.thenewmotion.ocpp.json.v15.OcppJ15
+import JsonSerializable._
 
 class OcppMessageSerializationSpec extends SpecificationWithJUnit {
 
   implicit val formats: Formats = DefaultFormats ++ OcppMessageJsonSerializers()
 
-  /*
   "OCPP message deserialization, new style tests" should {
     for (testMsg <- testMsgs) {
       s"read ${testMsg.msg.getClass.getName} messages" in new MessageTestScope(testMsg.jsonFileBase) {
-         OcppJ15.deserialize(messageAST)(testMsg.manifest) mustEqual testMsg.msg
+         OcppJ15.deserialize(messageAST)(testMsg.jsonSerializable) mustEqual testMsg.msg
       }
     }
   }
-  */
 
   "OCPP message serialization, new style tests" should {
     for (testMsg <- testMsgs) {
@@ -315,8 +314,6 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
   private class CallTestScope(operationName: String, callType: String) extends Scope {
     val messageAST = JsonParser.parse(loadRequestJSON)
 
-    System.err.println(s"Parsed ocpp15/without_srpc/$operationName.$callType.json; messageAST is $messageAST")
-
     private def loadRequestJSON: String = {
       val requestFileName = s"ocpp15/without_srpc/$operationName.$callType.json"
       Source.fromURL(this.getClass.getResource(requestFileName)).mkString
@@ -399,7 +396,7 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
           TransactionData(List(testMeter))))
     }
     val stopTransactionRes = StopTransactionRes(idTag = Some(IdTagInfo(status = AuthorizationStatus.IdTagExpired,
-        expiryDate = Some(new DateTime(2013, 2, 1, 16, 9, 18, DateTimeZone.forOffsetHours(1))),
+        expiryDate = Some(new DateTime(2013, 2, 1, 16, 9, 18, DateTimeZone.forID("Europe/Brussels"))),
         parentIdTag = Some("PARENT"))))
 
     val unlockConnectorReq = UnlockConnectorReq(connector = ConnectorScope(0))
@@ -498,7 +495,7 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
     val cancelReservationRes = CancelReservationRes(accepted = true)
   }
 
-  case class TestableMsg[T <: Message](manifest: Manifest[T], msg: T, jsonFileBase: String)
+  case class TestableMsg[T <: Message](jsonSerializable: JsonSerializable[T], msg: T, jsonFileBase: String)
 
   private class MessageTestScope(jsonFileBase: String) extends Scope {
     val messageAST = JsonParser.parse(loadRequestJSON)
@@ -519,34 +516,34 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
   //}
 
   val testMsgs = List(
-    TestableMsg(manifest[BootNotificationReq], TestMsgs.bootNotificationReq, "bootnotification.request"),
-    TestableMsg(manifest[AuthorizeReq], TestMsgs.authorizeReq, "authorize.request"),
-    TestableMsg(manifest[AuthorizeRes], TestMsgs.authorizeRes, "authorize.response"),
-    TestableMsg(manifest[StartTransactionReq], TestMsgs.startTransactionReq, "starttransaction.request"),
-  // TODO this one only for deserialization
-    //TestableMsg(manifest[StartTransactionReq], TestMsgs.startTransactionReqWithLocalTime, "starttransaction.localtime.request"),
-    TestableMsg(manifest[StartTransactionRes], TestMsgs.startTransactionRes, "starttransaction.response"),
-    TestableMsg(manifest[StopTransactionReq], TestMsgs.stopTransactionReq, "stoptransaction.request"),
-    TestableMsg(manifest[StopTransactionRes], TestMsgs.stopTransactionRes, "stoptransaction.response"),
-    TestableMsg(manifest[UnlockConnectorRes], TestMsgs.unlockConnectorRes, "unlockconnector.response"),
-    TestableMsg(manifest[ResetRes], TestMsgs.resetRes, "reset.response"),
-    TestableMsg(manifest[ChangeAvailabilityRes], TestMsgs.changeAvailabilityRes, "changeavailability.response"),
-    TestableMsg(manifest[StatusNotificationReq], TestMsgs.statusNotificationReq, "statusnotification.request"),
-    TestableMsg(manifest[StatusNotificationReq], TestMsgs.statusNotificationReqInError, "statusnotification.inerror.request"),
-    TestableMsg(manifest[RemoteStartTransactionRes], TestMsgs.remoteStartTransactionRes, "remotestarttransaction.response"),
-    TestableMsg(manifest[RemoteStopTransactionRes], TestMsgs.remoteStopTransactionRes, "remotestoptransaction.response"),
-    TestableMsg(manifest[HeartbeatReq.type], TestMsgs.heartbeatReq, "heartbeat.request"),
-    TestableMsg(manifest[UpdateFirmwareRes.type], TestMsgs.updateFirmwareRes, "updatefirmware.response"),
-    TestableMsg(manifest[FirmwareStatusNotificationReq], TestMsgs.firmwareStatusNotificationReq, "firmwarestatusnotification.request"),
-    TestableMsg(manifest[GetDiagnosticsRes], TestMsgs.getDiagnosticsRes, "getdiagnostics.response"),
-    TestableMsg(manifest[DiagnosticsStatusNotificationReq], TestMsgs.diagnosticsStatusNotificationReq, "diagnosticsstatusnotification.request"),
-    TestableMsg(manifest[MeterValuesReq], TestMsgs.meterValuesReq, "metervalues.request"),
-    TestableMsg(manifest[ChangeConfigurationRes], TestMsgs.changeConfigurationRes, "changeconfiguration.response"),
-    TestableMsg(manifest[ClearCacheRes], TestMsgs.clearCacheRes, "clearcache.response"),
-    TestableMsg(manifest[GetConfigurationRes], TestMsgs.getConfigurationRes, "getconfiguration.response"),
-    TestableMsg(manifest[GetLocalListVersionRes], TestMsgs.getLocalListVersionRes, "getlocallistversion.response"),
-    TestableMsg(manifest[SendLocalListRes], TestMsgs.sendLocalListRes, "sendlocallist.response"),
-    TestableMsg(manifest[ReserveNowRes], TestMsgs.reserveNowRes, "reservenow.response"),
-    TestableMsg(manifest[CancelReservationRes], TestMsgs.cancelReservationRes, "cancelreservation.response")
+    TestableMsg(jsonSerializable[BootNotificationReq], TestMsgs.bootNotificationReq, "bootnotification.request"),
+    TestableMsg(jsonSerializable[AuthorizeReq], TestMsgs.authorizeReq, "authorize.request"),
+    TestableMsg(jsonSerializable[AuthorizeRes], TestMsgs.authorizeRes, "authorize.response"),
+    TestableMsg(jsonSerializable[StartTransactionReq], TestMsgs.startTransactionReq, "starttransaction.request"),
+  // TODO this ojsonSerializablefor deserialization
+    //TestableMsjsonSerializablest[StartTransactionReq], TestMsgs.startTransactionReqWithLocalTime, "starttransaction.localtime.request"),
+    TestableMsg(jsonSerializable[StartTransactionRes], TestMsgs.startTransactionRes, "starttransaction.response"),
+    TestableMsg(jsonSerializable[StopTransactionReq], TestMsgs.stopTransactionReq, "stoptransaction.request"),
+    TestableMsg(jsonSerializable[StopTransactionRes], TestMsgs.stopTransactionRes, "stoptransaction.response"),
+    TestableMsg(jsonSerializable[UnlockConnectorRes], TestMsgs.unlockConnectorRes, "unlockconnector.response"),
+    TestableMsg(jsonSerializable[ResetRes], TestMsgs.resetRes, "reset.response"),
+    TestableMsg(jsonSerializable[ChangeAvailabilityRes], TestMsgs.changeAvailabilityRes, "changeavailability.response"),
+    TestableMsg(jsonSerializable[StatusNotificationReq], TestMsgs.statusNotificationReq, "statusnotification.request"),
+    TestableMsg(jsonSerializable[StatusNotificationReq], TestMsgs.statusNotificationReqInError, "statusnotification.inerror.request"),
+    TestableMsg(jsonSerializable[RemoteStartTransactionRes], TestMsgs.remoteStartTransactionRes, "remotestarttransaction.response"),
+    TestableMsg(jsonSerializable[RemoteStopTransactionRes], TestMsgs.remoteStopTransactionRes, "remotestoptransaction.response"),
+    TestableMsg(jsonSerializable[HeartbeatReq.type], TestMsgs.heartbeatReq, "heartbeat.request"),
+    TestableMsg(jsonSerializable[UpdateFirmwareRes.type], TestMsgs.updateFirmwareRes, "updatefirmware.response"),
+    TestableMsg(jsonSerializable[FirmwareStatusNotificationReq], TestMsgs.firmwareStatusNotificationReq, "firmwarestatusnotification.request"),
+    TestableMsg(jsonSerializable[GetDiagnosticsRes], TestMsgs.getDiagnosticsRes, "getdiagnostics.response"),
+    TestableMsg(jsonSerializable[DiagnosticsStatusNotificationReq], TestMsgs.diagnosticsStatusNotificationReq, "diagnosticsstatusnotification.request"),
+    TestableMsg(jsonSerializable[MeterValuesReq], TestMsgs.meterValuesReq, "metervalues.request"),
+    TestableMsg(jsonSerializable[ChangeConfigurationRes], TestMsgs.changeConfigurationRes, "changeconfiguration.response"),
+    TestableMsg(jsonSerializable[ClearCacheRes], TestMsgs.clearCacheRes, "clearcache.response"),
+    TestableMsg(jsonSerializable[GetConfigurationRes], TestMsgs.getConfigurationRes, "getconfiguration.response"),
+    TestableMsg(jsonSerializable[GetLocalListVersionRes], TestMsgs.getLocalListVersionRes, "getlocallistversion.response"),
+    TestableMsg(jsonSerializable[SendLocalListRes], TestMsgs.sendLocalListRes, "sendlocallist.response"),
+    TestableMsg(jsonSerializable[ReserveNowRes], TestMsgs.reserveNowRes, "reservenow.response"),
+    TestableMsg(jsonSerializable[CancelReservationRes], TestMsgs.cancelReservationRes, "cancelreservation.response")
   )
 }

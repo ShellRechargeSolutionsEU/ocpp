@@ -3,6 +3,8 @@ package com.thenewmotion.ocpp.json.v15
 import org.joda.time.DateTime
 import java.net.URI
 
+// we use fieldless case classes instead of case objects because that plays nicer with lift-json
+
 sealed trait Message
 
 sealed trait CentralSystemReq extends Message
@@ -22,12 +24,12 @@ case class StopTransactionReq(transactionId: Int,
                               meterStop: Int,
                               transactionData: Option[List[MeterValues]]) extends CentralSystemReq
 case class StopTransactionRes(idTagInfo: Option[IdTagInfo]) extends CentralSystemRes
-case object HeartbeatReq extends CentralSystemReq
+case class HeartbeatReq() extends CentralSystemReq
 case class HeartbeatRes(currentTime: DateTime) extends CentralSystemRes
 case class MeterValuesReq(connectorId: Int,
                           transactionId: Option[Int],
                           values: Option[List[MeterValueSample]]) extends CentralSystemReq
-case object MeterValuesRes extends CentralSystemRes
+case class MeterValuesRes() extends CentralSystemRes
 case class BootNotificationReq(chargePointVendor: String,
                                chargePointModel: String,
                                chargePointSerialNumber: Option[String],
@@ -47,11 +49,11 @@ case class StatusNotificationReq(connectorId: Int,
                                  timestamp: Option[DateTime],
                                  vendorId: Option[String],
                                  vendorErrorCode: Option[String]) extends CentralSystemReq
-case object StatusNotificationRes extends CentralSystemRes
+case class StatusNotificationRes() extends CentralSystemRes
 case class FirmwareStatusNotificationReq(status: String) extends CentralSystemReq
-case object FirmwareStatusNotificationRes extends CentralSystemRes
+case class FirmwareStatusNotificationRes() extends CentralSystemRes
 case class DiagnosticsStatusNotificationReq(status: String) extends CentralSystemReq
-case object DiagnosticsStatusNotificationRes extends CentralSystemRes
+case class DiagnosticsStatusNotificationRes() extends CentralSystemRes
 
 sealed trait ChargePointReq extends Message
 sealed trait ChargePointRes extends Message
@@ -68,13 +70,13 @@ case class GetDiagnosticsReq(location: URI,
                              retries: Option[Int],
                              retryInterval: Option[Int]) extends ChargePointReq
 case class GetDiagnosticsRes(fileName: Option[String]) extends ChargePointRes
-case object ClearCacheReq extends ChargePointReq
+case class ClearCacheReq() extends ChargePointReq
 case class ClearCacheRes(status: String) extends ChargePointRes
 case class UpdateFirmwareReq(retrieveDate: DateTime,
                              location: URI,
                              retries: Int,
                              retryInterval: Int) extends ChargePointReq
-case object UpdateFirmwareRes extends ChargePointRes
+case class UpdateFirmwareRes() extends ChargePointRes
 case class ChangeConfigurationReq(key: String, value:String) extends ChargePointReq
 case class ChangeConfigurationRes(status: String) extends ChargePointRes
 case class RemoteStartTransactionReq(idTag: String, connectorId: Option[Int]) extends ChargePointReq
@@ -91,7 +93,7 @@ case class DataTransferRes(status: String,
 case class GetConfigurationReq(key: Option[List[String]]) extends ChargePointReq
 case class GetConfigurationRes(configurationKey: Option[List[ConfigurationEntry]],
                                unknownKey: Option[List[String]]) extends ChargePointRes
-case object GetLocalListVersionReq extends ChargePointReq
+case class GetLocalListVersionReq() extends ChargePointReq
 case class GetLocalListVersionRes(listVersion: Int) extends ChargePointRes
 case class ReserveNowReq(connectorId: Int,
                          expiryDate: DateTime,
@@ -108,7 +110,7 @@ case class SendLocalListRes(status: String, hash: Option[String]) extends Charge
 
 case class IdTagInfo(status: String, expiryDate: Option[DateTime], parentIdTag: Option[String])
 case class MeterValues(values: Option[List[MeterValueSample]])
-case class MeterValueSample(timestamp: Option[DateTime], values: List[MeterValueItem])
+case class MeterValueSample(timestamp: DateTime, values: List[MeterValueItem])
 case class MeterValueItem(value: String,
                           context: Option[String],
                           format: Option[String],
