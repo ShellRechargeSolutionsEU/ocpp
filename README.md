@@ -10,7 +10,7 @@ You can find more details on the [official website](http://www.ocpp.nl/)
 * OCPP 1.2
 * OCPP 1.5
 * [Spray](http://spray.io) based service to handle OCPP requests
-
+* Functionality to parse and create OCPP JSON messages
 
 ## Setup
 
@@ -60,3 +60,7 @@ Spray OCPP
         <version>3.1-SNAPSHOT</version>
     </dependency>
 ```
+
+## Acknowledgements
+
+Most of the example messages in the ocpp-json unit tests were taken from [GIR ocppjs](http://www.gir.fr/ocppjs/)
