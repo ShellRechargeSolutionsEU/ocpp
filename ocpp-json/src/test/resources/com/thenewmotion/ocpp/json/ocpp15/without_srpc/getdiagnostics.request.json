@@ -1,0 +1,7 @@
+{
+"location": "ftp://root:root@axis.gir.foo/tmp",
+"startTime": "2013-02-01T15:09:18Z",
+"stopTime": "2013-08-08T16:09:18Z",
+"retries": 4,
+"retryInterval": 20
+}

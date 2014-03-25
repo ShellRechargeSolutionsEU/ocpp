@@ -1,5 +1,6 @@
 package com.thenewmotion.ocpp
-package json.v15
+package json
+package v15
 
 import net.liftweb.json._
 import ConvertersV15._

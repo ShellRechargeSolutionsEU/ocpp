@@ -4,6 +4,9 @@ package json.v15
 import com.thenewmotion.ocpp.messages
 import com.thenewmotion.ocpp.messages.Meter._
 import net.liftweb.json.MappingException
+import scala.concurrent.duration._
+import java.net.URI
+import com.thenewmotion.ocpp.messages.Scope
 
 object ConvertersV15 {
   def toV15(msg: messages.Message): Message = msg match {
@@ -12,6 +15,9 @@ object ConvertersV15 {
                                       meterSerialNumber) =>
       BootNotificationReq(chargePointVendor, chargePointModel, chargePointSerialNumber, chargeBoxSerialNumber,
                           firmwareVersion, iccid, imsi, meterType, meterSerialNumber)
+
+    case messages.BootNotificationRes(registrationAccepted, currentTime, heartbeatInterval) =>
+      BootNotificationRes(registrationAccepted.toStatusString, currentTime, heartbeatInterval.toSeconds.toInt)
 
     case messages.AuthorizeReq(idTag) => AuthorizeReq(idTag)
 
@@ -35,9 +41,16 @@ object ConvertersV15 {
 
     case messages.StopTransactionRes(idTagInfo) => StopTransactionRes(idTagInfo.map(_.toV15))
 
+    case messages.UnlockConnectorReq(scope) => UnlockConnectorReq(scope.toOcpp)
+
     case messages.UnlockConnectorRes(accepted) => UnlockConnectorRes(accepted.toStatusString)
 
+    case messages.ResetReq(resetType) => ResetReq(resetType.toString)
+
     case messages.ResetRes(accepted) => ResetRes(accepted.toStatusString)
+
+    case messages.ChangeAvailabilityReq(scope, availabilityType) =>
+      ChangeAvailabilityReq(connectorId = scope.toOcpp, `type` = availabilityType.toString)
 
     case messages.ChangeAvailabilityRes(status) => ChangeAvailabilityRes(status.toString)
 
@@ -59,38 +72,76 @@ object ConvertersV15 {
 
       StatusNotificationReq(scope.toOcpp, ocppStatus, errorCode, info, timestamp, vendorId, vendorErrorCode)
 
+    case messages.StatusNotificationRes => StatusNotificationRes()
+
+    case messages.RemoteStartTransactionReq(idTag, connector) =>
+      RemoteStartTransactionReq(idTag, connector.map(_.toOcpp))
+
     case messages.RemoteStartTransactionRes(accepted) => RemoteStartTransactionRes(accepted.toStatusString)
+
+    case messages.RemoteStopTransactionReq(transactionId) => RemoteStopTransactionReq(transactionId)
 
     case messages.RemoteStopTransactionRes(accepted) => RemoteStopTransactionRes(accepted.toStatusString)
 
     case messages.HeartbeatReq => HeartbeatReq()
 
+    case messages.HeartbeatRes(currentTime) => HeartbeatRes(currentTime)
+
+    case messages.UpdateFirmwareReq(retrieveDate, location, retries) =>
+      UpdateFirmwareReq(retrieveDate, location.toASCIIString, retries.numberOfRetries, retries.intervalInSeconds)
+
     case messages.UpdateFirmwareRes => UpdateFirmwareRes()
 
     case messages.FirmwareStatusNotificationReq(status) => FirmwareStatusNotificationReq(status.toString)
+
+    case messages.FirmwareStatusNotificationRes => FirmwareStatusNotificationRes()
+
+    case messages.GetDiagnosticsReq(location, startTime, stopTime, retries) =>
+      GetDiagnosticsReq(location.toASCIIString, startTime, stopTime, retries.numberOfRetries, retries.intervalInSeconds)
 
     case messages.GetDiagnosticsRes(filename) => GetDiagnosticsRes(filename)
 
     case messages.DiagnosticsStatusNotificationReq(uploaded) =>
       DiagnosticsStatusNotificationReq(uploaded.toUploadStatusString)
 
+    case messages.DiagnosticsStatusNotificationRes =>
+      DiagnosticsStatusNotificationRes()
+
     case messages.MeterValuesReq(scope, transactionId, meters) =>
       MeterValuesReq(scope.toOcpp, transactionId, Some(meters.map(_.toV15)))
 
+    case messages.MeterValuesRes => MeterValuesRes()
+
+    case messages.ChangeConfigurationReq(key, value) => ChangeConfigurationReq(key, value)
+
     case messages.ChangeConfigurationRes(status) => ChangeConfigurationRes(status.toString)
 
+    case messages.ClearCacheReq => ClearCacheReq()
+
     case messages.ClearCacheRes(accepted) => ClearCacheRes(accepted.toStatusString)
+
+    case messages.GetConfigurationReq(keys) => GetConfigurationReq(Some(keys))
 
     case messages.GetConfigurationRes(values, unknownKeys) =>
       GetConfigurationRes(configurationKey = Some(values.map(_.toV15)), unknownKey = Some(unknownKeys))
 
+    case messages.GetLocalListVersionReq => GetLocalListVersionReq()
+
     case messages.GetLocalListVersionRes(authListVersion) => GetLocalListVersionRes(authListVersion.toV15)
+
+    case messages.SendLocalListReq(updateType, authListVersion, authorisationData, hash) =>
+      SendLocalListReq(updateType.toString, authListVersion.toV15, Some(authorisationData.map(_.toV15)), hash)
 
     case messages.SendLocalListRes(status: messages.UpdateStatus.Value) =>
       val (ocppStatus, hash) = status.toV15AndHash
       SendLocalListRes(ocppStatus, hash)
 
+    case messages.ReserveNowReq(scope, expiryDate, idTag, parentIdTag, reservationId) =>
+      ReserveNowReq(scope.toOcpp, expiryDate, idTag, parentIdTag, reservationId)
+
     case messages.ReserveNowRes(status) => ReserveNowRes(status.toString)
+
+    case messages.CancelReservationReq(reservationId) => CancelReservationReq(reservationId)
 
     case messages.CancelReservationRes(accepted) => CancelReservationRes(accepted.toStatusString)
   }
@@ -100,6 +151,11 @@ object ConvertersV15 {
                              meterSerial) =>
       messages.BootNotificationReq(vendor, model, chargePointSerial, chargeBoxSerial, firmwareVersion, iccid, imsi,
                                    meterType, meterSerial)
+
+    case BootNotificationRes(registrationAccepted, currentTime, heartbeatInterval) =>
+      messages.BootNotificationRes(registrationAccepted = statusStringToBoolean(registrationAccepted),
+        currentTime = currentTime,
+        FiniteDuration(heartbeatInterval, SECONDS))
 
     case AuthorizeReq(idTag) => messages.AuthorizeReq(idTag)
 
@@ -116,9 +172,18 @@ object ConvertersV15 {
 
     case StopTransactionRes(idTagInfo) => messages.StopTransactionRes(idTagInfo.map(_.fromV15))
 
+    // TODO see which exception we get for invalid connector ID
+    case UnlockConnectorReq(connectorId) => messages.UnlockConnectorReq(messages.ConnectorScope.fromOcpp(connectorId))
+
     case UnlockConnectorRes(status) => messages.UnlockConnectorRes(statusStringToBoolean(status))
 
+    case ResetReq(resetType) => messages.ResetReq(enumFromJsonString(messages.ResetType, resetType))
+
     case ResetRes(status) => messages.ResetRes(statusStringToBoolean(status))
+
+    case ChangeAvailabilityReq(connectorId, availabilityType) =>
+      messages.ChangeAvailabilityReq(scope = messages.Scope.fromOcpp(connectorId),
+        availabilityType = enumFromJsonString(messages.AvailabilityType, availabilityType))
 
     // TODO catch NSEE
     case ChangeAvailabilityRes(status) => messages.ChangeAvailabilityRes(messages.AvailabilityStatus.withName(status))
@@ -144,36 +209,77 @@ object ConvertersV15 {
                                      timestamp,
                                      vendorId)
 
+    case StatusNotificationRes() => messages.StatusNotificationRes
+
+    case RemoteStartTransactionReq(idTag, connector) => messages.RemoteStartTransactionReq(idTag,
+      connector.map(messages.ConnectorScope.fromOcpp))
+
     case RemoteStartTransactionRes(status) => messages.RemoteStartTransactionRes(statusStringToBoolean(status))
+
+    case RemoteStopTransactionReq(transactionId) => messages.RemoteStopTransactionReq(transactionId)
 
     case RemoteStopTransactionRes(status) => messages.RemoteStopTransactionRes(statusStringToBoolean(status))
 
     case HeartbeatReq() => messages.HeartbeatReq
+
+    case HeartbeatRes(currentTime) => messages.HeartbeatRes(currentTime)
+
+      // TODO error handling URI syntax
+    case UpdateFirmwareReq(retrieveDate, location, retries, retryInterval) =>
+      messages.UpdateFirmwareReq(retrieveDate, new URI(location), messages.Retries.fromInts(retries, retryInterval))
 
     case UpdateFirmwareRes() => messages.UpdateFirmwareRes
 
     case FirmwareStatusNotificationReq(status) =>
       messages.FirmwareStatusNotificationReq(enumFromJsonString(messages.FirmwareStatus, status))
 
+    case FirmwareStatusNotificationRes() =>
+      messages.FirmwareStatusNotificationRes
+
+      // TODO error handling URI syntax
+    case GetDiagnosticsReq(location, startTime, stopTime, retries, retryInterval) =>
+      messages.GetDiagnosticsReq(new URI(location), startTime, stopTime,
+        messages.Retries.fromInts(retries, retryInterval))
+
     case GetDiagnosticsRes(filename) => messages.GetDiagnosticsRes(filename)
 
     case DiagnosticsStatusNotificationReq(status) =>
       messages.DiagnosticsStatusNotificationReq(uploadStatusStringToBoolean(status))
 
+    case DiagnosticsStatusNotificationRes() => messages.DiagnosticsStatusNotificationRes
+
     case MeterValuesReq(connectorId, transactionId, values) =>
       val meters: List[messages.Meter] = values.fold(List.empty[messages.Meter])(_.map(meterFromV15))
       messages.MeterValuesReq(messages.Scope.fromOcpp(connectorId), transactionId, meters)
 
+    case MeterValuesRes() => messages.MeterValuesRes
+
+    case ChangeConfigurationReq(key, value) => messages.ChangeConfigurationReq(key, value)
+
     case ChangeConfigurationRes(status) =>
       messages.ChangeConfigurationRes(enumFromJsonString(messages.ConfigurationStatus, status))
 
+    case ClearCacheReq() => messages.ClearCacheReq
+
     case ClearCacheRes(status) => messages.ClearCacheRes(statusStringToBoolean(status))
+
+    case GetConfigurationReq(keys) => messages.GetConfigurationReq(keys getOrElse Nil)
 
     case GetConfigurationRes(values, unknownKeys) =>
       messages.GetConfigurationRes(values.fold(List.empty[messages.KeyValue])(_.map(_.fromV15)),
                                    unknownKeys getOrElse Nil)
 
+    case GetLocalListVersionReq() => messages.GetLocalListVersionReq
+
     case GetLocalListVersionRes(v) => messages.GetLocalListVersionRes(messages.AuthListVersion(v))
+
+    case SendLocalListReq(updateType, authListVersion, authorizationData, hash) =>
+      messages.SendLocalListReq(
+        updateType = messages.UpdateType.withName(updateType),
+        listVersion = messages.AuthListSupported(authListVersion),
+        localAuthorisationList = authorizationData.getOrElse(Nil).map(_.fromV15),
+        hash = hash
+      )
 
     case SendLocalListRes(status, hash) =>
       import messages.UpdateStatus._
@@ -189,7 +295,12 @@ object ConvertersV15 {
 
       messages.SendLocalListRes(ocppStatus)
 
+    case ReserveNowReq(connectorId, expiryDate, idTag, parentIdTag, reservationId) =>
+      messages.ReserveNowReq(messages.Scope.fromOcpp(connectorId), expiryDate, idTag, parentIdTag, reservationId)
+
     case ReserveNowRes(status) => messages.ReserveNowRes(enumFromJsonString(messages.Reservation, status))
+
+    case CancelReservationReq(reservationId) => messages.CancelReservationReq(reservationId)
 
     case CancelReservationRes(status) => messages.CancelReservationRes(statusStringToBoolean(status))
   }
@@ -304,6 +415,21 @@ object ConvertersV15 {
       case messages.AuthListNotSupported => -1
       case messages.AuthListSupported(i) => i
     }
+  }
+
+  implicit class RichAuthorisationData(self: messages.AuthorisationData) {
+    def toV15: AuthorisationData = {
+      val v15IdTagInfo = self match {
+        case messages.AuthorisationAdd(_, idTagInfo) => Some(idTagInfo.toV15)
+        case messages.AuthorisationRemove(_) => None
+      }
+
+      AuthorisationData(self.idTag, v15IdTagInfo)
+    }
+  }
+
+  implicit class RichV15AuthorisationData(self: AuthorisationData) {
+    def fromV15: messages.AuthorisationData = messages.AuthorisationData(self.idTag, self.idTagInfo.map(_.fromV15))
   }
 
   implicit class RichUpdateStatus(self: messages.UpdateStatus.Value) {

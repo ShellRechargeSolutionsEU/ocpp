@@ -64,7 +64,7 @@ case class ResetReq(`type`: String) extends ChargePointReq
 case class ResetRes(status: String) extends ChargePointRes
 case class ChangeAvailabilityReq(connectorId: Int, `type`: String) extends ChargePointReq
 case class ChangeAvailabilityRes(status: String) extends ChargePointRes
-case class GetDiagnosticsReq(location: URI,
+case class GetDiagnosticsReq(location: String,
                              startTime: Option[DateTime],
                              stopTime: Option[DateTime],
                              retries: Option[Int],
@@ -73,9 +73,9 @@ case class GetDiagnosticsRes(fileName: Option[String]) extends ChargePointRes
 case class ClearCacheReq() extends ChargePointReq
 case class ClearCacheRes(status: String) extends ChargePointRes
 case class UpdateFirmwareReq(retrieveDate: DateTime,
-                             location: URI,
-                             retries: Int,
-                             retryInterval: Int) extends ChargePointReq
+                             location: String,
+                             retries: Option[Int],
+                             retryInterval: Option[Int]) extends ChargePointReq
 case class UpdateFirmwareRes() extends ChargePointRes
 case class ChangeConfigurationReq(key: String, value:String) extends ChargePointReq
 case class ChangeConfigurationRes(status: String) extends ChargePointRes
@@ -103,7 +103,7 @@ case class ReserveNowReq(connectorId: Int,
 case class ReserveNowRes(status: String) extends ChargePointRes
 case class SendLocalListReq(updateType: String,
                             listVersion: Int,
-                            localAuthorisationList: Option[List[LocalAuthListElem]],
+                            localAuthorisationList: Option[List[AuthorisationData]],
                             hash: Option[String]) extends ChargePointReq
 case class SendLocalListRes(status: String, hash: Option[String]) extends ChargePointRes
 
@@ -120,4 +120,4 @@ case class MeterValue(value: String,
 case class ConfigurationEntry(key: String,
                               readonly: Boolean,
                               value: Option[String])
-case class LocalAuthListElem(idTag: String, idTagInfo: Option[IdTagInfo])
+case class AuthorisationData(idTag: String, idTagInfo: Option[IdTagInfo])

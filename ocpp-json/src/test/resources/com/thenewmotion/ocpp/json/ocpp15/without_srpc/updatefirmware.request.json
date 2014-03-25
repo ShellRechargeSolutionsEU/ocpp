@@ -1,0 +1,6 @@
+{
+    "retrieveDate": "2013-02-01T15:09:18Z",
+    "location": "ftp://root:root@fork.gir.foo/tmp/kvcbx-updt.amx",
+    "retries": 4,
+    "retryInterval": 20
+}
