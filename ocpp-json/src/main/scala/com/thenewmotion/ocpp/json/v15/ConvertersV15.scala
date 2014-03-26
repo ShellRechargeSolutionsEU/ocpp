@@ -55,19 +55,7 @@ object ConvertersV15 {
 
     case messages.StatusNotificationReq(scope, status, timestamp, vendorId) =>
 
-      def statusToOcppFields(status: messages.ChargePointStatus): (String, String, Option[String], Option[String]) = {
-        def simpleStatus(name: String) = (name, "NoError", None, None)
-        status match {
-          case messages.Available => simpleStatus("Available")
-          case messages.Occupied => simpleStatus("Occupied")
-          case messages.Unavailable => simpleStatus("Unavailable")
-          case messages.Reserved => simpleStatus("Reserved")
-          case messages.Faulted(errCode, inf, vendorErrCode) =>
-            ("Faulted", errCode.map(_.toString).getOrElse("NoError"), inf, vendorErrCode)
-        }
-      }
-
-      val (ocppStatus, errorCode, info, vendorErrorCode) = statusToOcppFields(status)
+      val (ocppStatus, errorCode, info, vendorErrorCode) = status.toV15Fields
 
       StatusNotificationReq(scope.toOcpp, ocppStatus, errorCode, info, timestamp, vendorId, vendorErrorCode)
 
@@ -187,20 +175,6 @@ object ConvertersV15 {
       messages.ChangeAvailabilityRes(enumFromJsonString(messages.AvailabilityStatus, status))
 
     case StatusNotificationReq(connector, status, errorCode, info, timestamp, vendorId, vendorErrorCode) =>
-      def statusFieldsToOcppStatus(status: String, errorCode: String, info: Option[String],
-                                   vendorErrorCode: Option[String]): messages.ChargePointStatus = status match {
-          case "Available" => messages.Available
-          case "Occupied" => messages.Occupied
-          case "Unavailable" => messages.Unavailable
-          case "Reserved" => messages.Reserved
-          case "Faulted" => messages.Faulted(if (errorCode == "NoError")
-                                               None
-                                             else
-                                               Some(enumFromJsonString(messages.ChargePointErrorCode, errorCode)),
-                                             info,
-                                             vendorErrorCode)
-        }
-
       messages.StatusNotificationReq(messages.Scope.fromOcpp(connector),
                                      statusFieldsToOcppStatus(status, errorCode, info, vendorErrorCode),
                                      timestamp,
@@ -276,19 +250,7 @@ object ConvertersV15 {
         hash = hash
       )
 
-    case SendLocalListRes(status, hash) =>
-      import messages.UpdateStatus._
-
-      val ocppStatus = status match {
-        case "Accepted" => UpdateAccepted(hash)
-        case "Failed" => UpdateFailed
-        case "HashError" => HashError
-        case "NotSupportedValue" => NotSupportedValue
-        case "VersionMismatch" => VersionMismatch
-        case _ => throw new MappingException(s"Unrecognized value '$status' for OCPP update status")
-      }
-
-      messages.SendLocalListRes(ocppStatus)
+    case SendLocalListRes(status, hash) => messages.SendLocalListRes(stringAndHashToUpdateStatus(status, hash))
 
     case ReserveNowReq(connectorId, expiryDate, idTag, parentIdTag, reservationId) =>
       messages.ReserveNowReq(messages.Scope.fromOcpp(connectorId), expiryDate, idTag, parentIdTag, reservationId)
@@ -318,6 +280,40 @@ object ConvertersV15 {
           throw new MappingException(s"Unrecognized authorization status ${self.status} in OCPP-JSON message")
       }
   }
+
+  private implicit class RichChargePointStatus(self: messages.ChargePointStatus) {
+    def toV15Fields: (String, String, Option[String], Option[String]) = {
+      def simpleStatus(name: String) = (name, "NoError", None, None)
+      self match {
+        case messages.Available => simpleStatus("Available")
+        case messages.Occupied => simpleStatus("Occupied")
+        case messages.Unavailable => simpleStatus("Unavailable")
+        case messages.Reserved => simpleStatus("Reserved")
+        case messages.Faulted(errCode, inf, vendorErrCode) =>
+          ("Faulted", errCode.map(_.toString).getOrElse(RichChargePointStatus.defaultErrorCode), inf, vendorErrCode)
+      }
+    }
+  }
+
+  private object RichChargePointStatus {
+    val defaultErrorCode = "NoError"
+  }
+
+  private def statusFieldsToOcppStatus(status: String, errorCode: String, info: Option[String],
+                               vendorErrorCode: Option[String]): messages.ChargePointStatus = status match {
+    case "Available" => messages.Available
+    case "Occupied" => messages.Occupied
+    case "Unavailable" => messages.Unavailable
+    case "Reserved" => messages.Reserved
+    case "Faulted" =>
+      val errorCodeString =
+        if (errorCode == RichChargePointStatus.defaultErrorCode)
+          None
+        else
+          Some(enumFromJsonString(messages.ChargePointErrorCode, errorCode))
+      messages.Faulted(errorCodeString, info, vendorErrorCode)
+  }
+
 
   private implicit class RichTransactionData(self: messages.TransactionData) {
     def toV15: TransactionData = TransactionData(values = Some(self.meters.map(_.toV15): List[Meter]))
@@ -452,14 +448,16 @@ object ConvertersV15 {
     }
   }
 
-  private object UpdateStatusConverters {
-    val names = List("UpdateAccepted" -> "Accepted",
-                     "UpdateFailed" -> "Failed",
-                     "HashError" -> "HashError",
-                     "NotSupported" -> "NotSupportedValue",
-                     "VersionMismatch" -> "VersionMismatch")
-    val jsonToEnum = Map(names.map(_.swap): _*)
-    val enumToJson = Map(names: _*)
+  private def stringAndHashToUpdateStatus(status: String, hash: Option[String]) = {
+    import messages.UpdateStatus._
+    status match {
+      case "Accepted" => UpdateAccepted(hash)
+      case "Failed" => UpdateFailed
+      case "HashError" => HashError
+      case "NotSupportedValue" => NotSupportedValue
+      case "VersionMismatch" => VersionMismatch
+      case _ => throw new MappingException(s"Unrecognized value '$status' for OCPP update status")
+    }
   }
 
   /**
