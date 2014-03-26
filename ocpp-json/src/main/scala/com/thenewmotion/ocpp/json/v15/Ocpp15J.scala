@@ -4,8 +4,8 @@ package v15
 
 import net.liftweb.json._
 import ConvertersV15._
-import com.thenewmotion.ocpp.json.JsonSerializable
-import JsonSerializable._
+import com.thenewmotion.ocpp.json.JsonDeserializable
+import JsonDeserializable._
 
 /** Reading and writing OCPP 1.5 messages encoded with JSON */
 object Ocpp15J {
@@ -16,10 +16,10 @@ object Ocpp15J {
 
   def write(msg: messages.Message): String = compact(render(serialize(msg)))
 
-  def deserialize[M <: messages.Message : JsonSerializable](json: JValue): M =
-    jsonSerializable[M].deserializeV15(json)
+  def deserialize[M <: messages.Message : JsonDeserializable](json: JValue): M =
+    jsonDeserializable[M].deserializeV15(json)
 
-  def read[M <: messages.Message : JsonSerializable](s: String) = deserialize[M](JsonParser.parse(s))
+  def read[M <: messages.Message : JsonDeserializable](s: String) = deserialize[M](JsonParser.parse(s))
 
   val version: Version.Value = Version.V15
 

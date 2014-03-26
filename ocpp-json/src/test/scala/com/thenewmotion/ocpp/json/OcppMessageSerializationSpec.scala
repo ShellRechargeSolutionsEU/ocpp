@@ -12,7 +12,7 @@ import java.net.URI
 import messages._
 import messages.Meter._
 import com.thenewmotion.ocpp.json.v15.Ocpp15J
-import JsonSerializable._
+import JsonDeserializable._
 
 class OcppMessageSerializationSpec extends SpecificationWithJUnit {
 
@@ -27,7 +27,7 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
 
     "read StartTransaction requests with a local time in them" in
       new MessageTestScope("starttransaction.localtime.request") {
-        Ocpp15J.deserialize(messageAST)(jsonSerializable[StartTransactionReq]) mustEqual TestMsgs.startTransactionReqWithLocalTime
+        Ocpp15J.deserialize(messageAST)(jsonDeserializable[StartTransactionReq]) mustEqual TestMsgs.startTransactionReqWithLocalTime
       }
   }
 
@@ -71,10 +71,10 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
     case JField(field, value) if value != JNothing => JField(field, stripJNothingFields(value))
   }
 
-  case class TestableMsg[T <: Message](jsonSerializable: JsonSerializable[T], msg: T, jsonFileBase: String)
+  case class TestableMsg[T <: Message](jsonSerializable: JsonDeserializable[T], msg: T, jsonFileBase: String)
   object TestableMsg {
-    def apply[T <: Message : JsonSerializable](msg: T, jsonFileBase: String) =
-      new TestableMsg(jsonSerializable[T], msg, jsonFileBase)
+    def apply[T <: Message : JsonDeserializable](msg: T, jsonFileBase: String) =
+      new TestableMsg(jsonDeserializable[T], msg, jsonFileBase)
   }
 
   private class MessageTestScope(jsonFileBase: String) extends Scope {
@@ -93,7 +93,7 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
     TestableMsg(TestMsgs.bootNotificationRes, "bootnotification.response"),
     TestableMsg(TestMsgs.authorizeReq, "authorize.request"),
     TestableMsg(TestMsgs.authorizeRes, "authorize.response"),
-    TestableMsg(jsonSerializable[StartTransactionReq], TestMsgs.startTransactionReq, "starttransaction.request"),
+    TestableMsg(TestMsgs.startTransactionReq, "starttransaction.request"),
     TestableMsg(TestMsgs.startTransactionRes, "starttransaction.response"),
     TestableMsg(TestMsgs.stopTransactionReq, "stoptransaction.request"),
     TestableMsg(TestMsgs.stopTransactionRes, "stoptransaction.response"),
