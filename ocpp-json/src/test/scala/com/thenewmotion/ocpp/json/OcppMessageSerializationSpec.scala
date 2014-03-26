@@ -24,6 +24,11 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
          OcppJ15.deserialize(messageAST)(testMsg.jsonSerializable) mustEqual testMsg.msg
       }
     }
+
+    "read StartTransaction requests with a local time in them" in
+      new MessageTestScope("starttransaction.localtime.request") {
+        OcppJ15.deserialize(messageAST)(jsonSerializable[StartTransactionReq]) mustEqual TestMsgs.startTransactionReqWithLocalTime
+      }
   }
 
   "OCPP message serialization, new style tests" should {
@@ -32,6 +37,23 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
         OcppJ15.serialize(testMsg.msg) must beEqualToJson(messageAST)
       }
     }
+  }
+
+  "OCPP message serialization error handling" should {
+    "throw a MappingException in case a message contains an invalid URL" in
+      new MessageTestScope("updatefirmware.invalidurl.request") {
+        OcppJ15.deserialize[UpdateFirmwareReq](messageAST) must throwA[MappingException]
+      }
+
+    "throw a MappingException in case a MeterValues request mentions an invalid property name" in
+      new MessageTestScope("metervalues.invalidproperty.request") {
+        OcppJ15.deserialize[MeterValuesReq](messageAST) must throwA[MappingException]
+      }
+
+    "throw a MappingException in case an invalid status enum is given" in
+      new MessageTestScope("changeavailability.invalidstatus.response") {
+        OcppJ15.deserialize[ChangeAvailabilityRes](messageAST) must throwA[MappingException]
+      }
   }
 
   "OCPP message deserialization" should {
@@ -341,18 +363,84 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
 
   private def beEmptyJObject = beTypedEqualTo[JValue](JObject(List()))
 
-  private def localTimeForUTCFields(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int) =
-    new DateTime(year, month, day, hour, minute, second, DateTimeZone.UTC).withZone(DateTimeZone.getDefault())
+  case class TestableMsg[T <: Message](jsonSerializable: JsonSerializable[T], msg: T, jsonFileBase: String)
+  object TestableMsg {
+    def apply[T <: Message : JsonSerializable](msg: T, jsonFileBase: String) =
+      new TestableMsg(jsonSerializable[T], msg, jsonFileBase)
+  }
+
+  private class MessageTestScope(jsonFileBase: String) extends Scope {
+    val messageAST = JsonParser.parse(loadRequestJSON)
+
+    private def loadRequestJSON: String = {
+      val requestFileName = s"ocpp15/without_srpc/$jsonFileBase.json"
+      Source.fromURL(this.getClass.getResource(requestFileName)).mkString
+    }
+  }
 
   private val testTime = localTimeForUTCFields(2013,2,1,15,9,18)
+
+  private val testMsgs = List(
+    TestableMsg(TestMsgs.bootNotificationReq, "bootnotification.request"),
+    TestableMsg(TestMsgs.bootNotificationRes, "bootnotification.response"),
+    TestableMsg(TestMsgs.authorizeReq, "authorize.request"),
+    TestableMsg(TestMsgs.authorizeRes, "authorize.response"),
+    TestableMsg(jsonSerializable[StartTransactionReq], TestMsgs.startTransactionReq, "starttransaction.request"),
+    TestableMsg(TestMsgs.startTransactionRes, "starttransaction.response"),
+    TestableMsg(TestMsgs.stopTransactionReq, "stoptransaction.request"),
+    TestableMsg(TestMsgs.stopTransactionRes, "stoptransaction.response"),
+    TestableMsg(TestMsgs.unlockConnectorReq, "unlockconnector.request"),
+    TestableMsg(TestMsgs.unlockConnectorRes, "unlockconnector.response"),
+    TestableMsg(TestMsgs.resetReq, "reset.request"),
+    TestableMsg(TestMsgs.resetRes, "reset.response"),
+    TestableMsg(TestMsgs.changeAvailabilityReq, "changeavailability.request"),
+    TestableMsg(TestMsgs.changeAvailabilityReqForWholeCharger, "changeavailability.wholecharger.request"),
+    TestableMsg(TestMsgs.changeAvailabilityRes, "changeavailability.response"),
+    TestableMsg(TestMsgs.statusNotificationReq, "statusnotification.request"),
+    TestableMsg(TestMsgs.statusNotificationReqInError, "statusnotification.inerror.request"),
+    // The case that there is an error but the message gives NoError as the error code. Makes no sense but the OCPP
+    // standard doesn't disallow it.
+    TestableMsg(TestMsgs.statusNotificationReqInErrorNoError, "statusnotification.inerror-noerror.request"),
+    TestableMsg(TestMsgs.statusNotificationRes, "statusnotification.response"),
+    TestableMsg(TestMsgs.remoteStartTransactionReq, "remotestarttransaction.request"),
+    TestableMsg(TestMsgs.remoteStartTransactionRes, "remotestarttransaction.response"),
+    TestableMsg(TestMsgs.remoteStopTransactionReq, "remotestoptransaction.request"),
+    TestableMsg(TestMsgs.remoteStopTransactionRes, "remotestoptransaction.response"),
+    TestableMsg(TestMsgs.heartbeatReq, "heartbeat.request"),
+    TestableMsg(TestMsgs.heartbeatRes, "heartbeat.response"),
+    TestableMsg(TestMsgs.updateFirmwareReq, "updatefirmware.request"),
+    TestableMsg(TestMsgs.updateFirmwareRes, "updatefirmware.response"),
+    TestableMsg(TestMsgs.firmwareStatusNotificationReq, "firmwarestatusnotification.request"),
+    TestableMsg(TestMsgs.firmwareStatusNotificationRes, "firmwarestatusnotification.response"),
+    TestableMsg(TestMsgs.getDiagnosticsReq, "getdiagnostics.request"),
+    TestableMsg(TestMsgs.getDiagnosticsRes, "getdiagnostics.response"),
+    TestableMsg(TestMsgs.diagnosticsStatusNotificationReq, "diagnosticsstatusnotification.request"),
+    TestableMsg(TestMsgs.diagnosticsStatusNotificationRes, "diagnosticsstatusnotification.response"),
+    TestableMsg(TestMsgs.meterValuesReq, "metervalues.request"),
+    TestableMsg(TestMsgs.meterValuesRes, "metervalues.response"),
+    TestableMsg(TestMsgs.changeConfigurationReq, "changeconfiguration.request"),
+    TestableMsg(TestMsgs.changeConfigurationRes, "changeconfiguration.response"),
+    TestableMsg(TestMsgs.clearCacheReq, "clearcache.request"),
+    TestableMsg(TestMsgs.clearCacheRes, "clearcache.response"),
+    TestableMsg(TestMsgs.getConfigurationReq, "getconfiguration.request"),
+    TestableMsg(TestMsgs.getConfigurationRes, "getconfiguration.response"),
+    TestableMsg(TestMsgs.getLocalListVersionReq, "getlocallistversion.request"),
+    TestableMsg(TestMsgs.getLocalListVersionRes, "getlocallistversion.response"),
+    TestableMsg(TestMsgs.sendLocalListReq, "sendlocallist.request"),
+    TestableMsg(TestMsgs.sendLocalListRes, "sendlocallist.response"),
+    TestableMsg(TestMsgs.reserveNowReq, "reservenow.request"),
+    TestableMsg(TestMsgs.reserveNowRes, "reservenow.response"),
+    TestableMsg(TestMsgs.cancelReservationReq, "cancelreservation.request"),
+    TestableMsg(TestMsgs.cancelReservationRes, "cancelreservation.response")
+  )
 
   private object TestMsgs {
 
     val authorizeReq = AuthorizeReq(idTag = "B4F62CEF")
     val authorizeRes = AuthorizeRes(
-        IdTagInfo(status = AuthorizationStatus.Accepted,
-                  expiryDate = Some(testTime),
-                  parentIdTag = Some("PARENT")))
+      IdTagInfo(status = AuthorizationStatus.Accepted,
+        expiryDate = Some(testTime),
+        parentIdTag = Some("PARENT")))
 
     val bootNotificationReq = BootNotificationReq(chargePointVendor = "DBT",
       chargePointModel = "NQC-ACDC",
@@ -364,23 +452,23 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
       meterType = Some("DBT NQC-ACDC"),
       meterSerialNumber = Some("gir.vat.mx.000e48"))
     val bootNotificationRes = BootNotificationRes(registrationAccepted = true,
-        currentTime = new DateTime(2013, 9, 27, 16, 3, 0, DateTimeZone.forID("Europe/Brussels")),
-        heartbeatInterval = FiniteDuration(600, "seconds"))
+      currentTime = new DateTime(2013, 9, 27, 16, 3, 0, DateTimeZone.forID("Europe/Brussels")),
+      heartbeatInterval = FiniteDuration(600, "seconds"))
 
     val startTransactionReq = StartTransactionReq(connector = ConnectorScope(1),
-        idTag = "B4F62CEF",
-        timestamp = testTime,
-        meterStart = 0,
-        reservationId = Some(0))
+      idTag = "B4F62CEF",
+      timestamp = testTime,
+      meterStart = 0,
+      reservationId = Some(0))
     val startTransactionReqWithLocalTime = StartTransactionReq(connector = ConnectorScope(1),
-        idTag = "B4F62CEF",
-        timestamp = testTime,
-        meterStart = 0,
-        reservationId = Some(0))
+      idTag = "B4F62CEF",
+      timestamp = testTime,
+      meterStart = 0,
+      reservationId = Some(0))
     val startTransactionRes = StartTransactionRes(transactionId = 0,
-        idTag = IdTagInfo(status = AuthorizationStatus.Accepted,
-          expiryDate = Some(testTime),
-          parentIdTag = Some("PARENT")))
+      idTag = IdTagInfo(status = AuthorizationStatus.Accepted,
+        expiryDate = Some(testTime),
+        parentIdTag = Some("PARENT")))
 
     val stopTransactionReq = {
       val testTimestamp = testTime
@@ -409,8 +497,8 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
           TransactionData(List(testMeter))))
     }
     val stopTransactionRes = StopTransactionRes(idTag = Some(IdTagInfo(status = AuthorizationStatus.IdTagExpired,
-        expiryDate = Some(new DateTime(2013, 2, 1, 16, 9, 18, DateTimeZone.forID("Europe/Brussels"))),
-        parentIdTag = Some("PARENT"))))
+      expiryDate = Some(new DateTime(2013, 2, 1, 16, 9, 18, DateTimeZone.forID("Europe/Brussels"))),
+      parentIdTag = Some("PARENT"))))
 
     val unlockConnectorReq = UnlockConnectorReq(connector = ConnectorScope(0))
     val unlockConnectorRes = UnlockConnectorRes(accepted = true)
@@ -425,11 +513,18 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
     val changeAvailabilityRes = ChangeAvailabilityRes(status = AvailabilityStatus.Accepted)
 
     val statusNotificationReq = StatusNotificationReq(scope = ConnectorScope(1),
-        status = Available, timestamp = Some(testTime),
-        vendorId = Some(""))
+      status = Available, timestamp = Some(testTime),
+      vendorId = Some(""))
     val statusNotificationReqInError = {
       val faultedStatus = Faulted(errorCode = Some(ChargePointErrorCode.PowerMeterFailure),
         info = Some("Die meter is kats doorgefikt joh"), vendorErrorCode = Some("MeterB0rk3d"))
+
+      StatusNotificationReq(scope = ConnectorScope(1),
+        status = faultedStatus, timestamp = Some(testTime), vendorId = Some("TNM"))
+    }
+    val statusNotificationReqInErrorNoError = {
+      val faultedStatus = Faulted(errorCode = None,
+        info = Some("Het laadpunt is een beetje in de bonen"), vendorErrorCode = Some("Lolwut?"))
 
       StatusNotificationReq(scope = ConnectorScope(1),
         status = faultedStatus, timestamp = Some(testTime), vendorId = Some("TNM"))
@@ -464,43 +559,43 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
     val diagnosticsStatusNotificationRes = DiagnosticsStatusNotificationRes
 
     val meterValuesReq = MeterValuesReq(
-        scope = ConnectorScope(1),
-        transactionId = Some(0),
-        meters = List(
-          Meter(
-            timestamp = localTimeForUTCFields(2013, 3, 7, 16, 52, 16),
-            values = List(
-              Meter.Value(
-                value = "0",
-                context = ReadingContext.SamplePeriodic,
-                unit = UnitOfMeasure.Wh,
-                measurand = Measurand.EnergyActiveImportRegister,
-                format = ValueFormat.Raw,
-                location = Location.Outlet),
-              Meter.Value(
-                value = "0",
-                context = ReadingContext.SamplePeriodic,
-                unit = UnitOfMeasure.Varh,
-                measurand = Measurand.EnergyReactiveImportRegister,
-                format = ValueFormat.Raw,
-                location = Location.Outlet))),
-          Meter(
-            timestamp = localTimeForUTCFields(2013, 3, 7, 19, 52, 16),
-            values = List(
-              Meter.Value(
-                value = "20",
-                context = ReadingContext.SamplePeriodic,
-                unit = UnitOfMeasure.Wh,
-                measurand = Measurand.EnergyActiveImportRegister,
-                format = ValueFormat.Raw,
-                location = Location.Outlet),
-              Meter.Value(
-                value = "20",
-                context = ReadingContext.SamplePeriodic,
-                unit = UnitOfMeasure.Varh,
-                measurand = Measurand.EnergyReactiveImportRegister,
-                format = ValueFormat.Raw,
-                location = Location.Outlet)))))
+      scope = ConnectorScope(1),
+      transactionId = Some(0),
+      meters = List(
+        Meter(
+          timestamp = localTimeForUTCFields(2013, 3, 7, 16, 52, 16),
+          values = List(
+            Meter.Value(
+              value = "0",
+              context = ReadingContext.SamplePeriodic,
+              unit = UnitOfMeasure.Wh,
+              measurand = Measurand.EnergyActiveImportRegister,
+              format = ValueFormat.Raw,
+              location = Location.Outlet),
+            Meter.Value(
+              value = "0",
+              context = ReadingContext.SamplePeriodic,
+              unit = UnitOfMeasure.Varh,
+              measurand = Measurand.EnergyReactiveImportRegister,
+              format = ValueFormat.Raw,
+              location = Location.Outlet))),
+        Meter(
+          timestamp = localTimeForUTCFields(2013, 3, 7, 19, 52, 16),
+          values = List(
+            Meter.Value(
+              value = "20",
+              context = ReadingContext.SamplePeriodic,
+              unit = UnitOfMeasure.Wh,
+              measurand = Measurand.EnergyActiveImportRegister,
+              format = ValueFormat.Raw,
+              location = Location.Outlet),
+            Meter.Value(
+              value = "20",
+              context = ReadingContext.SamplePeriodic,
+              unit = UnitOfMeasure.Varh,
+              measurand = Measurand.EnergyReactiveImportRegister,
+              format = ValueFormat.Raw,
+              location = Location.Outlet)))))
     val meterValuesRes = MeterValuesRes
 
     val changeConfigurationReq = ChangeConfigurationReq(key = "KVCBX_LANG", value = "FR")
@@ -511,8 +606,8 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
 
     val getConfigurationReq = GetConfigurationReq(keys = List("apeschaap", "hompeschomp"))
     val getConfigurationRes = GetConfigurationRes(
-        values = List(KeyValue(key = "KVCBX_PROFILE", readonly = true, value = Some("NQC-ACDC"))),
-        unknownKeys = List())
+      values = List(KeyValue(key = "KVCBX_PROFILE", readonly = true, value = Some("NQC-ACDC"))),
+      unknownKeys = List())
 
     val getLocalListVersionReq = GetLocalListVersionReq
     val getLocalListVersionRes = GetLocalListVersionRes(AuthListSupported(0))
@@ -533,74 +628,8 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
     val cancelReservationRes = CancelReservationRes(accepted = true)
   }
 
-  case class TestableMsg[T <: Message](jsonSerializable: JsonSerializable[T], msg: T, jsonFileBase: String)
-  object TestableMsg {
-    def apply[T <: Message : JsonSerializable](msg: T, jsonFileBase: String) =
-      new TestableMsg(jsonSerializable[T], msg, jsonFileBase)
-  }
+  private def localTimeForUTCFields(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int) =
+    new DateTime(year, month, day, hour, minute, second, DateTimeZone.UTC).withZone(DateTimeZone.getDefault())
 
-  private class MessageTestScope(jsonFileBase: String) extends Scope {
-    val messageAST = JsonParser.parse(loadRequestJSON)
 
-    private def loadRequestJSON: String = {
-      val requestFileName = s"ocpp15/without_srpc/$jsonFileBase.json"
-      Source.fromURL(this.getClass.getResource(requestFileName)).mkString
-    }
-  }
-
-  private def testSerialization(msg: TestableMsg[_ <: Message]) = new MessageTestScope(msg.jsonFileBase) {
-    OcppJ15.serialize(msg.msg) must beEqualToJson(messageAST)
-  }
-
-  private val testMsgs = List(
-    TestableMsg(TestMsgs.bootNotificationReq, "bootnotification.request"),
-    TestableMsg(TestMsgs.bootNotificationRes, "bootnotification.response"),
-    TestableMsg(TestMsgs.authorizeReq, "authorize.request"),
-    TestableMsg(TestMsgs.authorizeRes, "authorize.response"),
-    TestableMsg(jsonSerializable[StartTransactionReq], TestMsgs.startTransactionReq, "starttransaction.request"),
-  // TODO this ojsonSerializablefor deserialization
-    //TestableMsg(TestMsgs.startTransactionReqWithLocalTime, "starttransaction.localtime.request"),
-    TestableMsg(TestMsgs.startTransactionRes, "starttransaction.response"),
-    TestableMsg(TestMsgs.stopTransactionReq, "stoptransaction.request"),
-    TestableMsg(TestMsgs.stopTransactionRes, "stoptransaction.response"),
-    TestableMsg(TestMsgs.unlockConnectorReq, "unlockconnector.request"),
-    TestableMsg(TestMsgs.unlockConnectorRes, "unlockconnector.response"),
-    TestableMsg(TestMsgs.resetReq, "reset.request"),
-    TestableMsg(TestMsgs.resetRes, "reset.response"),
-    TestableMsg(TestMsgs.changeAvailabilityReq, "changeavailability.request"),
-    TestableMsg(TestMsgs.changeAvailabilityRes, "changeavailability.response"),
-    TestableMsg(TestMsgs.statusNotificationReq, "statusnotification.request"),
-    TestableMsg(TestMsgs.statusNotificationReqInError, "statusnotification.inerror.request"),
-    TestableMsg(TestMsgs.statusNotificationRes, "statusnotification.response"),
-    TestableMsg(TestMsgs.remoteStartTransactionReq, "remotestarttransaction.request"),
-    TestableMsg(TestMsgs.remoteStartTransactionRes, "remotestarttransaction.response"),
-    TestableMsg(TestMsgs.remoteStopTransactionReq, "remotestoptransaction.request"),
-    TestableMsg(TestMsgs.remoteStopTransactionRes, "remotestoptransaction.response"),
-    TestableMsg(TestMsgs.heartbeatReq, "heartbeat.request"),
-    TestableMsg(TestMsgs.heartbeatRes, "heartbeat.response"),
-    TestableMsg(TestMsgs.updateFirmwareReq, "updatefirmware.request"),
-    TestableMsg(TestMsgs.updateFirmwareRes, "updatefirmware.response"),
-    TestableMsg(TestMsgs.firmwareStatusNotificationReq, "firmwarestatusnotification.request"),
-    TestableMsg(TestMsgs.firmwareStatusNotificationRes, "firmwarestatusnotification.response"),
-    TestableMsg(TestMsgs.getDiagnosticsReq, "getdiagnostics.request"),
-    TestableMsg(TestMsgs.getDiagnosticsRes, "getdiagnostics.response"),
-    TestableMsg(TestMsgs.diagnosticsStatusNotificationReq, "diagnosticsstatusnotification.request"),
-    TestableMsg(TestMsgs.diagnosticsStatusNotificationRes, "diagnosticsstatusnotification.response"),
-    TestableMsg(TestMsgs.meterValuesReq, "metervalues.request"),
-    TestableMsg(TestMsgs.meterValuesRes, "metervalues.response"),
-    TestableMsg(TestMsgs.changeConfigurationReq, "changeconfiguration.request"),
-    TestableMsg(TestMsgs.changeConfigurationRes, "changeconfiguration.response"),
-    TestableMsg(TestMsgs.clearCacheReq, "clearcache.request"),
-    TestableMsg(TestMsgs.clearCacheRes, "clearcache.response"),
-    TestableMsg(TestMsgs.getConfigurationReq, "getconfiguration.request"),
-    TestableMsg(TestMsgs.getConfigurationRes, "getconfiguration.response"),
-    TestableMsg(TestMsgs.getLocalListVersionReq, "getlocallistversion.request"),
-    TestableMsg(TestMsgs.getLocalListVersionRes, "getlocallistversion.response"),
-    TestableMsg(TestMsgs.sendLocalListReq, "sendlocallist.request"),
-    TestableMsg(TestMsgs.sendLocalListRes, "sendlocallist.response"),
-    TestableMsg(TestMsgs.reserveNowReq, "reservenow.request"),
-    TestableMsg(TestMsgs.reserveNowRes, "reservenow.response"),
-    TestableMsg(TestMsgs.cancelReservationReq, "cancelreservation.request"),
-    TestableMsg(TestMsgs.cancelReservationRes, "cancelreservation.response")
-  )
 }

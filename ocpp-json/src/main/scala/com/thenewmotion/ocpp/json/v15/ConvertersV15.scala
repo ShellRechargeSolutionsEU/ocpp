@@ -5,8 +5,7 @@ import com.thenewmotion.ocpp.messages
 import com.thenewmotion.ocpp.messages.Meter._
 import net.liftweb.json.MappingException
 import scala.concurrent.duration._
-import java.net.URI
-import com.thenewmotion.ocpp.messages.Scope
+import java.net.{URISyntaxException, URI}
 
 object ConvertersV15 {
   def toV15(msg: messages.Message): Message = msg match {
@@ -64,7 +63,7 @@ object ConvertersV15 {
           case messages.Unavailable => simpleStatus("Unavailable")
           case messages.Reserved => simpleStatus("Reserved")
           case messages.Faulted(errCode, inf, vendorErrCode) =>
-            ("Faulted", errCode.map(_.toString).getOrElse("OtherError"), inf, vendorErrCode)
+            ("Faulted", errCode.map(_.toString).getOrElse("NoError"), inf, vendorErrCode)
         }
       }
 
@@ -172,7 +171,6 @@ object ConvertersV15 {
 
     case StopTransactionRes(idTagInfo) => messages.StopTransactionRes(idTagInfo.map(_.fromV15))
 
-    // TODO see which exception we get for invalid connector ID
     case UnlockConnectorReq(connectorId) => messages.UnlockConnectorReq(messages.ConnectorScope.fromOcpp(connectorId))
 
     case UnlockConnectorRes(status) => messages.UnlockConnectorRes(statusStringToBoolean(status))
@@ -185,8 +183,8 @@ object ConvertersV15 {
       messages.ChangeAvailabilityReq(scope = messages.Scope.fromOcpp(connectorId),
         availabilityType = enumFromJsonString(messages.AvailabilityType, availabilityType))
 
-    // TODO catch NSEE
-    case ChangeAvailabilityRes(status) => messages.ChangeAvailabilityRes(messages.AvailabilityStatus.withName(status))
+    case ChangeAvailabilityRes(status) =>
+      messages.ChangeAvailabilityRes(enumFromJsonString(messages.AvailabilityStatus, status))
 
     case StatusNotificationReq(connector, status, errorCode, info, timestamp, vendorId, vendorErrorCode) =>
       def statusFieldsToOcppStatus(status: String, errorCode: String, info: Option[String],
@@ -195,7 +193,6 @@ object ConvertersV15 {
           case "Occupied" => messages.Occupied
           case "Unavailable" => messages.Unavailable
           case "Reserved" => messages.Reserved
-            // TODO test for NoError
           case "Faulted" => messages.Faulted(if (errorCode == "NoError")
                                                None
                                              else
@@ -224,9 +221,8 @@ object ConvertersV15 {
 
     case HeartbeatRes(currentTime) => messages.HeartbeatRes(currentTime)
 
-      // TODO error handling URI syntax
     case UpdateFirmwareReq(retrieveDate, location, retries, retryInterval) =>
-      messages.UpdateFirmwareReq(retrieveDate, new URI(location), messages.Retries.fromInts(retries, retryInterval))
+      messages.UpdateFirmwareReq(retrieveDate, parseURI(location), messages.Retries.fromInts(retries, retryInterval))
 
     case UpdateFirmwareRes() => messages.UpdateFirmwareRes
 
@@ -236,9 +232,8 @@ object ConvertersV15 {
     case FirmwareStatusNotificationRes() =>
       messages.FirmwareStatusNotificationRes
 
-      // TODO error handling URI syntax
     case GetDiagnosticsReq(location, startTime, stopTime, retries, retryInterval) =>
-      messages.GetDiagnosticsReq(new URI(location), startTime, stopTime,
+      messages.GetDiagnosticsReq(parseURI(location), startTime, stopTime,
         messages.Retries.fromInts(retries, retryInterval))
 
     case GetDiagnosticsRes(filename) => messages.GetDiagnosticsRes(filename)
@@ -275,7 +270,7 @@ object ConvertersV15 {
 
     case SendLocalListReq(updateType, authListVersion, authorizationData, hash) =>
       messages.SendLocalListReq(
-        updateType = messages.UpdateType.withName(updateType),
+        updateType = enumFromJsonString(messages.UpdateType, updateType),
         listVersion = messages.AuthListSupported(authListVersion),
         localAuthorisationList = authorizationData.getOrElse(Nil).map(_.fromV15),
         hash = hash
@@ -305,24 +300,30 @@ object ConvertersV15 {
     case CancelReservationRes(status) => messages.CancelReservationRes(statusStringToBoolean(status))
   }
 
-  implicit class RichIdTagInfo(i: messages.IdTagInfo) {
+  private implicit class RichIdTagInfo(i: messages.IdTagInfo) {
     def toV15: IdTagInfo = IdTagInfo(status = AuthorizationStatusConverters.enumToJson(i.status.toString),
                           expiryDate = i.expiryDate,
                           parentIdTag = i.parentIdTag)
   }
 
-  implicit class RichV15IdTagInfo(self: IdTagInfo) {
+  private implicit class RichV15IdTagInfo(self: IdTagInfo) {
     def fromV15: messages.IdTagInfo =
-      messages.IdTagInfo(status = messages.AuthorizationStatus.withName(AuthorizationStatusConverters.jsonToEnum(self.status)),
-                         expiryDate = self.expiryDate,
-                         parentIdTag = self.parentIdTag)
+      try {
+        messages.IdTagInfo(
+          status = messages.AuthorizationStatus.withName(AuthorizationStatusConverters.jsonToEnum(self.status)),
+          expiryDate = self.expiryDate,
+          parentIdTag = self.parentIdTag)
+      } catch {
+        case e: NoSuchElementException =>
+          throw new MappingException(s"Unrecognized authorization status ${self.status} in OCPP-JSON message")
+      }
   }
 
-  implicit class RichTransactionData(self: messages.TransactionData) {
+  private implicit class RichTransactionData(self: messages.TransactionData) {
     def toV15: TransactionData = TransactionData(values = Some(self.meters.map(_.toV15): List[Meter]))
   }
 
-  implicit class RichMeter(self: messages.Meter) {
+  private implicit class RichMeter(self: messages.Meter) {
     def toV15: Meter =
       Meter(timestamp = self.timestamp,
                        values = self.values.map(valueToV15))
@@ -339,17 +340,17 @@ object ConvertersV15 {
       if (actual == default) None else Some(actual.toString)
   }
 
-  def transactionDataFromV15(v15td: Option[List[TransactionData]]): List[messages.TransactionData] =
+  private def transactionDataFromV15(v15td: Option[List[TransactionData]]): List[messages.TransactionData] =
     v15td.fold(List.empty[messages.TransactionData])(_.map(metersFromV15))
 
-  def metersFromV15(v15mv: TransactionData): messages.TransactionData =
+  private def metersFromV15(v15mv: TransactionData): messages.TransactionData =
     messages.TransactionData(v15mv.values getOrElse List.empty[Meter] map meterFromV15)
 
-  def meterFromV15(v15m: Meter): messages.Meter = {
+  private def meterFromV15(v15m: Meter): messages.Meter = {
     messages.Meter(v15m.timestamp, v15m.values.map(meterValueFromV15))
   }
 
-  def meterValueFromV15(v15m: MeterValue): messages.Meter.Value = {
+  private def meterValueFromV15(v15m: MeterValue): messages.Meter.Value = {
     import v15m._
     import messages.Meter._
 
@@ -362,22 +363,22 @@ object ConvertersV15 {
   }
 
 
-  def getMeterValueProperty[T <: Enumeration](inJson: Option[String], enumeration: T, default: T#Value): T#Value =
+  private def getMeterValueProperty[T <: Enumeration](inJson: Option[String], enumeration: T, default: T#Value): T#Value =
     try {
       inJson.fold(default)(s => enumeration.withName(s))
     } catch {
-      // TODO or don't catch and report error?
-      case _: NoSuchElementException => default
+      case _: NoSuchElementException =>
+        throw new MappingException(s"Uknown meter value property $inJson in OCPP-JSON message")
     }
 
-  object AuthorizationStatusConverters {
+  private object AuthorizationStatusConverters {
     val names = List(("Accepted", "Accepted"), ("IdTagBlocked", "Blocked"), ("IdTagExpired", "Expired"),
       ("IdTagInvalid", "Invalid"), ("ConcurrentTx", "ConcurrentTx"))
     val jsonToEnum = Map(names.map(_.swap): _*)
     val enumToJson = Map(names: _*)
   }
 
-  implicit class BooleanToStatusString(val b: Boolean) extends AnyVal {
+  private implicit class BooleanToStatusString(val b: Boolean) extends AnyVal {
     def toStatusString = if (b) "Accepted" else "Rejected"
   }
 
@@ -388,7 +389,7 @@ object ConvertersV15 {
       throw new MappingException(s"Did not recognize status '$statusString' (expected 'Accepted' or 'Rejected')")
   }
 
-  implicit class BooleanToUploadStatusString(val b: Boolean) extends AnyVal {
+  private implicit class BooleanToUploadStatusString(val b: Boolean) extends AnyVal {
     def toUploadStatusString = if (b) "Uploaded" else "UploadFailed"
   }
 
@@ -398,26 +399,26 @@ object ConvertersV15 {
     case _ => throw new MappingException(s"'$s' is not a valid OCPP upload status")
   }
 
-  implicit class RichKeyValue(val self: messages.KeyValue) {
+  private implicit class RichKeyValue(val self: messages.KeyValue) {
     import self._
 
     def toV15: ConfigurationEntry = ConfigurationEntry(key, readonly, value)
   }
 
-  implicit class RichConfigurationEntry(self: ConfigurationEntry) {
+  private implicit class RichConfigurationEntry(self: ConfigurationEntry) {
     import self._
 
     def fromV15: messages.KeyValue = messages.KeyValue(key, readonly, value)
   }
 
-  implicit class RichAuthListVersion(self: messages.AuthListVersion) {
+  private implicit class RichAuthListVersion(self: messages.AuthListVersion) {
     def toV15: Int = self match {
       case messages.AuthListNotSupported => -1
       case messages.AuthListSupported(i) => i
     }
   }
 
-  implicit class RichAuthorisationData(self: messages.AuthorisationData) {
+  private implicit class RichAuthorisationData(self: messages.AuthorisationData) {
     def toV15: AuthorisationData = {
       val v15IdTagInfo = self match {
         case messages.AuthorisationAdd(_, idTagInfo) => Some(idTagInfo.toV15)
@@ -428,11 +429,11 @@ object ConvertersV15 {
     }
   }
 
-  implicit class RichV15AuthorisationData(self: AuthorisationData) {
+  private implicit class RichV15AuthorisationData(self: AuthorisationData) {
     def fromV15: messages.AuthorisationData = messages.AuthorisationData(self.idTag, self.idTagInfo.map(_.fromV15))
   }
 
-  implicit class RichUpdateStatus(self: messages.UpdateStatus.Value) {
+  private implicit class RichUpdateStatus(self: messages.UpdateStatus.Value) {
     import messages.UpdateStatus._
 
     def toV15AndHash: (String, Option[String]) = {
@@ -451,7 +452,7 @@ object ConvertersV15 {
     }
   }
 
-  object UpdateStatusConverters {
+  private object UpdateStatusConverters {
     val names = List("UpdateAccepted" -> "Accepted",
                      "UpdateFailed" -> "Failed",
                      "HashError" -> "HashError",
@@ -470,5 +471,14 @@ object ConvertersV15 {
   } catch {
     case e: NoSuchElementException =>
       throw new MappingException(s"Value $s is not valid for ${enum.getClass.getSimpleName}", e)
+  }
+
+  /**
+   * Parses a URI and throws a lift-json MappingException if the syntax is wrong
+   */
+  private def parseURI(s: String) = try {
+    new URI(s)
+  } catch {
+    case e: URISyntaxException => throw new MappingException(s"Invalid URL $s in OCPP-JSON message", e)
   }
 }
