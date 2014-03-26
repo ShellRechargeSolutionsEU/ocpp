@@ -29,7 +29,7 @@ class JsonDeserializableWithManifest[T <: messages.Message, V15T <: v15.Message 
 }
 
 object JsonDeserializable {
-  def jsonDes erializable[T <: Message : JsonDeserializable]: JsonDeserializable[T] = implicitly[JsonDeserializable[T]]
+  def jsonDeserializable[T <: Message : JsonDeserializable]: JsonDeserializable[T] = implicitly[JsonDeserializable[T]]
 
   implicit val bootNotificationReq =
     new JsonDeserializableWithManifest[BootNotificationReq, v15.BootNotificationReq]
