@@ -4,13 +4,13 @@ package v15
 
 import net.liftweb.json._
 import ConvertersV15._
-import com.thenewmotion.ocpp.json.{JsonSerializable, OcppMessageJsonSerializers}
+import com.thenewmotion.ocpp.json.JsonSerializable
 import JsonSerializable._
 
 /** Reading and writing OCPP 1.5 messages encoded with JSON */
 object Ocpp15J {
 
-  implicit val formats = DefaultFormats + new OcppMessageJsonSerializers.JodaDateTimeJsonFormat
+  implicit val formats = DefaultFormats + new JodaDateTimeJsonFormat
 
   def serialize(msg: messages.Message): JValue = Extraction.decompose(toV15(msg))
 

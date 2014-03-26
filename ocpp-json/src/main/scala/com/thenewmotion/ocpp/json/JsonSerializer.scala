@@ -22,7 +22,7 @@ trait JsonSerializable[T <: messages.Message] {
 }
 
 class JsonSerializableWithManifest[T <: messages.Message, V15T <: v15.Message : Manifest] extends JsonSerializable[T] {
-  implicit val formats = DefaultFormats + new OcppMessageJsonSerializers.JodaDateTimeJsonFormat
+  implicit val formats = DefaultFormats + new JodaDateTimeJsonFormat
 
   type V15Type = V15T
 

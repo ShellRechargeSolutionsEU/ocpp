@@ -22,7 +22,7 @@ class TransportMessageParserSpec extends SpecificationWithJUnit with Logging {
       val result = TransportMessageParser.parse(requestData)
       val requestObject = RequestMessage("1234567", "CallMessageAction", JObject(List(JField("payload", JString("something")))))
       result must_== requestObject
-      val requestJson = Serialization.write(requestObject)
+      val requestJson = TransportMessageParser.write(requestObject)
 
       requestJson must_== requestData
     }
@@ -32,7 +32,7 @@ class TransportMessageParserSpec extends SpecificationWithJUnit with Logging {
       val result = TransportMessageParser.parse(requestData)
       val requestObject = ResponseMessage("1234567", JObject(List(JField("payload", JString("something")))))
       result must_== requestObject
-      val requestJson = Serialization.write(requestObject)
+      val requestJson = TransportMessageParser.write(requestObject)
 
       requestJson must_== requestData
     }
@@ -42,7 +42,7 @@ class TransportMessageParserSpec extends SpecificationWithJUnit with Logging {
       val result = TransportMessageParser.parse(requestData)
       val requestObject = ErrorResponseMessage("1234567", InternalError, "description", JObject(List(JField("payload", JString("something")))))
       result must_== requestObject
-      val requestJson = Serialization.write(requestObject)
+      val requestJson = TransportMessageParser.write(requestObject)
 
       requestJson must_== requestData
     }

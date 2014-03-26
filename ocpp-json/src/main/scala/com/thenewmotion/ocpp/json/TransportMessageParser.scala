@@ -24,4 +24,10 @@ object TransportMessageParser extends Logging {
       case _                                => sys.error(s"Unrecognized JSON command message $input")
     }
   }
+
+  def writeJValue(input: TransportMessage): JValue = {
+    Extraction.decompose(input)
+  }
+
+  def write(input: TransportMessage): String = compactRender(writeJValue(input))
 }
