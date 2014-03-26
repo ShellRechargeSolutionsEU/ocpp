@@ -8,7 +8,7 @@ import com.thenewmotion.ocpp.json.{JsonSerializable, OcppMessageJsonSerializers}
 import JsonSerializable._
 
 /** Reading and writing OCPP 1.5 messages encoded with JSON */
-object OcppJ15 {
+object Ocpp15J {
 
   implicit val formats = DefaultFormats + new OcppMessageJsonSerializers.JodaDateTimeJsonFormat
 
