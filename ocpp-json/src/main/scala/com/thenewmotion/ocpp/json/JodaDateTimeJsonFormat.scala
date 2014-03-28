@@ -1,7 +1,7 @@
 package com.thenewmotion.ocpp.json
 
-import net.liftweb.json.JsonAST._
-import net.liftweb.json.CustomSerializer
+import org.json4s.JsonAST._
+import org.json4s.CustomSerializer
 import com.thenewmotion.time.Imports._
 import org.joda.time.format.ISODateTimeFormat
 

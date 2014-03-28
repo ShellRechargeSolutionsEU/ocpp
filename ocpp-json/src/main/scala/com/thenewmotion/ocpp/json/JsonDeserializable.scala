@@ -1,7 +1,7 @@
 package com.thenewmotion.ocpp
 package json
 
-import net.liftweb.json.{DefaultFormats, JValue, Extraction}
+import org.json4s.{DefaultFormats, JValue, Extraction}
 import messages._
 
 /**

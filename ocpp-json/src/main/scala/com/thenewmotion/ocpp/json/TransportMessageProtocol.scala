@@ -1,7 +1,7 @@
 package com.thenewmotion.ocpp
 package json
 
-import net.liftweb.json._
+import org.json4s._
 
 object TransportMessageType extends Enumeration {
   type MessageType = Value

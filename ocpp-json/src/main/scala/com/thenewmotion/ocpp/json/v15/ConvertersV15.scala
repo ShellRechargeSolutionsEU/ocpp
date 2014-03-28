@@ -3,7 +3,7 @@ package json.v15
 
 import com.thenewmotion.ocpp.messages
 import com.thenewmotion.ocpp.messages.Meter._
-import net.liftweb.json.MappingException
+import org.json4s.MappingException
 import scala.concurrent.duration._
 import java.net.{URISyntaxException, URI}
 

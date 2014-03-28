@@ -1,8 +1,8 @@
 package com.thenewmotion.ocpp
 package json
 
-import net.liftweb.json._
-import net.liftweb.json.ext.EnumNameSerializer
+import org.json4s._
+import org.json4s.ext.EnumNameSerializer
 
 object TransportMessageJsonSerializers {
 
@@ -32,6 +32,7 @@ object TransportMessageJsonSerializers {
   class ErrorMessageJsonFormat extends CustomSerializer[ErrorResponseMessage](format => (
     {
       case JArray(JInt(callType) :: JString(callId) :: errorName :: JString(errorDesc) :: errorDetails :: Nil) =>
+        System.err.println(s"Extracting $errorName as PayloadErrorCode.Value")
         ErrorResponseMessage(callId, errorName.extract[PayloadErrorCode.Value](format, manifest), errorDesc,
           errorDetails)
     },

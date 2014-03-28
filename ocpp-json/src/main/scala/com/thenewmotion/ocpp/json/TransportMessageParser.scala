@@ -1,7 +1,9 @@
 package com.thenewmotion.ocpp
 package json
 
-import net.liftweb.json._
+import org.json4s._
+import org.json4s.native.JsonParser
+import org.json4s.native.JsonMethods._
 import com.typesafe.scalalogging.slf4j.Logging
 
 object TransportMessageParser extends Logging {
@@ -29,5 +31,5 @@ object TransportMessageParser extends Logging {
     Extraction.decompose(input)
   }
 
-  def write(input: TransportMessage): String = compactRender(writeJValue(input))
+  def write(input: TransportMessage): String = compact(render(writeJValue(input)))
 }

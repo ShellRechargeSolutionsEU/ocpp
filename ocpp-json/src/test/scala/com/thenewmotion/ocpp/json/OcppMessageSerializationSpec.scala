@@ -4,10 +4,10 @@ package json
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.Scope
 import scala.io.Source
-import net.liftweb.json._
+import org.json4s._
+import org.json4s.native.JsonParser
 import com.thenewmotion.time.Imports._
 import scala.concurrent.duration._
-import net.liftweb.json.JsonDSL._
 import java.net.URI
 import messages._
 import messages.Meter._
@@ -15,8 +15,6 @@ import com.thenewmotion.ocpp.json.v15.Ocpp15J
 import JsonDeserializable._
 
 class OcppMessageSerializationSpec extends SpecificationWithJUnit {
-
-  implicit val formats: Formats = DefaultFormats ++ OcppMessageJsonSerializers()
 
   "OCPP message deserialization" should {
     for (testMsg <- testMsgs) {

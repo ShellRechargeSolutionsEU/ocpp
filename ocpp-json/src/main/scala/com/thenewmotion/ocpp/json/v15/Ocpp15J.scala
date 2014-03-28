@@ -2,7 +2,9 @@ package com.thenewmotion.ocpp
 package json
 package v15
 
-import net.liftweb.json._
+import org.json4s._
+import org.json4s.native.JsonMethods._
+import org.json4s.native.JsonParser
 import ConvertersV15._
 import com.thenewmotion.ocpp.json.JsonDeserializable
 import JsonDeserializable._
