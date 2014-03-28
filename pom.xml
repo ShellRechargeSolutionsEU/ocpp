@@ -19,7 +19,7 @@
 
     <properties>
         <spray.version>1.2.0</spray.version>
-        <json4s.version>3.2.6</json4s.version>
+        <json4s.version>3.2.4</json4s.version>
     </properties>
 
     <modules>
