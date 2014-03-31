@@ -5,11 +5,13 @@ import scala.concurrent.duration._
 import java.net.URI
 
 sealed trait Message
+sealed trait Req extends Message
+sealed trait Res extends Message
 
 @SerialVersionUID(0)
 sealed trait CentralSystemMessage extends Message
-sealed trait CentralSystemReq extends CentralSystemMessage
-sealed trait CentralSystemRes extends CentralSystemMessage
+sealed trait CentralSystemReq extends CentralSystemMessage with Req
+sealed trait CentralSystemRes extends CentralSystemMessage with Res
 
 
 case class AuthorizeReq(idTag: String) extends CentralSystemReq
@@ -184,8 +186,8 @@ object FirmwareStatus extends Enumeration {
 
 @SerialVersionUID(0)
 sealed trait ChargePointMessage extends Message
-sealed trait ChargePointReq extends ChargePointMessage
-sealed trait ChargePointRes extends ChargePointMessage
+sealed trait ChargePointReq extends ChargePointMessage with Req
+sealed trait ChargePointRes extends ChargePointMessage with Res
 
 
 case class RemoteStartTransactionReq(idTag: IdTag, connector: Option[ConnectorScope]) extends ChargePointReq
