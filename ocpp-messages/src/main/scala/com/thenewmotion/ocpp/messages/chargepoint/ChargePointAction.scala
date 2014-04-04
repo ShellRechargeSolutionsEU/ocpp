@@ -8,6 +8,7 @@ object ChargePointAction extends Enumeration {
   ChangeAvailability,
   ChangeConfiguration,
   ClearCache,
+  DataTransfer,
   GetConfiguration,
   GetDiagnostics,
   GetLocalListVersion,
