@@ -22,6 +22,6 @@ trait ChargePoint {
   def reserveNow(req: ReserveNowReq): ReserveNowRes
   def cancelReservation(req: CancelReservationReq): CancelReservationRes
 
-  def apply[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): RES = reqRes(req)(this)
+  def apply[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ChargePointReqRes[REQ, RES]): RES = reqRes(req)(this)
 }
 
