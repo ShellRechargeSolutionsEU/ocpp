@@ -2,7 +2,6 @@ package com.thenewmotion.ocpp
 package soap
 
 import com.thenewmotion.ocpp.v15
-import messages.chargepoint
 import com.thenewmotion.ocpp.messages
 
 /**

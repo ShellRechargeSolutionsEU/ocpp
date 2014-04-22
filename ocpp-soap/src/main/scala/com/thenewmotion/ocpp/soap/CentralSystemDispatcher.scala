@@ -6,7 +6,6 @@ import scalaxb.XMLFormat
 import scala.concurrent.{Future, ExecutionContext}
 import com.thenewmotion.ocpp.{messages => ocpp}
 import messages._
-import messages.centralsystem._
 
 object CentralSystemDispatcher {
   def apply(version: Version.Value): Dispatcher[CentralSystemReq, CentralSystemRes] = version match {

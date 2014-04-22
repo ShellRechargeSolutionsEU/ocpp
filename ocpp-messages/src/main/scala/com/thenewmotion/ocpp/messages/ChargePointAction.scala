@@ -1,4 +1,4 @@
-package com.thenewmotion.ocpp.messages.chargepoint
+package com.thenewmotion.ocpp.messages
 
 /**
  * @author Yaroslav Klymko

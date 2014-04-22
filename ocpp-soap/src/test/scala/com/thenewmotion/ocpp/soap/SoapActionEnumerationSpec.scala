@@ -2,7 +2,7 @@ package com.thenewmotion.ocpp
 package soap
 
 import org.specs2.mutable.SpecificationWithJUnit
-import messages.centralsystem.CentralSystemAction
+import com.thenewmotion.ocpp.messages.CentralSystemAction
 
 /**
  * @author Yaroslav Klymko

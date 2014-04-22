@@ -5,9 +5,7 @@ import scala.xml.NodeSeq
 import soapenvelope12.Body
 import scalaxb.XMLFormat
 import scala.concurrent.{ExecutionContext, Future}
-import com.thenewmotion.ocpp.messages
 import messages._
-import messages.chargepoint._
 
 object ChargePointDispatcher {
   def apply(version: Version.Value): Dispatcher[ChargePointReq, ChargePointRes] = version match {

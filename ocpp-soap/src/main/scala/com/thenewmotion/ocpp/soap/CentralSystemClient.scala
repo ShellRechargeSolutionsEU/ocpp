@@ -1,8 +1,7 @@
 package com.thenewmotion.ocpp
 package soap
 
-import com.thenewmotion.ocpp.messages
-import messages.centralsystem._
+import com.thenewmotion.ocpp.messages._
 import dispatch.Http
 import org.joda.time.DateTime
 import scala.concurrent.duration._
