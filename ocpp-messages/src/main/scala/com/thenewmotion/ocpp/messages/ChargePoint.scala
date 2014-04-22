@@ -16,7 +16,7 @@ trait ChargePoint {
   def updateFirmware(req: UpdateFirmwareReq)
   def sendLocalList(req: SendLocalListReq): SendLocalListRes
   def getLocalListVersion: GetLocalListVersionRes
-  def dataTransfer(req: DataTransferReq): DataTransferRes
+  def dataTransfer(req: ChargePointDataTransferReq): ChargePointDataTransferRes
   def reserveNow(req: ReserveNowReq): ReserveNowRes
   def cancelReservation(req: CancelReservationReq): CancelReservationRes
 

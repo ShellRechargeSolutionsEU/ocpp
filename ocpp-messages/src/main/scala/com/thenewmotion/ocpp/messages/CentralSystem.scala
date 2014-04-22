@@ -13,7 +13,7 @@ trait CentralSystem {
   def statusNotification(req: StatusNotificationReq)
   def firmwareStatusNotification(req: FirmwareStatusNotificationReq)
   def diagnosticsStatusNotification(req: DiagnosticsStatusNotificationReq)
-  def dataTransfer(req: DataTransferReq): DataTransferRes
+  def dataTransfer(req: CentralSystemDataTransferReq): CentralSystemDataTransferRes
 
   def apply[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: CentralSystemReqRes[REQ, RES]): RES = reqRes(req)(this)
 }

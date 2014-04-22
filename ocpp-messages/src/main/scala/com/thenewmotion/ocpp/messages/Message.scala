@@ -55,6 +55,11 @@ case class BootNotificationRes(registrationAccepted: Boolean,
                                currentTime: DateTime /*optional in OCPP 1.2*/ ,
                                heartbeatInterval: FiniteDuration /*optional in OCPP 1.2*/) extends CentralSystemRes
 
+case class CentralSystemDataTransferReq(vendorId: String, messageId: Option[String], data: Option[String])
+  extends CentralSystemReq
+
+case class CentralSystemDataTransferRes(status: DataTransferStatus.Value, data: Option[String] = None)
+  extends CentralSystemRes
 
 case class StatusNotificationReq(scope: Scope,
                                  status: ChargePointStatus,
@@ -245,10 +250,11 @@ case object GetLocalListVersionReq extends ChargePointReq
 case class GetLocalListVersionRes(version: AuthListVersion) extends ChargePointRes
 
 
-case class DataTransferReq(vendorId: String, messageId: Option[String], data: Option[String])
-  extends CentralSystemReq with ChargePointReq
-case class DataTransferRes(status: DataTransferStatus.Value, data: Option[String] = None)
-  extends CentralSystemRes with ChargePointRes
+case class ChargePointDataTransferReq(vendorId: String, messageId: Option[String], data: Option[String])
+  extends ChargePointReq
+
+case class ChargePointDataTransferRes(status: DataTransferStatus.Value, data: Option[String] = None)
+  extends ChargePointRes
 
 
 case class ReserveNowReq(connector: Scope,

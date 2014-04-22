@@ -1,7 +1,5 @@
 package com.thenewmotion.ocpp.messages
 
-import com.thenewmotion.ocpp.messages.{ChargePoint, CentralSystem}
-
 /**
  * ReqRes works as a multi-parameter typeclass for associating response types to request types. That is, if an implicit
  * value with type ReqRes[REQ, RES] is in scope, it means that RES is the response type that belongs to a request of
@@ -72,8 +70,8 @@ object ReqRes {
     def apply(req: GetLocalListVersionReq.type)(implicit service: ChargePoint) = service.getLocalListVersion
   }
 
-  implicit object ChargePointDataTransferReqRes extends ChargePointReqRes[DataTransferReq, DataTransferRes] {
-    def apply(req: DataTransferReq)(implicit service: ChargePoint) = service.dataTransfer(req)
+  implicit object ChargePointDataTransferReqRes extends ChargePointReqRes[ChargePointDataTransferReq, ChargePointDataTransferRes] {
+    def apply(req: ChargePointDataTransferReq)(implicit service: ChargePoint) = service.dataTransfer(req)
   }
 
   implicit object ReserveNowReqRes extends ChargePointReqRes[ReserveNowReq, ReserveNowRes] {
@@ -98,7 +96,7 @@ object ReqRes {
       case x: UpdateFirmwareReq => UpdateFirmwareReqRes(x)
       case x: SendLocalListReq => SendLocalListReqRes(x)
       case x: GetLocalListVersionReq.type => GetLocalListVersionReqRes(x)
-      case x: DataTransferReq => ChargePointDataTransferReqRes(x)
+      case x: ChargePointDataTransferReq => ChargePointDataTransferReqRes(x)(service)
       case x: ReserveNowReq => ReserveNowReqRes(x)
       case x: CancelReservationReq => CancelReservationReqRes(x)
     }
@@ -131,6 +129,10 @@ object ReqRes {
     def apply(req: BootNotificationReq)(implicit service: CentralSystem) = service.bootNotification(req)
   }
 
+  implicit object CentralSystemDataTransferReqRes extends CentralSystemReqRes[CentralSystemDataTransferReq, CentralSystemDataTransferRes] {
+    def apply(req: CentralSystemDataTransferReq)(implicit service: CentralSystem) = service.dataTransfer(req)
+  }
+
   implicit object StatusNotificationReqRes extends CentralSystemReqRes[StatusNotificationReq, StatusNotificationRes.type] {
     def apply(req: StatusNotificationReq)(implicit service: CentralSystem) = {
       service.statusNotification(req)
@@ -152,10 +154,6 @@ object ReqRes {
     }
   }
 
-  implicit object CentralSystemDataTransferReqRes extends CentralSystemReqRes[DataTransferReq, DataTransferRes] {
-    def apply(req: DataTransferReq)(implicit service: CentralSystem) = service.dataTransfer(req)
-  }
-
   implicit object GenericCentralSystemReqRes extends CentralSystemReqRes[CentralSystemReq, CentralSystemRes] {
     def apply(req: CentralSystemReq)(implicit service: CentralSystem) = req match {
       case x: AuthorizeReq => AuthorizeReqRes(x)
@@ -167,7 +165,7 @@ object ReqRes {
       case x: StatusNotificationReq => StatusNotificationReqRes(x)
       case x: FirmwareStatusNotificationReq => FirmwareStatusNotificationReqRes(x)
       case x: DiagnosticsStatusNotificationReq => DiagnosticsStatusNotificationReqRes(x)
-      case x: DataTransferReq => CentralSystemDataTransferReqRes(x)
+      case x: CentralSystemDataTransferReq => CentralSystemDataTransferReqRes(x)(service)
     }
   }
 }
