@@ -110,7 +110,7 @@ private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: Uri
 
   def sendLocalList(req: SendLocalListReq) = notSupported("sendLocalList")
   def getLocalListVersion = notSupported("getLocalListVersion")
-  def dataTransfer(req: DataTransferReq) = notSupported("dataTransfer")
+  def dataTransfer(req: ChargePointDataTransferReq) = notSupported("dataTransfer")
   def reserveNow(req: ReserveNowReq) = notSupported("reserveNow")
   def cancelReservation(req: CancelReservationReq) = notSupported("cancelReservation")
 }
@@ -236,7 +236,7 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
   def getLocalListVersion = GetLocalListVersionRes(
     AuthListVersion(?(_.getLocalListVersion, GetLocalListVersionRequest())))
 
-  def dataTransfer(req: DataTransferReq) = {
+  def dataTransfer(req: ChargePointDataTransferReq) = {
     val res = ?(_.dataTransfer, DataTransferRequest(req.vendorId, req.messageId, req.data))
     val status: ocpp.DataTransferStatus.Value = {
       import ocpp.{DataTransferStatus => ocpp}
@@ -247,7 +247,7 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
         case UnknownVendorId => ocpp.UnknownVendorId
       }
     }
-    DataTransferRes(status, stringOption(res.data))
+    ChargePointDataTransferRes(status, stringOption(res.data))
   }
 
   def reserveNow(x: ReserveNowReq) = {

@@ -155,7 +155,7 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
     messages.DiagnosticsStatusNotificationRes
   }
 
-  def dataTransfer(req: messages.DataTransferReq) = notSupported("dataTransfer")
+  def dataTransfer(req: messages.CentralSystemDataTransferReq) = notSupported("dataTransfer")
 }
 
 
@@ -291,7 +291,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
     ?(_.diagnosticsStatusNotification, DiagnosticsStatusNotificationRequest(status))
   }
 
-  def dataTransfer(req: messages.DataTransferReq) = {
+  def dataTransfer(req: messages.CentralSystemDataTransferReq) = {
     import req._
     val res = ?(_.dataTransfer, DataTransferRequestType(vendorId, messageId, data))
     val status = {
@@ -303,7 +303,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
         case UnknownVendorIdValue => ocpp.UnknownVendorId
       }
     }
-    messages.DataTransferRes(status, stringOption(res.data))
+    messages.CentralSystemDataTransferRes(status, stringOption(res.data))
   }
 
 

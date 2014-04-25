@@ -271,12 +271,12 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
 
       case DataTransfer => ?[DataTransferRequest, DataTransferResponse] {
         req =>
-          DataTransferReq(
+          CentralSystemDataTransferReq(
             req.vendorId,
             stringOption(req.messageId),
             stringOption(req.data))
       } {
-        case res: DataTransferRes =>
+        case res: CentralSystemDataTransferRes =>
           val status: DataTransferStatus = {
             import ocpp.{DataTransferStatus => ocpp}
             res.status match {
