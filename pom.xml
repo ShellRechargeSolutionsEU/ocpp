@@ -103,6 +103,11 @@
                 <artifactId>json4s-ext_${scala.version}</artifactId>
                 <version>${json4s.version}</version>
             </dependency>
+            <dependency>
+                <groupId>io.backchat.hookup</groupId>
+                <artifactId>hookup_${scala.version}</artifactId>
+                <version>0.2.3</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

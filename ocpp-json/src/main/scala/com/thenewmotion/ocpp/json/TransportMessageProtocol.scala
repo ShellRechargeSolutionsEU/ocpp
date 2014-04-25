@@ -9,7 +9,6 @@ object TransportMessageType extends Enumeration {
 }
 
 // Helper object to ensure proper use of error codes within the payload.
-// TODO see if a extensible mechanism to payload protocol is possible.
 object PayloadErrorCode extends Enumeration {
   type ErrorCode = Value
 
