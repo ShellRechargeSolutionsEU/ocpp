@@ -30,10 +30,6 @@ trait JsonOperations[REQ <: Req, RES <: Res] {
 
   def operations: Traversable[JsonOperation[_ <: REQ, _ <: RES]]
 
-  // TODO: still needed?
-  def actionForRequestObject(req: REQ): Option[Enumeration#Value] =
-    operations.find(_.matchesRequest(req)).map(_.action)
-
   def jsonOpForAction(action: Enumeration#Value): Option[JsonOperation[_ <: REQ, _ <: RES]] =
     operations.find(_.action == action)
 
