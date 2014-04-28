@@ -59,7 +59,6 @@ trait JsonOperations[REQ <: Req, RES <: Res] {
   def jsonOpForReqRes[Req <: REQ, Res <: RES](reqRes: ReqRes[Req, Res]): JsonOperation[Req, Res]
 }
 
-
 object CentralSystemOperations extends JsonOperations[CentralSystemReq, CentralSystemRes] {
 
   import CentralSystemAction._
