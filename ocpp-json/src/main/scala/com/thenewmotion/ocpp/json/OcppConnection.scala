@@ -113,8 +113,12 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
         case None =>
           logger.info("Received response for no request: {}", res)
         case Some(OutstandingRequest(op, resPromise)) =>
-          val response = op.deserializeRes(res.payload)
-          resPromise.success(response)
+          Try(op.deserializeRes(res.payload)) match {
+            case Success(response) => resPromise.success(response)
+            case Failure(e) =>
+              logger.info("Failed to parse OCPP response {} to call {} (operation {})", res.payload, res.callId, op, e)
+              resPromise.failure(e)
+          }
       }
     }
 
