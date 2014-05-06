@@ -52,12 +52,12 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
     val ourOperations: JsonOperations[INREQ, OUTRES]
     val theirOperations: JsonOperations[OUTREQ, INRES]
 
-    private val callIdGenerator = CallIdGenerator()
+    private[this] val callIdGenerator = CallIdGenerator()
 
     sealed case class OutstandingRequest[REQ <: OUTREQ, RES <: INRES](operation: JsonOperation[REQ, RES],
                                                                       responsePromise: Promise[RES])
 
-    private val callIdCache: mutable.Map[String, OutstandingRequest[_, _]] = mutable.Map()
+    private[this] val callIdCache: mutable.Map[String, OutstandingRequest[_, _]] = mutable.Map()
 
     def onSrpcMessage(msg: TransportMessage) {
       logger.debug("Incoming SRPC message: {}", msg)
@@ -109,7 +109,7 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
 
 
     private def handleIncomingResponse(res: ResponseMessage) {
-      callIdCache.get(res.callId) match {
+      callIdCache.remove(res.callId) match {
         case None =>
           logger.info("Received response for no request: {}", res)
         case Some(OutstandingRequest(op, resPromise)) =>
@@ -124,7 +124,7 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
 
     private def handleIncomingError(err: ErrorResponseMessage) = err match {
       case ErrorResponseMessage(callId, errCode, description, details) =>
-        callIdCache.get(callId) match {
+        callIdCache.remove(callId) match {
           case None => onOcppError(OcppError(errCode, description))
           case Some(OutstandingRequest(operation, futureResponse)) =>
             futureResponse failure new OcppException(OcppError(errCode, description))
