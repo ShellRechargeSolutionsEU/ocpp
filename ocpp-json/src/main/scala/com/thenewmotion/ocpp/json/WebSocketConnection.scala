@@ -67,7 +67,7 @@ trait HookupClientWebSocketComponent extends WebSocketComponent {
 
   class HookupClientWebSocketConnection(chargerId: String, config: HookupClientConfig) extends WebSocketConnection with Logging {
 
-    private val hookupClientConfig = HookupClientConfig(uri = uriWithChargerId(config.uri, chargerId))
+    private val hookupClientConfig = config.copy(uri = uriWithChargerId(config.uri, chargerId))
 
     private val client = new DefaultHookupClient(hookupClientConfig) {
       def receive: Receive = {
