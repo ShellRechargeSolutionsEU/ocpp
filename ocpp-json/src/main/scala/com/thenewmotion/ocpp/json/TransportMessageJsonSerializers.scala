@@ -32,7 +32,7 @@ object TransportMessageJsonSerializers {
   class ErrorMessageJsonFormat extends CustomSerializer[ErrorResponseMessage](format => (
     {
       case JArray(JInt(callType) :: JString(callId) :: errorName :: JString(errorDesc) :: errorDetails :: Nil) =>
-        System.err.println(s"Extracting $errorName as PayloadErrorCode.Value")
+        // TODO handle MappingException about the PayloadErrorCode
         ErrorResponseMessage(callId, errorName.extract[PayloadErrorCode.Value](format, manifest), errorDesc,
           errorDetails)
     },
