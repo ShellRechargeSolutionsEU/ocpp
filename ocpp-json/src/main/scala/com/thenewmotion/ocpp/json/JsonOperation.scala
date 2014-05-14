@@ -74,6 +74,7 @@ object CentralSystemOperations extends JsonOperations[CentralSystemReq, CentralS
   val operations: Traversable[JsonOperation[_ <: CentralSystemReq, _ <: CentralSystemRes]] = List(
     authorizeJsonOp,
     bootNotificationJsonOp,
+    diagnosticsStatusNotificationJsonOp,
     firmwareStatusNotificationJsonOp,
     heartbeatJsonOp,
     meterValuesJsonOp,
