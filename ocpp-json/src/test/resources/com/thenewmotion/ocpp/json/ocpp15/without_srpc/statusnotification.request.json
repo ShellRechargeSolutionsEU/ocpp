@@ -3,5 +3,6 @@
     "status": "Available",
     "errorCode": "NoError",
     "timestamp": "2013-02-01T15:09:18Z",
-    "vendorId": ""
+    "vendorId": "",
+    "info": "Info msg"
 }

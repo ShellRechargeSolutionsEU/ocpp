@@ -158,7 +158,7 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
       meterType = Some("DBT NQC-ACDC"),
       meterSerialNumber = Some("gir.vat.mx.000e48"))
     val bootNotificationRes = BootNotificationRes(registrationAccepted = true,
-      currentTime = new DateTime(2013, 9, 27, 16, 3, 0, DateTimeZone.forID("Europe/Brussels")),
+      currentTime = new DateTime(2013, 9, 27, 16, 3, 0),
       heartbeatInterval = FiniteDuration(600, "seconds"))
 
     val startTransactionReq = StartTransactionReq(connector = ConnectorScope(1),
@@ -203,7 +203,7 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
           TransactionData(List(testMeter))))
     }
     val stopTransactionRes = StopTransactionRes(idTag = Some(IdTagInfo(status = AuthorizationStatus.IdTagExpired,
-      expiryDate = Some(new DateTime(2013, 2, 1, 16, 9, 18, DateTimeZone.forID("Europe/Brussels"))),
+      expiryDate = Some(new DateTime(2013, 2, 1, 16, 9, 18)),
       parentIdTag = Some("PARENT"))))
 
     val unlockConnectorReq = UnlockConnectorReq(connector = ConnectorScope(0))
@@ -219,7 +219,7 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
     val changeAvailabilityRes = ChangeAvailabilityRes(status = AvailabilityStatus.Accepted)
 
     val statusNotificationReq = StatusNotificationReq(scope = ConnectorScope(1),
-      status = Available, timestamp = Some(testTime),
+      status = Available(Some("Info msg")), timestamp = Some(testTime),
       vendorId = Some(""))
     val statusNotificationReqInError = {
       val faultedStatus = Faulted(errorCode = Some(ChargePointErrorCode.PowerMeterFailure),
