@@ -10,7 +10,7 @@
 
     <groupId>com.thenewmotion.ocpp</groupId>
     <artifactId>ocpp-parent_2.10</artifactId>
-    <version>4.0</version>
+    <version>4.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>OCPP</name>
