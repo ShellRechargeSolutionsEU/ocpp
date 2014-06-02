@@ -283,12 +283,12 @@ object ConvertersV15 {
 
   private implicit class RichChargePointStatus(self: messages.ChargePointStatus) {
     def toV15Fields: (String, String, Option[String], Option[String]) = {
-      def simpleStatus(name: String) = (name, "NoError", None, None)
+      def simpleStatus(name: String) = (name, "NoError", self.info, None)
       self match {
-        case messages.Available => simpleStatus("Available")
-        case messages.Occupied => simpleStatus("Occupied")
-        case messages.Unavailable => simpleStatus("Unavailable")
-        case messages.Reserved => simpleStatus("Reserved")
+        case messages.Available(_) => simpleStatus("Available")
+        case messages.Occupied(_) => simpleStatus("Occupied")
+        case messages.Unavailable(_) => simpleStatus("Unavailable")
+        case messages.Reserved(_) => simpleStatus("Reserved")
         case messages.Faulted(errCode, inf, vendorErrCode) =>
           ("Faulted", errCode.map(_.toString).getOrElse(RichChargePointStatus.defaultErrorCode), inf, vendorErrCode)
       }
@@ -301,10 +301,10 @@ object ConvertersV15 {
 
   private def statusFieldsToOcppStatus(status: String, errorCode: String, info: Option[String],
                                vendorErrorCode: Option[String]): messages.ChargePointStatus = status match {
-    case "Available" => messages.Available
-    case "Occupied" => messages.Occupied
-    case "Unavailable" => messages.Unavailable
-    case "Reserved" => messages.Reserved
+    case "Available" => messages.Available(info)
+    case "Occupied" => messages.Occupied(info)
+    case "Unavailable" => messages.Unavailable(info)
+    case "Reserved" => messages.Reserved(info)
     case "Faulted" =>
       val errorCodeString =
         if (errorCode == RichChargePointStatus.defaultErrorCode)

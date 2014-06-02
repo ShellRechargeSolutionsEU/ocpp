@@ -157,15 +157,17 @@ object Meter {
   }
 }
 
-sealed trait ChargePointStatus
-case object Available extends ChargePointStatus
-case object Occupied extends ChargePointStatus
+sealed trait ChargePointStatus {
+  def info: Option[String]
+}
+case class Available(info:Option[String]=None) extends ChargePointStatus
+case class Occupied(info:Option[String]=None) extends ChargePointStatus
 case class Faulted(errorCode: Option[ChargePointErrorCode.Value],
-                   info: Option[String],
+                   info: Option[String]=None,
                    vendorErrorCode: Option[String]) extends ChargePointStatus
-case object Unavailable extends ChargePointStatus
+case class Unavailable(info:Option[String]=None) extends ChargePointStatus
 // since OCPP 1.5
-case object Reserved extends ChargePointStatus
+case class Reserved(info:Option[String]=None) extends ChargePointStatus
 
 object ChargePointErrorCode extends Enumeration {
   val ConnectorLockFailure,

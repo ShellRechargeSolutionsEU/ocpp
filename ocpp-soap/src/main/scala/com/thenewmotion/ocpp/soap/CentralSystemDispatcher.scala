@@ -91,9 +91,9 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemReq, C
       case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse] {
         req =>
           val status = req.status match {
-            case Available => ocpp.Available
-            case Occupied => ocpp.Occupied
-            case Unavailable => ocpp.Unavailable
+            case Available => ocpp.Available()
+            case Occupied => ocpp.Occupied()
+            case Unavailable => ocpp.Unavailable()
             case Faulted =>
               val errorCode: Option[ocpp.ChargePointErrorCode.Value] = {
                 import ocpp.{ChargePointErrorCode => ocpp}
@@ -217,9 +217,9 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
 
       case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse] { req =>
         val status = req.status match {
-          case Available => ocpp.Available
-          case OccupiedValue => ocpp.Occupied
-          case UnavailableValue => ocpp.Unavailable
+          case Available => ocpp.Available()
+          case OccupiedValue => ocpp.Occupied()
+          case UnavailableValue => ocpp.Unavailable()
           case FaultedValue =>
             val errorCode = {
               import ocpp.{ChargePointErrorCode => ocpp}
@@ -240,7 +240,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
               }
             }
             ocpp.Faulted(errorCode, req.info, req.vendorErrorCode)
-          case Reserved => ocpp.Reserved
+          case Reserved => ocpp.Reserved()
         }
         StatusNotificationReq(
           ocpp.Scope.fromOcpp(req.connectorId),

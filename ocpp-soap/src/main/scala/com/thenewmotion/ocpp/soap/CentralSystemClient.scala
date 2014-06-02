@@ -120,10 +120,10 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
     def noError(status: ChargePointStatus) = (status, NoError)
 
     val (chargePointStatus, errorCode) = status match {
-      case messages.Available => noError(Available)
-      case messages.Occupied => noError(Occupied)
-      case messages.Unavailable => noError(Unavailable)
-      case messages.Reserved => notSupported("statusNotification(Reserved)")
+      case messages.Available(_) => noError(Available)
+      case messages.Occupied(_) => noError(Occupied)
+      case messages.Unavailable(_) => noError(Unavailable)
+      case messages.Reserved(_) => notSupported("statusNotification(Reserved)")
       case messages.Faulted(code, info, vendorCode) =>
         info.foreach(x => logNotSupported("statusNotification.info", x))
         vendorCode.foreach(x => logNotSupported("statusNotification.vendorErrorCode", x))
@@ -256,15 +256,15 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       }
     }
 
-    def noError(status: ChargePointStatus) = (status, NoError, None, None)
+    def noError(status: ChargePointStatus, info: Option[String]) = (status, NoError, info, None)
 
     val (chargePointStatus, errorCode, errorInfo, vendorErrorCode) = status match {
-      case messages.Available => noError(Available)
-      case messages.Occupied => noError(OccupiedValue)
+      case messages.Available(info) => noError(Available, info)
+      case messages.Occupied(info) => noError(OccupiedValue, info)
       case messages.Faulted(code, info, vendorCode) =>
         (FaultedValue, code.map(toErrorCode) getOrElse NoError, info, vendorCode)
-      case messages.Unavailable => noError(UnavailableValue)
-      case messages.Reserved => noError(Reserved)
+      case messages.Unavailable(info) => noError(UnavailableValue, info)
+      case messages.Reserved(info) => noError(Reserved, info)
     }
 
     val x = StatusNotificationRequest(
