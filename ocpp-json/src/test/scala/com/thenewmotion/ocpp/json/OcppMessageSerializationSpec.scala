@@ -4,18 +4,19 @@ package json
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.Scope
 import scala.io.Source
-import org.json4s._
-import org.json4s.native.JsonParser
-import com.thenewmotion.time.Imports._
+import org.joda.time.{DateTime, DateTimeZone}
 import scala.concurrent.duration._
 import java.net.URI
 import messages._
 import messages.Meter._
 import com.thenewmotion.ocpp.json.v15.Ocpp15J
 import JsonDeserializable._
+import org.json4s._
+import org.json4s.Extraction.extract
+import org.json4s.DefaultFormats
+import org.json4s.native.JsonParser
 
 class OcppMessageSerializationSpec extends SpecificationWithJUnit {
-
   "OCPP message deserialization" should {
     for (testMsg <- testMsgs) {
       s"read ${testMsg.msg.getClass.getName} messages" in new MessageTestScope(testMsg.jsonFileBase) {
@@ -158,7 +159,7 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
       meterType = Some("DBT NQC-ACDC"),
       meterSerialNumber = Some("gir.vat.mx.000e48"))
     val bootNotificationRes = BootNotificationRes(registrationAccepted = true,
-      currentTime = new DateTime(2013, 9, 27, 16, 3, 0),
+      currentTime = new DateTime(2013, 9, 27, 16, 3, 0, plusTwoTimeZone),
       heartbeatInterval = FiniteDuration(600, "seconds"))
 
     val startTransactionReq = StartTransactionReq(connector = ConnectorScope(1),
@@ -203,7 +204,7 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
           TransactionData(List(testMeter))))
     }
     val stopTransactionRes = StopTransactionRes(idTag = Some(IdTagInfo(status = AuthorizationStatus.IdTagExpired,
-      expiryDate = Some(new DateTime(2013, 2, 1, 16, 9, 18)),
+      expiryDate = Some(new DateTime(2013, 2, 1, 16, 9, 18, plusOneTimeZone)),
       parentIdTag = Some("PARENT"))))
 
     val unlockConnectorReq = UnlockConnectorReq(connector = ConnectorScope(0))
@@ -335,5 +336,15 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
   }
 
   private def localTimeForUTCFields(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int) =
-    new DateTime(year, month, day, hour, minute, second, DateTimeZone.UTC).withZone(DateTimeZone.getDefault())
+    new DateTime(year, month, day, hour, minute, second, DateTimeZone.UTC).withZone(DateTimeZone.getDefault)
+
+  // In different environments, Joda Time or The New Motion Time come up with a different DateTimeZone object based on
+  // the numeric offset given in the ISO string. To prevent a spurious test failure, we figure out beforehand which
+  // timezone is derived from the relevant numeric offsets and use that in our expectations.
+  private val (plusOneTimeZone, plusTwoTimeZone) = {
+    implicit val formats = DefaultFormats + new JodaDateTimeJsonFormat
+
+    (extract[DateTime](JString("2000-01-01T00:00:00+0100")).getZone,
+     extract[DateTime](JString("2000-07-01T00:00:00+0200")).getZone)
+  }
 }
