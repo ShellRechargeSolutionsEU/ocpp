@@ -5,6 +5,7 @@ import _root_.spray.http._
 import _root_.spray.http.HttpRequest
 import _root_.spray.httpx.encoding.{Deflate, Encoder, Gzip}
 import _root_.spray.http.HttpHeaders.`Content-Type`
+import _root_.spray.http.StatusCodes.{UnsupportedMediaType, MethodNotAllowed}
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.Scope
 import org.specs2.mock.Mockito
@@ -19,7 +20,6 @@ import scala.concurrent.duration.Duration
 import ExecutionContext.Implicits.global
 import java.net.URI
 import soap.RichDateTime
-
 
 class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUtils {
 
@@ -116,6 +116,24 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
       res.namespace mustEqual Some("urn://Ocpp/Cs/2012/06/")
     }
+
+    "produce an UnsupportedMediaType error if the media type is missing or wrong" in new TestScope {
+      val processingFunction = mock[(ChargerInfo, CsReq) => Future[CsRes]]
+
+      val response = Await.result(OcppProcessing.applyDecoded[CsReq, CsRes](httpRequestWithNoContentType)(processingFunction),
+        Duration(2, "seconds"))
+
+      response.status mustEqual UnsupportedMediaType
+    }
+
+    "produce a MethodNotAllowed error if the wrong http method is used" in new TestScope {
+      val processingFunction = mock[(ChargerInfo, CsReq) => Future[CsRes]]
+
+      val response = Await.result(OcppProcessing.applyDecoded[CsReq, CsRes](httpRequestWithWrongMethod)(processingFunction),
+        Duration(2, "seconds"))
+
+      response.status mustEqual MethodNotAllowed
+    }
   }
 
   private trait TestScope extends Scope {
@@ -127,6 +145,18 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
       HttpMethods.POST,
       Uri("/"),
       List(`Content-Type`(MediaTypes.`application/soap+xml`)),
+      HttpEntity(bytesOfResourceFile("v15/heartbeatRequest.xml")))
+
+    val httpRequestWithWrongMethod = HttpRequest(
+      HttpMethods.PUT,
+      Uri("/"),
+      List(`Content-Type`(MediaTypes.`application/soap+xml`)),
+      HttpEntity(bytesOfResourceFile("v15/heartbeatRequest.xml")))
+
+    val httpRequestWithNoContentType = HttpRequest(
+      HttpMethods.POST,
+      Uri("/"),
+      List(),
       HttpEntity(bytesOfResourceFile("v15/heartbeatRequest.xml")))
   }
 

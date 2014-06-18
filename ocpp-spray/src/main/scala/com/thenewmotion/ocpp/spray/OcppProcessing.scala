@@ -71,7 +71,7 @@ object OcppProcessing extends Logging {
 
   private def soapPost(req: HttpRequest): Either[HttpResponse, HttpRequest] =
     SoapPost.unapply(req) match {
-      case None => Left(HttpResponse(NotFound))
+      case Left(statusCode) => Left(HttpResponse(statusCode))
       case _ => Right(req)
     }
 
