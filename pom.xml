@@ -15,7 +15,7 @@
 
     <name>OCPP</name>
     <url>http://github.com/thenewmotion/ocpp</url>
-    <description>Generated beans for Open Charge Point Protocol</description>
+    <description>Scala library for Open Charge Point Protocol</description>
 
     <properties>
         <spray.version>1.2.0</spray.version>
