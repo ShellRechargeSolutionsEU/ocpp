@@ -1,6 +1,6 @@
 # Open Charge Point Protocol for Scala [![Build Status](https://secure.travis-ci.org/thenewmotion/ocpp.png)](http://travis-ci.org/thenewmotion/ocpp)
 
-You can find more details on the [official website](http://www.ocpp.nl/)
+The Open Charge Point Protocol (OCPP) is a network protocol for communication between electric vehicle chargers and a central backoffice system. It is developed by the Open Charge Alliance (OCA). You can find more details on the [official website of the OCA](http://openchargealliance.org/)
 
 ## Includes
 * CentralSystemService.wsdl generated scala beans
