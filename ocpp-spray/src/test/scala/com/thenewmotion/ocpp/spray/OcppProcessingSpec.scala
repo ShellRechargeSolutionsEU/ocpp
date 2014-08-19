@@ -4,7 +4,7 @@ package spray
 import _root_.spray.http._
 import _root_.spray.http.HttpRequest
 import _root_.spray.httpx.encoding.{Deflate, Encoder, Gzip}
-import _root_.spray.http.HttpHeaders.`Content-Type`
+import _root_.spray.http.HttpHeaders.{`Content-Type`,`X-Forwarded-For`}
 import _root_.spray.http.StatusCodes.{UnsupportedMediaType, MethodNotAllowed}
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.Scope
@@ -18,7 +18,7 @@ import com.thenewmotion.ocpp.messages.{CentralSystemReq => CsReq, CentralSystemR
 import scala.concurrent.{Await, Future, ExecutionContext}
 import scala.concurrent.duration.Duration
 import ExecutionContext.Implicits.global
-import java.net.URI
+import java.net.{InetAddress, URI}
 import soap.RichDateTime
 
 class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUtils {
@@ -31,7 +31,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
       Await.result(OcppProcessing.applyDecoded[CsReq, CsRes](httpRequest)(mockProcessingFunction), Duration(2, "seconds"))
 
-      val expectedChargerInfo = ChargerInfo(V15, Some(new URI("http://address.com")), "chargeBoxIdentity")
+      val expectedChargerInfo = ChargerInfo(V15, Some(new URI("http://address.com")), "chargeBoxIdentity", Some(InetAddress.getByName("192.168.1.100")))
       there was one(mockProcessingFunction).apply(expectedChargerInfo, HeartbeatReq)
     }
 
@@ -60,12 +60,12 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
       mockProcessingFunction.apply(any, any) returns Future.successful(GetLocalListVersionRes(AuthListSupported(0)))
       val httpRequest = HttpRequest(HttpMethods.POST,
                                     Uri("/"),
-                                    List(`Content-Type`(MediaTypes.`application/soap+xml`)),
+                                    List(`Content-Type`(MediaTypes.`application/soap+xml`), `X-Forwarded-For`("192.168.1.100")),
                                     HttpEntity(bytesOfResourceFile("v15/getLocalListVersionRequest.xml")))
 
       Await.result(OcppProcessing.applyDecoded[CpReq, CpRes](httpRequest)(mockProcessingFunction), Duration(2, "seconds"))
 
-      val expectedChargerInfo = ChargerInfo(V15, Some(new URI("http://localhost:8080/ocpp/")), "TestTwin1")
+      val expectedChargerInfo = ChargerInfo(V15, Some(new URI("http://localhost:8080/ocpp/")), "TestTwin1", Some(InetAddress.getByName("192.168.1.100")))
       there was one(mockProcessingFunction).apply(expectedChargerInfo, GetLocalListVersionReq)
     }
 
@@ -144,7 +144,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
     val httpRequest = HttpRequest(
       HttpMethods.POST,
       Uri("/"),
-      List(`Content-Type`(MediaTypes.`application/soap+xml`)),
+      List(`Content-Type`(MediaTypes.`application/soap+xml`), `X-Forwarded-For`("192.168.1.100")),
       HttpEntity(bytesOfResourceFile("v15/heartbeatRequest.xml")))
 
     val httpRequestWithWrongMethod = HttpRequest(

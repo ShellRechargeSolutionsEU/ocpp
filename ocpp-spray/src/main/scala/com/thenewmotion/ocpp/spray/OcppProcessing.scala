@@ -1,6 +1,9 @@
 package com.thenewmotion.ocpp
 package spray
 
+import java.net.InetAddress
+import com.thenewmotion.spray.InetAddressFromReq
+
 import xml.{XML, NodeSeq}
 import com.typesafe.scalalogging.slf4j.Logging
 import soapenvelope12.{Body, Fault, Envelope}
@@ -15,7 +18,7 @@ import com.thenewmotion.ocpp.soap._
 /**
  * The information about the charge point available in an incoming request
  */
-case class ChargerInfo(ocppVersion: Version.Value, endpointUrl: Option[Uri], chargerId: String)
+case class ChargerInfo(ocppVersion: Version.Value, endpointUrl: Option[Uri], chargerId: String, ipAddress: Option[InetAddress])
 
 object OcppProcessing extends Logging {
 
@@ -39,7 +42,7 @@ object OcppProcessing extends Logging {
         env <- envelope(xml).right
         chargerId <- chargerId(env).right
         version <- parseVersion(env.Body).right
-        chargerInfo <- Right(ChargerInfo(version, ChargeBoxAddress.unapply(env), chargerId)).right
+        chargerInfo <- Right(ChargerInfo(version, ChargeBoxAddress.unapply(env), chargerId, InetAddressFromReq.unapply(req))).right
       } yield {
         httpLogger.debug(s">>\n\t${req.headers.mkString("\n\t")}\n\t$xml")
         dispatch(chargerInfo.ocppVersion, env.Body, f(chargerInfo, _: REQ)) map (OcppResponse(_))
