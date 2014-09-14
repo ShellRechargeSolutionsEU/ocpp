@@ -20,11 +20,11 @@
         </dependency>
         <dependency>
             <groupId>io.spray</groupId>
-            <artifactId>spray-http</artifactId>
+            <artifactId>spray-http_${scala.version}</artifactId>
         </dependency>
         <dependency>
             <groupId>io.spray</groupId>
-            <artifactId>spray-httpx</artifactId>
+            <artifactId>spray-httpx_${scala.version}</artifactId>
         </dependency>
         <dependency>
             <groupId>com.thenewmotion</groupId>
