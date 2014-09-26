@@ -1,7 +1,5 @@
 package com.thenewmotion.ocpp.json
 
-import scala.util.Random
-
 trait CallIdGenerator extends Iterator[String] {
   def hasNext = true
   def next(): String
@@ -13,13 +11,7 @@ object CallIdGenerator {
 
 class DefaultCallIdGenerator extends CallIdGenerator {
 
-  val callIdLength = 8
+  private val idIterator: Iterator[String] = Stream.iterate(0)(_+1).map(_.toHexString).toIterator
 
-  val random = new Random
-
-  private val idIterator = Stream.continually(random.nextPrintableChar()).grouped(callIdLength).map(_.mkString)
-
-
-  // TODO get rid of synchronized
   def next() = synchronized { idIterator.next() }
 }
