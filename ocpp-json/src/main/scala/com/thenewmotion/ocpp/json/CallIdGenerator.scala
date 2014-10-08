@@ -10,7 +10,7 @@ object CallIdGenerator {
 }
 
 class AtomicCallIdGenerator extends CallIdGenerator {
-  private var id = new java.util.concurrent.atomic.AtomicLong(-1)
+  private val id = new java.util.concurrent.atomic.AtomicLong(-1)
 
   def next() = id.incrementAndGet.toHexString
 }
