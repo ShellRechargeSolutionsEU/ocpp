@@ -31,7 +31,7 @@ OCPP 1.2
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
         <artifactId>ocpp-1.2_2.10</artifactId>
-        <version>4.0</version>
+        <version>4.2.3</version>
     </dependency>
 ```
 
@@ -40,7 +40,7 @@ OCPP 1.5
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
         <artifactId>ocpp-1.5_2.10</artifactId>
-        <version>4.0</version>
+        <version>4.2.3</version>
     </dependency>
 ```
 
@@ -49,7 +49,7 @@ Spray OCPP
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
         <artifactId>ocpp-spray_2.10</artifactId>
-        <version>4.0</version>
+        <version>4.2.3</version>
     </dependency>
 ```
 
@@ -58,7 +58,7 @@ OCPP 1.5-JSON
   <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
         <artifactId>ocpp-json_2.10</artifactId>
-        <version>4.0</version>
+        <version>4.2.3</version>
 ```
 
 ## Usage
