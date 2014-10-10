@@ -10,7 +10,7 @@
 
     <groupId>com.thenewmotion.ocpp</groupId>
     <artifactId>ocpp-parent_2.10</artifactId>
-    <version>4.2.3-SNAPSHOT</version>
+    <version>4.2.3</version>
     <packaging>pom</packaging>
 
     <name>OCPP</name>
@@ -19,7 +19,7 @@
 
     <properties>
         <spray.version>1.3.1</spray.version>
-        <json4s.version>3.2.4</json4s.version>
+        <json4s.version>3.2.10</json4s.version>
     </properties>
 
     <modules>
@@ -106,7 +106,7 @@
             <dependency>
                 <groupId>io.backchat.hookup</groupId>
                 <artifactId>hookup_${scala.version}</artifactId>
-                <version>0.2.3</version>
+                <version>0.4.0</version>
             </dependency>
             <dependency>
                 <groupId>com.thenewmotion</groupId>
