@@ -6,12 +6,11 @@ trait CallIdGenerator extends Iterator[String] {
 }
 
 object CallIdGenerator {
-  def apply() = new DefaultCallIdGenerator
+  def apply() = new AtomicCallIdGenerator
 }
 
-class DefaultCallIdGenerator extends CallIdGenerator {
+class AtomicCallIdGenerator extends CallIdGenerator {
+  private val id = new java.util.concurrent.atomic.AtomicLong(-1)
 
-  private val idIterator: Iterator[String] = Stream.iterate(0)(_+1).map(_.toHexString).toIterator
-
-  def next() = synchronized { idIterator.next() }
+  def next() = id.incrementAndGet.toHexString
 }
