@@ -16,50 +16,51 @@ The Open Charge Point Protocol (OCPP) is a network protocol for communication be
 ## Setup
 
 1. Add this repository to your pom.xml:
-```xml
+    ```xml
     <repository>
         <id>thenewmotion</id>
         <name>The New Motion Repository</name>
         <url>http://nexus.thenewmotion.com/content/repositories/releases-public</url>
     </repository>
-```
+    ```
 
 2. Add dependency to your pom.xml:
 
-OCPP 1.2
-```xml
+    OCPP 1.2
+    ```xml
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
         <artifactId>ocpp-1.2_2.10</artifactId>
         <version>4.2.3</version>
     </dependency>
-```
+    ```
 
-OCPP 1.5
-```xml
+    OCPP 1.5
+    ```xml
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
         <artifactId>ocpp-1.5_2.10</artifactId>
         <version>4.2.3</version>
     </dependency>
-```
+    ```
 
-Spray OCPP
-```xml
+    Spray OCPP
+    ```xml
     <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
         <artifactId>ocpp-spray_2.10</artifactId>
         <version>4.2.3</version>
     </dependency>
-```
+    ```
 
-OCPP 1.5-JSON
-```xml
-  <dependency>
+    OCPP 1.5-JSON
+    ```xml
+    <dependency>
         <groupId>com.thenewmotion.chargenetwork</groupId>
         <artifactId>ocpp-json_2.10</artifactId>
         <version>4.2.3</version>
-```
+    </dependency>
+    ```
 
 ## Usage
 
