@@ -1,5 +1,8 @@
 language: scala
 scala:
   - 2.10.4
+jdk:
+  - oraclejdk8
+  - oraclejdk7
 notifications:
   slack: thenewmotion:AXSluctig1mmZbeKRDeeY41s
