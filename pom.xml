@@ -95,11 +95,6 @@
                 <version>${spray.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.thenewmotion</groupId>
-                <artifactId>common_${scala.version}</artifactId>
-                <version>1.24</version>
-            </dependency>
-            <dependency>
                 <groupId>org.json4s</groupId>
                 <artifactId>json4s-native_${scala.version}</artifactId>
                 <version>${json4s.version}</version>

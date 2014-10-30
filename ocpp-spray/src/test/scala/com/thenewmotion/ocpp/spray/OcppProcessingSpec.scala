@@ -44,7 +44,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
       response.entity.asString must beMatching(".*Fault.*") and beMatching(".*b0rk! b0rk!.*")
     }
-    
+
     "produce a Fault response if the processing function throws" in new TestScope {
       val throwingProcessingFunction = mock[(ChargerInfo, CsReq) => Future[CsRes]]
       throwingProcessingFunction(any, any) throws new RuntimeException("b0rk! b0rk!")
