@@ -8,7 +8,7 @@
     </parent>
     <groupId>com.thenewmotion.ocpp</groupId>
     <artifactId>ocpp-parent_2.10</artifactId>
-    <version>4.2.5-SNAPSHOT</version>
+    <version>4.2.5</version>
     <packaging>pom</packaging>
     <name>OCPP</name>
     <url>http://github.com/thenewmotion/ocpp</url>
@@ -23,7 +23,7 @@
         <url>https://github.com/thenewmotion/ocpp</url>
         <connection>scm:git:ssh://git@github.com/thenewmotion/ocpp.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/thenewmotion/ocpp.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>ocpp-parent_2.10-4.2.5</tag>
     </scm>
     <modules>
         <module>ocpp-1.2</module>
