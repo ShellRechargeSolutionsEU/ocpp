@@ -1,20 +1,28 @@
 package com.thenewmotion.example
 
 import java.net.URI
-import com.typesafe.scalalogging.slf4j.Logging
+import org.slf4j.LoggerFactory
 import com.thenewmotion.ocpp.messages._
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
 import com.thenewmotion.ocpp.json.{OcppError, PayloadErrorCode, OcppException, OcppJsonClient}
 
 object JsonClientTestApp extends App {
-  val connection = new OcppJsonClient("Test Charger", new URI("http://localhost:8080/ocppws")) with Logging {
+
+  private val chargerId = args.headOption.getOrElse("test-charger")
+  private val centralSystemUri = if (args.length >= 2) args(1) else "ws://localhost:8080/ocppws"
+
+  private val logger = LoggerFactory.getLogger(JsonClientTestApp.getClass)
+
+  val connection = new OcppJsonClient(chargerId, new URI(centralSystemUri)) {
 
     def onRequest(req: ChargePointReq): Future[ChargePointRes] = Future {
       req match {
         case GetLocalListVersionReq =>
+          logger.info("Received GetLocalListVersionReq")
           GetLocalListVersionRes(AuthListNotSupported)
-        case _ =>
+        case x =>
+          logger.info(s"Received $x")
           throw OcppException(PayloadErrorCode.NotSupported, "Demo app doesn't support that")
       }
     }

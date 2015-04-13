@@ -1,7 +1,7 @@
 package com.thenewmotion.ocpp.json
 
 import org.json4s.JValue
-import com.typesafe.scalalogging.slf4j.Logging
+import org.slf4j.LoggerFactory
 
 trait SrpcComponent {
   trait SrpcConnection {
@@ -13,8 +13,10 @@ trait SrpcComponent {
   def onSrpcMessage(msg: TransportMessage)
 }
 
-trait DefaultSrpcComponent extends SrpcComponent with Logging {
+trait DefaultSrpcComponent extends SrpcComponent {
   this: WebSocketComponent =>
+
+  private[this] val logger = LoggerFactory.getLogger(DefaultSrpcComponent.this.getClass)
 
   class DefaultSrpcConnection extends SrpcConnection {
     def send(msg: TransportMessage) {

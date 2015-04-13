@@ -1,12 +1,13 @@
 package com.thenewmotion.ocpp.json
 
+import org.java_websocket.drafts.Draft_17
+import org.java_websocket.handshake.ServerHandshake
 import org.json4s._
 import org.json4s.native.Serialization
-import com.typesafe.scalalogging.slf4j.Logging
+import org.slf4j.LoggerFactory
+import org.java_websocket.client.WebSocketClient
 import java.net.URI
-import io.backchat.hookup._
-import io.backchat.hookup.HookupClient.Receive
-import io.backchat.hookup.{HookupClientConfig, JsonMessage, TextMessage, Connected}
+import scala.collection.JavaConverters._
 
 trait WebSocketComponent {
   trait WebSocketConnection {
@@ -43,7 +44,9 @@ trait WebSocketComponent {
   def onDisconnect(): Unit = {}
 }
 
-class DummyWebSocketComponent extends WebSocketComponent with Logging {
+class DummyWebSocketComponent extends WebSocketComponent {
+
+  private[this] val logger = LoggerFactory.getLogger(DummyWebSocketComponent.this.getClass)
 
   class MockWebSocketConnection extends WebSocketConnection {
     def send(msg: JValue) = {
@@ -61,29 +64,40 @@ class DummyWebSocketComponent extends WebSocketComponent with Logging {
   def onMessage(jval: JValue) = logger.info("DummyWebSocketComponent received message {}", jval)
 }
 
-trait HookupClientWebSocketComponent extends WebSocketComponent {
+trait SimpleClientWebSocketComponent extends WebSocketComponent {
 
   private val ocppProtocol = "ocpp1.5"
 
-  class HookupClientWebSocketConnection(chargerId: String, config: HookupClientConfig) extends WebSocketConnection with Logging {
+  class SimpleClientWebSocketConnection(chargerId: String, uri: URI) extends WebSocketConnection {
 
-    private val hookupClientConfig = config.copy(uri = uriWithChargerId(config.uri, chargerId))
+    private[this] val logger = LoggerFactory.getLogger(SimpleClientWebSocketConnection.this.getClass)
 
-    private val client = new DefaultHookupClient(hookupClientConfig) {
-      def receive: Receive = {
-        case Connected => logger.debug("WebSocket connection connected to {}", hookupClientConfig.uri)
-        case Disconnected(_) => onDisconnect()
-        case JsonMessage(jval) =>
-          logger.debug("Received JSON message {}", jval)
-          onMessage(jval)
-        case TextMessage(txt) =>
-          logger.debug("Received non-JSON message \"{}\"", txt)
-          onError(new Exception(s"Invalid JSON received: $txt"))
-        case e@Error(maybeEx) =>
-          logger.debug("Received error {}", e)
-          val exception = maybeEx getOrElse new Exception("WebSocket error received without more information")
-          onError(exception)
+    private val actualUri = uriWithChargerId(uri, chargerId)
+
+    private val headers = Map("Sec-WebSocket-Protocol" -> ocppProtocol).asJava
+
+    private val client = new WebSocketClient(actualUri, new Draft_17(), headers, 0) {
+
+      override def onOpen(h: ServerHandshake): Unit =
+        logger.debug("WebSocket connection opened to {}", actualUri)
+
+      override def onMessage(msg: String): Unit = {
+        native.parseJsonOpt(msg) match {
+          case None =>
+            logger.debug("Received non-JSON message: {}", msg)
+          case Some(jval) =>
+            logger.debug("Received JSON message {}", jval)
+            SimpleClientWebSocketComponent.this.onMessage(jval)
+        }
       }
+
+      override def onError(e: Exception) = {
+        logger.debug("Received error {}", e)
+        SimpleClientWebSocketComponent.this.onError(e)
+      }
+
+      override def onClose(code: Int, reason: String, remote: Boolean): Unit =
+        SimpleClientWebSocketComponent.this.onDisconnect()
     }
 
     private def uriWithChargerId(base: URI, chargerId: String): URI = {
@@ -94,11 +108,12 @@ trait HookupClientWebSocketComponent extends WebSocketComponent {
 
     def send(jval: JValue) = {
       logger.debug("Sending with Hookup: {}", jval)
-      client.send(jval)
+      client.send(native.compactJson(native.renderJValue(jval)))
     }
 
-    def close() = client.close()
+    def close() = client.closeBlocking()
 
-    client.connect(ocppProtocol)
+    val connected = client.connectBlocking()
+    logger.info(s"Created SimpleClientWebSocketConnection, connected = $connected")
   }
 }

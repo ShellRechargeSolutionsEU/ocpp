@@ -1,7 +1,7 @@
 package com.thenewmotion.ocpp
 package soap
 
-import com.typesafe.scalalogging.slf4j.Logging
+import org.slf4j.LoggerFactory
 
 /**
  * @author Yaroslav Klymko
@@ -11,8 +11,10 @@ trait Client {
   def version: Version.Value
 }
 
-private[ocpp] trait ScalaxbClient extends Logging {
+private[ocpp] trait ScalaxbClient {
   self: Client =>
+
+  private val logger = LoggerFactory.getLogger(ScalaxbClient.this.getClass)
 
   type Service
 

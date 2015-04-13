@@ -1,7 +1,7 @@
 package com.thenewmotion.ocpp.soap
 
 import scala.language.postfixOps
-import scalax.{RichAny, StringOption}
+import com.github.t3hnar.scalax.{RichAny, StringOption}
 import xml.Elem
 import scala.util.Try
 import com.thenewmotion.ocpp._

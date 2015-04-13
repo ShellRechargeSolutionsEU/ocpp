@@ -1,10 +1,10 @@
 package com.thenewmotion.ocpp.json
 
 import com.thenewmotion.ocpp.messages._
+import org.slf4j.LoggerFactory
 import v15.Ocpp15J
 import scala.concurrent.{Promise, Future}
 import scala.util.{Try, Success, Failure}
-import com.typesafe.scalalogging.slf4j.Logging
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -47,10 +47,12 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
 
   this: SrpcComponent =>
 
-  trait DefaultOcppConnection extends OcppConnection with Logging {
+  trait DefaultOcppConnection extends OcppConnection {
     /** The operations that the other side can request from us */
     val ourOperations: JsonOperations[INREQ, OUTRES]
     val theirOperations: JsonOperations[OUTREQ, INRES]
+
+    private val logger = LoggerFactory.getLogger(DefaultOcppConnection.this.getClass)
 
     private[this] val callIdGenerator = CallIdGenerator()
 
@@ -98,8 +100,8 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
           responseSrpc onComplete {
             case Success(json) => srpcConnection.send(json)
             case Failure(e) =>
-              logger.error("OCPP response future failed for {} with call ID {}. This ought to be impossible.",
-                opName, req.callId)
+              logger.error(
+                s"OCPP response future failed for $opName with call ID ${req.callId}. This ought to be impossible.")
           }
       }
     }

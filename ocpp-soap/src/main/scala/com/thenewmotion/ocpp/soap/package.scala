@@ -6,8 +6,7 @@ import scala.xml.{NamespaceBinding, NodeSeq}
 import javax.xml.datatype.{XMLGregorianCalendar, DatatypeFactory}
 import org.joda.time.{DateTimeZone, DateTime}
 import org.slf4j.LoggerFactory
-import com.typesafe.scalalogging.slf4j.Logger
-import scalax.StringOption
+import com.github.t3hnar.scalax.StringOption
 import java.net.URI
 
 
@@ -23,7 +22,7 @@ package object soap {
     Some("xs") -> "http://www.w3.org/2001/XMLSchema",
     Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance")
 
-  val httpLogger = Logger(LoggerFactory getLogger "com.thenewmotion.ocpp.http")
+  val httpLogger = LoggerFactory.getLogger("com.thenewmotion.ocpp.http")
 
   implicit class ReachFault(val self: Fault) extends AnyVal {
     def asBody: Body = simpleBody(DataRecord(Some(soapEnvelopeUri), Some("Fault"), self))

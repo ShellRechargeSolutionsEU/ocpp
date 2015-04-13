@@ -3,9 +3,9 @@ package spray
 
 import java.net.InetAddress
 import com.thenewmotion.spray.InetAddressFromReq
+import org.slf4j.LoggerFactory
 
 import xml.{XML, NodeSeq}
-import com.typesafe.scalalogging.slf4j.Logging
 import soapenvelope12.{Body, Fault, Envelope}
 import com.thenewmotion.ocpp.soap.Fault._
 import _root_.spray.http.{StatusCodes, HttpResponse, HttpRequest}
@@ -20,7 +20,9 @@ import com.thenewmotion.ocpp.soap._
  */
 case class ChargerInfo(ocppVersion: Version.Value, endpointUrl: Option[Uri], chargerId: String, ipAddress: Option[InetAddress])
 
-object OcppProcessing extends Logging {
+object OcppProcessing {
+
+  private val logger = LoggerFactory.getLogger(OcppProcessing.getClass)
 
   type ResponseFunc[T] = Option[T] => HttpResponse
   type ChargerId = String

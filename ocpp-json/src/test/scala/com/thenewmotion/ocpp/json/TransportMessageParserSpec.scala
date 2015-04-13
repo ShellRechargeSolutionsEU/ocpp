@@ -4,10 +4,9 @@ import org.specs2.mutable.SpecificationWithJUnit
 import scala.io.Source
 import org.json4s._
 import org.json4s.native.Serialization
-import com.typesafe.scalalogging.slf4j.Logging
 import PayloadErrorCode._
 
-class TransportMessageParserSpec extends SpecificationWithJUnit with Logging {
+class TransportMessageParserSpec extends SpecificationWithJUnit {
 
   implicit val formats = DefaultFormats ++ TransportMessageJsonSerializers()
 

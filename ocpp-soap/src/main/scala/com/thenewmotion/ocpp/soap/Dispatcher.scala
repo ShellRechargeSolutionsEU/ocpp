@@ -29,7 +29,7 @@ abstract class AbstractDispatcher[REQ, RES](implicit evidence: OcppService[REQ, 
 
   val actions: Enumeration
 
-  import scalax.RichAny
+  import com.github.t3hnar.scalax.RichAny
 
   def dispatch(body: Body, f: REQ => Future[RES])
               (implicit ec: ExecutionContext): Future[Body] = {

@@ -4,9 +4,11 @@ package json
 import org.json4s._
 import org.json4s.native.JsonParser
 import org.json4s.native.JsonMethods._
-import com.typesafe.scalalogging.slf4j.Logging
+import org.slf4j.LoggerFactory
 
-object TransportMessageParser extends Logging {
+object TransportMessageParser {
+
+  private[this] val logger = LoggerFactory.getLogger(TransportMessageParser.this.getClass)
 
   implicit val formats = DefaultFormats ++ TransportMessageJsonSerializers()
   val CALLTYPE = BigInt(TransportMessageType.CALL.id)

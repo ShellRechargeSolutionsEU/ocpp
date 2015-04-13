@@ -1,7 +1,7 @@
 package com.thenewmotion.ocpp
 package soap
 
-import scalax._
+import com.github.t3hnar.scalax._
 import soapenvelope12.Body
 import scala.xml.Elem
 

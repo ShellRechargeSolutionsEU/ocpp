@@ -3,7 +3,7 @@ package soap
 
 import scala.language.implicitConversions
 import xml.{Elem, NodeSeq}
-import scalax.RichAny
+import com.github.t3hnar.scalax.RichAny
 import soapenvelope12.Body
 
 /**

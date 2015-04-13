@@ -3,13 +3,12 @@ package com.thenewmotion.ocpp.json
 import java.net.URI
 import com.thenewmotion.ocpp.messages._
 import scala.concurrent.Future
-import io.backchat.hookup.HookupClientConfig
 
 abstract class OcppJsonClient(chargerId: String, centralSystemUri: URI)
   extends OcppEndpoint[CentralSystemReq, CentralSystemRes, ChargePointReq, ChargePointRes] {
 
-  private[this] val ocppStack = new ChargePointOcppConnectionComponent with DefaultSrpcComponent with HookupClientWebSocketComponent {
-    val webSocketConnection = new HookupClientWebSocketConnection(chargerId, hookupClientConfig)
+  private[this] val ocppStack = new ChargePointOcppConnectionComponent with DefaultSrpcComponent with SimpleClientWebSocketComponent {
+    val webSocketConnection = new SimpleClientWebSocketConnection(chargerId, centralSystemUri)
     val srpcConnection = new DefaultSrpcConnection
     val ocppConnection = new ChargePointOcppConnection
 
@@ -25,15 +24,4 @@ abstract class OcppJsonClient(chargerId: String, centralSystemUri: URI)
     ocppStack.ocppConnection.sendRequest(req)
 
   def close() = ocppStack.webSocketConnection.close()
-
-  /**
-   * Override this to supply your own configuration for the Hookup WebSocket client
-   *
-   * The server URL is part of the config, and put in here in the default implementation. So usually when overriding
-   * this method you will want to call super.hookupClientConfig.copy(...) to add in your own settings but leave the
-   * right server URL in place.
-   *
-   * @return
-   */
-  protected def hookupClientConfig: HookupClientConfig = new HookupClientConfig(uri = centralSystemUri)
 }
