@@ -107,7 +107,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
     }
 
     def send(jval: JValue) = {
-      logger.debug("Sending with Hookup: {}", jval)
+      logger.debug("Sending with Java-WebSocket: {}", jval)
       client.send(native.compactJson(native.renderJValue(jval)))
     }
 
