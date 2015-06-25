@@ -2,14 +2,12 @@ package com.thenewmotion.ocpp
 package spray
 
 import java.net.InetAddress
-import com.thenewmotion.spray.InetAddressFromReq
 import org.slf4j.LoggerFactory
 
 import xml.{XML, NodeSeq}
 import soapenvelope12.{Body, Fault, Envelope}
 import com.thenewmotion.ocpp.soap.Fault._
-import _root_.spray.http.{StatusCodes, HttpResponse, HttpRequest}
-import StatusCodes._
+import _root_.spray.http.{Uri => _, _}, HttpHeaders._
 import java.io.ByteArrayInputStream
 import scala.language.implicitConversions
 import scala.concurrent.{ExecutionContext, Future}
@@ -35,6 +33,19 @@ object OcppProcessing {
     applyDecoded(decoded)(f) map encode
   }
 
+  private def inetAddress(req: HttpRequest): Option[InetAddress] = {
+    val headers = req.headers
+    headers.collectFirst {
+      case `X-Forwarded-For`(x) if x.nonEmpty => x.head
+    } match {
+      case Some(RemoteAddress.IP(x))   => Some(x)
+      case Some(RemoteAddress.Unknown) => None
+      case None => headers.collectFirst {
+        case `Remote-Address`(RemoteAddress.IP(x)) => x
+      }
+    }
+  }
+
   private[spray] def applyDecoded[REQ, RES](req: HttpRequest)(f: ProcessingFunc[REQ, RES])
                                            (implicit ocppService: OcppService[REQ, RES], ec: ExecutionContext): Future[HttpResponse] = {
     val errorResponseOrFuture = safe {
@@ -44,7 +55,8 @@ object OcppProcessing {
         env <- envelope(xml).right
         chargerId <- chargerId(env).right
         version <- parseVersion(env.Body).right
-        chargerInfo <- Right(ChargerInfo(version, ChargeBoxAddress.unapply(env), chargerId, InetAddressFromReq.unapply(req))).right
+        chargerInfo <- Right(ChargerInfo(
+          version, ChargeBoxAddress.unapply(env), chargerId, inetAddress(req))).right
       } yield {
         httpLogger.debug(s">>\n\t${req.headers.mkString("\n\t")}\n\t$xml")
         dispatch(chargerInfo.ocppVersion, env.Body, f(chargerInfo, _: REQ)) map (OcppResponse(_))
