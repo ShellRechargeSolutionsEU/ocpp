@@ -22,15 +22,19 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemReq, C
   val actions = CentralSystemAction
   import actions._
 
-  def dispatch(action: Value, xml: NodeSeq, service: CentralSystemReq => Future[CentralSystemRes])(implicit ec: ExecutionContext) = {
-    def ?[XMLREQ: XMLFormat, XMLRES: XMLFormat](reqTrans: XMLREQ => CentralSystemReq)(resTrans: CentralSystemRes => XMLRES) =
+  def dispatch
+    (action: Value, xml: NodeSeq, service: CentralSystemReq => Future[CentralSystemRes])
+    (implicit ec: ExecutionContext) = {
+
+    def ?[XMLREQ: XMLFormat, XMLRES: XMLFormat]
+      (reqTrans: XMLREQ => CentralSystemReq)(resTrans: CentralSystemRes => XMLRES) =
       reqRes(action, xml, service)(reqTrans)(resTrans)
 
     action match {
       case Authorize => ?[AuthorizeRequest, AuthorizeResponse] {
         req => AuthorizeReq(req.idTag)
       } {
-          case AuthorizeRes(idTag) => AuthorizeResponse(idTag.toV12)
+        case AuthorizeRes(idTag) => AuthorizeResponse(idTag.toV12)
       }
 
       case BootNotification => ?[BootNotificationRequest, BootNotificationResponse] {

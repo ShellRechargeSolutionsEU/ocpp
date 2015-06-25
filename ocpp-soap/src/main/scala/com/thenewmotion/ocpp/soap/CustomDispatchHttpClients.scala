@@ -1,11 +1,10 @@
 package com.thenewmotion.ocpp
 package soap
 
-import scalaxb.HttpClients
+import scala.concurrent._, duration._
+import ExecutionContext.Implicits.global
 import dispatch._
-import scala.concurrent.duration._
-import scala.concurrent.Await
-import scala.concurrent.ExecutionContext.Implicits.global
+import scalaxb.HttpClients
 
 abstract class CustomDispatchHttpClients(http: Http) extends HttpClients {
   trait CustomDispatchHttpClient extends HttpClient {
@@ -33,7 +32,7 @@ abstract class CustomDispatchHttpClients(http: Http) extends HttpClients {
 }
 
 object CustomDispatchHttpClients {
-  val httpRequestTimeout = 45 seconds
+  val httpRequestTimeout = 45.seconds
 }
 
 object SoapActionHeader {

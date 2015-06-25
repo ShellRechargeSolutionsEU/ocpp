@@ -131,6 +131,18 @@ object ConvertersV15 {
     case messages.CancelReservationReq(reservationId) => CancelReservationReq(reservationId)
 
     case messages.CancelReservationRes(accepted) => CancelReservationRes(accepted.toStatusString)
+
+    case x: messages.CentralSystemDataTransferReq =>
+      DataTransferReq(x.vendorId, x.messageId, x.data)
+
+    case x: messages.CentralSystemDataTransferRes =>
+      DataTransferRes(x.status.toString, x.data)
+
+    case x: messages.ChargePointDataTransferReq =>
+      DataTransferReq(x.vendorId, x.messageId, x.data)
+
+    case x: messages.ChargePointDataTransferRes =>
+      DataTransferRes(x.status.toString, x.data)
   }
 
   def fromV15(msg: Message): messages.Message = msg match {
@@ -262,17 +274,19 @@ object ConvertersV15 {
     case CancelReservationRes(status) => messages.CancelReservationRes(statusStringToBoolean(status))
   }
 
-  private implicit class RichIdTagInfo(i: messages.IdTagInfo) {
-    def toV15: IdTagInfo = IdTagInfo(status = AuthorizationStatusConverters.enumToJson(i.status.toString),
-                          expiryDate = i.expiryDate,
-                          parentIdTag = i.parentIdTag)
+  private implicit class RichIdTagInfo(val i: messages.IdTagInfo) extends AnyVal {
+    def toV15 = IdTagInfo(
+      status = AuthorizationStatusConverters.enumToJson(i.status.toString),
+      expiryDate = i.expiryDate,
+      parentIdTag = i.parentIdTag)
   }
 
-  private implicit class RichV15IdTagInfo(self: IdTagInfo) {
+  private implicit class RichV15IdTagInfo(val self: IdTagInfo) extends AnyVal {
     def fromV15: messages.IdTagInfo =
       try {
         messages.IdTagInfo(
-          status = messages.AuthorizationStatus.withName(AuthorizationStatusConverters.jsonToEnum(self.status)),
+          status = messages.AuthorizationStatus
+            .withName(AuthorizationStatusConverters.jsonToEnum(self.status)),
           expiryDate = self.expiryDate,
           parentIdTag = self.parentIdTag)
       } catch {
@@ -281,7 +295,7 @@ object ConvertersV15 {
       }
   }
 
-  private implicit class RichChargePointStatus(self: messages.ChargePointStatus) {
+  private implicit class RichChargePointStatus(val self: messages.ChargePointStatus) extends AnyVal{
     def toV15Fields: (String, String, Option[String], Option[String]) = {
       def simpleStatus(name: String) = (name, "NoError", self.info, None)
       self match {
@@ -315,22 +329,22 @@ object ConvertersV15 {
   }
 
 
-  private implicit class RichTransactionData(self: messages.TransactionData) {
+  private implicit class RichTransactionData(val self: messages.TransactionData) extends AnyVal {
     def toV15: TransactionData = TransactionData(values = Some(self.meters.map(_.toV15): List[Meter]))
   }
 
-  private implicit class RichMeter(self: messages.Meter) {
-    def toV15: Meter =
-      Meter(timestamp = self.timestamp,
-                       values = self.values.map(valueToV15))
+  private implicit class RichMeter(val self: messages.Meter) extends AnyVal {
+    def toV15 = Meter(
+      timestamp = self.timestamp,
+      values = self.values.map(valueToV15))
 
-    def valueToV15(v: messages.Meter.Value): MeterValue =
-      MeterValue(value = v.value,
-                     measurand = noneIfDefault(Measurand.EnergyActiveImportRegister, v.measurand),
-                     context = noneIfDefault(ReadingContext.SamplePeriodic, v.context),
-                     format = noneIfDefault(ValueFormat.Raw, v.format),
-                     location = noneIfDefault(Location.Outlet, v.location),
-                     unit = noneIfDefault(UnitOfMeasure.Wh, v.unit))
+    def valueToV15(v: messages.Meter.Value) = MeterValue(
+        value = v.value,
+        measurand = noneIfDefault(Measurand.EnergyActiveImportRegister, v.measurand),
+        context = noneIfDefault(ReadingContext.SamplePeriodic, v.context),
+        format = noneIfDefault(ValueFormat.Raw, v.format),
+        location = noneIfDefault(Location.Outlet, v.location),
+        unit = noneIfDefault(UnitOfMeasure.Wh, v.unit))
 
     def noneIfDefault(default: Enumeration#Value, actual: Enumeration#Value): Option[String] =
       if (actual == default) None else Some(actual.toString)
@@ -368,10 +382,14 @@ object ConvertersV15 {
     }
 
   private object AuthorizationStatusConverters {
-    val names = List(("Accepted", "Accepted"), ("IdTagBlocked", "Blocked"), ("IdTagExpired", "Expired"),
-      ("IdTagInvalid", "Invalid"), ("ConcurrentTx", "ConcurrentTx"))
-    val jsonToEnum = Map(names.map(_.swap): _*)
-    val enumToJson = Map(names: _*)
+    val names = List(
+      "Accepted" -> "Accepted",
+      "IdTagBlocked" -> "Blocked",
+      "IdTagExpired" -> "Expired",
+      "IdTagInvalid" -> "Invalid",
+      "ConcurrentTx" -> "ConcurrentTx")
+    val jsonToEnum = names.map(_.swap).toMap
+    val enumToJson = names.toMap
   }
 
   private implicit class BooleanToStatusString(val b: Boolean) extends AnyVal {

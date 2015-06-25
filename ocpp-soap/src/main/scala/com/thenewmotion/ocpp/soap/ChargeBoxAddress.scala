@@ -4,12 +4,9 @@ import scala.language.postfixOps
 import com.github.t3hnar.scalax.{RichAny, StringOption}
 import xml.Elem
 import scala.util.Try
-import com.thenewmotion.ocpp._
 import soapenvelope12.Envelope
 
-/**
- * @author Yaroslav Klymko
- */
+
 object ChargeBoxAddress {
   def unapply(env: Envelope): Option[Uri] = {
     val headers = for {

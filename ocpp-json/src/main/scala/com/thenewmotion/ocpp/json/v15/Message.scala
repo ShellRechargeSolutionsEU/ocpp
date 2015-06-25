@@ -1,7 +1,6 @@
 package com.thenewmotion.ocpp.json.v15
 
 import org.joda.time.DateTime
-import java.net.URI
 
 // we use fieldless case classes instead of case objects because that plays nicer with lift-json
 

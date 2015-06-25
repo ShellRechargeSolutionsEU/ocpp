@@ -50,23 +50,22 @@ abstract class AbstractDispatcher[REQ, RES](implicit evidence: OcppService[REQ, 
                         (implicit ec: ExecutionContext): Future[Body]
 
   protected def reqRes: ReqRes = new ReqRes {
-    def apply[XMLREQ, XMLRES](action: actions.Value, xml: NodeSeq, f: REQ => Future[RES])
-                                                   (reqTrans: XMLREQ => REQ)
-                                                   (resTrans: RES => XMLRES)
-                                                   (implicit ec: ExecutionContext,
-                                                    reqEv: XMLFormat[XMLREQ],
-                                                    resEv: XMLFormat[XMLRES]) =
+    def apply[XMLREQ, XMLRES]
+        (action: actions.Value, xml: NodeSeq, f: REQ => Future[RES])
+        (reqTrans: XMLREQ => REQ)
+        (resTrans: RES => XMLRES)
+        (implicit ec: ExecutionContext, reqFmt: XMLFormat[XMLREQ], resFmt: XMLFormat[XMLRES]) =
       fromXMLEither[XMLREQ](xml) match {
         case Left(msg) => Future.successful(ProtocolError(msg))
-        case Right(xmlReq) => try {
-          val req = reqTrans(xmlReq)
-          f(req) map { res =>
+        case Right(xmlReq) =>
+          f(reqTrans(xmlReq)) map { res =>
             val xmlRes = resTrans(res)
-            simpleBody(DataRecord(Some(evidence.namespace(version)), Some(SoapActionEnumeration.responseLabels(actions)(action)), xmlRes))
+            simpleBody(DataRecord(
+              Some(evidence.namespace(version)),
+              Some(SoapActionEnumeration.responseLabels(actions)(action)), xmlRes))
           } recover {
             case FaultException(fault) => fault
           }
-        }
       }
   }
 
