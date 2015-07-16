@@ -131,6 +131,12 @@ object ConvertersV15 {
     case messages.CancelReservationReq(reservationId) => CancelReservationReq(reservationId)
 
     case messages.CancelReservationRes(accepted) => CancelReservationRes(accepted.toStatusString)
+
+    case messages.CentralSystemDataTransferReq(_, _, _)
+        | messages.CentralSystemDataTransferRes(_, _)
+        | messages.ChargePointDataTransferReq(_, _, _)
+        | messages.ChargePointDataTransferRes(_, _) =>
+        unexpectedMessage(msg)
   }
 
   def fromV15(msg: Message): messages.Message = msg match {
@@ -260,7 +266,12 @@ object ConvertersV15 {
     case CancelReservationReq(reservationId) => messages.CancelReservationReq(reservationId)
 
     case CancelReservationRes(status) => messages.CancelReservationRes(statusStringToBoolean(status))
+
+    case DataTransferReq(_, _, _) | DataTransferRes(_, _) => unexpectedMessage(msg)
   }
+
+  private def unexpectedMessage(msg: Any) =
+    throw new Exception(s"Couldn't convert unexpected OCPP message $msg")
 
   private implicit class RichIdTagInfo(i: messages.IdTagInfo) {
     def toV15: IdTagInfo = IdTagInfo(status = AuthorizationStatusConverters.enumToJson(i.status.toString),

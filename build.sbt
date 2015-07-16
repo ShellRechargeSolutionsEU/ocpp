@@ -72,7 +72,7 @@ val ocppSpray = module("ocpp-spray")
       sprayHttp, sprayHttpX, akka))
 
 val exampleJsonClient =
-  Project("example-json-client", file("example-json-client"))
+  module("example-json-client")
   .dependsOn(json)
   .settings(
     libraryDependencies ++= Seq(slf4jApi, slf4jSimpleLogger),

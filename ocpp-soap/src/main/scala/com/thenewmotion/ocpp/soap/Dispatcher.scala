@@ -58,7 +58,7 @@ abstract class AbstractDispatcher[REQ, RES](implicit evidence: OcppService[REQ, 
                                                     resEv: XMLFormat[XMLRES]) =
       fromXMLEither[XMLREQ](xml) match {
         case Left(msg) => Future.successful(ProtocolError(msg))
-        case Right(xmlReq) => try {
+        case Right(xmlReq) =>
           val req = reqTrans(xmlReq)
           f(req) map { res =>
             val xmlRes = resTrans(res)
@@ -66,7 +66,6 @@ abstract class AbstractDispatcher[REQ, RES](implicit evidence: OcppService[REQ, 
           } recover {
             case FaultException(fault) => fault
           }
-        }
       }
   }
 

@@ -33,7 +33,7 @@ abstract class CustomDispatchHttpClients(http: Http) extends HttpClients {
 }
 
 object CustomDispatchHttpClients {
-  val httpRequestTimeout = 45 seconds
+  val httpRequestTimeout = 45.seconds
 }
 
 object SoapActionHeader {

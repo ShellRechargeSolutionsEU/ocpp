@@ -1,10 +1,12 @@
 package com.thenewmotion.ocpp.json
 
-import com.thenewmotion.ocpp.messages._
-import scala.reflect._
-import com.thenewmotion.ocpp.json.JsonDeserializable._
-import org.json4s._
+import scala.language.existentials
+
 import scala.util.{Failure, Success, Try}
+import scala.reflect._
+import org.json4s._
+import com.thenewmotion.ocpp.messages._
+import com.thenewmotion.ocpp.json.JsonDeserializable._
 
 class JsonOperation[REQ <: Req, RES <: Res](val action: Enumeration#Value)
                                            (implicit reqRes: ReqRes[REQ, RES],
@@ -118,7 +120,7 @@ object ChargePointOperations extends JsonOperations[ChargePointReq, ChargePointR
   val sendLocalListJsonOp = new JsonOperation[SendLocalListReq, SendLocalListRes](SendLocalList)
   val unlockConnectorJsonOp = new JsonOperation[UnlockConnectorReq, UnlockConnectorRes](UnlockConnector)
   val updateFirmwareJsonOp = new JsonOperation[UpdateFirmwareReq, UpdateFirmwareRes.type](UpdateFirmware)
-  
+
   val operations: Traversable[JsonOperation[_ <: ChargePointReq, _ <: ChargePointRes]] = List(
     cancelReservationJsonOp,
     changeAvailabilityJsonOp,
