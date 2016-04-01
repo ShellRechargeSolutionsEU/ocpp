@@ -9,11 +9,13 @@ import javax.xml.namespace.QName
  */
 object Fault {
 
-  object TnsSender extends FaultcodeEnum {
+  @SerialVersionUID(0L)
+  object TnsSender extends FaultcodeEnum with Serializable {
     override def toString = "soap12:Sender"
   }
 
-  object TnsReceiver extends FaultcodeEnum {
+  @SerialVersionUID(0L)
+  object TnsReceiver extends FaultcodeEnum with Serializable {
     override def toString = "soap12:Receiver"
   }
 
