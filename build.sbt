@@ -3,7 +3,7 @@ import ScalaxbKeys._
 val dispatchV = "0.11.2"
 val json4sV = "3.2.10"
 val sprayV = "1.3.3"
-val specs2V = "2.4.15"
+val specs2V = "2.4.16"
 val slf4jV = "1.7.12"
 
 val time = "com.thenewmotion" %% "time" % "2.8"
