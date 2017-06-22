@@ -64,52 +64,13 @@ The Open Charge Point Protocol (OCPP) is a network protocol for communication be
 
 ## Usage
 
-There is an example OCPP 1.5-JSON client application in ocpp-json/src/test/scala/com/thenewmotion/example, reproduced
-here for your convenience:
+There is an example OCPP 1.5-JSON client application in example-json-client/src/main/scala/com/thenewmotion/ocpp/json. You can run it like this:
 
-```scala
-package com.thenewmotion.example
+    sbt "project example-json-client" "run 01234567 ws://localhost:8017/ocppws abcdef1234abcdef1234abcdef1234abcdef1234"
 
-import java.net.URI
-import com.typesafe.scalalogging.slf4j.Logging
-import com.thenewmotion.ocpp.messages._
-import scala.concurrent._
-import scala.concurrent.ExecutionContext.Implicits.global
-import com.thenewmotion.ocpp.json.{OcppError, PayloadErrorCode, OcppException, OcppJsonClient}
+    sbt "project example-json-client" "run 01234567 wss://test-cn-node-internet.thenewmotion.com/ocppws abcdef1234abcdef1234abcdef1234abcdef1234"
 
-object JsonClientTestApp extends App {
-  val connection = new OcppJsonClient("Test Charger", new URI("http://localhost:8080/ocppws")) with Logging {
-
-    def onRequest(req: ChargePointReq): Future[ChargePointRes] = Future {
-      req match {
-        case GetLocalListVersionReq =>
-          GetLocalListVersionRes(AuthListNotSupported)
-        case _ =>
-          throw OcppException(PayloadErrorCode.NotSupported, "Demo app doesn't support that")
-      }
-    }
-
-    def onError(err: OcppError) = logger.warn(s"OCPP error: ${err.error} ${err.description}")
-
-    def onDisconnect = logger.warn("WebSocket disconnect")
-  }
-
-  connection.send(BootNotificationReq(
-    chargePointVendor = "The New Motion",
-    chargePointModel = "Lolo 47.6",
-    chargePointSerialNumber = Some("123456"),
-    chargeBoxSerialNumber = None,
-    firmwareVersion = None,
-    iccid = None,
-    imsi = None,
-    meterType = None,
-    meterSerialNumber = None))
-
-  Thread.sleep(7000)
-
-  connection.close()
-}
-```
+The charge point id (here 01234567) and the basic auth password (here abcdef...) are combined and converted to binary data before being base64 encoded and passed on to the server.
 
 ## Acknowledgements
 

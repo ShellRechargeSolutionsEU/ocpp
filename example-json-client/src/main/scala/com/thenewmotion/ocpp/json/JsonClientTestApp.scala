@@ -1,21 +1,22 @@
-package com.thenewmotion.example
+package com.thenewmotion.ocpp.json
 
 import java.net.URI
-import org.slf4j.LoggerFactory
+
 import com.thenewmotion.ocpp.messages._
-import scala.concurrent._
+import org.slf4j.LoggerFactory
+
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.thenewmotion.ocpp.json.{OcppError, PayloadErrorCode, OcppException, OcppJsonClient}
+import scala.concurrent._
 
 object JsonClientTestApp extends App {
 
   private val chargerId = args.headOption.getOrElse("test-charger")
   private val centralSystemUri = if (args.length >= 2) args(1) else "ws://localhost:8080/ocppws"
+  private val authPassword = if (args.length >= 3) Some(args(2)) else None
 
   private val logger = LoggerFactory.getLogger(JsonClientTestApp.getClass)
 
-  val connection = new OcppJsonClient(chargerId, new URI(centralSystemUri)) {
-
+  val connection = new OcppJsonClient(chargerId, new URI(centralSystemUri), authPassword) {
     def onRequest(req: ChargePointReq): Future[ChargePointRes] = Future {
       req match {
         case GetLocalListVersionReq =>
@@ -46,4 +47,6 @@ object JsonClientTestApp extends App {
   Thread.sleep(7000)
 
   connection.close()
+
+  System.exit(0)
 }
