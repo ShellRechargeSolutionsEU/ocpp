@@ -66,11 +66,11 @@ The Open Charge Point Protocol (OCPP) is a network protocol for communication be
 
 There is an example OCPP 1.5-JSON client application in example-json-client/src/main/scala/com/thenewmotion/ocpp/json. You can run it like this:
 
-    sbt "project example-json-client" "run 01234567 ws://localhost:8017/ocppws abcdef1234abcdef1234abcdef1234abcdef1234"
+    sbt "project example-json-client" "run 01234567 ws://localhost:8017/ocppws"
+
+or with TLS encryption and Basic Auth according to the OCPP 1.6 JSON Implementation Specification:
 
     sbt "project example-json-client" "run 01234567 wss://test-cn-node-internet.thenewmotion.com/ocppws abcdef1234abcdef1234abcdef1234abcdef1234"
-
-The charge point id (here 01234567) and the basic auth password (here abcdef...) are combined and converted to binary data before being base64 encoded and passed on to the server.
 
 ## Acknowledgements
 
