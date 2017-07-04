@@ -7,6 +7,10 @@ import org.json4s.native.Serialization
 import org.slf4j.LoggerFactory
 import org.java_websocket.client.WebSocketClient
 import java.net.URI
+import javax.net.ssl.SSLContext
+
+import org.java_websocket.client.DefaultSSLWebSocketClientFactory
+
 import scala.collection.JavaConverters._
 
 trait WebSocketComponent {
@@ -68,13 +72,26 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
 
   private val ocppProtocol = "ocpp1.5"
 
-  class SimpleClientWebSocketConnection(chargerId: String, uri: URI) extends WebSocketConnection {
+  class SimpleClientWebSocketConnection(
+    chargerId: String,
+    uri: URI,
+    authPassword: Option[String]
+  )(implicit sslContext: SSLContext = SSLContext.getDefault) extends WebSocketConnection {
 
     private[this] val logger = LoggerFactory.getLogger(SimpleClientWebSocketConnection.this.getClass)
 
     private val actualUri = uriWithChargerId(uri, chargerId)
 
-    private val headers = Map("Sec-WebSocket-Protocol" -> ocppProtocol).asJava
+    private val headers = (Map("Sec-WebSocket-Protocol" -> ocppProtocol) ++
+      authPassword.fold(Map.empty[String, String]) { password =>
+        def toBytes = s"$chargerId:".toCharArray.map(_.toByte) ++
+          password.sliding(2, 2).map { byteAsHex =>
+            Integer.parseInt(byteAsHex, 16).toByte
+          }
+
+        import org.apache.commons.codec.binary.Base64.encodeBase64String
+        Map("Authorization" -> s"Basic: ${encodeBase64String(toBytes)}")
+      }).asJava
 
     private val client = new WebSocketClient(actualUri, new Draft_17(), headers, 0) {
 
@@ -113,7 +130,15 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
 
     def close() = client.closeBlocking()
 
-    val connected = client.connectBlocking()
+    private def connect() = {
+      if (uri.getScheme == "wss") {
+        logger.info(s"Using SSLContext protocol: ${sslContext.getProtocol}")
+        client.setWebSocketFactory(new DefaultSSLWebSocketClientFactory(sslContext))
+      }
+      client.connectBlocking()
+    }
+
+    val connected = connect()
     logger.info(s"Created SimpleClientWebSocketConnection, connected = $connected")
   }
 }

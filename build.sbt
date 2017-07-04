@@ -20,7 +20,7 @@ val akka = "com.typesafe.akka" %% "akka-actor" % "2.3.11" % "provided"
 val specs2 = "org.specs2" %% "specs2" % specs2V % "test"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.0.4"
 val scalaParser = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4"
-
+val commonsCodec = "commons-codec" % "commons-codec" % "1.10"
 
 def module(name: String) = Project(name, file(name))
   .enablePlugins(OssLibPlugin)
@@ -55,7 +55,7 @@ val json = module("ocpp-json")
   .dependsOn(messages)
   .settings(
     libraryDependencies ++= Seq(
-      javaWebSocket, json4sNative, json4sExt, slf4jApi, time))
+      javaWebSocket, json4sNative, json4sExt, slf4jApi, time, commonsCodec))
 
 val ocpp12Soap = scalaxbModule("ocpp-12", "com.thenewmotion.ocpp.v12")
 val ocpp15Soap = scalaxbModule("ocpp-15", "com.thenewmotion.ocpp.v15")
@@ -76,6 +76,7 @@ val exampleJsonClient =
   .dependsOn(json)
   .settings(
     libraryDependencies ++= Seq(slf4jApi, slf4jSimpleLogger),
+    outputStrategy in run := Some(StdoutOutput),
     publish := {}
   )
 
