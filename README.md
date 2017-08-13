@@ -29,7 +29,7 @@ The Open Charge Point Protocol (OCPP) is a network protocol for communication be
     OCPP 1.2
     ```xml
     <dependency>
-        <groupId>com.thenewmotion.chargenetwork</groupId>
+        <groupId>com.thenewmotion.ocpp</groupId>
         <artifactId>ocpp-1.2_2.10</artifactId>
         <version>4.3.0</version>
     </dependency>
@@ -38,7 +38,7 @@ The Open Charge Point Protocol (OCPP) is a network protocol for communication be
     OCPP 1.5
     ```xml
     <dependency>
-        <groupId>com.thenewmotion.chargenetwork</groupId>
+        <groupId>com.thenewmotion.ocpp</groupId>
         <artifactId>ocpp-1.5_2.10</artifactId>
         <version>4.3.0</version>
     </dependency>
@@ -47,7 +47,7 @@ The Open Charge Point Protocol (OCPP) is a network protocol for communication be
     Spray OCPP
     ```xml
     <dependency>
-        <groupId>com.thenewmotion.chargenetwork</groupId>
+        <groupId>com.thenewmotion.ocpp</groupId>
         <artifactId>ocpp-spray_2.10</artifactId>
         <version>4.3.0</version>
     </dependency>
@@ -56,7 +56,7 @@ The Open Charge Point Protocol (OCPP) is a network protocol for communication be
     OCPP 1.5-JSON
     ```xml
     <dependency>
-        <groupId>com.thenewmotion.chargenetwork</groupId>
+        <groupId>com.thenewmotion.ocpp</groupId>
         <artifactId>ocpp-json_2.10</artifactId>
         <version>4.3.0</version>
     </dependency>
