@@ -1,11 +1,12 @@
-package com.thenewmotion.ocpp.json
+package com.thenewmotion.ocppj.api
 
 import com.thenewmotion.ocpp.messages._
 import org.slf4j.LoggerFactory
-import v15.Ocpp15J
+import com.thenewmotion.ocpp.json.v15.Ocpp15J
 import scala.concurrent.{Promise, Future}
 import scala.util.{Try, Success, Failure}
 import scala.collection.mutable
+import com.thenewmotion.ocpp.json._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**

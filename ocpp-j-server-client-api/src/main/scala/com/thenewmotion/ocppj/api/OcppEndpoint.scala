@@ -1,4 +1,4 @@
-package com.thenewmotion.ocpp.json
+package com.thenewmotion.ocppj.api
 
 import com.thenewmotion.ocpp.messages.{ReqRes, Req, Res}
 import scala.concurrent.Future

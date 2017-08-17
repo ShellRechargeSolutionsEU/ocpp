@@ -1,4 +1,4 @@
-package com.thenewmotion.ocpp.json
+package com.thenewmotion.ocppj.api
 
 import java.net.URI
 import com.thenewmotion.ocpp.messages._

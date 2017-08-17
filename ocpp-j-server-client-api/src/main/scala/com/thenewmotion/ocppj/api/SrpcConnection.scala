@@ -1,7 +1,8 @@
-package com.thenewmotion.ocpp.json
+package com.thenewmotion.ocppj.api
 
 import org.json4s.JValue
 import org.slf4j.LoggerFactory
+import com.thenewmotion.ocpp.json.{TransportMessage, TransportMessageParser}
 
 trait SrpcComponent {
   trait SrpcConnection {

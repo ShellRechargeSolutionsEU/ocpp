@@ -1,4 +1,4 @@
-package com.thenewmotion.ocpp.json
+package com.thenewmotion.ocppj.api
 
 trait CallIdGenerator extends Iterator[String] {
   def hasNext = true

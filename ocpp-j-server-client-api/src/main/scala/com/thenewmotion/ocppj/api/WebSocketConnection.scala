@@ -1,4 +1,5 @@
-package com.thenewmotion.ocpp.json
+package com.thenewmotion.ocppj.api
+
 
 import org.java_websocket.drafts.Draft_17
 import org.java_websocket.handshake.ServerHandshake

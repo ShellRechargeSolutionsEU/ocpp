@@ -3,6 +3,7 @@ package com.thenewmotion.ocpp.json
 import java.net.URI
 
 import com.thenewmotion.ocpp.messages._
+import com.thenewmotion.ocppj.api._
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
