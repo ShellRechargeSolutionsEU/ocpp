@@ -55,7 +55,7 @@ val json = module("ocpp-json")
   .dependsOn(messages)
   .settings(
     libraryDependencies ++= Seq(
-      javaWebSocket, json4sNative, json4sExt, slf4jApi, time, commonsCodec))
+      json4sNative, json4sExt, slf4jApi, time))
 
 val ocpp12Soap = scalaxbModule("ocpp-12", "com.thenewmotion.ocpp.v12")
 val ocpp15Soap = scalaxbModule("ocpp-15", "com.thenewmotion.ocpp.v15")
@@ -76,7 +76,7 @@ val ocppJServerClientApi =
     .dependsOn(messages, json)
     .settings(
       libraryDependencies ++= Seq(
-        javaWebSocket, json4sNative, json4sExt, slf4jApi, time, commonsCodec)
+        javaWebSocket, slf4jApi, commonsCodec)
     )
 
 val exampleJsonClient =
