@@ -1,13 +1,16 @@
 package com.thenewmotion.ocpp
 
-import soapenvelope12.{Body, Fault, Envelope}
+import soapenvelope12.{Fault, Envelope, Body}
+
 import scalaxb.DataRecord
 import scala.xml.{NamespaceBinding, NodeSeq}
 import javax.xml.datatype.{XMLGregorianCalendar, DatatypeFactory}
-import org.joda.time.{DateTimeZone, DateTime}
+import java.time.{ZonedDateTime, Instant, ZoneId}
+
 import org.slf4j.LoggerFactory
 import com.github.t3hnar.scalax.StringOption
 import java.net.URI
+import java.util.GregorianCalendar
 
 
 /**
@@ -46,13 +49,16 @@ package object soap {
 
   private val factory = DatatypeFactory.newInstance
 
+  private val utc = ZoneId.of("UTC")
+
   implicit class RichXMLCalendar(val self: XMLGregorianCalendar) extends AnyVal {
-    def toDateTime: DateTime = new DateTime(self.toGregorianCalendar.getTimeInMillis)
+    def toDateTime: ZonedDateTime =
+      ZonedDateTime.ofInstant(Instant.ofEpochMilli(self.toGregorianCalendar.getTimeInMillis), utc)
   }
 
-  implicit class RichDateTime(val self: DateTime) extends AnyVal {
+  implicit class RichZonedDateTime(val self: ZonedDateTime) extends AnyVal {
     def toXMLCalendar: XMLGregorianCalendar =
-      factory.newXMLGregorianCalendar(self.toDateTime(DateTimeZone.UTC).toGregorianCalendar)
+      factory.newXMLGregorianCalendar(GregorianCalendar.from(self.withZoneSameInstant(utc)))
   }
 
   def stringOption(x: Option[String]): Option[String] = x.flatMap(StringOption.apply)

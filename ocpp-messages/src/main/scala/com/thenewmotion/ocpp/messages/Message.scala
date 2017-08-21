@@ -1,8 +1,8 @@
 package com.thenewmotion.ocpp.messages
 
-import org.joda.time.DateTime
 import scala.concurrent.duration._
 import java.net.URI
+import java.time.ZonedDateTime
 
 sealed trait Message
 sealed trait Req extends Message
@@ -20,7 +20,7 @@ case class AuthorizeRes(idTag: IdTagInfo) extends CentralSystemRes
 
 case class StartTransactionReq(connector: ConnectorScope,
                                idTag: IdTag,
-                               timestamp: DateTime,
+                               timestamp: ZonedDateTime,
                                meterStart: Int,
                                reservationId: Option[Int]) extends CentralSystemReq
 case class StartTransactionRes(transactionId: Int, idTag: IdTagInfo) extends CentralSystemRes
@@ -28,14 +28,14 @@ case class StartTransactionRes(transactionId: Int, idTag: IdTagInfo) extends Cen
 
 case class StopTransactionReq(transactionId: Int,
                               idTag: Option[IdTag],
-                              timestamp: DateTime,
+                              timestamp: ZonedDateTime,
                               meterStop: Int,
                               transactionData: List[TransactionData]) extends CentralSystemReq
 case class StopTransactionRes(idTag: Option[IdTagInfo]) extends CentralSystemRes
 
 
 case object HeartbeatReq extends CentralSystemReq
-case class HeartbeatRes(currentTime: DateTime) extends CentralSystemRes
+case class HeartbeatRes(currentTime: ZonedDateTime) extends CentralSystemRes
 
 
 case class MeterValuesReq(scope: Scope, transactionId: Option[Int], meters: List[Meter]) extends CentralSystemReq
@@ -52,7 +52,7 @@ case class BootNotificationReq(chargePointVendor: String,
                                meterType: Option[String],
                                meterSerialNumber: Option[String]) extends CentralSystemReq
 case class BootNotificationRes(registrationAccepted: Boolean,
-                               currentTime: DateTime /*optional in OCPP 1.2*/ ,
+                               currentTime: ZonedDateTime /*optional in OCPP 1.2*/ ,
                                heartbeatInterval: FiniteDuration /*optional in OCPP 1.2*/) extends CentralSystemRes
 
 case class CentralSystemDataTransferReq(vendorId: String, messageId: Option[String], data: Option[String])
@@ -63,7 +63,7 @@ case class CentralSystemDataTransferRes(status: DataTransferStatus.Value, data: 
 
 case class StatusNotificationReq(scope: Scope,
                                  status: ChargePointStatus,
-                                 timestamp: Option[DateTime],
+                                 timestamp: Option[ZonedDateTime],
                                  vendorId: Option[String]) extends CentralSystemReq
 case object StatusNotificationRes extends CentralSystemRes
 
@@ -79,7 +79,7 @@ case object DiagnosticsStatusNotificationRes extends CentralSystemRes
 
 case class TransactionData(meters: List[Meter])
 
-case class Meter(timestamp: DateTime, values: List[Meter.Value] = Nil)
+case class Meter(timestamp: ZonedDateTime, values: List[Meter.Value] = Nil)
 
 object Meter {
   case class Value(value: String,
@@ -210,8 +210,8 @@ case class UnlockConnectorRes(accepted: Boolean) extends ChargePointRes
 
 
 case class GetDiagnosticsReq(location: URI,
-                             startTime: Option[DateTime],
-                             stopTime: Option[DateTime],
+                             startTime: Option[ZonedDateTime],
+                             stopTime: Option[ZonedDateTime],
                              retries: Retries) extends ChargePointReq
 case class GetDiagnosticsRes(fileName: Option[String]) extends ChargePointRes
 
@@ -236,7 +236,7 @@ case class ResetReq(resetType: ResetType.Value) extends ChargePointReq
 case class ResetRes(accepted: Boolean) extends ChargePointRes
 
 
-case class UpdateFirmwareReq(retrieveDate: DateTime, location: URI, retries: Retries) extends ChargePointReq
+case class UpdateFirmwareReq(retrieveDate: ZonedDateTime, location: URI, retries: Retries) extends ChargePointReq
 case object UpdateFirmwareRes extends ChargePointRes
 
 
@@ -260,7 +260,7 @@ case class ChargePointDataTransferRes(status: DataTransferStatus.Value, data: Op
 
 
 case class ReserveNowReq(connector: Scope,
-                         expiryDate: DateTime,
+                         expiryDate: ZonedDateTime,
                          idTag: IdTag,
                          parentIdTag: Option[String] = None,
                          reservationId: Int) extends ChargePointReq

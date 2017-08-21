@@ -21,14 +21,10 @@ val specs2Mock = "org.specs2" %% "specs2-mock" % specs2V % "test"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.0.4"
 val scalaParser = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4"
 val commonsCodec = "commons-codec" % "commons-codec" % "1.10"
-val jodaTime = "joda-time" % "joda-time" % "2.9.9"
 
 def module(name: String) = Project(name, file(name))
   .enablePlugins(OssLibPlugin)
   .settings(
-    // -Ywarn-unused-import is not supported in 2.10
-    scalacOptions := scalacOptions.value.filterNot(_ == "-Ywarn-unused-import"),
-
     crossScalaVersions := Seq(tnm.ScalaVersion.prev),
     scalaVersion := tnm.ScalaVersion.prev,
 
@@ -51,14 +47,14 @@ def scalaxbModule(name: String, packageNameForGeneratedCode: String) =
 
 
 val messages = module("ocpp-messages")
-  .settings(
-    libraryDependencies += jodaTime)
 
 val json = module("ocpp-json")
   .dependsOn(messages)
   .settings(
     libraryDependencies ++= Seq(
-      json4sNative, json4sExt, slf4jApi, jodaTime))
+      json4sNative, json4sExt, slf4jApi
+    )
+  )
 
 val ocpp12Soap = scalaxbModule("ocpp-12", "com.thenewmotion.ocpp.v12")
 val ocpp15Soap = scalaxbModule("ocpp-15", "com.thenewmotion.ocpp.v15")

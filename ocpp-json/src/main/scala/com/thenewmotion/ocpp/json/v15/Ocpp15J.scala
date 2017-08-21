@@ -12,7 +12,7 @@ import JsonDeserializable._
 /** Reading and writing OCPP 1.5 messages encoded with JSON */
 object Ocpp15J {
 
-  implicit val formats = DefaultFormats + new JodaDateTimeJsonFormat
+  implicit val formats = DefaultFormats + new ZonedDateTimeJsonFormat
 
   def serialize(msg: messages.Message): JValue = Extraction.decompose(toV15(msg))
 

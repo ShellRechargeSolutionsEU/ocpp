@@ -9,7 +9,7 @@ import _root_.spray.http.StatusCodes.{UnsupportedMediaType, MethodNotAllowed}
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import org.specs2.mock.Mockito
-import org.joda.time.DateTime
+import java.time.ZonedDateTime
 import scala.io.Source
 import com.thenewmotion.ocpp.Version._
 import com.thenewmotion.ocpp.soap.SoapUtils
@@ -19,7 +19,7 @@ import scala.concurrent.{Await, Future, ExecutionContext}
 import scala.concurrent.duration.Duration
 import ExecutionContext.Implicits.global
 import java.net.{InetAddress, URI}
-import soap.RichDateTime
+import soap.RichZonedDateTime
 
 class OcppProcessingSpec extends Specification with Mockito with SoapUtils {
 
@@ -27,7 +27,7 @@ class OcppProcessingSpec extends Specification with Mockito with SoapUtils {
 
     "call the user-supplied function with the parsed request" in new TestScope {
       val mockProcessingFunction = mock[(ChargerInfo, CsReq) => Future[CsRes]]
-      mockProcessingFunction(anyObject, anyObject) returns Future.successful(HeartbeatRes(DateTime.now))
+      mockProcessingFunction(anyObject, anyObject) returns Future.successful(HeartbeatRes(ZonedDateTime.now()))
 
       Await.result(OcppProcessing.applyDecoded[CsReq, CsRes](httpRequest)(mockProcessingFunction), Duration(2, "seconds"))
 
@@ -77,7 +77,7 @@ class OcppProcessingSpec extends Specification with Mockito with SoapUtils {
       val res = Await.result(OcppProcessing.dispatch(V12, req, mockFunction), Duration(2, "seconds")).any.head
 
       there was one(mockFunction).apply(HeartbeatReq)
-      res.value mustEqual HeartbeatResponse(dateTime.toXMLCalendar)
+      res.value mustEqual HeartbeatResponse(referenceTime.toXMLCalendar)
     }
 
     "dispatch ocpp 1.5" in new TestScope {
@@ -88,7 +88,7 @@ class OcppProcessingSpec extends Specification with Mockito with SoapUtils {
       val res = Await.result(OcppProcessing.dispatch(V15, req, mockFunction), Duration(2, "seconds")).any.head
 
       there was one(mockFunction).apply(HeartbeatReq)
-      res.value mustEqual HeartbeatResponse(dateTime.toXMLCalendar)
+      res.value mustEqual HeartbeatResponse(referenceTime.toXMLCalendar)
     }
 
     "support GZIP encoding" in new EncodingSpec {
@@ -137,9 +137,9 @@ class OcppProcessingSpec extends Specification with Mockito with SoapUtils {
   }
 
   private trait TestScope extends Scope {
-    val dateTime = DateTime.now
+    val referenceTime = ZonedDateTime.now()
     val mockFunction = mock[CsReq => Future[CsRes]]
-    mockFunction.apply(anyObject) returns Future.successful(HeartbeatRes(dateTime))
+    mockFunction.apply(anyObject) returns Future.successful(HeartbeatRes(referenceTime))
 
     val httpRequest = HttpRequest(
       HttpMethods.POST,

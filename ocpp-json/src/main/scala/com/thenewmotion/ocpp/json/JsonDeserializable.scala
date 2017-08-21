@@ -18,7 +18,7 @@ trait JsonDeserializable[T <: messages.Message] {
 }
 
 class JsonDeserializableWithManifest[T <: messages.Message, V15T <: v15.Message : Manifest] extends JsonDeserializable[T] {
-  implicit val formats = DefaultFormats + new JodaDateTimeJsonFormat
+  implicit val formats = DefaultFormats + new ZonedDateTimeJsonFormat
 
   type V15Type = V15T
 

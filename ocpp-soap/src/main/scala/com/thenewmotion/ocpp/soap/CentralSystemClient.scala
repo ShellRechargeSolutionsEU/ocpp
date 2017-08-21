@@ -3,7 +3,7 @@ package soap
 
 import com.thenewmotion.ocpp.messages._
 import dispatch.Http
-import org.joda.time.DateTime
+import java.time.ZonedDateTime
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 
@@ -90,7 +90,7 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
 
     messages.BootNotificationRes(
       accepted,
-      currentTime.fold(DateTime.now)(_.toDateTime),
+      currentTime.fold(ZonedDateTime.now())(_.toDateTime),
       heartbeatInterval.fold(15.minutes)(FiniteDuration(_, SECONDS)))
   }
 

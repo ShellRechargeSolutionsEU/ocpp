@@ -1,24 +1,20 @@
 package com.thenewmotion.ocpp
 package json
 
-import org.specs2.mutable.Specification
-import org.specs2.specification.Scope
-
 import scala.io.Source
-import org.joda.time.{DateTimeZone, DateTime}
-
 import scala.concurrent.duration._
+import java.time.{ZoneId, ZonedDateTime}
 import java.net.URI
 
+import org.specs2.mutable.Specification
+import org.specs2.matcher.MatchResult
+import org.json4s._
+import org.json4s.native.JsonParser
+
+import com.thenewmotion.ocpp.json.v15.Ocpp15J
 import messages._
 import messages.Meter._
-import com.thenewmotion.ocpp.json.v15.Ocpp15J
 import JsonDeserializable._
-import org.json4s._
-import org.json4s.Extraction.extract
-import org.json4s.DefaultFormats
-import org.json4s.native.JsonParser
-import org.specs2.matcher.MatchResult
 
 class OcppMessageSerializationSpec extends Specification {
 
@@ -99,7 +95,7 @@ class OcppMessageSerializationSpec extends Specification {
     test(JsonParser.parse(loadRequestJSON))
   }
 
-  private val testTime = localTimeForUTCFields(2013,2,1,15,9,18)
+  private val testTime = utcDateTime(2013,2,1,15,9,18)
 
   private val testMsgs = List(
     TestableMsg(TestMsgs.bootNotificationReq, "bootnotification.request"),
@@ -173,7 +169,7 @@ class OcppMessageSerializationSpec extends Specification {
       meterType = Some("DBT NQC-ACDC"),
       meterSerialNumber = Some("gir.vat.mx.000e48"))
     val bootNotificationRes = BootNotificationRes(registrationAccepted = true,
-      currentTime = localTimeForUTCFields(2013, 9, 27, 14, 3, 0),
+      currentTime = utcDateTime(2013, 9, 27, 14, 3, 0),
       heartbeatInterval = FiniteDuration(600, "seconds"))
 
     val startTransactionReq = StartTransactionReq(connector = ConnectorScope(1),
@@ -193,7 +189,7 @@ class OcppMessageSerializationSpec extends Specification {
 
     val stopTransactionReq = {
       val testTimestamp = testTime
-      val meterTimestamp = localTimeForUTCFields(2013, 3, 7, 16, 52, 16)
+      val meterTimestamp = utcDateTime(2013, 3, 7, 16, 52, 16)
       val testMeter = Meter(timestamp = meterTimestamp, values = List(
         Meter.Value(value = "0",
           context = ReadingContext.SamplePeriodic,
@@ -218,7 +214,7 @@ class OcppMessageSerializationSpec extends Specification {
           TransactionData(List(testMeter))))
     }
     val stopTransactionRes = StopTransactionRes(idTag = Some(IdTagInfo(status = AuthorizationStatus.IdTagExpired,
-      expiryDate = Some(localTimeForUTCFields(2013, 2, 1, 15, 9, 18)),
+      expiryDate = Some(utcDateTime(2013, 2, 1, 15, 9, 18)),
       parentIdTag = Some("PARENT"))))
 
     val unlockConnectorReq = UnlockConnectorReq(connector = ConnectorScope(0))
@@ -272,7 +268,7 @@ class OcppMessageSerializationSpec extends Specification {
 
     val getDiagnosticsReq = GetDiagnosticsReq(location = new URI("ftp://root:root@axis.gir.foo/tmp"),
       startTime = Some(testTime),
-      stopTime = Some(localTimeForUTCFields(2013,8,8,16,9,18)),
+      stopTime = Some(utcDateTime(2013,8,8,16,9,18)),
       retries = Retries(Some(4), Some(FiniteDuration(20, SECONDS))))
     val getDiagnosticsRes = GetDiagnosticsRes(fileName = Some("diag-gir.vat.mx.000e48-20130131132608.txt"))
 
@@ -284,7 +280,7 @@ class OcppMessageSerializationSpec extends Specification {
       transactionId = Some(0),
       meters = List(
         Meter(
-          timestamp = localTimeForUTCFields(2013, 3, 7, 16, 52, 16),
+          timestamp = utcDateTime(2013, 3, 7, 16, 52, 16),
           values = List(
             Meter.Value(
               value = "0",
@@ -301,7 +297,7 @@ class OcppMessageSerializationSpec extends Specification {
               format = ValueFormat.Raw,
               location = Location.Outlet))),
         Meter(
-          timestamp = localTimeForUTCFields(2013, 3, 7, 19, 52, 16),
+          timestamp = utcDateTime(2013, 3, 7, 19, 52, 16),
           values = List(
             Meter.Value(
               value = "20",
@@ -349,6 +345,7 @@ class OcppMessageSerializationSpec extends Specification {
     val cancelReservationRes = CancelReservationRes(accepted = true)
   }
 
-  private def localTimeForUTCFields(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int) =
-    new DateTime(year, month, day, hour, minute, second, DateTimeZone.UTC).withZone(DateTimeZone.getDefault)
+  private def utcDateTime(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int) =
+    ZonedDateTime
+      .of(year, month, day, hour, minute, second, 0, ZoneId.of("UTC"))
 }

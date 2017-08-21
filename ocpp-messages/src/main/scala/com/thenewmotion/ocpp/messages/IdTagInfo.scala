@@ -1,7 +1,7 @@
 package com.thenewmotion.ocpp
 package messages
 
-import org.joda.time.DateTime
+import java.time.ZonedDateTime
 
 /**
  * @author Yaroslav Klymko
@@ -15,5 +15,5 @@ object AuthorizationStatus extends Enumeration {
 }
 
 case class IdTagInfo(status: AuthorizationStatus.Value,
-                     expiryDate: Option[DateTime] = None,
+                     expiryDate: Option[ZonedDateTime] = None,
                      parentIdTag: Option[String] = None)
