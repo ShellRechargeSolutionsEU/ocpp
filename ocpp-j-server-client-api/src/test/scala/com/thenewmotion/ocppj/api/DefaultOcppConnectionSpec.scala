@@ -1,14 +1,16 @@
-package com.thenewmotion.ocpp.json
+package com.thenewmotion.ocppj.api
 
+import com.thenewmotion.ocpp.json._
 import org.specs2.mutable.SpecificationWithJUnit
 import org.specs2.specification.Scope
-import com.thenewmotion.ocpp.messages._
 import org.specs2.mock.Mockito
+
 import scala.concurrent.{Await, Future, Promise}
 import org.json4s.JsonDSL._
+
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.thenewmotion.ocpp.messages.RemoteStopTransactionRes
+import com.thenewmotion.ocpp.messages._
 
 class DefaultOcppConnectionSpec extends SpecificationWithJUnit with Mockito {
 
