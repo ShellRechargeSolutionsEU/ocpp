@@ -200,7 +200,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
 
   def stopTransaction(req: messages.StopTransactionReq) = {
     import req._
-    def toTransactionData(x: messages.TransactionData): TransactionData = TransactionData(x.meters.map(toMeter): _*)
+    def toTransactionData(x: messages.TransactionData): TransactionData = TransactionData(x.meters.map(toMeter))
 
     val x = StopTransactionRequest(transactionId, idTag, timestamp.toXMLCalendar, meterStop, transactionData.map(toTransactionData))
     messages.StopTransactionRes(?(_.stopTransaction, x).idTagInfo.map(toIdTagInfo))
@@ -378,11 +378,12 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
 
     def toValue(x: messages.Meter.Value): Value = Value(
       x.value,
-      Some(x.context),
-      Some(x.format),
-      Some(x.measurand),
-      Some(x.location),
-      Some(x.unit))
+      Map(
+      "context" -> scalaxb.DataRecord(x.context.toString),
+      "format" -> scalaxb.DataRecord(x.format.toString),
+      "measurand" -> scalaxb.DataRecord(x.measurand.toString),
+      "location" -> scalaxb.DataRecord(x.location.toString),
+      "unit" -> scalaxb.DataRecord(x.unit.toString)))
 
     MeterValue(x.timestamp.toXMLCalendar, x.values.map(toValue))
   }

@@ -163,7 +163,7 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
     })
 
   def getConfiguration(x: GetConfigurationReq) = {
-    val res = ?(_.getConfiguration, GetConfigurationRequest(x.keys: _*))
+    val res = ?(_.getConfiguration, GetConfigurationRequest(x.keys))
     val values = res.configurationKey.map {
       case KeyValue(key, readonly, value) => ocpp.KeyValue(key, readonly, stringOption(value))
     }.toList
