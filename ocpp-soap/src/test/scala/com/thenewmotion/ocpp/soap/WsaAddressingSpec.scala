@@ -1,14 +1,14 @@
 package com.thenewmotion.ocpp
 package soap
 
-import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mutable.Specification
 import scala.xml.{NamespaceBinding, TopScope, NodeSeq}
 import org.specs2.mock.Mockito
 
 /**
  * @author Yaroslav Klymko
  */
-class WsaAddressingSpec extends SpecificationWithJUnit with Mockito {
+class WsaAddressingSpec extends Specification with Mockito {
 
   "WsaAddressing.apply" should {
 

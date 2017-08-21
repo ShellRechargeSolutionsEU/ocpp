@@ -6,7 +6,7 @@ import _root_.spray.http.HttpRequest
 import _root_.spray.httpx.encoding.{Deflate, Encoder, Gzip}
 import _root_.spray.http.HttpHeaders.{`Content-Type`,`X-Forwarded-For`}
 import _root_.spray.http.StatusCodes.{UnsupportedMediaType, MethodNotAllowed}
-import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import org.specs2.mock.Mockito
 import org.joda.time.DateTime
@@ -21,13 +21,13 @@ import ExecutionContext.Implicits.global
 import java.net.{InetAddress, URI}
 import soap.RichDateTime
 
-class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUtils {
+class OcppProcessingSpec extends Specification with Mockito with SoapUtils {
 
   "OcppProcessing" should {
 
     "call the user-supplied function with the parsed request" in new TestScope {
       val mockProcessingFunction = mock[(ChargerInfo, CsReq) => Future[CsRes]]
-      mockProcessingFunction(any, any) returns Future.successful(HeartbeatRes(DateTime.now))
+      mockProcessingFunction(anyObject, anyObject) returns Future.successful(HeartbeatRes(DateTime.now))
 
       Await.result(OcppProcessing.applyDecoded[CsReq, CsRes](httpRequest)(mockProcessingFunction), Duration(2, "seconds"))
 
@@ -37,7 +37,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
     "produce a Fault response if the processing function returns a failed future" in new TestScope {
       val failingProcessingFunction = mock[(ChargerInfo, CsReq) => Future[CsRes]]
-      failingProcessingFunction(any, any) returns Future.failed(new RuntimeException("b0rk! b0rk!"))
+      failingProcessingFunction(anyObject, anyObject) returns Future.failed(new RuntimeException("b0rk! b0rk!"))
 
       val response = Await.result(OcppProcessing.applyDecoded[CsReq, CsRes](httpRequest)(failingProcessingFunction),
         Duration(2, "seconds"))
@@ -47,7 +47,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
     "produce a Fault response if the processing function throws" in new TestScope {
       val throwingProcessingFunction = mock[(ChargerInfo, CsReq) => Future[CsRes]]
-      throwingProcessingFunction(any, any) throws new RuntimeException("b0rk! b0rk!")
+      throwingProcessingFunction(anyObject, anyObject) throws new RuntimeException("b0rk! b0rk!")
 
       val response = Await.result(OcppProcessing.applyDecoded[CsReq, CsRes](httpRequest)(throwingProcessingFunction),
         Duration(2, "seconds"))
@@ -57,7 +57,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
 
     "call the user-supplied ChargePointService according to the request" in {
       val mockProcessingFunction = mock[(ChargerInfo, CpReq) => Future[CpRes]]
-      mockProcessingFunction.apply(any, any) returns Future.successful(GetLocalListVersionRes(AuthListSupported(0)))
+      mockProcessingFunction.apply(anyObject, anyObject) returns Future.successful(GetLocalListVersionRes(AuthListSupported(0)))
       val httpRequest = HttpRequest(HttpMethods.POST,
                                     Uri("/"),
                                     List(`Content-Type`(MediaTypes.`application/soap+xml`), `X-Forwarded-For`("192.168.1.100")),
@@ -139,7 +139,7 @@ class OcppProcessingSpec extends SpecificationWithJUnit with Mockito with SoapUt
   private trait TestScope extends Scope {
     val dateTime = DateTime.now
     val mockFunction = mock[CsReq => Future[CsRes]]
-    mockFunction.apply(any) returns Future.successful(HeartbeatRes(dateTime))
+    mockFunction.apply(anyObject) returns Future.successful(HeartbeatRes(dateTime))
 
     val httpRequest = HttpRequest(
       HttpMethods.POST,

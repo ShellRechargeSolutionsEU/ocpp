@@ -1,7 +1,7 @@
 package com.thenewmotion.ocppj.api
 
 import com.thenewmotion.ocpp.json._
-import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import org.specs2.mock.Mockito
 
@@ -12,12 +12,12 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 import com.thenewmotion.ocpp.messages._
 
-class DefaultOcppConnectionSpec extends SpecificationWithJUnit with Mockito {
+class DefaultOcppConnectionSpec extends Specification with Mockito {
 
   "DefaultOcppConnection" should {
 
     "respond to requests with a response message" in new DefaultOcppConnectionScope {
-      onRequest.apply(any) returns RemoteStopTransactionRes(accepted = true)
+      onRequest.apply(anyObject) returns RemoteStopTransactionRes(accepted = true)
 
       testConnection.onSrpcMessage(srpcRemoteStopTransactionReq)
 
@@ -25,7 +25,7 @@ class DefaultOcppConnectionSpec extends SpecificationWithJUnit with Mockito {
     }
 
     "respond to requests with the same call ID" in new DefaultOcppConnectionScope {
-      onRequest.apply(any) returns RemoteStopTransactionRes(accepted = true)
+      onRequest.apply(anyObject) returns RemoteStopTransactionRes(accepted = true)
 
       testConnection.onSrpcMessage(srpcRemoteStopTransactionReq)
 
@@ -35,7 +35,7 @@ class DefaultOcppConnectionSpec extends SpecificationWithJUnit with Mockito {
     }
 
     "respond to requests with the applicable error message if processing throws an OCPP error" in new DefaultOcppConnectionScope {
-      onRequest.apply(any) throws new OcppException(OcppError(PayloadErrorCode.FormationViolation, "aargh!"))
+      onRequest.apply(anyObject) throws new OcppException(OcppError(PayloadErrorCode.FormationViolation, "aargh!"))
 
       testConnection.onSrpcMessage(srpcRemoteStopTransactionReq)
 
@@ -43,7 +43,7 @@ class DefaultOcppConnectionSpec extends SpecificationWithJUnit with Mockito {
     }
 
     "respond to requests with an InternalError error message if processing throws an unexpected exception" in new DefaultOcppConnectionScope {
-      onRequest.apply(any) throws new RuntimeException("bork")
+      onRequest.apply(anyObject) throws new RuntimeException("bork")
 
       testConnection.onSrpcMessage(srpcRemoteStopTransactionReq)
 

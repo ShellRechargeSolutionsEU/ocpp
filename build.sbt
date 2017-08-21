@@ -3,10 +3,9 @@ import ScalaxbKeys._
 val dispatchV = "0.11.2"
 val json4sV = "3.2.10"
 val sprayV = "1.3.3"
-val specs2V = "2.4.16"
+val specs2V = "3.9.1"
 val slf4jV = "1.7.12"
 
-val time = "com.thenewmotion" %% "time" % "2.8"
 val json4sNative = "org.json4s" %% "json4s-native" % json4sV
 val json4sExt = "org.json4s" %% "json4s-ext" % json4sV
 val javaWebSocket = "org.java-websocket" % "Java-WebSocket" % "1.3.0"
@@ -17,16 +16,21 @@ val scalax = "com.github.t3hnar" %% "scalax" % "3.0"
 val sprayHttp = "io.spray" %% "spray-http" % sprayV
 val sprayHttpX = "io.spray" %% "spray-httpx" % sprayV
 val akka = "com.typesafe.akka" %% "akka-actor" % "2.3.11" % "provided"
-val specs2 = "org.specs2" %% "specs2" % specs2V % "test"
+val specs2 = "org.specs2" %% "specs2-core" % specs2V % "test"
+val specs2Mock = "org.specs2" %% "specs2-mock" % specs2V % "test"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.0.4"
 val scalaParser = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4"
 val commonsCodec = "commons-codec" % "commons-codec" % "1.10"
+val jodaTime = "joda-time" % "joda-time" % "2.9.9"
 
 def module(name: String) = Project(name, file(name))
   .enablePlugins(OssLibPlugin)
   .settings(
     // -Ywarn-unused-import is not supported in 2.10
     scalacOptions := scalacOptions.value.filterNot(_ == "-Ywarn-unused-import"),
+
+    crossScalaVersions := Seq(tnm.ScalaVersion.prev),
+    scalaVersion := tnm.ScalaVersion.prev,
 
     organization := "com.thenewmotion.ocpp",
 
@@ -35,13 +39,12 @@ def module(name: String) = Project(name, file(name))
 def scalaxbModule(name: String, packageNameForGeneratedCode: String) =
   module(name)
    .settings(
-     libraryDependencies ++= {
-       Seq(scalaXml, scalaParser).filter(_ => scalaVersion.value startsWith "2.11") :+
+     libraryDependencies ++= Seq(
+       scalaXml,
+       scalaParser,
        dispatch
-     },
-
+     ),
      scalaxbSettings,
-
      sourceGenerators in Compile += (scalaxb in Compile).taskValue,
      dispatchVersion in (Compile, scalaxb) := dispatchV,
      packageName in (Compile, scalaxb)     := packageNameForGeneratedCode)
@@ -49,13 +52,13 @@ def scalaxbModule(name: String, packageNameForGeneratedCode: String) =
 
 val messages = module("ocpp-messages")
   .settings(
-    libraryDependencies += time)
+    libraryDependencies += jodaTime)
 
 val json = module("ocpp-json")
   .dependsOn(messages)
   .settings(
     libraryDependencies ++= Seq(
-      json4sNative, json4sExt, slf4jApi, time))
+      json4sNative, json4sExt, slf4jApi, jodaTime))
 
 val ocpp12Soap = scalaxbModule("ocpp-12", "com.thenewmotion.ocpp.v12")
 val ocpp15Soap = scalaxbModule("ocpp-15", "com.thenewmotion.ocpp.v15")
@@ -64,19 +67,19 @@ val ocppSoap = module("ocpp-soap")
   .dependsOn(messages, ocpp12Soap, ocpp15Soap)
   .settings(
     libraryDependencies ++= Seq(
-      slf4jApi, scalax))
+      slf4jApi, scalax, specs2Mock))
 val ocppSpray = module("ocpp-spray")
   .dependsOn(ocppSoap)
   .settings(
     libraryDependencies ++= Seq(
-      sprayHttp, sprayHttpX, akka))
+      sprayHttp, sprayHttpX, akka, specs2Mock))
 
 val ocppJServerClientApi =
   module("ocpp-j-server-client-api")
     .dependsOn(messages, json)
     .settings(
       libraryDependencies ++= Seq(
-        javaWebSocket, slf4jApi, commonsCodec)
+        javaWebSocket, slf4jApi, commonsCodec, specs2Mock)
     )
 
 val exampleJsonClient =
@@ -90,5 +93,9 @@ val exampleJsonClient =
 
 
 enablePlugins(OssLibPlugin)
+
+crossScalaVersions := Seq(tnm.ScalaVersion.prev)
+
+scalaVersion := tnm.ScalaVersion.prev
 
 publish := {}

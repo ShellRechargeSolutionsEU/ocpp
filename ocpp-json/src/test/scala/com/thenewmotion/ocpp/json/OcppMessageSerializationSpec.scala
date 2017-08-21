@@ -1,12 +1,15 @@
 package com.thenewmotion.ocpp
 package json
 
-import org.specs2.mutable.SpecificationWithJUnit
+import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
+
 import scala.io.Source
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.{DateTimeZone, DateTime}
+
 import scala.concurrent.duration._
 import java.net.URI
+
 import messages._
 import messages.Meter._
 import com.thenewmotion.ocpp.json.v15.Ocpp15J
@@ -15,42 +18,52 @@ import org.json4s._
 import org.json4s.Extraction.extract
 import org.json4s.DefaultFormats
 import org.json4s.native.JsonParser
+import org.specs2.matcher.MatchResult
 
-class OcppMessageSerializationSpec extends SpecificationWithJUnit {
+class OcppMessageSerializationSpec extends Specification {
+
   "OCPP message deserialization" should {
-    for (testMsg <- testMsgs) {
-      s"read ${testMsg.msg.getClass.getName} messages" in new MessageTestScope(testMsg.jsonFileBase) {
-         Ocpp15J.deserialize(messageAST)(testMsg.jsonSerializable) mustEqual testMsg.msg
+
+    "deserialize all message types" in {
+
+      for (testMsg <- testMsgs) yield {
+        withJsonFromFile(testMsg.jsonFileBase) { (messageAST: JValue) =>
+          Ocpp15J.deserialize(messageAST)(testMsg.jsonSerializable) mustEqual testMsg.msg
+        }
       }
     }
 
-    "read StartTransaction requests with a local time in them" in
-      new MessageTestScope("starttransaction.localtime.request") {
+    "read StartTransaction requests with a local time in them" in {
+      withJsonFromFile("starttransaction.localtime.request") { (messageAST: JValue) =>
         Ocpp15J.deserialize(messageAST)(jsonDeserializable[StartTransactionReq]) mustEqual TestMsgs.startTransactionReqWithLocalTime
       }
+    }
   }
 
   "OCPP message serialization" should {
-    for (testMsg <- testMsgs) {
-      s"serialize ${testMsg.msg.getClass.getName} messages" in new MessageTestScope(testMsg.jsonFileBase) {
-        Ocpp15J.serialize(testMsg.msg) must beEqualToJson(messageAST)
+
+    "serialize messages of all types" in {
+      for (testMsg <- testMsgs) yield {
+        withJsonFromFile(testMsg.jsonFileBase) { (messageAST: JValue) =>
+          Ocpp15J.serialize(testMsg.msg) must beEqualToJson(messageAST)
+        }
       }
     }
   }
 
   "OCPP message serialization error handling" should {
     "throw a MappingException in case a message contains an invalid URL" in
-      new MessageTestScope("updatefirmware.invalidurl.request") {
+      withJsonFromFile("updatefirmware.invalidurl.request") { messageAST =>
         Ocpp15J.deserialize[UpdateFirmwareReq](messageAST) must throwA[MappingException]
       }
 
     "throw a MappingException in case a MeterValues request mentions an invalid property name" in
-      new MessageTestScope("metervalues.invalidproperty.request") {
+      withJsonFromFile("metervalues.invalidproperty.request") { messageAST =>
         Ocpp15J.deserialize[MeterValuesReq](messageAST) must throwA[MappingException]
       }
 
     "throw a MappingException in case an invalid status enum is given" in
-      new MessageTestScope("changeavailability.invalidstatus.response") {
+      withJsonFromFile("changeavailability.invalidstatus.response") { messageAST =>
         Ocpp15J.deserialize[ChangeAvailabilityRes](messageAST) must throwA[MappingException]
       }
   }
@@ -76,13 +89,14 @@ class OcppMessageSerializationSpec extends SpecificationWithJUnit {
       new TestableMsg(jsonDeserializable[T], msg, jsonFileBase)
   }
 
-  private class MessageTestScope(jsonFileBase: String) extends Scope {
-    val messageAST = JsonParser.parse(loadRequestJSON)
+  private def withJsonFromFile(jsonFileBase: String)(test: JValue => MatchResult[_]) = {
 
-    private def loadRequestJSON: String = {
+    def loadRequestJSON: String = {
       val requestFileName = s"ocpp15/without_srpc/$jsonFileBase.json"
       Source.fromURL(this.getClass.getResource(requestFileName)).mkString
     }
+
+    test(JsonParser.parse(loadRequestJSON))
   }
 
   private val testTime = localTimeForUTCFields(2013,2,1,15,9,18)
