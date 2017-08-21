@@ -1,6 +1,6 @@
 import ScalaxbKeys._
 
-val dispatchV = "0.11.2"
+val dispatchV = "0.11.3"
 val json4sV = "3.2.10"
 val sprayV = "1.3.3"
 val specs2V = "3.9.1"
@@ -43,7 +43,9 @@ def scalaxbModule(name: String, packageNameForGeneratedCode: String) =
      scalaxbSettings,
      sourceGenerators in Compile += (scalaxb in Compile).taskValue,
      dispatchVersion in (Compile, scalaxb) := dispatchV,
-     packageName in (Compile, scalaxb)     := packageNameForGeneratedCode)
+     packageName in (Compile, scalaxb)     := packageNameForGeneratedCode,
+     // please give us good old synchronous HTTP clients for now
+     async in scalaxb in Compile := false)
 
 
 val messages = module("ocpp-messages")
