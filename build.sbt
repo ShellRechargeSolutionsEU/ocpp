@@ -1,5 +1,5 @@
 val dispatchV = "0.11.3"
-val json4sV = "3.2.10"
+val json4sV = "3.3.0"
 val sprayV = "1.3.3"
 val specs2V = "3.9.1"
 val slf4jV = "1.7.12"
