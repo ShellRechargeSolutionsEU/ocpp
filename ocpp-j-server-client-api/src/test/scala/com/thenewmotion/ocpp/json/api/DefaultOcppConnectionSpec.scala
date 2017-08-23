@@ -1,6 +1,7 @@
-package com.thenewmotion.ocppj.api
+package com.thenewmotion.ocpp
+package json
+package api
 
-import com.thenewmotion.ocpp.json._
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import org.specs2.mock.Mockito
@@ -10,7 +11,7 @@ import org.json4s.JsonDSL._
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-import com.thenewmotion.ocpp.messages._
+import messages._
 
 class DefaultOcppConnectionSpec extends Specification with Mockito {
 

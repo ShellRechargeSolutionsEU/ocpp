@@ -1,10 +1,12 @@
-package com.thenewmotion.ocpp.json
+package com.thenewmotion.ocpp
+package json
+package example
 
 import java.net.URI
-
-import com.thenewmotion.ocpp.messages._
-import com.thenewmotion.ocppj.api._
 import org.slf4j.LoggerFactory
+
+import messages._
+import api._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._

@@ -11,7 +11,7 @@ import org.specs2.matcher.MatchResult
 import org.json4s._
 import org.json4s.native.JsonParser
 
-import com.thenewmotion.ocpp.json.v15.Ocpp15J
+import v15.Ocpp15J
 import messages._
 import messages.Meter._
 import JsonDeserializable._

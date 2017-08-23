@@ -1,4 +1,4 @@
-package com.thenewmotion.ocppj.api
+package com.thenewmotion.ocpp.json.api
 
 import com.thenewmotion.ocpp.messages._
 import org.slf4j.LoggerFactory

@@ -6,7 +6,6 @@ import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.native.JsonParser
 import ConvertersV15._
-import com.thenewmotion.ocpp.json.JsonDeserializable
 import JsonDeserializable._
 
 /** Reading and writing OCPP 1.5 messages encoded with JSON */
