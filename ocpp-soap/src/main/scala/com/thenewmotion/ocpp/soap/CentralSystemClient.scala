@@ -25,7 +25,9 @@ object CentralSystemClient {
 
 class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http, endpoint: Option[Uri])
   extends CentralSystemClient with ScalaxbClient {
-  import v12._
+  import com.thenewmotion.ocpp
+  import ocpp.messages
+  import ocpp.v12._
   import ConvertersV12._
 
   def version = Version.V12
@@ -161,7 +163,9 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
 
 class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http, endpoint: Option[Uri])
   extends CentralSystemClient with ScalaxbClient {
-  import v15._
+  import com.thenewmotion.ocpp
+  import ocpp.messages
+  import ocpp.v15._
 
   def version = Version.V15
 
@@ -173,9 +177,9 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
   }.service
 
 
-  private implicit def toIdTagInfo(x: IdTagInfoType): messages.IdTagInfo = {
+  private implicit def toIdTagInfo(x: IdTagInfoType): enums.IdTagInfo = {
     val status = {
-      import messages.{AuthorizationStatus => ocpp}
+      import enums.{AuthorizationStatus => ocpp}
       x.status match {
         case AcceptedValue12 => ocpp.Accepted
         case BlockedValue => ocpp.IdTagBlocked
@@ -184,7 +188,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
         case ConcurrentTxValue => ocpp.ConcurrentTx
       }
     }
-    messages.IdTagInfo(status, x.expiryDate.map(_.toDateTime), x.parentIdTag)
+    enums.IdTagInfo(status, x.expiryDate.map(_.toDateTime), x.parentIdTag)
   }
 
   def authorize(req: messages.AuthorizeReq) =
@@ -295,7 +299,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
     import req._
     val res = ?(_.dataTransfer, DataTransferRequestType(vendorId, messageId, data))
     val status = {
-      import messages.{DataTransferStatus => ocpp}
+      import enums.{DataTransferStatus => ocpp}
       res.status match {
         case AcceptedValue13 => ocpp.Accepted
         case RejectedValue10 => ocpp.Rejected

@@ -6,6 +6,7 @@ import soapenvelope12.Body
 import scalaxb.XMLFormat
 import scala.concurrent.{ExecutionContext, Future}
 import messages._
+import messages.enums._
 
 object ChargePointDispatcher {
   def apply(version: Version.Value): Dispatcher[ChargePointReq, ChargePointRes] = version match {
@@ -19,7 +20,7 @@ object ChargePointDispatcher {
  * a charge point.
  */
 object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePointReq, ChargePointRes] {
-  import v15.{ChargePointService => _, Value => _, _}
+  import com.thenewmotion.ocpp.v15.{ChargePointService => _, Value => _, _}
   import ConvertersV15._
 
   def version: Version.Value = Version.V15
@@ -109,7 +110,7 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePointReq, Charg
 
       case RemoteStartTransaction => ?[RemoteStartTransactionRequest, RemoteStartTransactionResponse] { req =>
         val connectorScope = req.connectorId.map(ConnectorScope.fromOcpp)
-        RemoteStartTransactionReq(req.idTag, connectorScope)
+        RemoteStartTransactionReq(req.idTag, connectorScope, None)
       } {
         case RemoteStartTransactionRes(accepted) =>
           RemoteStartTransactionResponse(remoteStartStopStatus(accepted))

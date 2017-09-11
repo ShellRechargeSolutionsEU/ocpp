@@ -1,8 +1,8 @@
 package com.thenewmotion.ocpp
 package json.v15
 
-import com.thenewmotion.ocpp.messages
-import com.thenewmotion.ocpp.messages.Meter._
+import messages.Meter._
+import messages.enums
 import org.json4s.MappingException
 import scala.concurrent.duration._
 import java.net.{URISyntaxException, URI}
@@ -61,7 +61,7 @@ object ConvertersV15 {
 
     case messages.StatusNotificationRes => StatusNotificationRes()
 
-    case messages.RemoteStartTransactionReq(idTag, connector) =>
+    case messages.RemoteStartTransactionReq(idTag, connector, _) =>
       RemoteStartTransactionReq(idTag, connector.map(_.toOcpp))
 
     case messages.RemoteStartTransactionRes(accepted) => RemoteStartTransactionRes(accepted.toStatusString)
@@ -155,7 +155,7 @@ object ConvertersV15 {
     case AuthorizeRes(idTagInfo) => messages.AuthorizeRes(idTagInfo.fromV15)
 
     case StartTransactionReq(connectorId, idTag, timestamp, meterStart, reservationId) =>
-      messages.StartTransactionReq(messages.ConnectorScope.fromOcpp(connectorId), idTag, timestamp, meterStart,
+      messages.StartTransactionReq(enums.ConnectorScope.fromOcpp(connectorId), idTag, timestamp, meterStart,
                                    reservationId)
 
     case StartTransactionRes(transactionId, idTagInfo) => messages.StartTransactionRes(transactionId, idTagInfo.fromV15)
@@ -165,7 +165,7 @@ object ConvertersV15 {
 
     case StopTransactionRes(idTagInfo) => messages.StopTransactionRes(idTagInfo.map(_.fromV15))
 
-    case UnlockConnectorReq(connectorId) => messages.UnlockConnectorReq(messages.ConnectorScope.fromOcpp(connectorId))
+    case UnlockConnectorReq(connectorId) => messages.UnlockConnectorReq(enums.ConnectorScope.fromOcpp(connectorId))
 
     case UnlockConnectorRes(status) => messages.UnlockConnectorRes(statusStringToBoolean(status))
 
@@ -174,14 +174,14 @@ object ConvertersV15 {
     case ResetRes(status) => messages.ResetRes(statusStringToBoolean(status))
 
     case ChangeAvailabilityReq(connectorId, availabilityType) =>
-      messages.ChangeAvailabilityReq(scope = messages.Scope.fromOcpp(connectorId),
+      messages.ChangeAvailabilityReq(scope = enums.Scope.fromOcpp(connectorId),
         availabilityType = enumFromJsonString(messages.AvailabilityType, availabilityType))
 
     case ChangeAvailabilityRes(status) =>
       messages.ChangeAvailabilityRes(enumFromJsonString(messages.AvailabilityStatus, status))
 
     case StatusNotificationReq(connector, status, errorCode, info, timestamp, vendorId, vendorErrorCode) =>
-      messages.StatusNotificationReq(messages.Scope.fromOcpp(connector),
+      messages.StatusNotificationReq(enums.Scope.fromOcpp(connector),
                                      statusFieldsToOcppStatus(status, errorCode, info, vendorErrorCode),
                                      timestamp,
                                      vendorId)
@@ -189,7 +189,7 @@ object ConvertersV15 {
     case StatusNotificationRes() => messages.StatusNotificationRes
 
     case RemoteStartTransactionReq(idTag, connector) => messages.RemoteStartTransactionReq(idTag,
-      connector.map(messages.ConnectorScope.fromOcpp))
+      connector.map(enums.ConnectorScope.fromOcpp), None)
 
     case RemoteStartTransactionRes(status) => messages.RemoteStartTransactionRes(statusStringToBoolean(status))
 
@@ -225,7 +225,7 @@ object ConvertersV15 {
 
     case MeterValuesReq(connectorId, transactionId, values) =>
       val meters: List[messages.Meter] = values.fold(List.empty[messages.Meter])(_.map(meterFromV15))
-      messages.MeterValuesReq(messages.Scope.fromOcpp(connectorId), transactionId, meters)
+      messages.MeterValuesReq(enums.Scope.fromOcpp(connectorId), transactionId, meters)
 
     case MeterValuesRes() => messages.MeterValuesRes
 
@@ -259,7 +259,7 @@ object ConvertersV15 {
     case SendLocalListRes(status, hash) => messages.SendLocalListRes(stringAndHashToUpdateStatus(status, hash))
 
     case ReserveNowReq(connectorId, expiryDate, idTag, parentIdTag, reservationId) =>
-      messages.ReserveNowReq(messages.Scope.fromOcpp(connectorId), expiryDate, idTag, parentIdTag, reservationId)
+      messages.ReserveNowReq(enums.Scope.fromOcpp(connectorId), expiryDate, idTag, parentIdTag, reservationId)
 
     case ReserveNowRes(status) => messages.ReserveNowRes(enumFromJsonString(messages.Reservation, status))
 
@@ -273,17 +273,17 @@ object ConvertersV15 {
   private def unexpectedMessage(msg: Any) =
     throw new Exception(s"Couldn't convert unexpected OCPP message $msg")
 
-  private implicit class RichIdTagInfo(i: messages.IdTagInfo) {
+  private implicit class RichIdTagInfo(i: enums.IdTagInfo) {
     def toV15: IdTagInfo = IdTagInfo(status = AuthorizationStatusConverters.enumToJson(i.status.toString),
                           expiryDate = i.expiryDate,
                           parentIdTag = i.parentIdTag)
   }
 
   private implicit class RichV15IdTagInfo(self: IdTagInfo) {
-    def fromV15: messages.IdTagInfo =
+    def fromV15: enums.IdTagInfo =
       try {
-        messages.IdTagInfo(
-          status = messages.AuthorizationStatus.withName(AuthorizationStatusConverters.jsonToEnum(self.status)),
+        enums.IdTagInfo(
+          status = enums.AuthorizationStatus.withName(AuthorizationStatusConverters.jsonToEnum(self.status)),
           expiryDate = self.expiryDate,
           parentIdTag = self.parentIdTag)
       } catch {

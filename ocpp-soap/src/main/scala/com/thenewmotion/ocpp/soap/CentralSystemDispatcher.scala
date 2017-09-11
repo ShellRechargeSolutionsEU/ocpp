@@ -6,6 +6,7 @@ import scalaxb.XMLFormat
 import scala.concurrent.{Future, ExecutionContext}
 import com.thenewmotion.ocpp.{messages => ocpp}
 import messages._
+import messages.enums._
 
 object CentralSystemDispatcher {
   def apply(version: Version.Value): Dispatcher[CentralSystemReq, CentralSystemRes] = version match {
@@ -15,7 +16,7 @@ object CentralSystemDispatcher {
 }
 
 object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemReq, CentralSystemRes] {
-  import v12.{CentralSystemService => _, _}
+  import com.thenewmotion.ocpp.v12.{CentralSystemService => _, _}
   import ConvertersV12._
 
   def version = Version.V12
@@ -130,7 +131,7 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemReq, C
       case MeterValues => ?[MeterValuesRequest, MeterValuesResponse] {
         req =>
           def toMeter(x: MeterValue): Meter = Meter(x.timestamp.toDateTime, List(Meter.DefaultValue(x.value)))
-          MeterValuesReq(ocpp.Scope.fromOcpp(req.connectorId), None, req.values.map(toMeter).toList)
+          MeterValuesReq(enums.Scope.fromOcpp(req.connectorId), None, req.values.map(toMeter).toList)
       } { _ => MeterValuesResponse() }
 
       case DataTransfer => throw new ActionNotSupportedException(version, "dataTransfer")
@@ -139,7 +140,7 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemReq, C
 }
 
 object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, CentralSystemRes] {
-  import v15.{CentralSystemService => _, _}
+  import com.thenewmotion.ocpp.v15.{CentralSystemService => _, _}
   import ConvertersV15._
 
   def version = Version.V15
@@ -188,7 +189,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
         import req._
 
         StartTransactionReq(
-          ocpp.ConnectorScope.fromOcpp(connectorId),
+          enums.ConnectorScope.fromOcpp(connectorId),
           idTag, timestamp.toDateTime, meterStart, None)
       } {
         case StartTransactionRes(transactionId, idTagInfo) =>
@@ -243,7 +244,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
           case Reserved => ocpp.Reserved()
         }
         StatusNotificationReq(
-          ocpp.Scope.fromOcpp(req.connectorId),
+          enums.Scope.fromOcpp(req.connectorId),
           status,
           req.timestamp.map(_.toDateTime),
           stringOption(req.vendorId))
@@ -266,7 +267,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
       case MeterValues => ?[MeterValuesRequest, MeterValuesResponse] {
         req =>
           def toMeter(x: MeterValue): Meter = Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
-          MeterValuesReq(ocpp.Scope.fromOcpp(req.connectorId), req.transactionId, req.values.map(toMeter).toList)
+          MeterValuesReq(enums.Scope.fromOcpp(req.connectorId), req.transactionId, req.values.map(toMeter).toList)
       }  (_ => MeterValuesResponse())
 
       case DataTransfer => ?[DataTransferRequest, DataTransferResponse] {
@@ -278,7 +279,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
       } {
         case res: CentralSystemDataTransferRes =>
           val status: DataTransferStatus = {
-            import ocpp.{DataTransferStatus => ocpp}
+            import enums.{DataTransferStatus => ocpp}
             res.status match {
               case ocpp.Accepted => AcceptedValue
               case ocpp.Rejected => RejectedValue

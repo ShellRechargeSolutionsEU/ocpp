@@ -26,7 +26,7 @@ private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: Uri
   extends ChargePointClient
   with ScalaxbClient {
 
-  import v12._
+  import com.thenewmotion.ocpp.v12._
   import ConvertersV12._
 
   def version = Version.V12
@@ -119,7 +119,7 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
   extends ChargePointClient
   with ScalaxbClient {
 
-  import v15._
+  import com.thenewmotion.ocpp.v15._
   import ConvertersV15._
 
   def version = Version.V15
@@ -238,8 +238,8 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
 
   def dataTransfer(req: ChargePointDataTransferReq) = {
     val res = ?(_.dataTransfer, DataTransferRequest(req.vendorId, req.messageId, req.data))
-    val status: ocpp.DataTransferStatus.Value = {
-      import ocpp.{DataTransferStatus => ocpp}
+    val status: enums.DataTransferStatus.Value = {
+      import enums.{DataTransferStatus => ocpp}
       res.status match {
         case AcceptedValue => ocpp.Accepted
         case RejectedValue => ocpp.Rejected

@@ -13,6 +13,7 @@ import org.json4s.native.JsonParser
 
 import v15.Ocpp15J
 import messages._
+import messages.enums._
 import messages.Meter._
 import JsonDeserializable._
 
@@ -249,7 +250,7 @@ class OcppMessageSerializationSpec extends Specification {
     val statusNotificationRes = StatusNotificationRes
 
     val remoteStartTransactionReq = RemoteStartTransactionReq(idTag = "044943121F1D80",
-      connector = Some(ConnectorScope(1)))
+      connector = Some(ConnectorScope(1)), chargingProfile = None)
     val remoteStartTransactionRes = RemoteStartTransactionRes(accepted = true)
 
     val remoteStopTransactionReq = RemoteStopTransactionReq(transactionId = 1)

@@ -1,15 +1,14 @@
 package com.thenewmotion.ocpp
 package soap
 
-import com.thenewmotion.ocpp.v12
-
 /**
  * @author Yaroslav Klymko
  */
 private[soap] object ConvertersV12 {
 
-  import com.thenewmotion.ocpp.messages
-  import v12._
+  import com.thenewmotion.ocpp
+  import ocpp.messages.enums
+  import ocpp.v12._
 
   implicit class RichRemoteStartStopStatus(val self: RemoteStartStopStatus) extends AnyVal {
     def toOcpp: Boolean = self match {
@@ -19,9 +18,9 @@ private[soap] object ConvertersV12 {
   }
 
   implicit class RichIdTagInfo(val self: IdTagInfo) extends AnyVal {
-    def toOcpp: messages.IdTagInfo = {
+    def toOcpp: enums.IdTagInfo = {
       val status = {
-        import messages.{AuthorizationStatus => ocpp}
+        import enums.{AuthorizationStatus => ocpp}
         self.status match {
           case AcceptedValue6 => ocpp.Accepted
           case Blocked => ocpp.IdTagBlocked
@@ -30,14 +29,14 @@ private[soap] object ConvertersV12 {
           case ConcurrentTx => ocpp.ConcurrentTx
         }
       }
-      messages.IdTagInfo(status, self.expiryDate.map(_.toDateTime), self.parentIdTag)
+      enums.IdTagInfo(status, self.expiryDate.map(_.toDateTime), self.parentIdTag)
     }
   }
 
-  implicit class RichOcppIdTagInfo(val self: messages.IdTagInfo) extends AnyVal {
+  implicit class RichOcppIdTagInfo(val self: enums.IdTagInfo) extends AnyVal {
     def toV12: IdTagInfo = {
       val status: AuthorizationStatus = {
-        import messages.{AuthorizationStatus => ocpp}
+        import enums.{AuthorizationStatus => ocpp}
         self.status match {
           case ocpp.Accepted => AcceptedValue6
           case ocpp.IdTagBlocked => Blocked
@@ -49,5 +48,4 @@ private[soap] object ConvertersV12 {
       IdTagInfo(status, self.expiryDate.map(_.toXMLCalendar), self.parentIdTag)
     }
   }
-
 }
