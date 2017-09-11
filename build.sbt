@@ -46,6 +46,7 @@ def scalaxbModule(name: String, packageNameForGeneratedCode: String) =
 
 
 val messages = module("ocpp-messages")
+  .settings(libraryDependencies += "com.thenewmotion" %% "enum-utils" % "0.2")
 
 val json = module("ocpp-json")
   .dependsOn(messages)

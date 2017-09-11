@@ -1,8 +1,11 @@
-package com.thenewmotion.ocpp.messages
+package com.thenewmotion.ocpp
+package messages
 
 import scala.concurrent.duration._
 import java.net.URI
 import java.time.ZonedDateTime
+
+import enums._
 
 sealed trait Message
 sealed trait Req extends Message
@@ -14,7 +17,7 @@ sealed trait CentralSystemReq extends CentralSystemMessage with Req
 sealed trait CentralSystemRes extends CentralSystemMessage with Res
 
 
-case class AuthorizeReq(idTag: String) extends CentralSystemReq
+case class AuthorizeReq(idTag: IdTag) extends CentralSystemReq
 case class AuthorizeRes(idTag: IdTagInfo) extends CentralSystemRes
 
 
@@ -197,7 +200,66 @@ sealed trait ChargePointReq extends ChargePointMessage with Req
 sealed trait ChargePointRes extends ChargePointMessage with Res
 
 
-case class RemoteStartTransactionReq(idTag: IdTag, connector: Option[ConnectorScope]) extends ChargePointReq
+case class ChargingSchedulePeriod(
+  startOffset: FiniteDuration,
+  amperesLimit: Double,
+  numberPhases: Option[Int]
+)
+
+case class ChargingSchedule(
+  chargingRateUnit: UnitOfChargingRate,
+  chargingSchedulePeriod: List[ChargingSchedulePeriod],
+  minChargingRate: Option[Double],
+  startsAt: Option[ZonedDateTime],
+  duration: Option[FiniteDuration]
+)
+
+case class ChargingProfile(
+  id: Int,
+  stackLevel: Int,
+  chargingProfilePurpose: ChargingProfilePurpose,
+  chargingProfileKind: ChargingProfileKind,
+  chargingSchedule: ChargingSchedule,
+  transactionId: Option[Int],
+  validFrom: Option[ZonedDateTime],
+  validTo: Option[ZonedDateTime]
+)
+
+case class SetChargingProfileReq(
+  connector: ConnectorScope,
+  chargingProfile: ChargingProfile
+) extends ChargePointReq
+case class SetChargingProfileRes(
+  status: ChargingProfileStatus
+) extends ChargePointRes
+
+case class ClearChargingProfileReq(
+  id: Option[Int],
+  connector: Option[ConnectorScope],
+  chargingProfilePurpose: Option[ChargingProfilePurpose],
+  stackLevel: Option[Int]
+) extends ChargePointReq
+case class ClearChargingProfileRes(
+  status: ClearChargingProfileStatus
+) extends ChargePointRes
+
+case class GetCompositeScheduleReq(
+  connector: ConnectorScope,
+  duration: FiniteDuration,
+  chargingRateUnit: Option[UnitOfChargingRate]
+) extends ChargePointReq
+case class GetCompositeScheduleRes(
+  status: GetCompositeScheduleStatus,
+  connector: Option[ConnectorScope],
+  scheduleStart: Option[ZonedDateTime],
+  chargingSchedule: Option[ChargingSchedule]
+) extends ChargePointRes
+
+case class RemoteStartTransactionReq(
+  idTag: IdTag,
+  connector: Option[ConnectorScope],
+  chargingProfile: Option[ChargingProfile]
+) extends ChargePointReq
 case class RemoteStartTransactionRes(accepted: Boolean) extends ChargePointRes
 
 
@@ -304,18 +366,18 @@ object UpdateStatus {
 }
 
 sealed trait AuthorisationData {
-  def idTag: String
+  def idTag: IdTag
 }
 
 object AuthorisationData {
-  def apply(idTag: String, idTagInfo: Option[IdTagInfo]): AuthorisationData = idTagInfo match {
+  def apply(idTag: IdTag, idTagInfo: Option[IdTagInfo]): AuthorisationData = idTagInfo match {
     case Some(x) => AuthorisationAdd(idTag, x)
     case None => AuthorisationRemove(idTag)
   }
 }
 
-case class AuthorisationAdd(idTag: String, idTagInfo: IdTagInfo) extends AuthorisationData
-case class AuthorisationRemove(idTag: String) extends AuthorisationData
+case class AuthorisationAdd(idTag: IdTag, idTagInfo: IdTagInfo) extends AuthorisationData
+case class AuthorisationRemove(idTag: IdTag) extends AuthorisationData
 
 
 object Reservation extends Enumeration {

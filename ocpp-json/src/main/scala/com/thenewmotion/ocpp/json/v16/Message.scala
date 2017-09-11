@@ -38,7 +38,8 @@ case class FirmwareStatusNotificationRes() extends CentralSystemRes
 case class HeartbeatReq() extends CentralSystemReq
 case class HeartbeatRes(currentTime: ZonedDateTime) extends CentralSystemRes
 
-case class MeterValuesReq(connectorId: Int,
+case class MeterValuesReq(
+  connectorId: Int,
   transactionId: Option[Int],
   meterValue: List[Meter]) extends CentralSystemReq
 case class MeterValuesRes() extends CentralSystemRes
@@ -88,7 +89,7 @@ case class CancelReservationRes(status: String) extends ChargePointRes
 case class ChangeAvailabilityReq(connectorId: Int, `type`: String) extends ChargePointReq
 case class ChangeAvailabilityRes(status: String) extends ChargePointRes
 
-case class ChangeConfigurationReq(key: String, value:String) extends ChargePointReq
+case class ChangeConfigurationReq(key: String, value: String) extends ChargePointReq
 case class ChangeConfigurationRes(status: String) extends ChargePointRes
 
 case class ClearCacheReq() extends ChargePointReq

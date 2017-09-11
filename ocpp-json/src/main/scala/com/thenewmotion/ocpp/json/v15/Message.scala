@@ -173,7 +173,8 @@ case class IdTagInfo(
 )
 
 case class Meter(timestamp: ZonedDateTime, values: List[MeterValue])
-case class MeterValue(value: String,
+case class MeterValue(
+  value: String,
   context: Option[String],
   format: Option[String],
   measurand: Option[String],

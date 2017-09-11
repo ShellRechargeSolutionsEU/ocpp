@@ -1,5 +1,5 @@
 package com.thenewmotion.ocpp
-package messages
+package messages.enums
 
 /**
  * @author Yaroslav Klymko
