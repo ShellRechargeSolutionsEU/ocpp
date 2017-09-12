@@ -5,6 +5,40 @@ import scala.concurrent.duration._
 import java.net.URI
 import java.time.ZonedDateTime
 
+import enums.reflection.EnumUtils.Enumerable
+import enums.reflection.EnumUtils.Nameable
+
+// TODO: begin WIP
+trait StopReason
+object StopReason {
+  case object Local extends StopReason
+}
+
+trait RegistrationStatus extends Nameable
+object RegistrationStatus extends Enumerable[RegistrationStatus] {
+  case object Accepted extends RegistrationStatus
+  case object Rejected extends RegistrationStatus
+  case object Pending extends RegistrationStatus
+  val values = Set(Accepted, Rejected, Pending)
+}
+trait DiagnosticsStatus extends Nameable
+object DiagnosticsStatus extends Enumerable[DiagnosticsStatus] {
+  case object Uploaded extends DiagnosticsStatus
+  case object UploadFailed extends DiagnosticsStatus
+  val values = Set(Uploaded, UploadFailed)
+}
+trait Phase
+trait MessageTrigger
+trait TriggerMessageStatus
+trait UnlockStatus extends Nameable
+object UnlockStatus extends Enumerable[UnlockStatus] {
+  case object Unlocked extends UnlockStatus
+  case object UnlockFailed extends UnlockStatus
+  case object NotSupported extends UnlockStatus
+  val values = Set(Unlocked, UnlockFailed, NotSupported)
+}
+// end WIP
+
 sealed trait Message
 sealed trait Req extends Message
 sealed trait Res extends Message
@@ -31,7 +65,8 @@ case class StopTransactionReq(transactionId: Int,
                               idTag: Option[IdTag],
                               timestamp: ZonedDateTime,
                               meterStop: Int,
-                              transactionData: List[TransactionData]) extends CentralSystemReq
+                              reason: StopReason, // ocpp 1.6
+                              meters: List[Meter]) extends CentralSystemReq
 case class StopTransactionRes(idTag: Option[IdTagInfo]) extends CentralSystemRes
 
 
@@ -52,9 +87,9 @@ case class BootNotificationReq(chargePointVendor: String,
                                imsi: Option[String],
                                meterType: Option[String],
                                meterSerialNumber: Option[String]) extends CentralSystemReq
-case class BootNotificationRes(registrationAccepted: Boolean,
+case class BootNotificationRes(status: RegistrationStatus,
                                currentTime: ZonedDateTime /*optional in OCPP 1.2*/ ,
-                               heartbeatInterval: FiniteDuration /*optional in OCPP 1.2*/) extends CentralSystemRes
+                               interval: FiniteDuration /*optional in OCPP 1.2*/) extends CentralSystemRes
 
 case class CentralSystemDataTransferReq(vendorId: String, messageId: Option[String], data: Option[String])
   extends CentralSystemReq
@@ -73,18 +108,18 @@ case class FirmwareStatusNotificationReq(status: FirmwareStatus.Value) extends C
 case object FirmwareStatusNotificationRes extends CentralSystemRes
 
 
-case class DiagnosticsStatusNotificationReq(uploaded: Boolean) extends CentralSystemReq
+case class DiagnosticsStatusNotificationReq(status: DiagnosticsStatus) extends CentralSystemReq
 case object DiagnosticsStatusNotificationRes extends CentralSystemRes
 
-
-
-case class TransactionData(meters: List[Meter])
-
-sealed trait ChargePointStatus {
-  def info: Option[String]
-}
+sealed trait ChargePointStatus { def info: Option[String] }
 case class Available(info:Option[String]=None) extends ChargePointStatus
 case class Occupied(info:Option[String]=None) extends ChargePointStatus
+// Note: ocpp 1.6 replaced the occupied status
+case class Preparing(info:Option[String]=None) extends ChargePointStatus
+case class Charging(info:Option[String]=None) extends ChargePointStatus
+case class SuspendedEVSE(info:Option[String]=None) extends ChargePointStatus
+case class SuspendedEV(info:Option[String]=None) extends ChargePointStatus
+case class Finishing(info:Option[String]=None) extends ChargePointStatus
 case class Faulted(errorCode: Option[ChargePointErrorCode.Value],
                    info: Option[String]=None,
                    vendorErrorCode: Option[String]) extends ChargePointStatus
@@ -96,22 +131,30 @@ object ChargePointErrorCode extends Enumeration {
   val ConnectorLockFailure,
   HighTemperature,
   Mode3Error,
+  EVCommunicationError, // ocpp 1.6: renamed from Mode3Error
   PowerMeterFailure,
   PowerSwitchFailure,
   ReaderFailure,
   ResetFailure,
   GroundFailure /*since OCPP 1.5*/ ,
   OverCurrentFailure,
+  OverVoltage, // ocpp 1.6
   UnderVoltage,
   WeakSignal,
+  InternalError, // ocpp 1.6
+  LocalListConflict, // ocpp 1.6
+  NoError, // ocpp 1.6
   OtherError = Value
 }
 
 object FirmwareStatus extends Enumeration {
   val Downloaded,
   DownloadFailed,
+  Downloading, // ocpp 1.6
   InstallationFailed,
-  Installed = Value
+  Installed,
+  Installing, // ocpp 1.6
+  Idle = Value
 }
 
 @SerialVersionUID(0)
@@ -119,7 +162,7 @@ sealed trait ChargePointMessage extends Message
 sealed trait ChargePointReq extends ChargePointMessage with Req
 sealed trait ChargePointRes extends ChargePointMessage with Res
 
-
+// ocpp 1.6: charging profiles
 case class ChargingSchedulePeriod(
   startOffset: FiniteDuration,
   amperesLimit: Double,
@@ -172,10 +215,19 @@ case class GetCompositeScheduleRes(
   status: GetCompositeScheduleStatus
 ) extends ChargePointRes
 
+// ocpp 1.6: trigger message
+case class TriggerMessageReq(
+  requestedMessage: MessageTrigger,
+  connector: ConnectorScope
+) extends ChargePointReq
+case class TriggerMessageRes(
+  status: TriggerMessageStatus
+) extends ChargePointRes
+
 case class RemoteStartTransactionReq(
   idTag: IdTag,
   connector: Option[ConnectorScope],
-  chargingProfile: Option[ChargingProfile]
+  chargingProfile: Option[ChargingProfile] // ocpp 1.6
 ) extends ChargePointReq
 case class RemoteStartTransactionRes(accepted: Boolean) extends ChargePointRes
 
@@ -185,7 +237,7 @@ case class RemoteStopTransactionRes(accepted: Boolean) extends ChargePointRes
 
 
 case class UnlockConnectorReq(connector: ConnectorScope) extends ChargePointReq
-case class UnlockConnectorRes(accepted: Boolean) extends ChargePointRes
+case class UnlockConnectorRes(status: UnlockStatus) extends ChargePointRes
 
 
 case class GetDiagnosticsReq(location: URI,
@@ -222,7 +274,8 @@ case object UpdateFirmwareRes extends ChargePointRes
 case class SendLocalListReq(updateType: UpdateType.Value,
                             listVersion: AuthListSupported,
                             localAuthorisationList: List[AuthorisationData],
-                            hash: Option[String]) extends ChargePointReq
+                            hash: Option[String] // dropped in ocpp 1.6
+                            ) extends ChargePointReq
 
 case class SendLocalListRes(status: UpdateStatus.Value) extends ChargePointRes
 
@@ -252,7 +305,7 @@ case class CancelReservationRes(accepted: Boolean) extends ChargePointRes
 
 
 object ConfigurationStatus extends Enumeration {
-  val Accepted, Rejected, NotSupported = Value
+  val Accepted, Rejected, NotSupported, RebootRequired = Value
 }
 
 object AvailabilityStatus extends Enumeration {

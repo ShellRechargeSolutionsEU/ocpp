@@ -7,12 +7,15 @@ case class Meter(timestamp: ZonedDateTime, values: List[Meter.Value] = Nil)
 
 object Meter {
 
-  case class Value(value: String,
+  case class Value(
+    value: String,
     context: ReadingContext,
     format: ValueFormat,
     measurand: Measurand,
+    phase: Option[Phase], // ocpp 1.6
     location: Location,
-    unit: UnitOfMeasure)
+    unit: UnitOfMeasure
+  )
 
   object DefaultValue {
     val readingContext = ReadingContext.SamplePeriodic
@@ -20,11 +23,12 @@ object Meter {
     val measurand = Measurand.EnergyActiveImportRegister
     val location = Location.Outlet
     val unitOfMeasure = UnitOfMeasure.Wh
+    val phase = None
 
-    def apply(value: Int): Value = Value(value.toString, readingContext, format, measurand, location, unitOfMeasure)
+    def apply(value: Int): Value = Value(value.toString, readingContext, format, measurand, phase, location, unitOfMeasure)
 
     def unapply(x: Value): Option[Int] = PartialFunction.condOpt(x) {
-      case Value(value, `readingContext`, `format`, `measurand`, `location`, `unitOfMeasure`) => value.toFloat.round
+      case Value(value, `readingContext`, `format`, `measurand`, `phase`, `location`, `unitOfMeasure`) => value.toFloat.round
     }
   }
 
@@ -42,10 +46,16 @@ object Meter {
     case object PowerActiveImport extends Measurand { override def name = "Power.Active.Import" }
     case object PowerReactiveExport extends Measurand { override def name = "Power.Reactive.Export" }
     case object PowerReactiveImport extends Measurand { override def name = "Power.Reactive.Import" }
+    case object PowerFactor extends Measurand { override def name = "Power.Factor" } // ocpp 1.6
+    case object PowerOffered extends Measurand { override def name = "Power.Offered" } // ocpp 1.6
     case object CurrentExport extends Measurand { override def name = "Current.Export" }
     case object CurrentImport extends Measurand { override def name = "Current.Import" }
+    case object CurrentOffered extends Measurand { override def name = "Current.Offered" } // ocpp 1.6
     case object Voltage extends Measurand { override def name = "Voltage" }
     case object Temperature extends Measurand { override def name = "Temperature" }
+    case object Frequency extends Measurand { override def name = "Frequency" } // ocpp 1.6
+    case object FanSpeedInRotationsPerMinute extends Measurand { override def name = "RPM" } // ocpp 1.6
+    case object StateOfChargeInPercentage extends Measurand { override def name = "SoC" } // ocpp 1.6
 
     val values = Set(
       EnergyActiveExportRegister,
@@ -60,10 +70,16 @@ object Meter {
       PowerActiveImport,
       PowerReactiveExport,
       PowerReactiveImport,
+      PowerFactor,
+      PowerOffered,
       CurrentExport,
       CurrentImport,
+      CurrentOffered,
       Voltage,
-      Temperature
+      Temperature,
+      Frequency,
+      FanSpeedInRotationsPerMinute,
+      StateOfChargeInPercentage
     )
   }
 
@@ -83,38 +99,49 @@ object Meter {
     case object SamplePeriodic extends ReadingContext { override def name = "Sample.Periodic" }
     case object TransactionBegin extends ReadingContext { override def name = "Transaction.Begin" }
     case object TransactionEnd extends ReadingContext { override def name = "Transaction.End" }
+    case object Trigger extends ReadingContext { override def name = "Trigger" } // ocpp 1.6
+    case object Other extends ReadingContext { override def name = "Other" } // ocpp 1.6
 
-    val values = Set(InterruptionBegin, InterruptionEnd, SampleClock, SamplePeriodic, TransactionBegin, TransactionEnd)
+    val values = Set(InterruptionBegin, InterruptionEnd, SampleClock, SamplePeriodic, TransactionBegin, TransactionEnd, Trigger, Other)
   }
 
   sealed trait Location extends Nameable
-
   object Location extends Enumerable[Location] {
-
     case object Inlet extends Location
-
     case object Outlet extends Location
-
     case object Body extends Location
 
-    val values = Set(Inlet, Outlet, Body)
+    // ocpp 1.6
+    case object Cable extends Location
+    case object Ev extends Location { override def name = "EV" }
+    val values = Set(Inlet, Outlet, Body, Cable, Ev)
   }
 
   sealed trait UnitOfMeasure extends Nameable
   object UnitOfMeasure extends Enumerable[UnitOfMeasure] {
-    case object Wh      extends UnitOfMeasure { override def name = "Wh" }
-    case object Kwh     extends UnitOfMeasure { override def name = "kWh" }
-    case object Varh    extends UnitOfMeasure { override def name = "varh" }
-    case object Kvarh   extends UnitOfMeasure { override def name = "kvarh" }
-    case object W       extends UnitOfMeasure { override def name = "W" }
-    case object Kw      extends UnitOfMeasure { override def name = "kW" }
-    case object Var     extends UnitOfMeasure { override def name = "var" }
-    case object Kvar    extends UnitOfMeasure { override def name = "kvar" }
-    case object Amp     extends UnitOfMeasure { override def name = "Amp" }
-    case object Volt    extends UnitOfMeasure { override def name = "Volt" }
-    case object Celsius extends UnitOfMeasure { override def name = "Celsius" }
+    // TODO: Should we override the name value here? It makes more
+    // sense to move these overrides to ConvertersVXX.scala because
+    // the naming may actually differ between versions
+    case object Wh         extends UnitOfMeasure { override def name = "Wh" }
+    case object Kwh        extends UnitOfMeasure { override def name = "kWh" }
+    case object Varh       extends UnitOfMeasure { override def name = "varh" }
+    case object Kvarh      extends UnitOfMeasure { override def name = "kvarh" }
+    case object W          extends UnitOfMeasure { override def name = "W" }
+    case object Kw         extends UnitOfMeasure { override def name = "kW" }
+    case object Var        extends UnitOfMeasure { override def name = "var" }
+    case object Kvar       extends UnitOfMeasure { override def name = "kvar" }
+    case object Amp        extends UnitOfMeasure { override def name = "Amp" }
+    case object Volt       extends UnitOfMeasure { override def name = "Volt" }
+    case object Celsius    extends UnitOfMeasure { override def name = "Celsius" }
 
-    def values = Set(Wh, Kwh, Varh, Kvarh, W, Kw, Var, Kvar, Amp, Volt, Celsius)
+    // ocpp 1.6
+    case object Fahrenheit extends UnitOfMeasure { override def name =  "Fahrenheit" }
+    case object Kelvin     extends UnitOfMeasure { override def name = "K" }
+    case object Va         extends UnitOfMeasure { override def name = "VA" }
+    case object Kva        extends UnitOfMeasure { override def name = "kVA" }
+    case object Percent    extends UnitOfMeasure { override def name = "Percent" }
+    def values = Set(Wh, Kwh, Varh, Kvarh, W, Kw, Var, Kvar, Amp, Volt, Celsius,
+      Fahrenheit, Kelvin, Va, Kva, Percent)
   }
 }
 
