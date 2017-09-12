@@ -1,13 +1,16 @@
 package com.thenewmotion.ocpp
 package messages.enums
 
+import java.time.ZonedDateTime
+
 import enums.reflection.EnumUtils.Enumerable
 import enums.reflection.EnumUtils.Nameable
+import messages.ChargingSchedule
 
-sealed trait RecurringKind extends Nameable
-object RecurringKind extends Enumerable[RecurringKind] {
-  case object Daily extends RecurringKind
-  case object Weekly extends RecurringKind
+sealed trait RecurrencyKind extends Nameable
+object RecurrencyKind extends Enumerable[RecurrencyKind] {
+  case object Daily extends RecurrencyKind
+  case object Weekly extends RecurrencyKind
   val values = Set(Daily, Weekly)
 }
 
@@ -15,7 +18,7 @@ sealed trait ChargingProfileKind
 object ChargingProfileKind {
   case object Absolute extends ChargingProfileKind // startSchedule can't be None
   case object Relative extends ChargingProfileKind // startSchedule should be None
-  final case class Recurring(kind: RecurringKind) extends ChargingProfileKind // startSchedule?
+  final case class Recurring(kind: RecurrencyKind) extends ChargingProfileKind // startSchedule?
 }
 
 sealed trait ChargingProfilePurpose extends Nameable
@@ -48,9 +51,12 @@ object ClearChargingProfileStatus extends Enumerable[ClearChargingProfileStatus]
   val values = Set(Accepted, Unknown)
 }
 
-sealed trait GetCompositeScheduleStatus extends Nameable
-object GetCompositeScheduleStatus extends Enumerable[GetCompositeScheduleStatus] {
-  case object Accepted extends GetCompositeScheduleStatus
+sealed trait GetCompositeScheduleStatus
+object GetCompositeScheduleStatus {
+  case class Accepted(
+    connector: Scope,
+    scheduleStart: Option[ZonedDateTime],
+    chargingSchedule: Option[ChargingSchedule]
+  ) extends GetCompositeScheduleStatus
   case object Rejected extends GetCompositeScheduleStatus
-  val values = Set(Accepted, Rejected)
 }

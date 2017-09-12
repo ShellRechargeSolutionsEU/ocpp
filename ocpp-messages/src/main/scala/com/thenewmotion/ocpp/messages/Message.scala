@@ -226,7 +226,7 @@ case class ChargingProfile(
 )
 
 case class SetChargingProfileReq(
-  connector: ConnectorScope,
+  connector: Scope,
   chargingProfile: ChargingProfile
 ) extends ChargePointReq
 case class SetChargingProfileRes(
@@ -235,7 +235,7 @@ case class SetChargingProfileRes(
 
 case class ClearChargingProfileReq(
   id: Option[Int],
-  connector: Option[ConnectorScope],
+  connector: Option[Scope],
   chargingProfilePurpose: Option[ChargingProfilePurpose],
   stackLevel: Option[Int]
 ) extends ChargePointReq
@@ -244,15 +244,12 @@ case class ClearChargingProfileRes(
 ) extends ChargePointRes
 
 case class GetCompositeScheduleReq(
-  connector: ConnectorScope,
+  connector: Scope,
   duration: FiniteDuration,
   chargingRateUnit: Option[UnitOfChargingRate]
 ) extends ChargePointReq
 case class GetCompositeScheduleRes(
-  status: GetCompositeScheduleStatus,
-  connector: Option[ConnectorScope],
-  scheduleStart: Option[ZonedDateTime],
-  chargingSchedule: Option[ChargingSchedule]
+  status: GetCompositeScheduleStatus
 ) extends ChargePointRes
 
 case class RemoteStartTransactionReq(
