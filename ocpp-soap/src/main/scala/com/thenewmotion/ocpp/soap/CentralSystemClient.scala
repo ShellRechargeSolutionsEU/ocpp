@@ -312,7 +312,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
 
 
   def toMeter(x: messages.Meter): MeterValue = {
-    implicit def toReadingContext(x: messages.Meter.ReadingContext.Value): ReadingContext = {
+    implicit def toReadingContext(x: messages.Meter.ReadingContext): ReadingContext = {
       import messages.Meter.{ReadingContext => ocpp}
       x match {
         case ocpp.InterruptionBegin => Interruptionu46Begin
@@ -324,7 +324,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       }
     }
 
-    implicit def toValueFormat(x: messages.Meter.ValueFormat.Value): ValueFormat = {
+    implicit def toValueFormat(x: messages.Meter.ValueFormat): ValueFormat = {
       import messages.Meter.{ValueFormat => ocpp}
       x match {
         case ocpp.Raw => Raw
@@ -332,7 +332,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       }
     }
 
-    implicit def toMeasurand(x: messages.Meter.Measurand.Value): Measurand = {
+    implicit def toMeasurand(x: messages.Meter.Measurand): Measurand = {
       import messages.Meter.{Measurand => ocpp}
       x match {
         case ocpp.EnergyActiveExportRegister => Energyu46Activeu46Exportu46Register
@@ -354,8 +354,8 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       }
     }
 
-    implicit def toLocation(x: messages.Meter.Location.Value): Location = {
-      import messages.Meter.{Location => ocpp}
+    implicit def toLocation(x: Meter.Location): Location = {
+      import Meter.{Location => ocpp}
       x match {
         case ocpp.Inlet => Inlet
         case ocpp.Outlet => Outlet
@@ -363,7 +363,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       }
     }
 
-    implicit def toUnit(x: messages.Meter.UnitOfMeasure.Value): UnitOfMeasure = {
+    implicit def toUnit(x: messages.Meter.UnitOfMeasure): UnitOfMeasure = {
       import messages.Meter.{UnitOfMeasure => ocpp}
       x match {
         case ocpp.Wh => Wh

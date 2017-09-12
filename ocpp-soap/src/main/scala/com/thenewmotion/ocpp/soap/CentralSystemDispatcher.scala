@@ -293,7 +293,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
 
   def toValue(x: com.thenewmotion.ocpp.v15.Value): Meter.Value = {
     import Meter.{ReadingContext => ocpp}
-    def toReadingContext(x: ReadingContext): Meter.ReadingContext.Value = {
+    def toReadingContext(x: ReadingContext): Meter.ReadingContext = {
       x match {
         case Interruptionu46Begin => ocpp.InterruptionBegin
         case Interruptionu46End => ocpp.InterruptionEnd
@@ -304,7 +304,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
       }
     }
 
-    def toValueFormat(x: ValueFormat): Meter.ValueFormat.Value = {
+    def toValueFormat(x: ValueFormat): Meter.ValueFormat = {
       import Meter.{ValueFormat => ocpp}
       x match {
         case Raw => ocpp.Raw
@@ -312,7 +312,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
       }
     }
 
-    def toMeasurand(x: Measurand): Meter.Measurand.Value = {
+    def toMeasurand(x: Measurand): Meter.Measurand = {
       import Meter.{Measurand => ocpp}
       x match {
         case Energyu46Activeu46Exportu46Register => ocpp.EnergyActiveExportRegister
@@ -334,7 +334,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
       }
     }
 
-    def toLocation(x: Location): Meter.Location.Value = {
+    def toLocation(x: Location): Meter.Location = {
       import com.thenewmotion.ocpp.v15._
       import Meter.{Location => ocpp}
       x match {
@@ -344,7 +344,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
       }
     }
 
-    def toUnit(x: UnitOfMeasure): Meter.UnitOfMeasure.Value = {
+    def toUnit(x: UnitOfMeasure): Meter.UnitOfMeasure = {
       import Meter.{UnitOfMeasure => ocpp}
       x match {
         case Wh => ocpp.Wh

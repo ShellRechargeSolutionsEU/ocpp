@@ -3,6 +3,8 @@ package json.v15
 
 import messages.Meter._
 import org.json4s.MappingException
+import enums.reflection.EnumUtils.{Enumerable, Nameable}
+
 import scala.concurrent.duration._
 import java.net.{URISyntaxException, URI}
 
@@ -342,8 +344,8 @@ object ConvertersV15 {
                      location = noneIfDefault(Location.Outlet, v.location),
                      unit = noneIfDefault(UnitOfMeasure.Wh, v.unit))
 
-    def noneIfDefault(default: Enumeration#Value, actual: Enumeration#Value): Option[String] =
-      if (actual == default) None else Some(actual.toString)
+    def noneIfDefault(default: Nameable, actual: Nameable): Option[String] =
+      if (actual == default) None else Some(actual.name)
   }
 
   private def transactionDataFromV15(v15td: Option[List[TransactionData]]): List[messages.TransactionData] =
@@ -368,13 +370,11 @@ object ConvertersV15 {
       unit = getMeterValueProperty(unit, UnitOfMeasure, UnitOfMeasure.Wh))
   }
 
-
-  private def getMeterValueProperty[T <: Enumeration](inJson: Option[String], enumeration: T, default: T#Value): T#Value =
-    try {
-      inJson.fold(default)(s => enumeration.withName(s))
-    } catch {
-      case _: NoSuchElementException =>
+  private def getMeterValueProperty[V <: Nameable](inJson: Option[String], enumeration: Enumerable[V], default: V): V =
+    inJson.fold(Option(default))(s => enumeration.withName(s)) match {
+      case None =>
         throw new MappingException(s"Uknown meter value property $inJson in OCPP-JSON message")
+      case Some(v) => v
     }
 
   private object AuthorizationStatusConverters {

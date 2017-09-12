@@ -5,8 +5,6 @@ import scala.concurrent.duration._
 import java.net.URI
 import java.time.ZonedDateTime
 
-import enums._
-
 sealed trait Message
 sealed trait Req extends Message
 sealed trait Res extends Message
@@ -81,84 +79,6 @@ case object DiagnosticsStatusNotificationRes extends CentralSystemRes
 
 
 case class TransactionData(meters: List[Meter])
-
-case class Meter(timestamp: ZonedDateTime, values: List[Meter.Value] = Nil)
-
-object Meter {
-  case class Value(value: String,
-                   context: ReadingContext.Value,
-                   format: ValueFormat.Value,
-                   measurand: Measurand.Value,
-                   location: Location.Value,
-                   unit: UnitOfMeasure.Value)
-
-  object DefaultValue {
-    val readingContext = ReadingContext.SamplePeriodic
-    val format = ValueFormat.Raw
-    val measurand = Measurand.EnergyActiveImportRegister
-    val location = Location.Outlet
-    val unitOfMeasure = UnitOfMeasure.Wh
-
-    def apply(value: Int): Value = Value(value.toString, readingContext, format, measurand, location, unitOfMeasure)
-
-    def unapply(x: Value): Option[Int] = PartialFunction.condOpt(x) {
-      case Value(value, `readingContext`, `format`, `measurand`, `location`, `unitOfMeasure`) => value.toFloat.round
-    }
-  }
-
-  object Location extends Enumeration {
-    val Inlet = Value(0, "Inlet")
-    val Outlet = Value(1, "Outlet")
-    val Body = Value(2, "Body")
-  }
-
-  object Measurand extends Enumeration {
-    val EnergyActiveExportRegister = Value(0, "Energy.Active.Export.Register")
-    val EnergyActiveImportRegister = Value(1, "Energy.Active.Import.Register")
-    val EnergyReactiveExportRegister = Value(2, "Energy.Reactive.Export.Register")
-    val EnergyReactiveImportRegister = Value(3, "Energy.Reactive.Import.Register")
-    val EnergyActiveExportInterval = Value(4, "Energy.Active.Export.Interval")
-    val EnergyActiveImportInterval = Value(5, "Energy.Active.Import.Interval")
-    val EnergyReactiveExportInterval = Value(6, "Energy.Reactive.Export.Interval")
-    val EnergyReactiveImportInterval = Value(7, "Energy.Reactive.Import.Interval")
-    val PowerActiveExport = Value(8, "Power.Active.Export")
-    val PowerActiveImport = Value(9, "Power.Active.Import")
-    val PowerReactiveExport = Value(10, "Power.Reactive.Export")
-    val PowerReactiveImport = Value(11, "Power.Reactive.Import")
-    val CurrentExport = Value(12, "Current.Export")
-    val CurrentImport = Value(13, "Current.Import")
-    val Voltage = Value(14, "Voltage")
-    val Temperature = Value(15, "Temperature")
-  }
-
-  object ValueFormat extends Enumeration {
-    val Raw = Value(0, "Raw")
-    val Signed = Value(1, "Signed")
-  }
-
-  object ReadingContext extends Enumeration {
-    val InterruptionBegin = Value(0, "Interruption.Begin")
-    val InterruptionEnd = Value(1, "Interruption.End")
-    val SampleClock = Value(2, "Sample.Clock")
-    val SamplePeriodic = Value(3, "Sample.Periodic")
-    val TransactionBegin = Value(4, "Transaction.Begin")
-    val TransactionEnd = Value(5, "Transaction.End")
-  }
-
-  object UnitOfMeasure extends Enumeration {
-    val Wh = Value(0, "Wh")
-    val Kwh = Value(1, "kWh")
-    val Varh = Value(2, "varh")
-    val Kvarh = Value(3, "kvarh")
-    val W = Value(4, "W")
-    val Kw = Value(5, "kW")
-    val Var = Value(6, "var")
-    val Kvar = Value(7, "kvar")
-    val Amp = Value(8, "Amp")
-    val Volt = Value(9, "Volt")
-    val Celsius = Value(10, "Celsius")
-  }
-}
 
 sealed trait ChargePointStatus {
   def info: Option[String]
