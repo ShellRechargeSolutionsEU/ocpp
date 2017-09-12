@@ -19,6 +19,7 @@ val specs2Mock = "org.specs2" %% "specs2-mock" % specs2V % "test"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.0.4"
 val scalaParser = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4"
 val commonsCodec = "commons-codec" % "commons-codec" % "1.10"
+val enumUtils = "com.thenewmotion" %% "enum-utils" % "0.2.1"
 
 def module(name: String) = Project(name, file(name))
   .enablePlugins(OssLibPlugin)
@@ -46,7 +47,7 @@ def scalaxbModule(name: String, packageNameForGeneratedCode: String) =
 
 
 val messages = module("ocpp-messages")
-  .settings(libraryDependencies += "com.thenewmotion" %% "enum-utils" % "0.2")
+  .settings(libraryDependencies += enumUtils)
 
 val json = module("ocpp-json")
   .dependsOn(messages)
