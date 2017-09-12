@@ -49,8 +49,8 @@ private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: Uri
 
   def unlockConnector(req: UnlockConnectorReq) = UnlockConnectorRes(
     ?(_.unlockConnector, UnlockConnectorRequest(req.connector.toOcpp)) match {
-      case AcceptedValue3 => true
-      case RejectedValue3 => false
+      case AcceptedValue3 => messages.UnlockStatus.Unlocked
+      case RejectedValue3 => messages.UnlockStatus.UnlockFailed
     })
 
   def getDiagnostics(x: GetDiagnosticsReq) = {
@@ -141,8 +141,8 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
 
   def unlockConnector(req: UnlockConnectorReq) = UnlockConnectorRes(
     ?(_.unlockConnector, UnlockConnectorRequest(req.connector.toOcpp)) match {
-      case AcceptedValue4 => true
-      case RejectedValue4 => false
+      case AcceptedValue4 => messages.UnlockStatus.Unlocked
+      case RejectedValue4 => messages.UnlockStatus.UnlockFailed
     })
 
   def getDiagnostics(x: GetDiagnosticsReq) = {

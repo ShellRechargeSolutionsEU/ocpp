@@ -17,7 +17,7 @@ object ConvertersV15 {
                           firmwareVersion, iccid, imsi, meterType, meterSerialNumber)
 
     case messages.BootNotificationRes(registrationAccepted, currentTime, heartbeatInterval) =>
-      BootNotificationRes(registrationAccepted.toStatusString, currentTime, heartbeatInterval.toSeconds.toInt)
+      BootNotificationRes(registrationAccepted.name, currentTime, heartbeatInterval.toSeconds.toInt)
 
     case messages.AuthorizeReq(idTag) => AuthorizeReq(idTag)
 
@@ -32,18 +32,25 @@ object ConvertersV15 {
 
     case messages.StartTransactionRes(transactionId, idTagInfo) => StartTransactionRes(transactionId, idTagInfo.toV15)
 
-    case messages.StopTransactionReq(transactionId, idTag, timestamp, meterStop, transactionData) =>
+    case messages.StopTransactionReq(transactionId, idTag, timestamp, meterStop, stopReason, meters) =>
       StopTransactionReq(transactionId = transactionId,
                          idTag = idTag,
                          timestamp = timestamp,
                          meterStop = meterStop,
-                         transactionData = Some(transactionData.map(_.toV15)))
+                         transactionData = Some(
+                          meters.map(meter => TransactionData(Some(List(meter.toV15))))
+                          // TODO: is this conversion really correct?
+                          // List(TransactionData(Some(meters.map(_.toV15))))
+                         ))
 
     case messages.StopTransactionRes(idTagInfo) => StopTransactionRes(idTagInfo.map(_.toV15))
 
     case messages.UnlockConnectorReq(scope) => UnlockConnectorReq(scope.toOcpp)
 
-    case messages.UnlockConnectorRes(accepted) => UnlockConnectorRes(accepted.toStatusString)
+    case messages.UnlockConnectorRes(accepted) => UnlockConnectorRes {
+      if (accepted == messages.UnlockStatus.Unlocked) "Accepted"
+      else "Rejected"
+    }
 
     case messages.ResetReq(resetType) => ResetReq(resetType.toString)
 
@@ -90,7 +97,7 @@ object ConvertersV15 {
     case messages.GetDiagnosticsRes(filename) => GetDiagnosticsRes(filename)
 
     case messages.DiagnosticsStatusNotificationReq(uploaded) =>
-      DiagnosticsStatusNotificationReq(uploaded.toUploadStatusString)
+      DiagnosticsStatusNotificationReq(uploaded.name)
 
     case messages.DiagnosticsStatusNotificationRes =>
       DiagnosticsStatusNotificationRes()
@@ -146,8 +153,11 @@ object ConvertersV15 {
       messages.BootNotificationReq(vendor, model, chargePointSerial, chargeBoxSerial, firmwareVersion, iccid, imsi,
                                    meterType, meterSerial)
 
-    case BootNotificationRes(registrationAccepted, currentTime, heartbeatInterval) =>
-      messages.BootNotificationRes(registrationAccepted = statusStringToBoolean(registrationAccepted),
+    case BootNotificationRes(statusString, currentTime, heartbeatInterval) =>
+      messages.BootNotificationRes(status =
+        messages.RegistrationStatus.withName(statusString).getOrElse {
+          throw new MappingException(s"Did not recognize status '$statusString'")
+        },
         currentTime = currentTime,
         FiniteDuration(heartbeatInterval, SECONDS))
 
@@ -162,13 +172,16 @@ object ConvertersV15 {
     case StartTransactionRes(transactionId, idTagInfo) => messages.StartTransactionRes(transactionId, idTagInfo.fromV15)
 
     case StopTransactionReq(transactionId, idTag, timestamp, meterStop, transactionData) =>
-      messages.StopTransactionReq(transactionId, idTag, timestamp, meterStop, transactionDataFromV15(transactionData))
+      messages.StopTransactionReq(transactionId, idTag, timestamp, meterStop, messages.StopReason.Local, transactionDataFromV15(transactionData))
 
     case StopTransactionRes(idTagInfo) => messages.StopTransactionRes(idTagInfo.map(_.fromV15))
 
     case UnlockConnectorReq(connectorId) => messages.UnlockConnectorReq(messages.ConnectorScope.fromOcpp(connectorId))
 
-    case UnlockConnectorRes(status) => messages.UnlockConnectorRes(statusStringToBoolean(status))
+    case UnlockConnectorRes(statusString) => messages.UnlockConnectorRes(
+      if (statusString == "Accepted") messages.UnlockStatus.Unlocked
+      else messages.UnlockStatus.UnlockFailed
+    )
 
     case ResetReq(resetType) => messages.ResetReq(enumFromJsonString(messages.ResetType, resetType))
 
@@ -219,8 +232,12 @@ object ConvertersV15 {
 
     case GetDiagnosticsRes(filename) => messages.GetDiagnosticsRes(filename)
 
-    case DiagnosticsStatusNotificationReq(status) =>
-      messages.DiagnosticsStatusNotificationReq(uploadStatusStringToBoolean(status))
+    case DiagnosticsStatusNotificationReq(statusString) =>
+      messages.DiagnosticsStatusNotificationReq(status =
+        messages.DiagnosticsStatus.withName(statusString).getOrElse {
+          throw new MappingException(s"Did not recognize status '$statusString'")
+        }
+      )
 
     case DiagnosticsStatusNotificationRes() => messages.DiagnosticsStatusNotificationRes
 
@@ -326,11 +343,6 @@ object ConvertersV15 {
       messages.Faulted(errorCodeString, info, vendorErrorCode)
   }
 
-
-  private implicit class RichTransactionData(self: messages.TransactionData) {
-    def toV15: TransactionData = TransactionData(values = Some(self.meters.map(_.toV15): List[Meter]))
-  }
-
   private implicit class RichMeter(self: messages.Meter) {
     def toV15: Meter =
       Meter(timestamp = self.timestamp,
@@ -348,11 +360,12 @@ object ConvertersV15 {
       if (actual == default) None else Some(actual.name)
   }
 
-  private def transactionDataFromV15(v15td: Option[List[TransactionData]]): List[messages.TransactionData] =
-    v15td.fold(List.empty[messages.TransactionData])(_.map(metersFromV15))
+  // TODO: is this conversion really correct?
+  private def transactionDataFromV15(v15td: Option[List[TransactionData]]): List[messages.Meter] =
+    v15td.fold(List.empty[messages.Meter])(metersFromV15)
 
-  private def metersFromV15(v15mv: TransactionData): messages.TransactionData =
-    messages.TransactionData(v15mv.values getOrElse List.empty[Meter] map meterFromV15)
+  private def metersFromV15(v15mv: List[TransactionData]): List[messages.Meter] =
+    v15mv.flatMap(_.values.fold(List.empty[messages.Meter])(_.map(meterFromV15)))
 
   private def meterFromV15(v15m: Meter): messages.Meter = {
     messages.Meter(v15m.timestamp, v15m.values.map(meterValueFromV15))
@@ -364,6 +377,7 @@ object ConvertersV15 {
 
     Value(value = value,
       measurand = getMeterValueProperty(measurand, Measurand, Measurand.EnergyActiveImportRegister),
+      phase = None,
       context = getMeterValueProperty(context, ReadingContext, ReadingContext.SamplePeriodic),
       format = getMeterValueProperty(format, ValueFormat, ValueFormat.Raw),
       location = getMeterValueProperty(location, Location, Location.Outlet),
@@ -393,16 +407,6 @@ object ConvertersV15 {
     case "Rejected" => false
     case _          =>
       throw new MappingException(s"Did not recognize status '$statusString' (expected 'Accepted' or 'Rejected')")
-  }
-
-  private implicit class BooleanToUploadStatusString(val b: Boolean) extends AnyVal {
-    def toUploadStatusString = if (b) "Uploaded" else "UploadFailed"
-  }
-
-  private def uploadStatusStringToBoolean(s: String): Boolean = s match {
-    case "Uploaded" => true
-    case "UploadFailed" => false
-    case _ => throw new MappingException(s"'$s' is not a valid OCPP upload status")
   }
 
   private implicit class RichKeyValue(val self: messages.KeyValue) {

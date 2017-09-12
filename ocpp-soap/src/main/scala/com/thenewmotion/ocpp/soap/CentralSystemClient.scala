@@ -52,8 +52,8 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
 
   def stopTransaction(req: messages.StopTransactionReq) = {
     import req._
-    if (transactionData.nonEmpty)
-      logNotSupported("stopTransaction.transactionData", transactionData.mkString("\n", "\n", "\n"))
+    if (meters.nonEmpty)
+      logNotSupported("stopTransaction.transactionData", meters.mkString("\n", "\n", "\n"))
 
     val x = StopTransactionRequest(transactionId, idTag, timestamp.toXMLCalendar, meterStop)
     messages.StopTransactionRes(?(_.stopTransaction, x).idTagInfo.map(_.toOcpp))
@@ -86,8 +86,8 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
 
     val BootNotificationResponse(status, currentTime, heartbeatInterval) = ?(_.bootNotification, x)
     val accepted = status match {
-      case AcceptedValue7 => true
-      case RejectedValue6 => false
+      case AcceptedValue7 => messages.RegistrationStatus.Accepted
+      case RejectedValue6 => messages.RegistrationStatus.Rejected
     }
 
     messages.BootNotificationRes(
@@ -152,7 +152,7 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
   }
 
   def diagnosticsStatusNotification(req: messages.DiagnosticsStatusNotificationReq) = {
-    val status = if (req.uploaded) Uploaded else UploadFailed
+    val status = if (req.status == messages.DiagnosticsStatus.Uploaded) Uploaded else UploadFailed
     ?(_.diagnosticsStatusNotification, DiagnosticsStatusNotificationRequest(status))
     messages.DiagnosticsStatusNotificationRes
   }
@@ -204,9 +204,10 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
 
   def stopTransaction(req: messages.StopTransactionReq) = {
     import req._
-    def toTransactionData(x: messages.TransactionData): TransactionData = TransactionData(x.meters.map(toMeter))
 
-    val x = StopTransactionRequest(transactionId, idTag, timestamp.toXMLCalendar, meterStop, transactionData.map(toTransactionData))
+    val x = StopTransactionRequest(transactionId, idTag, timestamp.toXMLCalendar, meterStop, Seq(TransactionData(req.meters.map(toMeterValue))))
+    // TODO: is this conversion really correct?
+    // req.meters.map(meter => TransactionData(Seq(toMeterValue(meter)))))
     messages.StopTransactionRes(?(_.stopTransaction, x).idTagInfo.map(toIdTagInfo))
   }
 
@@ -214,7 +215,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
 
   def meterValues(req: messages.MeterValuesReq) {
     import req._
-    val x = MeterValuesRequest(scope.toOcpp, transactionId, meters.map(toMeter))
+    val x = MeterValuesRequest(scope.toOcpp, transactionId, meters.map(toMeterValue))
     ?(_.meterValues, x)
   }
 
@@ -233,8 +234,8 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
 
     val BootNotificationResponse(status, currentTime, heartbeatInterval) = ?(_.bootNotification, x)
     val accepted = status match {
-      case AcceptedValue11 => true
-      case RejectedValue9 => false
+      case AcceptedValue11 => messages.RegistrationStatus.Accepted
+      case RejectedValue9 => messages.RegistrationStatus.Rejected
     }
 
     messages.BootNotificationRes(accepted, currentTime.toDateTime, FiniteDuration(heartbeatInterval, SECONDS))
@@ -291,7 +292,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
   }
 
   def diagnosticsStatusNotification(req: messages.DiagnosticsStatusNotificationReq) {
-    val status = if (req.uploaded) Uploaded else UploadFailed
+    val status = if (req.status == messages.DiagnosticsStatus.Uploaded) Uploaded else UploadFailed
     ?(_.diagnosticsStatusNotification, DiagnosticsStatusNotificationRequest(status))
   }
 
@@ -311,7 +312,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
   }
 
 
-  def toMeter(x: messages.Meter): MeterValue = {
+  def toMeterValue(x: messages.Meter): MeterValue = {
     implicit def toReadingContext(x: messages.Meter.ReadingContext): ReadingContext = {
       import messages.Meter.{ReadingContext => ocpp}
       x match {

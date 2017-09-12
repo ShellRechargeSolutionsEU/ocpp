@@ -170,8 +170,8 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePointReq, Charg
         val connectorScope = ConnectorScope.fromOcpp(req.connectorId)
         UnlockConnectorReq(connectorScope)
       } {
-        case UnlockConnectorRes(accepted) =>
-          UnlockConnectorResponse(if (accepted) AcceptedValue4 else RejectedValue4)
+        case UnlockConnectorRes(status) =>
+          UnlockConnectorResponse(if (status == messages.UnlockStatus.Unlocked) AcceptedValue4 else RejectedValue4)
       }
 
       case UpdateFirmware => ?[UpdateFirmwareRequest, UpdateFirmwareResponse] { req =>

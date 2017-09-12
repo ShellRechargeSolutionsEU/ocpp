@@ -49,17 +49,17 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemReq, C
         case res: BootNotificationRes =>
           import res._
 
-          val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue7 else RejectedValue6
+          val registrationStatus: RegistrationStatus = if (status == messages.RegistrationStatus.Accepted) AcceptedValue7 else RejectedValue6
 
-          BootNotificationResponse(registrationStatus, Some(currentTime.toXMLCalendar), Some(heartbeatInterval.toSeconds.toInt))
+          BootNotificationResponse(registrationStatus, Some(currentTime.toXMLCalendar), Some(interval.toSeconds.toInt))
       }
 
       case DiagnosticsStatusNotification =>
         ?[DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse] {
           req =>
             val uploaded = req.status match {
-              case Uploaded => true
-              case UploadFailed => false
+              case Uploaded => messages.DiagnosticsStatus.Uploaded
+              case UploadFailed => messages.DiagnosticsStatus.UploadFailed
             }
             DiagnosticsStatusNotificationReq(uploaded)
         } { _ => DiagnosticsStatusNotificationResponse() }
@@ -78,7 +78,7 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemReq, C
       case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse] {
         req =>
           import req._
-           StopTransactionReq(transactionId, stringOption(idTag), timestamp.toDateTime, meterStop, Nil)
+           StopTransactionReq(transactionId, stringOption(idTag), timestamp.toDateTime, meterStop, messages.StopReason.Local, Nil)
       } {
         case StopTransactionRes(idTagInfo) =>
           StopTransactionResponse(idTagInfo.map(_.toV12))
@@ -169,7 +169,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
           meterSerialNumber = stringOption(req.meterSerialNumber))
       } {
         case BootNotificationRes(registrationAccepted, currentTime, heartbeatInterval) =>
-          val registrationStatus: RegistrationStatus = if (registrationAccepted) AcceptedValue11 else RejectedValue9
+          val registrationStatus: RegistrationStatus = if (registrationAccepted == messages.RegistrationStatus.Accepted) AcceptedValue11 else RejectedValue9
 
           BootNotificationResponse(registrationStatus, currentTime.toXMLCalendar, heartbeatInterval.toSeconds.toInt)
       }
@@ -178,8 +178,8 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
         ?[DiagnosticsStatusNotificationRequest, DiagnosticsStatusNotificationResponse] {
           req =>
             val uploaded = req.status match {
-              case Uploaded => true
-              case UploadFailed => false
+              case Uploaded => messages.DiagnosticsStatus.Uploaded
+              case UploadFailed => messages.DiagnosticsStatus.UploadFailed
             }
             DiagnosticsStatusNotificationReq(uploaded)
         } { _ => DiagnosticsStatusNotificationResponse() }
@@ -198,14 +198,16 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
       case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse] { req =>
         import req._
         def toMeter(x: MeterValue) = Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
-        def toTransactionData(x: TransactionData) = ocpp.TransactionData(x.values.map(toMeter).toList)
 
         StopTransactionReq(
           transactionId,
           stringOption(idTag),
           timestamp.toDateTime,
           meterStop,
-          transactionData.map(toTransactionData).toList)
+          messages.StopReason.Local,
+          // TODO: is this conversion really correct?
+          transactionData.flatMap(_.values.map(toMeter)).toList
+        )
       } {
         case StopTransactionRes(idTagInfo) =>
           StopTransactionResponse(idTagInfo.map(_.toV15))
@@ -366,6 +368,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
       x.context.map(toReadingContext) getOrElse Meter.DefaultValue.readingContext,
       x.format.map(toValueFormat) getOrElse Meter.DefaultValue.format,
       x.measurand.map(toMeasurand) getOrElse Meter.DefaultValue.measurand,
+      phase = None,
       x.location.map(toLocation) getOrElse Meter.DefaultValue.location,
       x.unit.map(toUnit) getOrElse Meter.DefaultValue.unitOfMeasure)
   }

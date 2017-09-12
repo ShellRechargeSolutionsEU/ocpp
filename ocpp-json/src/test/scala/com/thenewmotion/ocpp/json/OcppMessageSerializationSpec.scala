@@ -167,9 +167,10 @@ class OcppMessageSerializationSpec extends Specification {
       imsi = Some(""),
       meterType = Some("DBT NQC-ACDC"),
       meterSerialNumber = Some("gir.vat.mx.000e48"))
-    val bootNotificationRes = BootNotificationRes(registrationAccepted = true,
+    val bootNotificationRes = BootNotificationRes(
+      status = RegistrationStatus.Accepted,
       currentTime = utcDateTime(2013, 9, 27, 14, 3, 0),
-      heartbeatInterval = FiniteDuration(600, "seconds"))
+      interval = FiniteDuration(600, "seconds"))
 
     val startTransactionReq = StartTransactionReq(connector = ConnectorScope(1),
       idTag = "B4F62CEF",
@@ -193,12 +194,14 @@ class OcppMessageSerializationSpec extends Specification {
         Meter.Value(value = "0",
           context = ReadingContext.SamplePeriodic,
           measurand = Measurand.EnergyActiveImportRegister,
+          phase = None,
           format = ValueFormat.Raw,
           location = Location.Outlet,
           unit = UnitOfMeasure.Wh),
         Meter.Value(value = "0",
           context = ReadingContext.SamplePeriodic,
           measurand = Measurand.EnergyReactiveImportRegister,
+          phase = None,
           format = ValueFormat.Raw,
           location = Location.Outlet,
           unit = UnitOfMeasure.Varh)))
@@ -208,16 +211,16 @@ class OcppMessageSerializationSpec extends Specification {
         //"2013­08­14T14:29:31.540+02:00"
         timestamp = testTimestamp,
         meterStop = 20,
-        transactionData = List(
-          TransactionData(List(testMeter)),
-          TransactionData(List(testMeter))))
+        reason = StopReason.Local,
+        meters = List(testMeter, testMeter)
+      )
     }
     val stopTransactionRes = StopTransactionRes(idTag = Some(IdTagInfo(status = AuthorizationStatus.IdTagExpired,
       expiryDate = Some(utcDateTime(2013, 2, 1, 15, 9, 18)),
       parentIdTag = Some("PARENT"))))
 
     val unlockConnectorReq = UnlockConnectorReq(connector = ConnectorScope(0))
-    val unlockConnectorRes = UnlockConnectorRes(accepted = true)
+    val unlockConnectorRes = UnlockConnectorRes(UnlockStatus.Unlocked)
 
     val resetReq = ResetReq(resetType = ResetType.Soft)
     val resetRes = ResetRes(accepted = true)
@@ -271,7 +274,9 @@ class OcppMessageSerializationSpec extends Specification {
       retries = Retries(Some(4), Some(FiniteDuration(20, SECONDS))))
     val getDiagnosticsRes = GetDiagnosticsRes(fileName = Some("diag-gir.vat.mx.000e48-20130131132608.txt"))
 
-    val diagnosticsStatusNotificationReq = DiagnosticsStatusNotificationReq(uploaded = true)
+    val diagnosticsStatusNotificationReq = DiagnosticsStatusNotificationReq(
+      DiagnosticsStatus.Uploaded
+    )
     val diagnosticsStatusNotificationRes = DiagnosticsStatusNotificationRes
 
     val meterValuesReq = MeterValuesReq(
@@ -286,12 +291,14 @@ class OcppMessageSerializationSpec extends Specification {
               context = ReadingContext.SamplePeriodic,
               unit = UnitOfMeasure.Wh,
               measurand = Measurand.EnergyActiveImportRegister,
+              phase = None,
               format = ValueFormat.Raw,
               location = Location.Outlet),
             Meter.Value(
               value = "0",
               context = ReadingContext.SamplePeriodic,
               unit = UnitOfMeasure.Varh,
+              phase = None,
               measurand = Measurand.EnergyReactiveImportRegister,
               format = ValueFormat.Raw,
               location = Location.Outlet))),
@@ -302,6 +309,7 @@ class OcppMessageSerializationSpec extends Specification {
               value = "20",
               context = ReadingContext.SamplePeriodic,
               unit = UnitOfMeasure.Wh,
+              phase = None,
               measurand = Measurand.EnergyActiveImportRegister,
               format = ValueFormat.Raw,
               location = Location.Outlet),
@@ -310,6 +318,7 @@ class OcppMessageSerializationSpec extends Specification {
               context = ReadingContext.SamplePeriodic,
               unit = UnitOfMeasure.Varh,
               measurand = Measurand.EnergyReactiveImportRegister,
+              phase = None,
               format = ValueFormat.Raw,
               location = Location.Outlet)))))
     val meterValuesRes = MeterValuesRes
