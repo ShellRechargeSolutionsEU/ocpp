@@ -7,13 +7,12 @@ package soap
 private[soap] object ConvertersV15 {
 
   import com.thenewmotion.ocpp
-  import ocpp.messages.enums
   import ocpp.v15._
 
-  implicit class RichIdTagInfo(val self: enums.IdTagInfo) extends AnyVal{
+  implicit class RichIdTagInfo(val self: messages.IdTagInfo) extends AnyVal{
     def toV15: IdTagInfoType = {
       val status: AuthorizationStatusType = {
-        import enums.{AuthorizationStatus => ocpp}
+        import messages.{AuthorizationStatus => ocpp}
         self.status match {
           case ocpp.Accepted => AcceptedValue12
           case ocpp.IdTagBlocked => BlockedValue
@@ -27,7 +26,7 @@ private[soap] object ConvertersV15 {
 
     def toIdTagInfo: IdTagInfo = {
       val status: AuthorizationStatus = {
-        import enums.{AuthorizationStatus => ocpp}
+        import messages.{AuthorizationStatus => ocpp}
         self.status match {
           case ocpp.Accepted => AcceptedValue5
           case ocpp.IdTagBlocked => Blocked
@@ -41,9 +40,9 @@ private[soap] object ConvertersV15 {
   }
 
   implicit class RichV15IdTagInfo(val self: IdTagInfo) extends AnyVal {
-    def toOcpp: enums.IdTagInfo = {
-      val status: enums.AuthorizationStatus.Value = {
-          import enums.{AuthorizationStatus => ocpp}
+    def toOcpp: messages.IdTagInfo = {
+      val status: messages.AuthorizationStatus.Value = {
+          import messages.{AuthorizationStatus => ocpp}
           self.status match {
             case AcceptedValue5 => ocpp.Accepted
             case Blocked        => ocpp.IdTagBlocked
@@ -52,7 +51,7 @@ private[soap] object ConvertersV15 {
             case ConcurrentTx   => ocpp.ConcurrentTx
         }
       }
-      enums.IdTagInfo(status, self.expiryDate.map(_.toDateTime), self.parentIdTag)
+      messages.IdTagInfo(status, self.expiryDate.map(_.toDateTime), self.parentIdTag)
     }
   }
 
@@ -71,8 +70,8 @@ private[soap] object ConvertersV15 {
     def toV15: (UpdateStatus, Option[String]) = {
       import messages.UpdateStatus._
       self match {
-        case UpdateAccepted(h) => (AcceptedValue10,         h)
-        case UpdateFailed      => (Failed,                  None)
+        case UpdateAccepted(h) => (AcceptedValue10,                 h)
+        case UpdateFailed      => (Failed,                       None)
         case HashError         => (ocpp.v15.HashError,           None)
         case NotSupportedValue => (ocpp.v15.NotSupportedValue,   None)
         case VersionMismatch   => (ocpp.v15.VersionMismatch,     None)

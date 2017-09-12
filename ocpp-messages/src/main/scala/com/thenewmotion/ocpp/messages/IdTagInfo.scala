@@ -1,5 +1,5 @@
 package com.thenewmotion.ocpp
-package messages.enums
+package messages
 
 import java.time.ZonedDateTime
 

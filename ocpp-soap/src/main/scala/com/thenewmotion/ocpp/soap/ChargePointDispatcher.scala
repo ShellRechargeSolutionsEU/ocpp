@@ -6,7 +6,6 @@ import soapenvelope12.Body
 import scalaxb.XMLFormat
 import scala.concurrent.{ExecutionContext, Future}
 import messages._
-import messages.enums._
 
 object ChargePointDispatcher {
   def apply(version: Version.Value): Dispatcher[ChargePointReq, ChargePointRes] = version match {
@@ -82,7 +81,8 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePointReq, Charg
           GetConfigurationReq(req.key.toList)
       } {
         case GetConfigurationRes(values, unknownKeys) =>
-          def keyValue(kv: messages.KeyValue) = v15.KeyValue(kv.key, kv.readonly, kv.value)
+          import com.thenewmotion.ocpp.v15.KeyValue
+          def keyValue(kv: messages.KeyValue) = KeyValue(kv.key, kv.readonly, kv.value)
 
           GetConfigurationResponse(values.map(keyValue), unknownKeys)
       }

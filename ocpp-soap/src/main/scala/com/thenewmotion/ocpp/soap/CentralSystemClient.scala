@@ -177,9 +177,9 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
   }.service
 
 
-  private implicit def toIdTagInfo(x: IdTagInfoType): enums.IdTagInfo = {
+  private implicit def toIdTagInfo(x: IdTagInfoType): messages.IdTagInfo = {
     val status = {
-      import enums.{AuthorizationStatus => ocpp}
+      import messages.{AuthorizationStatus => ocpp}
       x.status match {
         case AcceptedValue12 => ocpp.Accepted
         case BlockedValue => ocpp.IdTagBlocked
@@ -188,7 +188,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
         case ConcurrentTxValue => ocpp.ConcurrentTx
       }
     }
-    enums.IdTagInfo(status, x.expiryDate.map(_.toDateTime), x.parentIdTag)
+    messages.IdTagInfo(status, x.expiryDate.map(_.toDateTime), x.parentIdTag)
   }
 
   def authorize(req: messages.AuthorizeReq) =
@@ -299,7 +299,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
     import req._
     val res = ?(_.dataTransfer, DataTransferRequestType(vendorId, messageId, data))
     val status = {
-      import enums.{DataTransferStatus => ocpp}
+      import messages.{DataTransferStatus => ocpp}
       res.status match {
         case AcceptedValue13 => ocpp.Accepted
         case RejectedValue10 => ocpp.Rejected

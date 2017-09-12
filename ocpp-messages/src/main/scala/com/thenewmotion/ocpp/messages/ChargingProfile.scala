@@ -1,11 +1,10 @@
 package com.thenewmotion.ocpp
-package messages.enums
+package messages
 
 import java.time.ZonedDateTime
 
 import enums.reflection.EnumUtils.Enumerable
 import enums.reflection.EnumUtils.Nameable
-import messages.ChargingSchedule
 
 sealed trait RecurrencyKind extends Nameable
 object RecurrencyKind extends Enumerable[RecurrencyKind] {

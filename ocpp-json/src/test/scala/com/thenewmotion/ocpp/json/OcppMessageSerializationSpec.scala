@@ -13,7 +13,6 @@ import org.json4s.native.JsonParser
 
 import v15.Ocpp15J
 import messages._
-import messages.enums._
 import messages.Meter._
 import JsonDeserializable._
 

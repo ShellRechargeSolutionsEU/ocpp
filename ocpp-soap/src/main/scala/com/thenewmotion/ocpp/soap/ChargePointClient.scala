@@ -238,8 +238,8 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
 
   def dataTransfer(req: ChargePointDataTransferReq) = {
     val res = ?(_.dataTransfer, DataTransferRequest(req.vendorId, req.messageId, req.data))
-    val status: enums.DataTransferStatus.Value = {
-      import enums.{DataTransferStatus => ocpp}
+    val status: messages.DataTransferStatus.Value = {
+      import messages.{DataTransferStatus => ocpp}
       res.status match {
         case AcceptedValue => ocpp.Accepted
         case RejectedValue => ocpp.Rejected
