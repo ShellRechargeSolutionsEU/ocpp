@@ -273,7 +273,7 @@ object ConvertersV16 {
   }
 
   private def unexpectedMessage(msg: Any) =
-    throw new Exception(s"Couldn’t convert unexpected OCPP message $msg")
+    throw new Exception(s"Couldn't convert unexpected OCPP message $msg")
 
   private implicit class RichIdTagInfo(i: messages.IdTagInfo) {
     def toV16: IdTagInfo = IdTagInfo(status = AuthorizationStatusConverters.enumToJson(i.status.toString),
@@ -404,7 +404,7 @@ object ConvertersV16 {
     case "Accepted" => true
     case "Rejected" => false
     case _          =>
-      throw new MappingException(s"Did not recognize status ‘$statusString’ (expected ‘Accepted’ or ‘Rejected’)")
+      throw new MappingException(s"Did not recognize status $statusString (expected 'Accepted' or 'Rejected')")
   }
 
   private implicit class BooleanToUploadStatusString(val b: Boolean) extends AnyVal {
@@ -414,7 +414,7 @@ object ConvertersV16 {
   private def uploadStatusStringToBoolean(s: String): Boolean = s match {
     case "Uploaded" => true
     case "UploadFailed" => false
-    case _ => throw new MappingException(s"‘$s’ is not a valid OCPP upload status")
+    case _ => throw new MappingException(s"$s is not a valid OCPP upload status")
   }
 
   private implicit class RichKeyValue(val self: messages.KeyValue) {
@@ -478,7 +478,7 @@ object ConvertersV16 {
       case "HashError" => HashError
       case "NotSupportedValue" => NotSupportedValue
       case "VersionMismatch" => VersionMismatch
-      case _ => throw new MappingException(s"Unrecognized value ‘$status’ for OCPP update status")
+      case _ => throw new MappingException(s"Unrecognized value $status for OCPP update status")
     }
   }
 
