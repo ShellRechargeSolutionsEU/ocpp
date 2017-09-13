@@ -319,7 +319,7 @@ object ConvertersV15 {
         case messages.Unavailable(_) => simpleStatus("Unavailable")
         case messages.Reserved(_) => simpleStatus("Reserved")
         case messages.Faulted(errCode, inf, vendorErrCode) =>
-          ("Faulted", errCode.map(_.toString).getOrElse(RichChargePointStatus.defaultErrorCode), inf, vendorErrCode)
+          ("Faulted", errCode.map(_.name).getOrElse(RichChargePointStatus.defaultErrorCode), inf, vendorErrCode)
       }
     }
   }
@@ -339,7 +339,7 @@ object ConvertersV15 {
         if (errorCode == RichChargePointStatus.defaultErrorCode)
           None
         else
-          Some(enumFromJsonString(messages.ChargePointErrorCode, errorCode))
+          Some(enumerableFromJsonString(messages.ChargePointErrorCode, errorCode))
       messages.Faulted(errorCodeString, info, vendorErrorCode)
   }
 
@@ -484,6 +484,13 @@ object ConvertersV15 {
     case e: NoSuchElementException =>
       throw new MappingException(s"Value $s is not valid for ${enum.getClass.getSimpleName}", e)
   }
+
+  private def enumerableFromJsonString[T <: Nameable](enum: Enumerable[T], s: String): T =
+    enum.withName(s) match {
+      case None =>
+        throw new MappingException(s"Value $s is not valid for ${enum.getClass.getSimpleName}")
+      case Some(v) => v
+    }
 
   /**
    * Parses a URI and throws a lift-json MappingException if the syntax is wrong

@@ -98,9 +98,9 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
 
   def statusNotification(req: messages.StatusNotificationReq) {
     import req._
-    def toErrorCode(x: messages.ChargePointErrorCode.Value): ChargePointErrorCode = {
+    def toErrorCode(x: messages.ChargePointErrorCode): ChargePointErrorCode = {
       import messages.{ChargePointErrorCode => ocpp}
-      def notSupportedCode(x: messages.ChargePointErrorCode.Value) =
+      def notSupportedCode(x: messages.ChargePointErrorCode) =
         notSupported("statusNotification(ChargePointErrorCode.%s)".format(x))
 
       x match {
@@ -243,7 +243,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
 
   def statusNotification(req: messages.StatusNotificationReq) {
     import req._
-    def toErrorCode(x: messages.ChargePointErrorCode.Value): ChargePointErrorCode = {
+    def toErrorCode(x: messages.ChargePointErrorCode): ChargePointErrorCode = {
       import messages.{ChargePointErrorCode => ocpp}
       x match {
         case ocpp.ConnectorLockFailure => ConnectorLockFailure

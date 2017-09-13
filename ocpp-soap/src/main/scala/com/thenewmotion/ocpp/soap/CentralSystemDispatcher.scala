@@ -95,7 +95,7 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemReq, C
             case Occupied => ocpp.Occupied()
             case Unavailable => ocpp.Unavailable()
             case Faulted =>
-              val errorCode: Option[ocpp.ChargePointErrorCode.Value] = {
+              val errorCode: Option[ocpp.ChargePointErrorCode] = {
                 import ocpp.{ChargePointErrorCode => ocpp}
                 req.errorCode match {
                   case ConnectorLockFailure => Some(ocpp.ConnectorLockFailure)

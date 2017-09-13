@@ -120,32 +120,12 @@ case class Charging(info:Option[String]=None) extends ChargePointStatus
 case class SuspendedEVSE(info:Option[String]=None) extends ChargePointStatus
 case class SuspendedEV(info:Option[String]=None) extends ChargePointStatus
 case class Finishing(info:Option[String]=None) extends ChargePointStatus
-case class Faulted(errorCode: Option[ChargePointErrorCode.Value],
+case class Faulted(errorCode: Option[ChargePointErrorCode],
                    info: Option[String]=None,
                    vendorErrorCode: Option[String]) extends ChargePointStatus
 case class Unavailable(info:Option[String]=None) extends ChargePointStatus
 // since OCPP 1.5
 case class Reserved(info:Option[String]=None) extends ChargePointStatus
-
-object ChargePointErrorCode extends Enumeration {
-  val ConnectorLockFailure,
-  HighTemperature,
-  Mode3Error,
-  EVCommunicationError, // ocpp 1.6: renamed from Mode3Error
-  PowerMeterFailure,
-  PowerSwitchFailure,
-  ReaderFailure,
-  ResetFailure,
-  GroundFailure /*since OCPP 1.5*/ ,
-  OverCurrentFailure,
-  OverVoltage, // ocpp 1.6
-  UnderVoltage,
-  WeakSignal,
-  InternalError, // ocpp 1.6
-  LocalListConflict, // ocpp 1.6
-  NoError, // ocpp 1.6
-  OtherError = Value
-}
 
 object FirmwareStatus extends Enumeration {
   val Downloaded,

@@ -305,7 +305,7 @@ object ConvertersV16 {
         case messages.Unavailable(_) => simpleStatus("Unavailable")
         case messages.Reserved(_) => simpleStatus("Reserved")
         case messages.Faulted(errCode, inf, vendorErrCode) =>
-          ("Faulted", errCode.map(_.toString).getOrElse(RichChargePointStatus.defaultErrorCode), inf, vendorErrCode)
+          ("Faulted", errCode.map(_.name).getOrElse(RichChargePointStatus.defaultErrorCode), inf, vendorErrCode)
       }
     }
   }
@@ -321,12 +321,12 @@ object ConvertersV16 {
     case "Unavailable" => messages.Unavailable(info)
     case "Reserved" => messages.Reserved(info)
     case "Faulted" =>
-  val errorCodeString =
-  if (errorCode == RichChargePointStatus.defaultErrorCode)
-  None
-  else
-  Some(enumFromJsonString(messages.ChargePointErrorCode, errorCode))
-  messages.Faulted(errorCodeString, info, vendorErrorCode)
+      val errorCodeString =
+        if (errorCode == RichChargePointStatus.defaultErrorCode)
+          None
+        else
+          Some(enumerableFromJsonString(messages.ChargePointErrorCode, errorCode))
+      messages.Faulted(errorCodeString, info, vendorErrorCode)
   }
 
   private implicit class RichCharginProfile(cp: messages.ChargingProfile) {
@@ -514,6 +514,13 @@ object ConvertersV16 {
     case e: NoSuchElementException =>
       throw new MappingException(s"Value $s is not valid for ${enum.getClass.getSimpleName}", e)
   }
+
+  private def enumerableFromJsonString[T <: Nameable](enum: Enumerable[T], s: String): T =
+    enum.withName(s) match {
+      case None =>
+        throw new MappingException(s"Value $s is not valid for ${enum.getClass.getSimpleName}")
+      case Some(v) => v
+    }
 
   /**
     * Parses a URI and throws a lift-json MappingException if the syntax is wrong
