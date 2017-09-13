@@ -129,7 +129,7 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePointReq, Charg
           req.idTag, req.parentIdTag, req.reservationId)
       } {
         case ReserveNowRes(status) =>
-          def genericStatusToV15Status(x: Reservation.Value) = x match {
+          def genericStatusToV15Status(x: Reservation) = x match {
             case Reservation.Accepted => Accepted
             case Reservation.Faulted => Faulted
             case Reservation.Occupied => Occupied

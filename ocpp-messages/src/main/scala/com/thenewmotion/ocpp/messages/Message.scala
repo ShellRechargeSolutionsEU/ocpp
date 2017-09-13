@@ -104,7 +104,7 @@ case class StatusNotificationReq(scope: Scope,
 case object StatusNotificationRes extends CentralSystemRes
 
 
-case class FirmwareStatusNotificationReq(status: FirmwareStatus.Value) extends CentralSystemReq
+case class FirmwareStatusNotificationReq(status: FirmwareStatus) extends CentralSystemReq
 case object FirmwareStatusNotificationRes extends CentralSystemRes
 
 
@@ -127,14 +127,25 @@ case class Unavailable(info:Option[String]=None) extends ChargePointStatus
 // since OCPP 1.5
 case class Reserved(info:Option[String]=None) extends ChargePointStatus
 
-object FirmwareStatus extends Enumeration {
-  val Downloaded,
-  DownloadFailed,
-  Downloading, // ocpp 1.6
-  InstallationFailed,
-  Installed,
-  Installing, // ocpp 1.6
-  Idle = Value
+sealed trait FirmwareStatus extends Nameable
+object FirmwareStatus extends Enumerable[FirmwareStatus] {
+  object Downloaded extends FirmwareStatus
+  object DownloadFailed extends FirmwareStatus
+  object Downloading extends FirmwareStatus // ocpp 1.6
+  object InstallationFailed extends FirmwareStatus
+  object Installed extends FirmwareStatus
+  object Installing extends FirmwareStatus // ocpp 1.6
+  object Idle extends FirmwareStatus
+
+  val values = Set(
+    Downloaded,
+    DownloadFailed,
+    Downloading,
+    InstallationFailed,
+    Installed,
+    Installing,
+    Idle
+  )
 }
 
 @SerialVersionUID(0)
@@ -228,22 +239,22 @@ case class GetDiagnosticsRes(fileName: Option[String]) extends ChargePointRes
 
 
 case class ChangeConfigurationReq(key: String, value: String) extends ChargePointReq
-case class ChangeConfigurationRes(status: ConfigurationStatus.Value) extends ChargePointRes
+case class ChangeConfigurationRes(status: ConfigurationStatus) extends ChargePointRes
 
 
 case class GetConfigurationReq(keys: List[String]) extends ChargePointReq
 case class GetConfigurationRes(values: List[KeyValue], unknownKeys: List[String]) extends ChargePointRes
 
 
-case class ChangeAvailabilityReq(scope: Scope, availabilityType: AvailabilityType.Value) extends ChargePointReq
-case class ChangeAvailabilityRes(status: AvailabilityStatus.Value) extends ChargePointRes
+case class ChangeAvailabilityReq(scope: Scope, availabilityType: AvailabilityType) extends ChargePointReq
+case class ChangeAvailabilityRes(status: AvailabilityStatus) extends ChargePointRes
 
 
 case object ClearCacheReq extends ChargePointReq
 case class ClearCacheRes(accepted: Boolean) extends ChargePointRes
 
 
-case class ResetReq(resetType: ResetType.Value) extends ChargePointReq
+case class ResetReq(resetType: ResetType) extends ChargePointReq
 case class ResetRes(accepted: Boolean) extends ChargePointRes
 
 
@@ -251,7 +262,7 @@ case class UpdateFirmwareReq(retrieveDate: ZonedDateTime, location: URI, retries
 case object UpdateFirmwareRes extends ChargePointRes
 
 
-case class SendLocalListReq(updateType: UpdateType.Value,
+case class SendLocalListReq(updateType: UpdateType,
                             listVersion: AuthListSupported,
                             localAuthorisationList: List[AuthorisationData],
                             hash: Option[String] // dropped in ocpp 1.6
@@ -276,7 +287,7 @@ case class ReserveNowReq(connector: Scope,
                          idTag: IdTag,
                          parentIdTag: Option[String] = None,
                          reservationId: Int) extends ChargePointReq
-case class ReserveNowRes(status: Reservation.Value) extends ChargePointRes
+case class ReserveNowRes(status: Reservation) extends ChargePointRes
 
 
 case class CancelReservationReq(reservationId: Int) extends ChargePointReq
@@ -284,26 +295,49 @@ case class CancelReservationRes(accepted: Boolean) extends ChargePointRes
 
 
 
-object ConfigurationStatus extends Enumeration {
-  val Accepted, Rejected, NotSupported, RebootRequired = Value
+sealed trait ConfigurationStatus extends Nameable
+object ConfigurationStatus extends Enumerable[ConfigurationStatus] {
+  object Accepted extends ConfigurationStatus
+  object Rejected extends ConfigurationStatus
+  object NotSupported extends ConfigurationStatus
+  object RebootRequired extends ConfigurationStatus
+
+  val values = Set(Accepted, Rejected, NotSupported, RebootRequired)
 }
 
-object AvailabilityStatus extends Enumeration {
-  val Accepted, Rejected, Scheduled = Value
+sealed trait AvailabilityStatus extends Nameable
+object AvailabilityStatus extends Enumerable[AvailabilityStatus] {
+  object Accepted extends AvailabilityStatus
+  object Rejected extends AvailabilityStatus
+  object Scheduled extends AvailabilityStatus
+
+  val values = Set(Accepted, Rejected, Scheduled)
 }
 
-object AvailabilityType extends Enumeration {
-  val Operative, Inoperative = Value
+sealed trait AvailabilityType extends Nameable
+object AvailabilityType extends Enumerable[AvailabilityType] {
+  object Operative extends AvailabilityType
+  object Inoperative extends AvailabilityType
+
+  val values = Set(Operative, Inoperative)
 }
 
-object ResetType extends Enumeration {
-  val Hard, Soft = Value
+sealed trait ResetType extends Nameable
+object ResetType extends Enumerable[ResetType] {
+  object Hard extends ResetType
+  object Soft extends ResetType
+
+  val values = Set(Hard, Soft)
 }
 
 case class KeyValue(key: String, readonly: Boolean, value: Option[String])
 
-object UpdateType extends Enumeration {
-  val Differential, Full = Value
+sealed trait UpdateType extends Nameable
+object UpdateType extends Enumerable[UpdateType] {
+  object Differential extends UpdateType
+  object Full extends UpdateType
+
+  val values = Set(Differential, Full)
 }
 
 object UpdateStatus {
@@ -330,8 +364,15 @@ case class AuthorisationAdd(idTag: IdTag, idTagInfo: IdTagInfo) extends Authoris
 case class AuthorisationRemove(idTag: IdTag) extends AuthorisationData
 
 
-object Reservation extends Enumeration {
-  val Accepted, Faulted, Occupied, Rejected, Unavailable = Value
+sealed trait Reservation extends Nameable
+object Reservation extends Enumerable[Reservation] {
+  object Accepted extends Reservation
+  object Faulted extends Reservation
+  object Occupied extends Reservation
+  object Rejected extends Reservation
+  object Unavailable extends Reservation
+
+  val values = Set(Accepted, Faulted, Occupied, Rejected, Unavailable)
 }
 
 object AuthListVersion {

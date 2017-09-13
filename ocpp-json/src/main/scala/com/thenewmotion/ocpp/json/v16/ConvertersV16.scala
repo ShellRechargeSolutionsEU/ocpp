@@ -48,14 +48,14 @@ object ConvertersV16 {
 
     case messages.UnlockConnectorRes(accepted) => UnlockConnectorRes(accepted.toStatusString)
 
-    case messages.ResetReq(resetType) => ResetReq(resetType.toString)
+    case messages.ResetReq(resetType) => ResetReq(resetType.name)
 
     case messages.ResetRes(accepted) => ResetRes(accepted.toStatusString)
 
     case messages.ChangeAvailabilityReq(scope, availabilityType) =>
-      ChangeAvailabilityReq(connectorId = scope.toOcpp, `type` = availabilityType.toString)
+      ChangeAvailabilityReq(connectorId = scope.toOcpp, `type` = availabilityType.name)
 
-    case messages.ChangeAvailabilityRes(status) => ChangeAvailabilityRes(status.toString)
+    case messages.ChangeAvailabilityRes(status) => ChangeAvailabilityRes(status.name)
 
     case messages.StatusNotificationReq(scope, status, timestamp, vendorId) =>
 
@@ -83,7 +83,7 @@ object ConvertersV16 {
 
     case messages.UpdateFirmwareRes => UpdateFirmwareRes()
 
-    case messages.FirmwareStatusNotificationReq(status) => FirmwareStatusNotificationReq(status.toString)
+    case messages.FirmwareStatusNotificationReq(status) => FirmwareStatusNotificationReq(status.name)
 
     case messages.FirmwareStatusNotificationRes => FirmwareStatusNotificationRes()
 
@@ -105,7 +105,7 @@ object ConvertersV16 {
 
     case messages.ChangeConfigurationReq(key, value) => ChangeConfigurationReq(key, value)
 
-    case messages.ChangeConfigurationRes(status) => ChangeConfigurationRes(status.toString)
+    case messages.ChangeConfigurationRes(status) => ChangeConfigurationRes(status.name)
 
     case messages.ClearCacheReq => ClearCacheReq()
 
@@ -121,7 +121,7 @@ object ConvertersV16 {
     case messages.GetLocalListVersionRes(authListVersion) => GetLocalListVersionRes(authListVersion.toV16)
 
     case messages.SendLocalListReq(updateType, authListVersion, authorisationData, hash) =>
-      SendLocalListReq(updateType.toString, authListVersion.toV16, Some(authorisationData.map(_.toV16)))
+      SendLocalListReq(updateType.name, authListVersion.toV16, Some(authorisationData.map(_.toV16)))
 
     case messages.SendLocalListRes(status: messages.UpdateStatus.Value) =>
       val (ocppStatus, hash) = status.toV16AndHash
@@ -130,7 +130,7 @@ object ConvertersV16 {
     case messages.ReserveNowReq(scope, expiryDate, idTag, parentIdTag, reservationId) =>
       ReserveNowReq(scope.toOcpp, expiryDate, idTag, parentIdTag, reservationId)
 
-    case messages.ReserveNowRes(status) => ReserveNowRes(status.toString)
+    case messages.ReserveNowRes(status) => ReserveNowRes(status.name)
 
     case messages.CancelReservationReq(reservationId) => CancelReservationReq(reservationId)
 
@@ -173,16 +173,16 @@ object ConvertersV16 {
 
     case UnlockConnectorRes(status) => messages.UnlockConnectorRes(statusStringToBoolean(status))
 
-    case ResetReq(resetType) => messages.ResetReq(enumFromJsonString(messages.ResetType, resetType))
+    case ResetReq(resetType) => messages.ResetReq(enumerableFromJsonString(messages.ResetType, resetType))
 
     case ResetRes(status) => messages.ResetRes(statusStringToBoolean(status))
 
     case ChangeAvailabilityReq(connectorId, availabilityType) =>
       messages.ChangeAvailabilityReq(scope = messages.Scope.fromOcpp(connectorId),
-        availabilityType = enumFromJsonString(messages.AvailabilityType, availabilityType))
+        availabilityType = enumerableFromJsonString(messages.AvailabilityType, availabilityType))
 
     case ChangeAvailabilityRes(status) =>
-      messages.ChangeAvailabilityRes(enumFromJsonString(messages.AvailabilityStatus, status))
+      messages.ChangeAvailabilityRes(enumerableFromJsonString(messages.AvailabilityStatus, status))
 
     case StatusNotificationReq(connector, status, errorCode, info, timestamp, vendorId, vendorErrorCode) =>
       messages.StatusNotificationReq(messages.Scope.fromOcpp(connector),
@@ -236,7 +236,7 @@ object ConvertersV16 {
     case ChangeConfigurationReq(key, value) => messages.ChangeConfigurationReq(key, value)
 
     case ChangeConfigurationRes(status) =>
-      messages.ChangeConfigurationRes(enumFromJsonString(messages.ConfigurationStatus, status))
+      messages.ChangeConfigurationRes(enumerableFromJsonString(messages.ConfigurationStatus, status))
 
     case ClearCacheReq() => messages.ClearCacheReq
 
@@ -254,7 +254,7 @@ object ConvertersV16 {
 
     case SendLocalListReq(updateType, authListVersion, authorizationData) =>
       messages.SendLocalListReq(
-        updateType = enumFromJsonString(messages.UpdateType, updateType),
+        updateType = enumerableFromJsonString(messages.UpdateType, updateType),
         listVersion = messages.AuthListSupported(authListVersion),
         localAuthorisationList = authorizationData.getOrElse(Nil).map(_.fromV16),
         hash = None
@@ -265,7 +265,7 @@ object ConvertersV16 {
     case ReserveNowReq(connectorId, expiryDate, idTag, parentIdTag, reservationId) =>
       messages.ReserveNowReq(messages.Scope.fromOcpp(connectorId), expiryDate, idTag, parentIdTag, reservationId)
 
-    case ReserveNowRes(status) => messages.ReserveNowRes(enumFromJsonString(messages.Reservation, status))
+    case ReserveNowRes(status) => messages.ReserveNowRes(enumerableFromJsonString(messages.Reservation, status))
 
     case CancelReservationReq(reservationId) => messages.CancelReservationReq(reservationId)
 
@@ -505,16 +505,9 @@ object ConvertersV16 {
   }
 
   /**
-    * Tries to get select the enum value whose name is equal to the given string. If no such enum value exists, throws
-    * a net.liftweb.json.MappingException.
+    * Tries to get select the enumerable value whose name is equal to the given string. If no such enum value exists,
+    * throws a net.liftweb.json.MappingException.
     */
-  private def enumFromJsonString[T <: Enumeration](enum: T, s: String) = try {
-    enum.withName(s)
-  } catch {
-    case e: NoSuchElementException =>
-      throw new MappingException(s"Value $s is not valid for ${enum.getClass.getSimpleName}", e)
-  }
-
   private def enumerableFromJsonString[T <: Nameable](enum: Enumerable[T], s: String): T =
     enum.withName(s) match {
       case None =>
