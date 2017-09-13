@@ -9,9 +9,22 @@ import enums.reflection.EnumUtils.Enumerable
 import enums.reflection.EnumUtils.Nameable
 
 // TODO: begin WIP
-trait StopReason
-object StopReason {
+trait StopReason extends Nameable
+object StopReason extends Enumerable[StopReason] {
+  case object EmergencyStop extends StopReason
+  case object EVDisconnected extends StopReason
+  case object HardReset extends StopReason
+  case object PowerLoss extends StopReason
+  case object Reboot extends StopReason
+  case object Value extends StopReason
+  case object Remote extends StopReason
+  case object SoftReset extends StopReason
+  case object UnlockCommand extends StopReason
+  case object DeAuthorized extends StopReason
   case object Local extends StopReason
+  case object Other extends StopReason
+  val values = Set(EmergencyStop, EVDisconnected, HardReset, PowerLoss, Reboot,
+    Value, Remote, SoftReset, UnlockCommand, DeAuthorized, Local, Other)
 }
 
 trait RegistrationStatus extends Nameable
@@ -27,7 +40,10 @@ object DiagnosticsStatus extends Enumerable[DiagnosticsStatus] {
   case object UploadFailed extends DiagnosticsStatus
   val values = Set(Uploaded, UploadFailed)
 }
-trait Phase
+trait Phase extends Nameable
+object Phase extends Enumerable[Phase] {
+  val values = Set()
+}
 trait MessageTrigger
 trait TriggerMessageStatus
 trait UnlockStatus extends Nameable

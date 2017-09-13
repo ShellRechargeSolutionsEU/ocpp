@@ -7,7 +7,6 @@ import java.net.URISyntaxException
 import enums.reflection.EnumUtils.Enumerable
 import enums.reflection.EnumUtils.Nameable
 import messages.AuthorizationStatus
-import messages.Meter._
 import org.json4s.MappingException
 
 import scala.concurrent.duration._
@@ -36,8 +35,9 @@ object ConvertersV15 {
 
     case messages.StartTransactionRes(transactionId, idTagInfo) => StartTransactionRes(transactionId, idTagInfo.toV15)
 
-    case messages.StopTransactionReq(transactionId, idTag, timestamp, meterStop, stopReason, meters) =>
-      StopTransactionReq(transactionId = transactionId,
+    case messages.StopTransactionReq(transactionId, idTag, timestamp, meterStop, _, meters) =>
+      StopTransactionReq(
+        transactionId = transactionId,
         idTag = idTag,
         timestamp = timestamp,
         meterStop = meterStop,
@@ -45,7 +45,8 @@ object ConvertersV15 {
           meters.map(meter => TransactionData(Some(List(meter.toV15))))
           // TODO: is this conversion really correct?
           // List(TransactionData(Some(meters.map(_.toV15))))
-        ))
+        )
+      )
 
     case messages.StopTransactionRes(idTagInfo) => StopTransactionRes(idTagInfo.map(_.toV15))
 
@@ -158,12 +159,11 @@ object ConvertersV15 {
         meterType, meterSerial)
 
     case BootNotificationRes(statusString, currentTime, heartbeatInterval) =>
-      messages.BootNotificationRes(status =
-        messages.RegistrationStatus.withName(statusString).getOrElse {
-          throw new MappingException(s"Did not recognize status '$statusString'")
-        },
+      messages.BootNotificationRes(
+        status = enumerableFromJsonString(messages.RegistrationStatus, statusString),
         currentTime = currentTime,
-        FiniteDuration(heartbeatInterval, SECONDS))
+        FiniteDuration(heartbeatInterval, SECONDS)
+      )
 
     case AuthorizeReq(idTag) => messages.AuthorizeReq(idTag)
 
@@ -237,10 +237,8 @@ object ConvertersV15 {
     case GetDiagnosticsRes(filename) => messages.GetDiagnosticsRes(filename)
 
     case DiagnosticsStatusNotificationReq(statusString) =>
-      messages.DiagnosticsStatusNotificationReq(status =
-        messages.DiagnosticsStatus.withName(statusString).getOrElse {
-          throw new MappingException(s"Did not recognize status '$statusString'")
-        }
+      messages.DiagnosticsStatusNotificationReq(
+        status = enumerableFromJsonString(messages.DiagnosticsStatus, statusString)
       )
 
     case DiagnosticsStatusNotificationRes() => messages.DiagnosticsStatusNotificationRes
@@ -355,15 +353,20 @@ object ConvertersV15 {
       Meter(timestamp = self.timestamp,
         values = self.values.map(valueToV15))
 
-    def valueToV15(v: messages.Meter.Value): MeterValue =
-      MeterValue(value = v.value,
+    def valueToV15(v: messages.Meter.Value): MeterValue = {
+      import messages.Meter._
+
+      MeterValue(
+        value = v.value,
         measurand = noneIfDefault(Measurand.EnergyActiveImportRegister, v.measurand),
         context = noneIfDefault(ReadingContext.SamplePeriodic, v.context),
         format = noneIfDefault(ValueFormat.Raw, v.format),
         location = noneIfDefault(Location.Outlet, v.location),
-        unit = noneIfDefault(UnitOfMeasure.Wh, v.unit))
+        unit = noneIfDefault(UnitOfMeasure.Wh, v.unit)
+      )
+    }
 
-    def noneIfDefault(default: Nameable, actual: Nameable): Option[String] =
+    def noneIfDefault[T <: Nameable](default: T, actual: T): Option[String] =
       if (actual == default) None else Some(actual.name)
   }
 
@@ -382,21 +385,20 @@ object ConvertersV15 {
     import messages.Meter._
     import v15m._
 
-    Value(value = value,
+    Value(
+      value = value,
       measurand = getMeterValueProperty(measurand, Measurand, Measurand.EnergyActiveImportRegister),
       phase = None,
       context = getMeterValueProperty(context, ReadingContext, ReadingContext.SamplePeriodic),
       format = getMeterValueProperty(format, ValueFormat, ValueFormat.Raw),
       location = getMeterValueProperty(location, Location, Location.Outlet),
-      unit = getMeterValueProperty(unit, UnitOfMeasure, UnitOfMeasure.Wh))
+      unit = getMeterValueProperty(unit, UnitOfMeasure, UnitOfMeasure.Wh)
+    )
   }
 
-  private def getMeterValueProperty[V <: Nameable](inJson: Option[String], enumeration: Enumerable[V], default: V): V =
-    inJson.fold(Option(default))(s => enumeration.withName(s)) match {
-      case None =>
-        throw new MappingException(s"Uknown meter value property $inJson in OCPP-JSON message")
-      case Some(v) => v
-    }
+  private def getMeterValueProperty[V <: Nameable](
+    property: Option[String], enum: Enumerable[V], default: V
+  ): V = property.fold(default)(s => enumerableFromJsonString(enum, s))
 
   private object AuthorizationStatusConverters {
     val names = List(
@@ -418,7 +420,7 @@ object ConvertersV15 {
     case "Accepted" => true
     case "Rejected" => false
     case _ =>
-      throw new MappingException(s"Did not recognize status '$statusString' (expected 'Accepted' or 'Rejected')")
+      throw new MappingException(s"Did not recognize status $statusString (expected 'Accepted' or 'Rejected')")
   }
 
   private implicit class RichKeyValue(val self: messages.KeyValue) {
@@ -485,7 +487,7 @@ object ConvertersV15 {
       case "HashError" => HashError
       case "NotSupportedValue" => NotSupportedValue
       case "VersionMismatch" => VersionMismatch
-      case _ => throw new MappingException(s"Unrecognized value '$status' for OCPP update status")
+      case _ => throw new MappingException(s"Unrecognized value $status for OCPP update status")
     }
   }
 
@@ -506,6 +508,6 @@ object ConvertersV15 {
   private def parseURI(s: String) = try {
     new URI(s)
   } catch {
-    case e: URISyntaxException => throw new MappingException(s"Invalid URL $s in OCPP-JSON message", e)
+    case e: URISyntaxException => throw MappingException(s"Invalid URL $s in OCPP-JSON message", e)
   }
 }

@@ -1,11 +1,11 @@
-/* Temporarily disabled to make things compile
 package com.thenewmotion.ocpp
 package json.v16
 
-import java.net.{URI, URISyntaxException}
+import java.net.URI
+import java.net.URISyntaxException
 
-import enums.reflection.EnumUtils.{Enumerable, Nameable}
-import messages.Meter._
+import enums.reflection.EnumUtils.Enumerable
+import enums.reflection.EnumUtils.Nameable
 import messages.AuthorizationStatus
 import org.json4s.MappingException
 
@@ -20,7 +20,7 @@ object ConvertersV16 {
         firmwareVersion, iccid, imsi, meterType, meterSerialNumber)
 
     case messages.BootNotificationRes(registrationAccepted, currentTime, interval) =>
-      com.thenewmotion.ocpp.json.v16.BootNotificationRes(registrationAccepted.toStatusString, currentTime, interval.toSeconds.toInt)
+      BootNotificationRes(registrationAccepted.name, currentTime, interval.toSeconds.toInt)
 
     case messages.AuthorizeReq(idTag) => AuthorizeReq(idTag)
 
@@ -35,19 +35,21 @@ object ConvertersV16 {
 
     case messages.StartTransactionRes(transactionId, idTagInfo) => StartTransactionRes(transactionId, idTagInfo.toV16)
 
-    case messages.StopTransactionReq(transactionId, idTag, timestamp, meterStop, transactionData) =>
-      StopTransactionReq(transactionId = transactionId,
+    case messages.StopTransactionReq(transactionId, idTag, timestamp, meterStop, stopReason, meters) =>
+      StopTransactionReq(
+        transactionId = transactionId,
         idTag = idTag,
         timestamp = timestamp,
-        reason = "",
+        reason = Some(stopReason.name),
         meterStop = meterStop,
-        transactionData = Some(transactionDataToV16(transactionData)))
+        transactionData = Some(meters.map(_.toV16))
+      )
 
     case messages.StopTransactionRes(idTagInfo) => StopTransactionRes(idTagInfo.map(_.toV16))
 
     case messages.UnlockConnectorReq(scope) => UnlockConnectorReq(scope.toOcpp)
 
-    case messages.UnlockConnectorRes(accepted) => UnlockConnectorRes(accepted.toStatusString)
+    case messages.UnlockConnectorRes(status) => UnlockConnectorRes(status.name)
 
     case messages.ResetReq(resetType) => ResetReq(resetType.name)
 
@@ -94,7 +96,7 @@ object ConvertersV16 {
     case messages.GetDiagnosticsRes(filename) => GetDiagnosticsRes(filename)
 
     case messages.DiagnosticsStatusNotificationReq(uploaded) =>
-      DiagnosticsStatusNotificationReq(uploaded.toUploadStatusString)
+      DiagnosticsStatusNotificationReq(uploaded.name)
 
     case messages.DiagnosticsStatusNotificationRes =>
       DiagnosticsStatusNotificationRes()
@@ -125,7 +127,7 @@ object ConvertersV16 {
       SendLocalListReq(updateType.name, authListVersion.toV16, Some(authorisationData.map(_.toV16)))
 
     case messages.SendLocalListRes(status: messages.UpdateStatus.Value) =>
-      val (ocppStatus, hash) = status.toV16AndHash
+      val (ocppStatus, _) = status.toV16AndHash
       SendLocalListRes(ocppStatus)
 
     case messages.ReserveNowReq(scope, expiryDate, idTag, parentIdTag, reservationId) =>
@@ -150,10 +152,12 @@ object ConvertersV16 {
       messages.BootNotificationReq(vendor, model, chargePointSerial, chargeBoxSerial, firmwareVersion, iccid, imsi,
         meterType, meterSerial)
 
-    case BootNotificationRes(registrationAccepted, currentTime, heartbeatInterval) =>
-      messages.BootNotificationRes(registrationAccepted = statusStringToBoolean(registrationAccepted),
+    case BootNotificationRes(statusString, currentTime, interval) =>
+      messages.BootNotificationRes(
+        status = enumerableFromJsonString(messages.RegistrationStatus, statusString),
         currentTime = currentTime,
-        FiniteDuration(heartbeatInterval, SECONDS))
+        FiniteDuration(interval, SECONDS)
+      )
 
     case AuthorizeReq(idTag) => messages.AuthorizeReq(idTag)
 
@@ -165,14 +169,25 @@ object ConvertersV16 {
 
     case StartTransactionRes(transactionId, idTagInfo) => messages.StartTransactionRes(transactionId, idTagInfo.fromV16)
 
-    case StopTransactionReq(transactionId, idTag, timestamp, meterStop, reason, transactionData) =>
-      messages.StopTransactionReq(transactionId, idTag, timestamp, meterStop, transactionDataFromV16(transactionData))
+    case StopTransactionReq(transactionId, idTag, timestamp, meterStop, stopReason, meters) =>
+      messages.StopTransactionReq(
+        transactionId,
+        idTag,
+        timestamp,
+        meterStop,
+        stopReason.fold(messages.StopReason.Local: messages.StopReason) {
+          enumerableFromJsonString(messages.StopReason, _)
+        },
+        meters.fold(List.empty[messages.Meter])(_.map(meterFromV16))
+      )
 
     case StopTransactionRes(idTagInfo) => messages.StopTransactionRes(idTagInfo.map(_.fromV16))
 
     case UnlockConnectorReq(connectorId) => messages.UnlockConnectorReq(messages.ConnectorScope.fromOcpp(connectorId))
 
-    case UnlockConnectorRes(status) => messages.UnlockConnectorRes(statusStringToBoolean(status))
+    case UnlockConnectorRes(statusString) => messages.UnlockConnectorRes(
+      status = enumerableFromJsonString(messages.UnlockStatus, statusString)
+    )
 
     case ResetReq(resetType) => messages.ResetReq(enumerableFromJsonString(messages.ResetType, resetType))
 
@@ -193,8 +208,7 @@ object ConvertersV16 {
 
     case StatusNotificationRes() => messages.StatusNotificationRes
 
-    case RemoteStartTransactionReq(idTag, connector, chargingProfile) => messages.RemoteStartTransactionReq(idTag,
-      connector.map(messages.ConnectorScope.fromOcpp), chargingProfile.map(cp => chargingProfileFromV16(cp)))
+    case RemoteStartTransactionReq(idTag, connector, chargingProfile) => messages.RemoteStartTransactionReq(idTag, connector.map(messages.ConnectorScope.fromOcpp), chargingProfile.map(cp => chargingProfileFromV16(cp)))
 
     case RemoteStartTransactionRes(status) => messages.RemoteStartTransactionRes(statusStringToBoolean(status))
 
@@ -212,7 +226,7 @@ object ConvertersV16 {
     case UpdateFirmwareRes() => messages.UpdateFirmwareRes
 
     case FirmwareStatusNotificationReq(status) =>
-      messages.FirmwareStatusNotificationReq(enumFromJsonString(messages.FirmwareStatus, status))
+      messages.FirmwareStatusNotificationReq(enumerableFromJsonString(messages.FirmwareStatus, status))
 
     case FirmwareStatusNotificationRes() =>
       messages.FirmwareStatusNotificationRes
@@ -223,8 +237,10 @@ object ConvertersV16 {
 
     case GetDiagnosticsRes(filename) => messages.GetDiagnosticsRes(filename)
 
-    case DiagnosticsStatusNotificationReq(status) =>
-      messages.DiagnosticsStatusNotificationReq(uploadStatusStringToBoolean(status))
+    case DiagnosticsStatusNotificationReq(statusString) =>
+      messages.DiagnosticsStatusNotificationReq(
+        status = enumerableFromJsonString(messages.DiagnosticsStatus, statusString)
+      )
 
     case DiagnosticsStatusNotificationRes() => messages.DiagnosticsStatusNotificationRes
 
@@ -319,7 +335,7 @@ object ConvertersV16 {
   }
 
   private def statusFieldsToOcppStatus(status: String, errorCode: String, info: Option[String],
-                                       vendorErrorCode: Option[String]): messages.ChargePointStatus = status match {
+    vendorErrorCode: Option[String]): messages.ChargePointStatus = status match {
     case "Available" => messages.Available(info)
     case "Occupied" => messages.Occupied(info)
     case "Unavailable" => messages.Unavailable(info)
@@ -333,87 +349,51 @@ object ConvertersV16 {
       messages.Faulted(errorCodeString, info, vendorErrorCode)
   }
 
-  private implicit class RichCharginProfile(cp: messages.ChargingProfile) {
-    def toV16: ChargingProfile =
-      ChargingProfile(cp.id, cp.stackLevel, cp.chargingProfilePurpose.toString, cp.chargingProfileKind.toString,
-        scheduleToV16(cp.chargingSchedule), cp.transactionId, None, cp.validFrom, cp.validTo)
-
-    def scheduleToV16(cs: messages.ChargingSchedule): ChargingSchedule =
-      ChargingSchedule(cs.chargingRateUnit.toString, cs.chargingSchedulePeriod.map(periodToV16),
-        cs.duration.map(_.toSeconds.toInt), cs.startsAt, cs.minChargingRate.map(_.toFloat))
-
-    def periodToV16(csp: messages.ChargingSchedulePeriod): ChargingSchedulePeriod =
-      ChargingSchedulePeriod(csp.startOffset.toSeconds.toInt, csp.amperesLimit.toFloat, csp.numberPhases)
-  }
-
-  private def transactionDataToV16(tsList: List[messages.TransactionData]): List[Meter] = {
-    tsList.flatMap( ts => ts.meters.map(_.toV16) )
-  }
-
   private implicit class RichMeter(self: messages.Meter) {
     def toV16: Meter =
       Meter(timestamp = self.timestamp,
         sampledValue = self.values.map(valueToV16))
 
-    def valueToV16(v: messages.Meter.Value): MeterValue =
-      MeterValue(value = v.value,
+    def valueToV16(v: messages.Meter.Value): MeterValue = {
+      import messages.Meter._
+      MeterValue(
+        value = v.value,
         measurand = noneIfDefault(Measurand.EnergyActiveImportRegister, v.measurand),
-        phase = None,
+        phase = v.phase.map(_.name),
         context = noneIfDefault(ReadingContext.SamplePeriodic, v.context),
         format = noneIfDefault(ValueFormat.Raw, v.format),
         location = noneIfDefault(Location.Outlet, v.location),
-        unit = noneIfDefault(UnitOfMeasure.Wh, v.unit))
+        unit = noneIfDefault(UnitOfMeasure.Wh, v.unit)
+      )
+    }
 
-    def noneIfDefault(default: Any, actual: Any): Option[String] =
-      if (actual == default) None else Some(actual.toString)
+    def noneIfDefault[T <: Nameable](default: T, actual: T): Option[String] =
+      if (actual == default) None else Some(actual.name)
   }
-
-  private def chargingProfileFromV16(v16p: ChargingProfile): messages.ChargingProfile =
-    messages.ChargingProfile(v16p.chargingProfileId, v16p.stackLevel, stringToProfilePurpose(v16p.chargingProfilePurpose),
-      stringToProfileKind(v16p.chargingProfileKind), scheduleFromV16(v16p.chargingSchedule),
-      v16p.transactionId, v16p.validFrom, v16p.validTo)
-
-  private def stringToProfilePurpose(v16cpp: String): messages.ChargingProfilePurpose = ???
-  private def stringToProfileKind(v16cpk: String): messages.ChargingProfileKind = ???
-
-  private def scheduleFromV16(v16cs: ChargingSchedule): messages.ChargingSchedule =
-    messages.ChargingSchedule(stringToUnitOfChargeRate(v16cs.chargingRateUnit), v16cs.chargingSchedulePeriod.map(periodFromV16),
-      v16cs.minChargingRate.map(_.toDouble),v16cs.startSchedule, v16cs.duration.map(secondsToFiniteDuration))
-
-  private def secondsToFiniteDuration(seconds: Int): FiniteDuration =
-    FiniteDuration(seconds.toLong, "seconds")
-
-  private def stringToUnitOfChargeRate(unit: String): messages.UnitOfChargingRate =
-    if(unit == "W") messages.UnitOfChargeRate.Watts else messages.UnitOfChargeRate.Amperes
-
-  private def periodFromV16(v16sp: ChargingSchedulePeriod): messages.ChargingSchedulePeriod =
-    messages.ChargingSchedulePeriod(secondsToFiniteDuration(v16sp.startPeriod), v16sp.limit.toDouble, v16sp.numberPhases)
-
-  private def transactionDataFromV16(v16td: Option[List[Meter]]): List[messages.TransactionData] =
-    messages.TransactionData(v16td.getOrElse(List.empty[Meter]).map(meterFromV16)) :: Nil
 
   private def meterFromV16(v16m: Meter): messages.Meter = {
     messages.Meter(v16m.timestamp, v16m.sampledValue.map(meterValueFromV16))
   }
 
   private def meterValueFromV16(v16m: MeterValue): messages.Meter.Value = {
+    import messages.Phase
     import messages.Meter._
     import v16m._
 
-    Value(value = value,
+    Value(
+      value = value,
       measurand = getMeterValueProperty(measurand, Measurand, Measurand.EnergyActiveImportRegister),
+      phase = phase.map(enumerableFromJsonString(Phase, _)),
       context = getMeterValueProperty(context, ReadingContext, ReadingContext.SamplePeriodic),
       format = getMeterValueProperty(format, ValueFormat, ValueFormat.Raw),
       location = getMeterValueProperty(location, Location, Location.Outlet),
-      unit = getMeterValueProperty(unit, UnitOfMeasure, UnitOfMeasure.Wh))
+      unit = getMeterValueProperty(unit, UnitOfMeasure, UnitOfMeasure.Wh)
+    )
   }
 
-  private def getMeterValueProperty[V <: Nameable](inJson: Option[String], enumeration: Enumerable[V], default: V): V =
-    inJson.fold(Option(default))(s => enumeration.withName(s)) match {
-      case None =>
-        throw new MappingException(s"Uknown meter value property $inJson in OCPP-JSON message")
-      case Some(v) => v
-    }
+  private def getMeterValueProperty[V <: Nameable](
+    property: Option[String], enum: Enumerable[V], default: V
+  ): V = property.fold(default)(s => enumerableFromJsonString(enum, s))
 
   private object AuthorizationStatusConverters {
     val names = List(
@@ -434,27 +414,19 @@ object ConvertersV16 {
   private def statusStringToBoolean(statusString: String) = statusString match {
     case "Accepted" => true
     case "Rejected" => false
-    case _          =>
+    case _ =>
       throw new MappingException(s"Did not recognize status $statusString (expected 'Accepted' or 'Rejected')")
   }
 
-  private implicit class BooleanToUploadStatusString(val b: Boolean) extends AnyVal {
-    def toUploadStatusString = if (b) "Uploaded" else "UploadFailed"
-  }
-
-  private def uploadStatusStringToBoolean(s: String): Boolean = s match {
-    case "Uploaded" => true
-    case "UploadFailed" => false
-    case _ => throw new MappingException(s"$s is not a valid OCPP upload status")
-  }
-
   private implicit class RichKeyValue(val self: messages.KeyValue) {
+
     import self._
 
     def toV16: ConfigurationEntry = ConfigurationEntry(key, readonly, value)
   }
 
   private implicit class RichConfigurationEntry(self: ConfigurationEntry) {
+
     import self._
 
     def fromV16: messages.KeyValue = messages.KeyValue(key, readonly, value)
@@ -483,6 +455,7 @@ object ConvertersV16 {
   }
 
   private implicit class RichUpdateStatus(self: messages.UpdateStatus.Value) {
+
     import messages.UpdateStatus._
 
     def toV16AndHash: (String, Option[String]) = {
@@ -514,9 +487,9 @@ object ConvertersV16 {
   }
 
   /**
-    * Tries to get select the enumerable value whose name is equal to the given string. If no such enum value exists,
-    * throws a net.liftweb.json.MappingException.
-    */
+   * Tries to get select the enumerable value whose name is equal to the given string. If no such enum value exists,
+   * throws a net.liftweb.json.MappingException.
+   */
   private def enumerableFromJsonString[T <: Nameable](enum: Enumerable[T], s: String): T =
     enum.withName(s) match {
       case None =>
@@ -525,12 +498,44 @@ object ConvertersV16 {
     }
 
   /**
-    * Parses a URI and throws a lift-json MappingException if the syntax is wrong
-    */
+   * Parses a URI and throws a lift-json MappingException if the syntax is wrong
+   */
   private def parseURI(s: String) = try {
     new URI(s)
   } catch {
-    case e: URISyntaxException => throw new MappingException(s"Invalid URL $s in OCPP-JSON message", e)
+    case e: URISyntaxException => throw MappingException(s"Invalid URL $s in OCPP-JSON message", e)
   }
+
+  private def periodFromV16(v16sp: ChargingSchedulePeriod): messages.ChargingSchedulePeriod =
+    messages.ChargingSchedulePeriod(secondsToFiniteDuration(v16sp.startPeriod), v16sp.limit.toDouble, v16sp.numberPhases)
+
+  private implicit class RichChargingProfile(cp: messages.ChargingProfile) {
+    def toV16: ChargingProfile =
+      ChargingProfile(cp.id, cp.stackLevel, cp.chargingProfilePurpose.toString, cp.chargingProfileKind.toString,
+        scheduleToV16(cp.chargingSchedule), cp.transactionId, None, cp.validFrom, cp.validTo)
+
+    def scheduleToV16(cs: messages.ChargingSchedule): ChargingSchedule =
+      ChargingSchedule(cs.chargingRateUnit.toString, cs.chargingSchedulePeriod.map(periodToV16),
+        cs.duration.map(_.toSeconds.toInt), cs.startsAt, cs.minChargingRate.map(_.toFloat))
+
+    def periodToV16(csp: messages.ChargingSchedulePeriod): ChargingSchedulePeriod =
+      ChargingSchedulePeriod(csp.startOffset.toSeconds.toInt, csp.amperesLimit.toFloat, csp.numberPhases)
+  }
+
+  private def chargingProfileFromV16(v16p: ChargingProfile): messages.ChargingProfile =
+    messages.ChargingProfile(v16p.chargingProfileId, v16p.stackLevel, stringToProfilePurpose(v16p.chargingProfilePurpose),
+      stringToProfileKind(v16p.chargingProfileKind), scheduleFromV16(v16p.chargingSchedule),
+      v16p.transactionId, v16p.validFrom, v16p.validTo)
+
+  private def stringToProfilePurpose(v16cpp: String): messages.ChargingProfilePurpose = ???
+  private def stringToProfileKind(v16cpk: String): messages.ChargingProfileKind = ???
+  private def secondsToFiniteDuration(seconds: Int): FiniteDuration =
+    FiniteDuration(seconds.toLong, "seconds")
+
+  private def stringToUnitOfChargeRate(unit: String): messages.UnitOfChargingRate =
+    if (unit == "W") messages.UnitOfChargeRate.Watts else messages.UnitOfChargeRate.Amperes
+
+  private def scheduleFromV16(v16cs: ChargingSchedule): messages.ChargingSchedule =
+    messages.ChargingSchedule(stringToUnitOfChargeRate(v16cs.chargingRateUnit), v16cs.chargingSchedulePeriod.map(periodFromV16),
+      v16cs.minChargingRate.map(_.toDouble), v16cs.startSchedule, v16cs.duration.map(secondsToFiniteDuration))
 }
-*/
