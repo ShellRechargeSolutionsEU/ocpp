@@ -6,6 +6,7 @@ import java.net.{URI, URISyntaxException}
 
 import enums.reflection.EnumUtils.{Enumerable, Nameable}
 import messages.Meter._
+import messages.AuthorizationStatus
 import org.json4s.MappingException
 
 import scala.concurrent.duration._
@@ -278,22 +279,25 @@ object ConvertersV16 {
     throw new Exception(s"Couldn't convert unexpected OCPP message $msg")
 
   private implicit class RichIdTagInfo(i: messages.IdTagInfo) {
-    def toV16: IdTagInfo = IdTagInfo(status = AuthorizationStatusConverters.enumToJson(i.status.toString),
+    def toV16: IdTagInfo = IdTagInfo(status = AuthorizationStatusConverters.enumToJson(i.status),
       expiryDate = i.expiryDate,
       parentIdTag = i.parentIdTag)
   }
 
   private implicit class RichV16IdTagInfo(self: IdTagInfo) {
-    def fromV16: messages.IdTagInfo =
-      try {
-        messages.IdTagInfo(
-          status = messages.AuthorizationStatus.withName(AuthorizationStatusConverters.jsonToEnum(self.status)),
-          expiryDate = self.expiryDate,
-          parentIdTag = self.parentIdTag)
+    def fromV16: messages.IdTagInfo = {
+      val authStatus = try {
+        AuthorizationStatusConverters.jsonToEnum(self.status)
       } catch {
         case e: NoSuchElementException =>
           throw new MappingException(s"Unrecognized authorization status ${self.status} in OCPP-JSON message")
       }
+
+      messages.IdTagInfo(
+        status = authStatus,
+        expiryDate = self.expiryDate,
+        parentIdTag = self.parentIdTag)
+    }
   }
 
   private implicit class RichChargePointStatus(self: messages.ChargePointStatus) {
@@ -412,8 +416,13 @@ object ConvertersV16 {
     }
 
   private object AuthorizationStatusConverters {
-    val names = List(("Accepted", "Accepted"), ("IdTagBlocked", "Blocked"), ("IdTagExpired", "Expired"),
-    ("IdTagInvalid", "Invalid"), ("ConcurrentTx", "ConcurrentTx"))
+    val names = List(
+      (AuthorizationStatus.Accepted, "Accepted"),
+      (AuthorizationStatus.IdTagBlocked, "Blocked"),
+      (AuthorizationStatus.IdTagExpired, "Expired"),
+      (AuthorizationStatus.IdTagInvalid, "Invalid"),
+      (AuthorizationStatus.ConcurrentTx, "ConcurrentTx")
+    )
     val jsonToEnum = Map(names.map(_.swap): _*)
     val enumToJson = Map(names: _*)
   }

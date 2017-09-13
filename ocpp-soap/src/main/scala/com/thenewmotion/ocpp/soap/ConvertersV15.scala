@@ -41,7 +41,7 @@ private[soap] object ConvertersV15 {
 
   implicit class RichV15IdTagInfo(val self: IdTagInfo) extends AnyVal {
     def toOcpp: messages.IdTagInfo = {
-      val status: messages.AuthorizationStatus.Value = {
+      val status: messages.AuthorizationStatus = {
           import messages.{AuthorizationStatus => ocpp}
           self.status match {
             case AcceptedValue5 => ocpp.Accepted

@@ -94,7 +94,7 @@ case class BootNotificationRes(status: RegistrationStatus,
 case class CentralSystemDataTransferReq(vendorId: String, messageId: Option[String], data: Option[String])
   extends CentralSystemReq
 
-case class CentralSystemDataTransferRes(status: DataTransferStatus.Value, data: Option[String] = None)
+case class CentralSystemDataTransferRes(status: DataTransferStatus, data: Option[String] = None)
   extends CentralSystemRes
 
 case class StatusNotificationReq(scope: Scope,
@@ -278,7 +278,7 @@ case class GetLocalListVersionRes(version: AuthListVersion) extends ChargePointR
 case class ChargePointDataTransferReq(vendorId: String, messageId: Option[String], data: Option[String])
   extends ChargePointReq
 
-case class ChargePointDataTransferRes(status: DataTransferStatus.Value, data: Option[String] = None)
+case class ChargePointDataTransferRes(status: DataTransferStatus, data: Option[String] = None)
   extends ChargePointRes
 
 
