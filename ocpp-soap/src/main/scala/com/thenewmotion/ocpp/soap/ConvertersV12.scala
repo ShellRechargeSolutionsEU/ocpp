@@ -1,9 +1,6 @@
 package com.thenewmotion.ocpp
 package soap
 
-/**
- * @author Yaroslav Klymko
- */
 private[soap] object ConvertersV12 {
 
   import com.thenewmotion.ocpp

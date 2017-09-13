@@ -225,10 +225,10 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
 
     import ocpp.{UpdateStatus => ocpp}
     SendLocalListRes(res.status match {
-      case AcceptedValue10 => ocpp.UpdateAccepted(stringOption(res.hash))
-      case Failed => ocpp.UpdateFailed
+      case AcceptedValue10 => ocpp.Accepted(stringOption(res.hash))
+      case Failed => ocpp.Failed
       case HashError => ocpp.HashError
-      case NotSupportedValue => ocpp.NotSupportedValue
+      case NotSupportedValue => ocpp.NotSupported
       case VersionMismatch => ocpp.VersionMismatch
     })
   }

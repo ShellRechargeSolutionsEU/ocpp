@@ -7,9 +7,6 @@ import java.time.ZonedDateTime
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 
-/**
- * @author Yaroslav Klymko
- */
 trait CentralSystemClient extends CentralSystem with Client
 
 object CentralSystemClient {
@@ -106,7 +103,7 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
       x match {
         case ocpp.ConnectorLockFailure => ConnectorLockFailure
         case ocpp.HighTemperature => HighTemperature
-        case ocpp.Mode3Error => Mode3Error
+        case ocpp.EVCommunicationError => Mode3Error
         case ocpp.PowerMeterFailure => PowerMeterFailure
         case ocpp.PowerSwitchFailure => PowerSwitchFailure
         case ocpp.ReaderFailure => ReaderFailure
@@ -121,15 +118,18 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
 
     def noError(status: ChargePointStatus) = (status, NoError)
 
-    val (chargePointStatus, errorCode) = status match {
-      case messages.Available(_) => noError(Available)
-      case messages.Occupied(_) => noError(Occupied)
-      case messages.Unavailable(_) => noError(Unavailable)
-      case messages.Reserved(_) => notSupported("statusNotification(Reserved)")
-      case messages.Faulted(code, info, vendorCode) =>
-        info.foreach(x => logNotSupported("statusNotification.info", x))
-        vendorCode.foreach(x => logNotSupported("statusNotification.vendorErrorCode", x))
-        (Faulted, code.map(toErrorCode) getOrElse NoError)
+    val (chargePointStatus, errorCode) = {
+      import messages.ChargePointStatus
+      status match {
+        case ChargePointStatus.Available(_) => noError(Available)
+        case ChargePointStatus.Occupied(_, _) => noError(Occupied)
+        case ChargePointStatus.Unavailable(_) => noError(Unavailable)
+        case ChargePointStatus.Reserved(_) => notSupported("statusNotification(Reserved)")
+        case ChargePointStatus.Faulted(code, info, vendorCode) =>
+          info.foreach(x => logNotSupported("statusNotification.info", x))
+          vendorCode.foreach(x => logNotSupported("statusNotification.vendorErrorCode", x))
+          (Faulted, code.map(toErrorCode) getOrElse NoError)
+      }
     }
 
     timestamp.foreach(x => logNotSupported("statusNotification.timestamp", x))
@@ -206,8 +206,6 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
     import req._
 
     val x = StopTransactionRequest(transactionId, idTag, timestamp.toXMLCalendar, meterStop, Seq(TransactionData(req.meters.map(toMeterValue))))
-    // TODO: is this conversion really correct?
-    // req.meters.map(meter => TransactionData(Seq(toMeterValue(meter)))))
     messages.StopTransactionRes(?(_.stopTransaction, x).idTagInfo.map(toIdTagInfo))
   }
 
@@ -248,7 +246,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       x match {
         case ocpp.ConnectorLockFailure => ConnectorLockFailure
         case ocpp.HighTemperature => HighTemperature
-        case ocpp.Mode3Error => Mode3Error
+        case ocpp.EVCommunicationError => Mode3Error
         case ocpp.PowerMeterFailure => PowerMeterFailure
         case ocpp.PowerSwitchFailure => PowerSwitchFailure
         case ocpp.ReaderFailure => ReaderFailure
@@ -263,13 +261,16 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
 
     def noError(status: ChargePointStatus, info: Option[String]) = (status, NoError, info, None)
 
-    val (chargePointStatus, errorCode, errorInfo, vendorErrorCode) = status match {
-      case messages.Available(info) => noError(Available, info)
-      case messages.Occupied(info) => noError(OccupiedValue, info)
-      case messages.Faulted(code, info, vendorCode) =>
-        (FaultedValue, code.map(toErrorCode) getOrElse NoError, info, vendorCode)
-      case messages.Unavailable(info) => noError(UnavailableValue, info)
-      case messages.Reserved(info) => noError(Reserved, info)
+    val (chargePointStatus, errorCode, errorInfo, vendorErrorCode) = {
+      import messages.ChargePointStatus
+      status match {
+        case ChargePointStatus.Available(info) => noError(Available, info)
+        case ChargePointStatus.Occupied(_, info) => noError(OccupiedValue, info)
+        case ChargePointStatus.Faulted(code, info, vendorCode) =>
+          (FaultedValue, code.map(toErrorCode) getOrElse NoError, info, vendorCode)
+        case ChargePointStatus.Unavailable(info) => noError(UnavailableValue, info)
+        case ChargePointStatus.Reserved(info) => noError(Reserved, info)
+      }
     }
 
     val x = StatusNotificationRequest(

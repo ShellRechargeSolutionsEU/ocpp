@@ -126,7 +126,7 @@ object ConvertersV16 {
     case messages.SendLocalListReq(updateType, authListVersion, authorisationData, hash) =>
       SendLocalListReq(updateType.name, authListVersion.toV16, Some(authorisationData.map(_.toV16)))
 
-    case messages.SendLocalListRes(status: messages.UpdateStatus.Value) =>
+    case messages.SendLocalListRes(status: messages.UpdateStatus) =>
       val (ocppStatus, _) = status.toV16AndHash
       SendLocalListRes(ocppStatus)
 
@@ -319,12 +319,13 @@ object ConvertersV16 {
   private implicit class RichChargePointStatus(self: messages.ChargePointStatus) {
     def toV16Fields: (String, String, Option[String], Option[String]) = {
       def simpleStatus(name: String) = (name, "NoError", self.info, None)
+      import messages.ChargePointStatus
       self match {
-        case messages.Available(_) => simpleStatus("Available")
-        case messages.Occupied(_) => simpleStatus("Occupied")
-        case messages.Unavailable(_) => simpleStatus("Unavailable")
-        case messages.Reserved(_) => simpleStatus("Reserved")
-        case messages.Faulted(errCode, inf, vendorErrCode) =>
+        case ChargePointStatus.Available(_) => simpleStatus("Available")
+        case ChargePointStatus.Occupied(_, _) => simpleStatus("Occupied")
+        case ChargePointStatus.Unavailable(_) => simpleStatus("Unavailable")
+        case ChargePointStatus.Reserved(_) => simpleStatus("Reserved")
+        case ChargePointStatus.Faulted(errCode, inf, vendorErrCode) =>
           ("Faulted", errCode.map(_.name).getOrElse(RichChargePointStatus.defaultErrorCode), inf, vendorErrCode)
       }
     }
@@ -335,18 +336,21 @@ object ConvertersV16 {
   }
 
   private def statusFieldsToOcppStatus(status: String, errorCode: String, info: Option[String],
-    vendorErrorCode: Option[String]): messages.ChargePointStatus = status match {
-    case "Available" => messages.Available(info)
-    case "Occupied" => messages.Occupied(info)
-    case "Unavailable" => messages.Unavailable(info)
-    case "Reserved" => messages.Reserved(info)
-    case "Faulted" =>
-      val errorCodeString =
-        if (errorCode == RichChargePointStatus.defaultErrorCode)
-          None
-        else
-          Some(enumerableFromJsonString(messages.ChargePointErrorCode, errorCode))
-      messages.Faulted(errorCodeString, info, vendorErrorCode)
+    vendorErrorCode: Option[String]): messages.ChargePointStatus = {
+    import messages.ChargePointStatus
+    status match {
+      case "Available" => ChargePointStatus.Available(info)
+      case "Occupied" => ChargePointStatus.Occupied(reason = None, info)
+      case "Unavailable" => ChargePointStatus.Unavailable(info)
+      case "Reserved" => ChargePointStatus.Reserved(info)
+      case "Faulted" =>
+        val errorCodeString =
+          if (errorCode == RichChargePointStatus.defaultErrorCode)
+            None
+          else
+            Some(enumerableFromJsonString(messages.ChargePointErrorCode, errorCode))
+        ChargePointStatus.Faulted(errorCodeString, info, vendorErrorCode)
+    }
   }
 
   private implicit class RichMeter(self: messages.Meter) {
@@ -454,22 +458,22 @@ object ConvertersV16 {
     def fromV16: messages.AuthorisationData = messages.AuthorisationData(self.idTag, self.idTagInfo.map(_.fromV16))
   }
 
-  private implicit class RichUpdateStatus(self: messages.UpdateStatus.Value) {
+  private implicit class RichUpdateStatus(self: messages.UpdateStatus) {
 
     import messages.UpdateStatus._
 
     def toV16AndHash: (String, Option[String]) = {
       val hashString = self match {
-        case UpdateAccepted(hash) => hash
+        case Accepted(hash) => hash
         case _ => None
       }
 
       (enumToName(self), hashString)
     }
 
-    def enumToName(v: messages.UpdateStatus.Value): String = v match {
-      case UpdateAccepted(_) => "Accepted"
-      case UpdateFailed => "Failed"
+    def enumToName(v: messages.UpdateStatus): String = v match {
+      case Accepted(_) => "Accepted"
+      case Failed => "Failed"
       case x => x.toString
     }
   }
@@ -477,10 +481,10 @@ object ConvertersV16 {
   private def stringToUpdateStatus(status: String) = {
     import messages.UpdateStatus._
     status match {
-      case "Accepted" => UpdateAccepted(None)
-      case "Failed" => UpdateFailed
+      case "Accepted" => Accepted(None)
+      case "Failed" => Failed
       case "HashError" => HashError
-      case "NotSupportedValue" => NotSupportedValue
+      case "NotSupportedValue" => NotSupported
       case "VersionMismatch" => VersionMismatch
       case _ => throw new MappingException(s"Unrecognized value $status for OCPP update status")
     }

@@ -1,4 +1,5 @@
-package com.thenewmotion.ocpp.messages
+package com.thenewmotion.ocpp
+package messages
 
 import enums.reflection.EnumUtils.{Enumerable, Nameable}
 
@@ -6,7 +7,6 @@ sealed trait ChargePointErrorCode extends Nameable
 object ChargePointErrorCode extends Enumerable[ChargePointErrorCode] {
   object ConnectorLockFailure extends ChargePointErrorCode
   object HighTemperature      extends ChargePointErrorCode
-  object Mode3Error           extends ChargePointErrorCode
   object EVCommunicationError extends ChargePointErrorCode // ocpp 1.6: renamed from Mode3Error
   object PowerMeterFailure    extends ChargePointErrorCode
   object PowerSwitchFailure   extends ChargePointErrorCode
@@ -25,7 +25,6 @@ object ChargePointErrorCode extends Enumerable[ChargePointErrorCode] {
   val values = Set(
     ConnectorLockFailure,
     HighTemperature,
-    Mode3Error,
     EVCommunicationError,
     PowerMeterFailure,
     PowerSwitchFailure,

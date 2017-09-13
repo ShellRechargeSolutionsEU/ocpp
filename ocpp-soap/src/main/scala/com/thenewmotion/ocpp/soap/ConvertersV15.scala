@@ -1,9 +1,6 @@
 package com.thenewmotion.ocpp
 package soap
 
-/**
- * @author Yaroslav Klymko
- */
 private[soap] object ConvertersV15 {
 
   import com.thenewmotion.ocpp
@@ -66,15 +63,15 @@ private[soap] object ConvertersV15 {
     }
   }
 
-  implicit class RichUpdateStatus(val self: messages.UpdateStatus.Value) extends AnyVal {
+  implicit class RichUpdateStatus(val self: messages.UpdateStatus) extends AnyVal {
     def toV15: (UpdateStatus, Option[String]) = {
-      import messages.UpdateStatus._
+      import messages.UpdateStatus
       self match {
-        case UpdateAccepted(h) => (AcceptedValue10,                 h)
-        case UpdateFailed      => (Failed,                       None)
-        case HashError         => (ocpp.v15.HashError,           None)
-        case NotSupportedValue => (ocpp.v15.NotSupportedValue,   None)
-        case VersionMismatch   => (ocpp.v15.VersionMismatch,     None)
+        case UpdateStatus.Accepted(h)     => (AcceptedValue10,                 h)
+        case UpdateStatus.Failed          => (Failed,                       None)
+        case UpdateStatus.HashError       => (ocpp.v15.HashError,           None)
+        case UpdateStatus.NotSupported    => (ocpp.v15.NotSupportedValue,   None)
+        case UpdateStatus.VersionMismatch => (ocpp.v15.VersionMismatch,     None)
       }
     }
   }

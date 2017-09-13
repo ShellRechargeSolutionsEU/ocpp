@@ -52,7 +52,7 @@ object ClearChargingProfileStatus extends Enumerable[ClearChargingProfileStatus]
 
 sealed trait GetCompositeScheduleStatus
 object GetCompositeScheduleStatus {
-  case class Accepted(
+  final case class Accepted(
     connector: Scope,
     scheduleStart: Option[ZonedDateTime],
     chargingSchedule: Option[ChargingSchedule]

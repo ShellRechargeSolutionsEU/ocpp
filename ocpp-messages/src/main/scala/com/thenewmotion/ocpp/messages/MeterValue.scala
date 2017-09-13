@@ -1,4 +1,5 @@
-package com.thenewmotion.ocpp.messages
+package com.thenewmotion.ocpp
+package messages
 
 import java.time.ZonedDateTime
 import enums.reflection.EnumUtils.{Nameable, Enumerable}
@@ -119,9 +120,6 @@ object Meter {
 
   sealed trait UnitOfMeasure extends Nameable
   object UnitOfMeasure extends Enumerable[UnitOfMeasure] {
-    // TODO: Should we override the name value here? It makes more
-    // sense to move these overrides to ConvertersVXX.scala because
-    // the naming may actually differ between versions
     case object Wh         extends UnitOfMeasure { override def name = "Wh" }
     case object Kwh        extends UnitOfMeasure { override def name = "kWh" }
     case object Varh       extends UnitOfMeasure { override def name = "varh" }
@@ -130,8 +128,8 @@ object Meter {
     case object Kw         extends UnitOfMeasure { override def name = "kW" }
     case object Var        extends UnitOfMeasure { override def name = "var" }
     case object Kvar       extends UnitOfMeasure { override def name = "kvar" }
-    case object Amp        extends UnitOfMeasure { override def name = "Amp" }
-    case object Volt       extends UnitOfMeasure { override def name = "Volt" }
+    case object Amp        extends UnitOfMeasure { override def name = "A" }
+    case object Volt       extends UnitOfMeasure { override def name = "V" }
     case object Celsius    extends UnitOfMeasure { override def name = "Celsius" }
 
     // ocpp 1.6

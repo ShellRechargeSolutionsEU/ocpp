@@ -8,7 +8,6 @@ import java.time.ZonedDateTime
 import enums.reflection.EnumUtils.Enumerable
 import enums.reflection.EnumUtils.Nameable
 
-// TODO: begin WIP
 trait StopReason extends Nameable
 object StopReason extends Enumerable[StopReason] {
   case object EmergencyStop extends StopReason
@@ -16,15 +15,14 @@ object StopReason extends Enumerable[StopReason] {
   case object HardReset extends StopReason
   case object PowerLoss extends StopReason
   case object Reboot extends StopReason
-  case object Value extends StopReason
   case object Remote extends StopReason
   case object SoftReset extends StopReason
   case object UnlockCommand extends StopReason
   case object DeAuthorized extends StopReason
   case object Local extends StopReason
   case object Other extends StopReason
-  val values = Set(EmergencyStop, EVDisconnected, HardReset, PowerLoss, Reboot,
-    Value, Remote, SoftReset, UnlockCommand, DeAuthorized, Local, Other)
+  val values = Set(EmergencyStop, EVDisconnected, HardReset, PowerLoss,
+    Reboot, Remote, SoftReset, UnlockCommand, DeAuthorized, Local, Other)
 }
 
 trait RegistrationStatus extends Nameable
@@ -34,18 +32,39 @@ object RegistrationStatus extends Enumerable[RegistrationStatus] {
   case object Pending extends RegistrationStatus
   val values = Set(Accepted, Rejected, Pending)
 }
+
 trait DiagnosticsStatus extends Nameable
 object DiagnosticsStatus extends Enumerable[DiagnosticsStatus] {
   case object Uploaded extends DiagnosticsStatus
   case object UploadFailed extends DiagnosticsStatus
-  val values = Set(Uploaded, UploadFailed)
+  case object Uploading extends DiagnosticsStatus // ocpp 1.6
+  case object Idle extends DiagnosticsStatus // ocpp 1.6
+  val values = Set(Uploaded, UploadFailed, Uploading, Idle)
 }
+
 trait Phase extends Nameable
 object Phase extends Enumerable[Phase] {
-  val values = Set()
+  case object L1 extends Phase
+  case object L2 extends Phase
+  case object L3 extends Phase
+  case object N extends Phase
+  case object L1N extends Phase { override def name = "L1-N"}
+  case object L2N extends Phase { override def name = "L2-N"}
+  case object L3N extends Phase { override def name = "L3-N"}
+  case object L1L2 extends Phase { override def name = "L1-L2"}
+  case object L2L3 extends Phase { override def name = "L2-L3"}
+  case object L3L1 extends Phase { override def name = "L3-L1"}
+  val values = Set(L1, L2, L3, N, L1N, L2N, L3N, L1L2, L2L3, L3L1)
 }
-trait MessageTrigger
-trait TriggerMessageStatus
+
+trait TriggerMessageStatus extends Nameable
+object TriggerMessageStatus extends Enumerable[TriggerMessageStatus] {
+  case object Accepted extends TriggerMessageStatus
+  case object Rejected extends TriggerMessageStatus
+  case object NotImplemented extends TriggerMessageStatus
+  val values = Set(Accepted, Rejected, NotImplemented)
+}
+
 trait UnlockStatus extends Nameable
 object UnlockStatus extends Enumerable[UnlockStatus] {
   case object Unlocked extends UnlockStatus
@@ -53,7 +72,6 @@ object UnlockStatus extends Enumerable[UnlockStatus] {
   case object NotSupported extends UnlockStatus
   val values = Set(Unlocked, UnlockFailed, NotSupported)
 }
-// end WIP
 
 sealed trait Message
 sealed trait Req extends Message
@@ -127,22 +145,6 @@ case object FirmwareStatusNotificationRes extends CentralSystemRes
 case class DiagnosticsStatusNotificationReq(status: DiagnosticsStatus) extends CentralSystemReq
 case object DiagnosticsStatusNotificationRes extends CentralSystemRes
 
-sealed trait ChargePointStatus { def info: Option[String] }
-case class Available(info:Option[String]=None) extends ChargePointStatus
-case class Occupied(info:Option[String]=None) extends ChargePointStatus
-// Note: ocpp 1.6 replaced the occupied status
-case class Preparing(info:Option[String]=None) extends ChargePointStatus
-case class Charging(info:Option[String]=None) extends ChargePointStatus
-case class SuspendedEVSE(info:Option[String]=None) extends ChargePointStatus
-case class SuspendedEV(info:Option[String]=None) extends ChargePointStatus
-case class Finishing(info:Option[String]=None) extends ChargePointStatus
-case class Faulted(errorCode: Option[ChargePointErrorCode],
-                   info: Option[String]=None,
-                   vendorErrorCode: Option[String]) extends ChargePointStatus
-case class Unavailable(info:Option[String]=None) extends ChargePointStatus
-// since OCPP 1.5
-case class Reserved(info:Option[String]=None) extends ChargePointStatus
-
 sealed trait FirmwareStatus extends Nameable
 object FirmwareStatus extends Enumerable[FirmwareStatus] {
   object Downloaded extends FirmwareStatus
@@ -151,7 +153,7 @@ object FirmwareStatus extends Enumerable[FirmwareStatus] {
   object InstallationFailed extends FirmwareStatus
   object Installed extends FirmwareStatus
   object Installing extends FirmwareStatus // ocpp 1.6
-  object Idle extends FirmwareStatus
+  object Idle extends FirmwareStatus // ocpp 1.6
 
   val values = Set(
     Downloaded,
@@ -223,9 +225,18 @@ case class GetCompositeScheduleRes(
 ) extends ChargePointRes
 
 // ocpp 1.6: trigger message
+trait MessageTrigger
+object MessageTrigger {
+  case object BootNotification extends MessageTrigger
+  case object DiagnosticsStatusNotification extends MessageTrigger
+  case object FirmwareStatusNotification extends MessageTrigger
+  case object Heartbeat extends MessageTrigger
+  final case class MeterValues(connector: Option[ConnectorScope]) extends MessageTrigger
+  final case class StatusNotification(connector: Option[ConnectorScope]) extends MessageTrigger
+}
+
 case class TriggerMessageReq(
-  requestedMessage: MessageTrigger,
-  connector: ConnectorScope
+  requestedMessage: MessageTrigger
 ) extends ChargePointReq
 case class TriggerMessageRes(
   status: TriggerMessageStatus
@@ -284,7 +295,7 @@ case class SendLocalListReq(updateType: UpdateType,
                             hash: Option[String] // dropped in ocpp 1.6
                             ) extends ChargePointReq
 
-case class SendLocalListRes(status: UpdateStatus.Value) extends ChargePointRes
+case class SendLocalListRes(status: UpdateStatus) extends ChargePointRes
 
 
 case object GetLocalListVersionReq extends ChargePointReq
@@ -356,13 +367,13 @@ object UpdateType extends Enumerable[UpdateType] {
   val values = Set(Differential, Full)
 }
 
+sealed trait UpdateStatus
 object UpdateStatus {
-  sealed trait Value
-  case class UpdateAccepted(hash: Option[String]) extends Value
-  case object UpdateFailed extends Value
-  case object HashError extends Value
-  case object NotSupportedValue extends Value
-  case object VersionMismatch extends Value
+  case class Accepted(hash: Option[String]) extends UpdateStatus
+  case object Failed extends UpdateStatus
+  case object HashError extends UpdateStatus
+  case object NotSupported extends UpdateStatus
+  case object VersionMismatch extends UpdateStatus
 }
 
 sealed trait AuthorisationData {

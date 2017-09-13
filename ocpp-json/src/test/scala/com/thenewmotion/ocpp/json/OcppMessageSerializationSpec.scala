@@ -231,19 +231,28 @@ class OcppMessageSerializationSpec extends Specification {
       ChangeAvailabilityReq(scope = ChargePointScope, availabilityType = AvailabilityType.Operative)
     val changeAvailabilityRes = ChangeAvailabilityRes(status = AvailabilityStatus.Accepted)
 
-    val statusNotificationReq = StatusNotificationReq(scope = ConnectorScope(1),
-      status = Available(Some("Info msg")), timestamp = Some(testTime),
-      vendorId = Some(""))
+    val statusNotificationReq = StatusNotificationReq(
+      scope = ConnectorScope(1),
+      status = ChargePointStatus.Available(Some("Info msg")),
+      timestamp = Some(testTime),
+      vendorId = Some("")
+    )
     val statusNotificationReqInError = {
-      val faultedStatus = Faulted(errorCode = Some(ChargePointErrorCode.PowerMeterFailure),
-        info = Some("Die meter is kats doorgefikt joh"), vendorErrorCode = Some("MeterB0rk3d"))
+      val faultedStatus = ChargePointStatus.Faulted(
+        errorCode = Some(ChargePointErrorCode.PowerMeterFailure),
+        info = Some("Die meter is kats doorgefikt joh"),
+        vendorErrorCode = Some("MeterB0rk3d")
+      )
 
       StatusNotificationReq(scope = ConnectorScope(1),
         status = faultedStatus, timestamp = Some(testTime), vendorId = Some("TNM"))
     }
     val statusNotificationReqInErrorNoError = {
-      val faultedStatus = Faulted(errorCode = None,
-        info = Some("Het laadpunt is een beetje in de bonen"), vendorErrorCode = Some("Lolwut?"))
+      val faultedStatus = ChargePointStatus.Faulted(
+        errorCode = None,
+        info = Some("Het laadpunt is een beetje in de bonen"),
+        vendorErrorCode = Some("Lolwut?")
+      )
 
       StatusNotificationReq(scope = ConnectorScope(1),
         status = faultedStatus, timestamp = Some(testTime), vendorId = Some("TNM"))
@@ -340,7 +349,7 @@ class OcppMessageSerializationSpec extends Specification {
     val sendLocalListReq = SendLocalListReq(UpdateType.Full, listVersion = AuthListSupported(1),
       localAuthorisationList = List(AuthorisationData(idTag = "044943121F1D80",
         idTagInfo = Some(IdTagInfo(AuthorizationStatus.Accepted, Some(testTime), Some(""))))), hash = Some(""))
-    val sendLocalListRes = SendLocalListRes(status = UpdateStatus.UpdateAccepted(Some("")))
+    val sendLocalListRes = SendLocalListRes(status = UpdateStatus.Accepted(Some("")))
 
     val reserveNowReq = ReserveNowReq(connector = ChargePointScope,
       expiryDate = testTime,

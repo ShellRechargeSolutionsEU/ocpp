@@ -91,16 +91,16 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemReq, C
       case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse] {
         req =>
           val status = req.status match {
-            case Available => ocpp.Available()
-            case Occupied => ocpp.Occupied()
-            case Unavailable => ocpp.Unavailable()
+            case Available => ocpp.ChargePointStatus.Available()
+            case Occupied => ocpp.ChargePointStatus.Occupied(reason = None)
+            case Unavailable => ocpp.ChargePointStatus.Unavailable()
             case Faulted =>
               val errorCode: Option[ocpp.ChargePointErrorCode] = {
                 import ocpp.{ChargePointErrorCode => ocpp}
                 req.errorCode match {
                   case ConnectorLockFailure => Some(ocpp.ConnectorLockFailure)
                   case HighTemperature => Some(ocpp.HighTemperature)
-                  case Mode3Error => Some(ocpp.Mode3Error)
+                  case Mode3Error => Some(ocpp.EVCommunicationError)
                   case NoError => None
                   case PowerMeterFailure => Some(ocpp.PowerMeterFailure)
                   case PowerSwitchFailure => Some(ocpp.PowerSwitchFailure)
@@ -108,7 +108,7 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemReq, C
                   case ResetFailure => Some(ocpp.ResetFailure)
                 }
               }
-              ocpp.Faulted(errorCode, None, None)
+              ocpp.ChargePointStatus.Faulted(errorCode, None, None)
           }
           StatusNotificationReq(Scope.fromOcpp(req.connectorId), status, None, None)
       } { _ => StatusNotificationResponse() }
@@ -205,7 +205,6 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
           timestamp.toDateTime,
           meterStop,
           messages.StopReason.Local,
-          // TODO: is this conversion really correct?
           transactionData.flatMap(_.values.map(toMeter)).toList
         )
       } {
@@ -219,16 +218,16 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
 
       case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse] { req =>
         val status = req.status match {
-          case Available => ocpp.Available()
-          case OccupiedValue => ocpp.Occupied()
-          case UnavailableValue => ocpp.Unavailable()
+          case Available => ocpp.ChargePointStatus.Available()
+          case OccupiedValue => ocpp.ChargePointStatus.Occupied(reason = None)
+          case UnavailableValue => ocpp.ChargePointStatus.Unavailable()
           case FaultedValue =>
             val errorCode = {
               import ocpp.{ChargePointErrorCode => ocpp}
               req.errorCode match {
                 case ConnectorLockFailure => Some(ocpp.ConnectorLockFailure)
                 case HighTemperature => Some(ocpp.HighTemperature)
-                case Mode3Error => Some(ocpp.Mode3Error)
+                case Mode3Error => Some(ocpp.EVCommunicationError)
                 case NoError => None
                 case PowerMeterFailure => Some(ocpp.PowerMeterFailure)
                 case PowerSwitchFailure => Some(ocpp.PowerSwitchFailure)
@@ -241,8 +240,8 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
                 case OtherError => Some(ocpp.OtherError)
               }
             }
-            ocpp.Faulted(errorCode, req.info, req.vendorErrorCode)
-          case Reserved => ocpp.Reserved()
+            ocpp.ChargePointStatus.Faulted(errorCode, req.info, req.vendorErrorCode)
+          case Reserved => ocpp.ChargePointStatus.Reserved()
         }
         StatusNotificationReq(
           messages.Scope.fromOcpp(req.connectorId),
