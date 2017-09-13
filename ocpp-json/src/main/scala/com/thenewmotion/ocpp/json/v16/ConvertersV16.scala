@@ -4,7 +4,7 @@ package json.v16
 
 import java.net.{URI, URISyntaxException}
 
-import enums.reflection.EnumUtils.{Nameable, Enumerable}
+import enums.reflection.EnumUtils.{Enumerable, Nameable}
 import messages.Meter._
 import org.json4s.MappingException
 
@@ -65,8 +65,8 @@ object ConvertersV16 {
 
     case messages.StatusNotificationRes => StatusNotificationRes()
 
-    //    case messages.RemoteStartTransactionReq(idTag, connector, chargingProfile) =>
-    //      RemoteStartTransactionReq(idTag, connector.map(_.toOcpp), chargingProfile.map(_.toV16))
+    case messages.RemoteStartTransactionReq(idTag, connector, chargingProfile) =>
+      RemoteStartTransactionReq(idTag, connector.map(_.toOcpp), chargingProfile.map(_.toV16))
 
     case messages.RemoteStartTransactionRes(accepted) => RemoteStartTransactionRes(accepted.toStatusString)
 
@@ -192,8 +192,8 @@ object ConvertersV16 {
 
     case StatusNotificationRes() => messages.StatusNotificationRes
 
-    //    case RemoteStartTransactionReq(idTag, connector, chargingProfile) => messages.RemoteStartTransactionReq(idTag,
-    //      connector.map(messages.ConnectorScope.fromOcpp))
+    case RemoteStartTransactionReq(idTag, connector, chargingProfile) => messages.RemoteStartTransactionReq(idTag,
+      connector.map(messages.ConnectorScope.fromOcpp), chargingProfile.map(cp => chargingProfileFromV16(cp)))
 
     case RemoteStartTransactionRes(status) => messages.RemoteStartTransactionRes(statusStringToBoolean(status))
 
@@ -329,17 +329,18 @@ object ConvertersV16 {
   messages.Faulted(errorCodeString, info, vendorErrorCode)
   }
 
-  //  private implicit class RichCharginProfile(cp: messages.ChargingProfile) {
-  //    def toV16: ChargingProfile =
-  //      ChargingProfile(cp.id, cp.stackLevel, cp.chargingProfilePurpose.toString, cp.chargingProfileKind.toString,
-  //        scheduleToV16(cp.chargingSchedule), cp.transactionId, None, cp.validFrom, cp.validTo)
-  //
-  //    def scheduleToV16(cs: messages.ChargingSchedule): ChargingSchedule =
-  //      ChargingSchedule(cs.chargingRateUnit.toString, cs.chargingSchedulePeriod, cs.duration, cs.startsAt, cs.minChargingRate)
-  //
-  //    def periodToV16(csp: messages.ChargingSchedulePeriod): ChargingSchedulePeriod =
-  //      ChargingSchedulePeriod(csp.startOffset.length, csp.amperesLimit, csp.numberPhases)
-  //  }
+  private implicit class RichCharginProfile(cp: messages.ChargingProfile) {
+    def toV16: ChargingProfile =
+      ChargingProfile(cp.id, cp.stackLevel, cp.chargingProfilePurpose.toString, cp.chargingProfileKind.toString,
+        scheduleToV16(cp.chargingSchedule), cp.transactionId, None, cp.validFrom, cp.validTo)
+
+    def scheduleToV16(cs: messages.ChargingSchedule): ChargingSchedule =
+      ChargingSchedule(cs.chargingRateUnit.toString, cs.chargingSchedulePeriod.map(periodToV16),
+        cs.duration.map(_.toSeconds.toInt), cs.startsAt, cs.minChargingRate.map(_.toFloat))
+
+    def periodToV16(csp: messages.ChargingSchedulePeriod): ChargingSchedulePeriod =
+      ChargingSchedulePeriod(csp.startOffset.toSeconds.toInt, csp.amperesLimit.toFloat, csp.numberPhases)
+  }
 
   private def transactionDataToV16(tsList: List[messages.TransactionData]): List[Meter] = {
     tsList.flatMap( ts => ts.meters.map(_.toV16) )
@@ -362,6 +363,27 @@ object ConvertersV16 {
     def noneIfDefault(default: Any, actual: Any): Option[String] =
       if (actual == default) None else Some(actual.toString)
   }
+
+  private def chargingProfileFromV16(v16p: ChargingProfile): messages.ChargingProfile =
+    messages.ChargingProfile(v16p.chargingProfileId, v16p.stackLevel, stringToProfilePurpose(v16p.chargingProfilePurpose),
+      stringToProfileKind(v16p.chargingProfileKind), scheduleFromV16(v16p.chargingSchedule),
+      v16p.transactionId, v16p.validFrom, v16p.validTo)
+
+  private def stringToProfilePurpose(v16cpp: String): messages.ChargingProfilePurpose = ???
+  private def stringToProfileKind(v16cpk: String): messages.ChargingProfileKind = ???
+
+  private def scheduleFromV16(v16cs: ChargingSchedule): messages.ChargingSchedule =
+    messages.ChargingSchedule(stringToUnitOfChargeRate(v16cs.chargingRateUnit), v16cs.chargingSchedulePeriod.map(periodFromV16),
+      v16cs.minChargingRate.map(_.toDouble),v16cs.startSchedule, v16cs.duration.map(secondsToFiniteDuration))
+
+  private def secondsToFiniteDuration(seconds: Int): FiniteDuration =
+    FiniteDuration(seconds.toLong, "seconds")
+
+  private def stringToUnitOfChargeRate(unit: String): messages.UnitOfChargingRate =
+    if(unit == "W") messages.UnitOfChargeRate.Watts else messages.UnitOfChargeRate.Amperes
+
+  private def periodFromV16(v16sp: ChargingSchedulePeriod): messages.ChargingSchedulePeriod =
+    messages.ChargingSchedulePeriod(secondsToFiniteDuration(v16sp.startPeriod), v16sp.limit.toDouble, v16sp.numberPhases)
 
   private def transactionDataFromV16(v16td: Option[List[Meter]]): List[messages.TransactionData] =
     messages.TransactionData(v16td.getOrElse(List.empty[Meter]).map(meterFromV16)) :: Nil
