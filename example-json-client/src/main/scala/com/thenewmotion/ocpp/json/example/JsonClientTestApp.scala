@@ -16,10 +16,11 @@ object JsonClientTestApp extends App {
   private val chargerId = args.headOption.getOrElse("test-charger")
   private val centralSystemUri = if (args.length >= 2) args(1) else "ws://localhost:8080/ocppws"
   private val authPassword = if (args.length >= 3) Some(args(2)) else None
+  private val ocppProtocol = if (args.length >= 4) args(3) else "ocpp15"
 
   private val logger = LoggerFactory.getLogger(JsonClientTestApp.getClass)
 
-  val connection = new OcppJsonClient(chargerId, new URI(centralSystemUri), authPassword) {
+  val connection = new OcppJsonClient(chargerId, new URI(centralSystemUri), authPassword, ocppProtocol) {
     def onRequest(req: ChargePointReq): Future[ChargePointRes] = Future {
       req match {
         case GetLocalListVersionReq =>

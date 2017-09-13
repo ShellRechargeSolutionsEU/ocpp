@@ -70,12 +70,11 @@ class DummyWebSocketComponent extends WebSocketComponent {
 
 trait SimpleClientWebSocketComponent extends WebSocketComponent {
 
-  private val ocppProtocol = "ocpp1.5"
-
   class SimpleClientWebSocketConnection(
     chargerId: String,
     uri: URI,
-    authPassword: Option[String]
+    authPassword: Option[String],
+    ocppProtocol: String
   )(implicit sslContext: SSLContext = SSLContext.getDefault) extends WebSocketConnection {
 
     private[this] val logger = LoggerFactory.getLogger(SimpleClientWebSocketConnection.this.getClass)

@@ -9,9 +9,10 @@ The Open Charge Point Protocol (OCPP) is a network protocol for communication be
 * Helper methods to work with ocpp
 * OCPP 1.2
 * OCPP 1.5
+* OCPP 1.6
 * [Spray](http://spray.io) based service to handle OCPP requests
 * Functionality to parse and create OCPP JSON messages
-* A high-level interface for an OCPP 1.5-JSON client
+* A high-level interface for an OCPP 1.5-JSON or  OCPP 1.6-JSON client
 
 ## Setup
 
@@ -66,7 +67,7 @@ The Open Charge Point Protocol (OCPP) is a network protocol for communication be
 
 There is an example OCPP 1.5-JSON client application in example-json-client/src/main/scala/com/thenewmotion/ocpp/json. You can run it like this:
 
-    sbt "project example-json-client" "run 01234567 ws://localhost:8017/ocppws"
+    sbt "project example-json-client" "run 01234567 ws://localhost:8017/ocppws ocpp16"
 
 or with TLS encryption and Basic Auth according to the OCPP 1.6 JSON Implementation Specification:
 
