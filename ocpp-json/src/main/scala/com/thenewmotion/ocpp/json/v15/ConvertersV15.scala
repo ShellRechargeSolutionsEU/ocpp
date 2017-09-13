@@ -1,21 +1,24 @@
 package com.thenewmotion.ocpp
 package json.v15
 
-import messages.Meter._
+import java.net.URI
+import java.net.URISyntaxException
+
+import enums.reflection.EnumUtils.Enumerable
+import enums.reflection.EnumUtils.Nameable
 import messages.AuthorizationStatus
+import messages.Meter._
 import org.json4s.MappingException
-import enums.reflection.EnumUtils.{Nameable, Enumerable}
 
 import scala.concurrent.duration._
-import java.net.{URISyntaxException, URI}
 
 object ConvertersV15 {
   def toV15(msg: messages.Message): Message = msg match {
     case messages.BootNotificationReq(chargePointVendor, chargePointModel, chargePointSerialNumber,
-                                      chargeBoxSerialNumber, firmwareVersion, iccid, imsi, meterType,
-                                      meterSerialNumber) =>
+    chargeBoxSerialNumber, firmwareVersion, iccid, imsi, meterType,
+    meterSerialNumber) =>
       BootNotificationReq(chargePointVendor, chargePointModel, chargePointSerialNumber, chargeBoxSerialNumber,
-                          firmwareVersion, iccid, imsi, meterType, meterSerialNumber)
+        firmwareVersion, iccid, imsi, meterType, meterSerialNumber)
 
     case messages.BootNotificationRes(registrationAccepted, currentTime, heartbeatInterval) =>
       BootNotificationRes(registrationAccepted.name, currentTime, heartbeatInterval.toSeconds.toInt)
@@ -26,23 +29,23 @@ object ConvertersV15 {
 
     case messages.StartTransactionReq(connector, idTag, timestamp, meterStart, reservationId) =>
       StartTransactionReq(connectorId = connector.toOcpp,
-                          idTag = idTag,
-                          timestamp = timestamp,
-                          meterStart = meterStart,
-                          reservationId = reservationId)
+        idTag = idTag,
+        timestamp = timestamp,
+        meterStart = meterStart,
+        reservationId = reservationId)
 
     case messages.StartTransactionRes(transactionId, idTagInfo) => StartTransactionRes(transactionId, idTagInfo.toV15)
 
     case messages.StopTransactionReq(transactionId, idTag, timestamp, meterStop, stopReason, meters) =>
       StopTransactionReq(transactionId = transactionId,
-                         idTag = idTag,
-                         timestamp = timestamp,
-                         meterStop = meterStop,
-                         transactionData = Some(
-                          meters.map(meter => TransactionData(Some(List(meter.toV15))))
-                          // TODO: is this conversion really correct?
-                          // List(TransactionData(Some(meters.map(_.toV15))))
-                         ))
+        idTag = idTag,
+        timestamp = timestamp,
+        meterStop = meterStop,
+        transactionData = Some(
+          meters.map(meter => TransactionData(Some(List(meter.toV15))))
+          // TODO: is this conversion really correct?
+          // List(TransactionData(Some(meters.map(_.toV15))))
+        ))
 
     case messages.StopTransactionRes(idTagInfo) => StopTransactionRes(idTagInfo.map(_.toV15))
 
@@ -142,17 +145,17 @@ object ConvertersV15 {
     case messages.CancelReservationRes(accepted) => CancelReservationRes(accepted.toStatusString)
 
     case messages.CentralSystemDataTransferReq(_, _, _)
-        | messages.CentralSystemDataTransferRes(_, _)
-        | messages.ChargePointDataTransferReq(_, _, _)
-        | messages.ChargePointDataTransferRes(_, _) =>
-        unexpectedMessage(msg)
+         | messages.CentralSystemDataTransferRes(_, _)
+         | messages.ChargePointDataTransferReq(_, _, _)
+         | messages.ChargePointDataTransferRes(_, _) =>
+      unexpectedMessage(msg)
   }
 
   def fromV15(msg: Message): messages.Message = msg match {
     case BootNotificationReq(vendor, model, chargePointSerial, chargeBoxSerial, firmwareVersion, iccid, imsi, meterType,
-                             meterSerial) =>
+    meterSerial) =>
       messages.BootNotificationReq(vendor, model, chargePointSerial, chargeBoxSerial, firmwareVersion, iccid, imsi,
-                                   meterType, meterSerial)
+        meterType, meterSerial)
 
     case BootNotificationRes(statusString, currentTime, heartbeatInterval) =>
       messages.BootNotificationRes(status =
@@ -168,7 +171,7 @@ object ConvertersV15 {
 
     case StartTransactionReq(connectorId, idTag, timestamp, meterStart, reservationId) =>
       messages.StartTransactionReq(messages.ConnectorScope.fromOcpp(connectorId), idTag, timestamp, meterStart,
-                                   reservationId)
+        reservationId)
 
     case StartTransactionRes(transactionId, idTagInfo) => messages.StartTransactionRes(transactionId, idTagInfo.fromV15)
 
@@ -197,9 +200,9 @@ object ConvertersV15 {
 
     case StatusNotificationReq(connector, status, errorCode, info, timestamp, vendorId, vendorErrorCode) =>
       messages.StatusNotificationReq(messages.Scope.fromOcpp(connector),
-                                     statusFieldsToOcppStatus(status, errorCode, info, vendorErrorCode),
-                                     timestamp,
-                                     vendorId)
+        statusFieldsToOcppStatus(status, errorCode, info, vendorErrorCode),
+        timestamp,
+        vendorId)
 
     case StatusNotificationRes() => messages.StatusNotificationRes
 
@@ -261,7 +264,7 @@ object ConvertersV15 {
 
     case GetConfigurationRes(values, unknownKeys) =>
       messages.GetConfigurationRes(values.fold(List.empty[messages.KeyValue])(_.map(_.fromV15)),
-                                   unknownKeys getOrElse Nil)
+        unknownKeys getOrElse Nil)
 
     case GetLocalListVersionReq() => messages.GetLocalListVersionReq
 
@@ -294,8 +297,8 @@ object ConvertersV15 {
 
   private implicit class RichIdTagInfo(i: messages.IdTagInfo) {
     def toV15: IdTagInfo = IdTagInfo(status = AuthorizationStatusConverters.enumToJson(i.status),
-                          expiryDate = i.expiryDate,
-                          parentIdTag = i.parentIdTag)
+      expiryDate = i.expiryDate,
+      parentIdTag = i.parentIdTag)
   }
 
   private implicit class RichV15IdTagInfo(self: IdTagInfo) {
@@ -333,7 +336,7 @@ object ConvertersV15 {
   }
 
   private def statusFieldsToOcppStatus(status: String, errorCode: String, info: Option[String],
-                               vendorErrorCode: Option[String]): messages.ChargePointStatus = status match {
+    vendorErrorCode: Option[String]): messages.ChargePointStatus = status match {
     case "Available" => messages.Available(info)
     case "Occupied" => messages.Occupied(info)
     case "Unavailable" => messages.Unavailable(info)
@@ -350,15 +353,15 @@ object ConvertersV15 {
   private implicit class RichMeter(self: messages.Meter) {
     def toV15: Meter =
       Meter(timestamp = self.timestamp,
-                       values = self.values.map(valueToV15))
+        values = self.values.map(valueToV15))
 
     def valueToV15(v: messages.Meter.Value): MeterValue =
       MeterValue(value = v.value,
-                     measurand = noneIfDefault(Measurand.EnergyActiveImportRegister, v.measurand),
-                     context = noneIfDefault(ReadingContext.SamplePeriodic, v.context),
-                     format = noneIfDefault(ValueFormat.Raw, v.format),
-                     location = noneIfDefault(Location.Outlet, v.location),
-                     unit = noneIfDefault(UnitOfMeasure.Wh, v.unit))
+        measurand = noneIfDefault(Measurand.EnergyActiveImportRegister, v.measurand),
+        context = noneIfDefault(ReadingContext.SamplePeriodic, v.context),
+        format = noneIfDefault(ValueFormat.Raw, v.format),
+        location = noneIfDefault(Location.Outlet, v.location),
+        unit = noneIfDefault(UnitOfMeasure.Wh, v.unit))
 
     def noneIfDefault(default: Nameable, actual: Nameable): Option[String] =
       if (actual == default) None else Some(actual.name)
@@ -376,8 +379,8 @@ object ConvertersV15 {
   }
 
   private def meterValueFromV15(v15m: MeterValue): messages.Meter.Value = {
-    import v15m._
     import messages.Meter._
+    import v15m._
 
     Value(value = value,
       measurand = getMeterValueProperty(measurand, Measurand, Measurand.EnergyActiveImportRegister),
@@ -414,17 +417,19 @@ object ConvertersV15 {
   private def statusStringToBoolean(statusString: String) = statusString match {
     case "Accepted" => true
     case "Rejected" => false
-    case _          =>
+    case _ =>
       throw new MappingException(s"Did not recognize status '$statusString' (expected 'Accepted' or 'Rejected')")
   }
 
   private implicit class RichKeyValue(val self: messages.KeyValue) {
+
     import self._
 
     def toV15: ConfigurationEntry = ConfigurationEntry(key, readonly, value)
   }
 
   private implicit class RichConfigurationEntry(self: ConfigurationEntry) {
+
     import self._
 
     def fromV15: messages.KeyValue = messages.KeyValue(key, readonly, value)
@@ -453,6 +458,7 @@ object ConvertersV15 {
   }
 
   private implicit class RichUpdateStatus(self: messages.UpdateStatus.Value) {
+
     import messages.UpdateStatus._
 
     def toV15AndHash: (String, Option[String]) = {
