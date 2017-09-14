@@ -20,6 +20,8 @@ val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.0.4"
 val scalaParser = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4"
 val commonsCodec = "commons-codec" % "commons-codec" % "1.10"
 val enumUtils = "com.thenewmotion" %% "enum-utils" % "0.2.1"
+val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
+val specs2ScalaCheck = "org.specs2" %% "specs2-scalacheck" % specs2V % "test"
 
 def module(name: String) = Project(name, file(name))
   .enablePlugins(OssLibPlugin)
@@ -53,7 +55,7 @@ val json = module("ocpp-json")
   .dependsOn(messages)
   .settings(
     libraryDependencies ++= Seq(
-      json4sNative, json4sExt, slf4jApi
+      json4sNative, json4sExt, slf4jApi, scalaCheck, specs2ScalaCheck
     )
   )
 
