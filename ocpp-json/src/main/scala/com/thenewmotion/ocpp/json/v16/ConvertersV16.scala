@@ -6,7 +6,7 @@ import java.net.URISyntaxException
 
 import enums.reflection.EnumUtils.Enumerable
 import enums.reflection.EnumUtils.Nameable
-import messages.AuthorizationStatus
+import messages.{AuthorizationStatus, ChargingProfilePurpose, ConnectorScope, MessageTrigger}
 import org.json4s.MappingException
 
 import scala.concurrent.duration._
@@ -289,6 +289,10 @@ object ConvertersV16 {
     case CancelReservationRes(status) => messages.CancelReservationRes(statusStringToBoolean(status))
 
     case DataTransferReq(_, _, _) | DataTransferRes(_, _) => unexpectedMessage(msg)
+
+    case TriggerMessageReq(reqMsg, connectorId) => messages.TriggerMessageReq(reqMsg)
+
+    case TriggerMessageRes
   }
 
   private def unexpectedMessage(msg: Any) =
@@ -322,7 +326,8 @@ object ConvertersV16 {
       import messages.ChargePointStatus
       self match {
         case ChargePointStatus.Available(_) => simpleStatus("Available")
-        case ChargePointStatus.Occupied(_, _) => simpleStatus("Occupied")
+        case ChargePointStatus.Occupied(reasonOpt, _) => simpleStatus(
+          reasonOpt.getOrElse(throw new Exception ("Missing occupied reason field")).name)
         case ChargePointStatus.Unavailable(_) => simpleStatus("Unavailable")
         case ChargePointStatus.Reserved(_) => simpleStatus("Reserved")
         case ChargePointStatus.Faulted(errCode, inf, vendorErrCode) =>
@@ -478,6 +483,34 @@ object ConvertersV16 {
     }
   }
 
+  private implicit class RichTriggerMessage(self: messages.TriggerMessageReq) {
+    import messages.MessageTrigger._
+
+    def toV16: TriggerMessageReq = {
+      self.requestedMessage match {
+        case BootNotification => TriggerMessageReq("BootNotification", None)
+        case DiagnosticsStatusNotification => TriggerMessageReq("DiagnosticsStatusNotification", None)
+        case FirmwareStatusNotification => TriggerMessageReq("FirmwareStatusNotification", None)
+        case Heartbeat => TriggerMessageReq("Heartbeat", None)
+        case MeterValues(connector) => TriggerMessageReq("MeterValues", connector.map(_.id))
+        case StatusNotification(connector) => TriggerMessageReq("StatusNotification", connector.map(_.id))
+      }
+    }
+  }
+
+  private def triggerFromV16(v16t: TriggerMessageReq): messages.TriggerMessageReq = {
+    import messages.MessageTrigger._
+
+    v16t.requestedMessage match {
+      case "BootNotification" => messages.TriggerMessageReq(BootNotification)
+      case "DiagnosticsStatusNotification" => messages.TriggerMessageReq(DiagnosticsStatusNotification)
+      case "FirmwareStatusNotification" => messages.TriggerMessageReq(FirmwareStatusNotification)
+      case "Heartbeat" => messages.TriggerMessageReq(Heartbeat)
+      case "MeterValues" => messages.TriggerMessageReq(MeterValues(v16t.connectorId.map(ConnectorScope.fromOcpp)))
+      case "StatusNotification" => messages.TriggerMessageReq(StatusNotification(v16t.connectorId.map(ConnectorScope.fromOcpp)))
+    }
+  }
+
   private def stringToUpdateStatus(status: String) = {
     import messages.UpdateStatus._
     status match {
@@ -527,19 +560,31 @@ object ConvertersV16 {
   }
 
   private def chargingProfileFromV16(v16p: ChargingProfile): messages.ChargingProfile =
-    messages.ChargingProfile(v16p.chargingProfileId, v16p.stackLevel, stringToProfilePurpose(v16p.chargingProfilePurpose),
+    messages.ChargingProfile(v16p.chargingProfileId, v16p.stackLevel,
+      enumerableFromJsonString(messages.ChargingProfilePurpose, v16p.chargingProfilePurpose),
       stringToProfileKind(v16p.chargingProfileKind), scheduleFromV16(v16p.chargingSchedule),
       v16p.transactionId, v16p.validFrom, v16p.validTo)
 
-  private def stringToProfilePurpose(v16cpp: String): messages.ChargingProfilePurpose = ???
-  private def stringToProfileKind(v16cpk: String): messages.ChargingProfileKind = ???
-  private def secondsToFiniteDuration(seconds: Int): FiniteDuration =
-    FiniteDuration(seconds.toLong, "seconds")
+  private def stringToProfileKind(v16cpk: String): messages.ChargingProfileKind = {
+    import messages.ChargingProfileKind._
+    import messages.RecurrencyKind._
 
-  private def stringToUnitOfChargeRate(unit: String): messages.UnitOfChargingRate =
-    if (unit == "W") messages.UnitOfChargeRate.Watts else messages.UnitOfChargeRate.Amperes
+    v16cpk match {
+      case "Absolute" => Absolute
+      case "Relative" => Relative
+      case "Weekly" => Recurring(Weekly)
+      case "Daily" => Recurring(Daily)
+      case _ => throw new MappingException(s"Unrecognized value $v16cpk for OCPP profile kind")
+    }
+  }
+
+  private def secondsToFiniteDuration(seconds: Int): FiniteDuration = FiniteDuration(seconds.toLong, "seconds")
 
   private def scheduleFromV16(v16cs: ChargingSchedule): messages.ChargingSchedule =
-    messages.ChargingSchedule(stringToUnitOfChargeRate(v16cs.chargingRateUnit), v16cs.chargingSchedulePeriod.map(periodFromV16),
-      v16cs.minChargingRate.map(_.toDouble), v16cs.startSchedule, v16cs.duration.map(secondsToFiniteDuration))
+    messages.ChargingSchedule(
+      enumerableFromJsonString(messages.UnitOfChargeRate, v16cs.chargingRateUnit),
+      v16cs.chargingSchedulePeriod.map(periodFromV16),
+      v16cs.minChargingRate.map(_.toDouble),
+      v16cs.startSchedule,
+      v16cs.duration.map(secondsToFiniteDuration))
 }
