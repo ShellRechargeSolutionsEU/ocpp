@@ -290,8 +290,7 @@ object ConvertersV16 {
 
     case DataTransferReq(_, _, _) | DataTransferRes(_, _) => unexpectedMessage(msg)
 
-    case t@TriggerMessageReq(reqMsg, connectorId) => triggerFromV16(t)
-    // messages.TriggerMessageReq(reqMsg)
+    case triggerMessageReq@TriggerMessageReq(_, _) => triggerFromV16(triggerMessageReq)
 
     case TriggerMessageRes(status) => messages.TriggerMessageRes(enumerableFromJsonString(messages.TriggerMessageStatus, status))
   }
@@ -328,7 +327,7 @@ object ConvertersV16 {
       self match {
         case ChargePointStatus.Available(_) => simpleStatus("Available")
         case ChargePointStatus.Occupied(reasonOpt, _) => simpleStatus(
-          reasonOpt.getOrElse(throw new Exception ("Missing occupied reason field")).name)
+          reasonOpt.getOrElse(throw new Exception("Missing occupied reason field")).name)
         case ChargePointStatus.Unavailable(_) => simpleStatus("Unavailable")
         case ChargePointStatus.Reserved(_) => simpleStatus("Reserved")
         case ChargePointStatus.Faulted(errCode, inf, vendorErrCode) =>
@@ -386,8 +385,8 @@ object ConvertersV16 {
   }
 
   private def meterValueFromV16(v16m: MeterValue): messages.Meter.Value = {
-    import messages.Phase
     import messages.Meter._
+    import messages.Phase
     import v16m._
 
     Value(
@@ -485,6 +484,7 @@ object ConvertersV16 {
   }
 
   private implicit class RichTriggerMessage(self: messages.TriggerMessageReq) {
+
     import messages.MessageTrigger._
 
     def toV16: TriggerMessageReq = {
@@ -499,44 +499,31 @@ object ConvertersV16 {
     }
   }
 
-  private def triggerFromV16(v16t: TriggerMessageReq): messages.TriggerMessageReq = {
-/*
-    import messages.MessageTrigger._
-
+  private def triggerFromV16(v16t: TriggerMessageReq): messages.TriggerMessageReq =
     messages.TriggerMessageReq {
       import messages.ChargePointScope
       import messages.ConnectorScope
-      import messages.MessageTrigger
       import messages.Scope
-      val scope = Scope.fromOcpp(connectorId.getOrElse(0))
-      val connectorScopeOpt =
-        scope match {
-          case connectorScope@ConnectorScope(_) => Some(connectorScope)
-          case ChargePointScope => None
-        }
+      import v16t._
 
-      reqMsg match {
-        case "BootNotification" => MessageTrigger.BootNotification
-        case "DiagnosticsStatusNotification" => MessageTrigger.DiagnosticsStatusNotification
-        case "FirmwareStatusNotification" => MessageTrigger.FirmwareStatusNotification
-        case "Heartbeat" => MessageTrigger.Heartbeat
-        case "MeterValues" => MessageTrigger.MeterValues(connectorScopeOpt)
-        case "StatusNotification" => MessageTrigger.StatusNotification(connectorScopeOpt)
-        case _ => throw new MappingException(s"Value $reqMsg is not valid for MessageTrigger")
+      val connectorScopeOpt = Scope.fromOcpp(connectorId.getOrElse(0)) match {
+        case connectorScope@ConnectorScope(_) => Some(connectorScope)
+        case ChargePointScope => None
+      }
+
+      import messages.MessageTrigger._
+      requestedMessage match {
+        case "BootNotification" => BootNotification
+        case "DiagnosticsStatusNotification" => DiagnosticsStatusNotification
+        case "FirmwareStatusNotification" => FirmwareStatusNotification
+        case "Heartbeat" => Heartbeat
+        case "MeterValues" => MeterValues(connectorScopeOpt)
+        case "StatusNotification" => StatusNotification(connectorScopeOpt)
+        case _ => throw new MappingException(
+          s"Value $requestedMessage is not valid for MessageTrigger"
+        )
       }
     }
-
-    v16t.requestedMessage match {
-      case "BootNotification" => messages.TriggerMessageReq(BootNotification)
-      case "DiagnosticsStatusNotification" => messages.TriggerMessageReq(DiagnosticsStatusNotification)
-      case "FirmwareStatusNotification" => messages.TriggerMessageReq(FirmwareStatusNotification)
-      case "Heartbeat" => messages.TriggerMessageReq(Heartbeat)
-      case "MeterValues" => messages.TriggerMessageReq(MeterValues(v16t.connectorId.map(ConnectorScope.fromOcpp)))
-      case "StatusNotification" => messages.TriggerMessageReq(StatusNotification(v16t.connectorId.map(ConnectorScope.fromOcpp)))
-    }
-*/
-    ???
-  }
 
   private def stringToUpdateStatus(status: String) = {
     import messages.UpdateStatus._
