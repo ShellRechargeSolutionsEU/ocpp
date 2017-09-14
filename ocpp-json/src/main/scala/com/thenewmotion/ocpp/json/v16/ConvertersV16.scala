@@ -6,7 +6,7 @@ import java.net.URISyntaxException
 
 import enums.reflection.EnumUtils.Enumerable
 import enums.reflection.EnumUtils.Nameable
-import messages.{AuthorizationStatus, ChargingProfilePurpose, ConnectorScope, MessageTrigger}
+import messages.AuthorizationStatus
 import org.json4s.MappingException
 
 import scala.concurrent.duration._
@@ -290,9 +290,10 @@ object ConvertersV16 {
 
     case DataTransferReq(_, _, _) | DataTransferRes(_, _) => unexpectedMessage(msg)
 
-    case TriggerMessageReq(reqMsg, connectorId) => messages.TriggerMessageReq(reqMsg)
+    case t@TriggerMessageReq(reqMsg, connectorId) => triggerFromV16(t)
+    // messages.TriggerMessageReq(reqMsg)
 
-    case TriggerMessageRes
+    case TriggerMessageRes(status) => messages.TriggerMessageRes(enumerableFromJsonString(messages.TriggerMessageStatus, status))
   }
 
   private def unexpectedMessage(msg: Any) =
@@ -499,7 +500,31 @@ object ConvertersV16 {
   }
 
   private def triggerFromV16(v16t: TriggerMessageReq): messages.TriggerMessageReq = {
+/*
     import messages.MessageTrigger._
+
+    messages.TriggerMessageReq {
+      import messages.ChargePointScope
+      import messages.ConnectorScope
+      import messages.MessageTrigger
+      import messages.Scope
+      val scope = Scope.fromOcpp(connectorId.getOrElse(0))
+      val connectorScopeOpt =
+        scope match {
+          case connectorScope@ConnectorScope(_) => Some(connectorScope)
+          case ChargePointScope => None
+        }
+
+      reqMsg match {
+        case "BootNotification" => MessageTrigger.BootNotification
+        case "DiagnosticsStatusNotification" => MessageTrigger.DiagnosticsStatusNotification
+        case "FirmwareStatusNotification" => MessageTrigger.FirmwareStatusNotification
+        case "Heartbeat" => MessageTrigger.Heartbeat
+        case "MeterValues" => MessageTrigger.MeterValues(connectorScopeOpt)
+        case "StatusNotification" => MessageTrigger.StatusNotification(connectorScopeOpt)
+        case _ => throw new MappingException(s"Value $reqMsg is not valid for MessageTrigger")
+      }
+    }
 
     v16t.requestedMessage match {
       case "BootNotification" => messages.TriggerMessageReq(BootNotification)
@@ -509,6 +534,8 @@ object ConvertersV16 {
       case "MeterValues" => messages.TriggerMessageReq(MeterValues(v16t.connectorId.map(ConnectorScope.fromOcpp)))
       case "StatusNotification" => messages.TriggerMessageReq(StatusNotification(v16t.connectorId.map(ConnectorScope.fromOcpp)))
     }
+*/
+    ???
   }
 
   private def stringToUpdateStatus(status: String) = {
