@@ -8,7 +8,7 @@ import java.time.ZonedDateTime
 import enums.reflection.EnumUtils.Enumerable
 import enums.reflection.EnumUtils.Nameable
 
-trait StopReason extends Nameable
+sealed trait StopReason extends Nameable
 object StopReason extends Enumerable[StopReason] {
   case object EmergencyStop extends StopReason
   case object EVDisconnected extends StopReason
@@ -25,7 +25,7 @@ object StopReason extends Enumerable[StopReason] {
     Reboot, Remote, SoftReset, UnlockCommand, DeAuthorized, Local, Other)
 }
 
-trait RegistrationStatus extends Nameable
+sealed trait RegistrationStatus extends Nameable
 object RegistrationStatus extends Enumerable[RegistrationStatus] {
   case object Accepted extends RegistrationStatus
   case object Rejected extends RegistrationStatus
@@ -33,7 +33,7 @@ object RegistrationStatus extends Enumerable[RegistrationStatus] {
   val values = Set(Accepted, Rejected, Pending)
 }
 
-trait DiagnosticsStatus extends Nameable
+sealed trait DiagnosticsStatus extends Nameable
 object DiagnosticsStatus extends Enumerable[DiagnosticsStatus] {
   case object Uploaded extends DiagnosticsStatus
   case object UploadFailed extends DiagnosticsStatus
@@ -42,7 +42,7 @@ object DiagnosticsStatus extends Enumerable[DiagnosticsStatus] {
   val values = Set(Uploaded, UploadFailed, Uploading, Idle)
 }
 
-trait Phase extends Nameable
+sealed trait Phase extends Nameable
 object Phase extends Enumerable[Phase] {
   case object L1 extends Phase
   case object L2 extends Phase
@@ -57,7 +57,7 @@ object Phase extends Enumerable[Phase] {
   val values = Set(L1, L2, L3, N, L1N, L2N, L3N, L1L2, L2L3, L3L1)
 }
 
-trait TriggerMessageStatus extends Nameable
+sealed trait TriggerMessageStatus extends Nameable
 object TriggerMessageStatus extends Enumerable[TriggerMessageStatus] {
   case object Accepted extends TriggerMessageStatus
   case object Rejected extends TriggerMessageStatus
@@ -65,7 +65,7 @@ object TriggerMessageStatus extends Enumerable[TriggerMessageStatus] {
   val values = Set(Accepted, Rejected, NotImplemented)
 }
 
-trait UnlockStatus extends Nameable
+sealed trait UnlockStatus extends Nameable
 object UnlockStatus extends Enumerable[UnlockStatus] {
   case object Unlocked extends UnlockStatus
   case object UnlockFailed extends UnlockStatus
@@ -225,14 +225,32 @@ case class GetCompositeScheduleRes(
 ) extends ChargePointRes
 
 // ocpp 1.6: trigger message
-trait MessageTrigger
-object MessageTrigger {
-  case object BootNotification extends MessageTrigger
-  case object DiagnosticsStatusNotification extends MessageTrigger
-  case object FirmwareStatusNotification extends MessageTrigger
-  case object Heartbeat extends MessageTrigger
-  final case class MeterValues(connector: Option[ConnectorScope]) extends MessageTrigger
-  final case class StatusNotification(connector: Option[ConnectorScope]) extends MessageTrigger
+sealed trait MessageTrigger
+sealed trait MessageTriggerWithoutConnector extends MessageTrigger with Nameable
+sealed trait MessageTriggerWithConnector extends MessageTrigger {
+  def connector: Option[ConnectorScope]
+}
+
+object MessageTriggerWithoutConnector extends Enumerable[MessageTriggerWithoutConnector] {
+  case object BootNotification extends MessageTriggerWithoutConnector
+  case object DiagnosticsStatusNotification extends MessageTriggerWithoutConnector
+  case object FirmwareStatusNotification extends MessageTriggerWithoutConnector
+  case object Heartbeat extends MessageTriggerWithoutConnector
+  val values = Set(
+    BootNotification,
+    DiagnosticsStatusNotification,
+    FirmwareStatusNotification,
+    Heartbeat
+  )
+}
+
+object MessageTriggerWithConnector {
+  final case class MeterValues(
+    connector: Option[ConnectorScope]
+  ) extends MessageTriggerWithConnector
+  final case class StatusNotification(
+    connector: Option[ConnectorScope]
+  ) extends MessageTriggerWithConnector
 }
 
 case class TriggerMessageReq(

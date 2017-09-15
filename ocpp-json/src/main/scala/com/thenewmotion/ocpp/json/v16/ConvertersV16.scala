@@ -123,7 +123,7 @@ object ConvertersV16 {
 
     case messages.GetLocalListVersionRes(authListVersion) => GetLocalListVersionRes(authListVersion.toV16)
 
-    case messages.SendLocalListReq(updateType, authListVersion, authorisationData, hash) =>
+    case messages.SendLocalListReq(updateType, authListVersion, authorisationData, _) =>
       SendLocalListReq(updateType.name, authListVersion.toV16, Some(authorisationData.map(_.toV16)))
 
     case messages.SendLocalListRes(status: messages.UpdateStatus) =>
@@ -290,7 +290,7 @@ object ConvertersV16 {
 
     case DataTransferReq(_, _, _) | DataTransferRes(_, _) => unexpectedMessage(msg)
 
-    case triggerMessageReq@TriggerMessageReq(_, _) => triggerFromV16(triggerMessageReq)
+    case triggerMessageReq: TriggerMessageReq => triggerFromV16(triggerMessageReq)
 
     case TriggerMessageRes(status) => messages.TriggerMessageRes(enumerableFromJsonString(messages.TriggerMessageStatus, status))
   }
@@ -309,7 +309,7 @@ object ConvertersV16 {
       val authStatus = try {
         AuthorizationStatusConverters.jsonToEnum(self.status)
       } catch {
-        case e: NoSuchElementException =>
+        case _: NoSuchElementException =>
           throw new MappingException(s"Unrecognized authorization status ${self.status} in OCPP-JSON message")
       }
 
@@ -327,7 +327,8 @@ object ConvertersV16 {
       self match {
         case ChargePointStatus.Available(_) => simpleStatus("Available")
         case ChargePointStatus.Occupied(reasonOpt, _) => simpleStatus(
-          reasonOpt.getOrElse(throw new Exception("Missing occupied reason field")).name)
+          reasonOpt.getOrElse(throw new MappingException("Missing occupied reason field")).name
+        )
         case ChargePointStatus.Unavailable(_) => simpleStatus("Unavailable")
         case ChargePointStatus.Reserved(_) => simpleStatus("Reserved")
         case ChargePointStatus.Faulted(errCode, inf, vendorErrCode) =>
@@ -485,43 +486,40 @@ object ConvertersV16 {
 
   private implicit class RichTriggerMessage(self: messages.TriggerMessageReq) {
 
-    import messages.MessageTrigger._
+    import messages.MessageTriggerWithConnector
+    import messages.MessageTriggerWithoutConnector
 
     def toV16: TriggerMessageReq = {
       self.requestedMessage match {
-        case BootNotification => TriggerMessageReq("BootNotification", None)
-        case DiagnosticsStatusNotification => TriggerMessageReq("DiagnosticsStatusNotification", None)
-        case FirmwareStatusNotification => TriggerMessageReq("FirmwareStatusNotification", None)
-        case Heartbeat => TriggerMessageReq("Heartbeat", None)
-        case MeterValues(connector) => TriggerMessageReq("MeterValues", connector.map(_.id))
-        case StatusNotification(connector) => TriggerMessageReq("StatusNotification", connector.map(_.id))
+        case messageTrigger: MessageTriggerWithoutConnector =>
+          TriggerMessageReq(messageTrigger.name, None)
+        case MessageTriggerWithConnector.MeterValues(connector) =>
+          TriggerMessageReq("MeterValues", connector.map(_.id))
+        case MessageTriggerWithConnector.StatusNotification(connector) =>
+          TriggerMessageReq("StatusNotification", connector.map(_.id))
       }
     }
   }
 
   private def triggerFromV16(v16t: TriggerMessageReq): messages.TriggerMessageReq =
     messages.TriggerMessageReq {
-      import messages.ChargePointScope
       import messages.ConnectorScope
-      import messages.Scope
-      import v16t._
-
-      val connectorScopeOpt = Scope.fromOcpp(connectorId.getOrElse(0)) match {
-        case connectorScope@ConnectorScope(_) => Some(connectorScope)
-        case ChargePointScope => None
-      }
-
-      import messages.MessageTrigger._
-      requestedMessage match {
-        case "BootNotification" => BootNotification
-        case "DiagnosticsStatusNotification" => DiagnosticsStatusNotification
-        case "FirmwareStatusNotification" => FirmwareStatusNotification
-        case "Heartbeat" => Heartbeat
-        case "MeterValues" => MeterValues(connectorScopeOpt)
-        case "StatusNotification" => StatusNotification(connectorScopeOpt)
-        case _ => throw new MappingException(
-          s"Value $requestedMessage is not valid for MessageTrigger"
-        )
+      import messages.MessageTriggerWithConnector
+      import messages.MessageTriggerWithoutConnector
+      v16t match {
+        case TriggerMessageReq(requestedMessage, connectorId) =>
+          MessageTriggerWithoutConnector.withName(requestedMessage) match {
+            case Some(messageTrigger) => messageTrigger
+            case None => requestedMessage match {
+              case "MeterValues" =>
+                MessageTriggerWithConnector.MeterValues(connectorId.map(ConnectorScope.fromOcpp))
+              case "StatusNotification" =>
+                MessageTriggerWithConnector.StatusNotification(connectorId.map(ConnectorScope.fromOcpp))
+              case _ => throw new MappingException(
+                s"Value $requestedMessage is not valid for MessageTrigger"
+              )
+            }
+          }
       }
     }
 
@@ -558,7 +556,7 @@ object ConvertersV16 {
   }
 
   private def periodFromV16(v16sp: ChargingSchedulePeriod): messages.ChargingSchedulePeriod =
-    messages.ChargingSchedulePeriod(secondsToFiniteDuration(v16sp.startPeriod), v16sp.limit.toDouble, v16sp.numberPhases)
+    messages.ChargingSchedulePeriod(v16sp.startPeriod.seconds, v16sp.limit.toDouble, v16sp.numberPhases)
 
   private implicit class RichChargingProfile(cp: messages.ChargingProfile) {
     def toV16: ChargingProfile =
@@ -592,13 +590,11 @@ object ConvertersV16 {
     }
   }
 
-  private def secondsToFiniteDuration(seconds: Int): FiniteDuration = FiniteDuration(seconds.toLong, "seconds")
-
   private def scheduleFromV16(v16cs: ChargingSchedule): messages.ChargingSchedule =
     messages.ChargingSchedule(
       enumerableFromJsonString(messages.UnitOfChargeRate, v16cs.chargingRateUnit),
       v16cs.chargingSchedulePeriod.map(periodFromV16),
       v16cs.minChargingRate.map(_.toDouble),
       v16cs.startSchedule,
-      v16cs.duration.map(secondsToFiniteDuration))
+      v16cs.duration.map(_.seconds))
 }

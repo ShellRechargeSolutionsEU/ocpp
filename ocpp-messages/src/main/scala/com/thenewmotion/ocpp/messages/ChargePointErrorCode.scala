@@ -1,7 +1,8 @@
 package com.thenewmotion.ocpp
 package messages
 
-import enums.reflection.EnumUtils.{Enumerable, Nameable}
+import enums.reflection.EnumUtils.Enumerable
+import enums.reflection.EnumUtils.Nameable
 
 sealed trait ChargePointErrorCode extends Nameable
 object ChargePointErrorCode extends Enumerable[ChargePointErrorCode] {
@@ -41,4 +42,3 @@ object ChargePointErrorCode extends Enumerable[ChargePointErrorCode] {
     OtherError
   )
 }
-
