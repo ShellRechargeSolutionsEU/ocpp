@@ -86,8 +86,8 @@ object Meter {
 
   sealed trait ValueFormat extends Nameable
   object ValueFormat extends Enumerable[ValueFormat] {
-    object Raw extends ValueFormat
-    object Signed extends ValueFormat
+    case object Raw extends ValueFormat
+    case object Signed extends ValueFormat
 
     val values = Set(Raw, Signed)
   }

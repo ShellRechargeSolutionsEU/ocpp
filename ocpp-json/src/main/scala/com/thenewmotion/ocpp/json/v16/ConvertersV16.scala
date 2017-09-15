@@ -412,8 +412,8 @@ object ConvertersV16 {
       (AuthorizationStatus.IdTagInvalid, "Invalid"),
       (AuthorizationStatus.ConcurrentTx, "ConcurrentTx")
     )
-    val jsonToEnum = Map(names.map(_.swap): _*)
-    val enumToJson = Map(names: _*)
+    val jsonToEnum: String => AuthorizationStatus = Map(names.map(_.swap): _*)
+    val enumToJson: AuthorizationStatus => String = Map(names: _*)
   }
 
   private implicit class BooleanToStatusString(val b: Boolean) extends AnyVal {

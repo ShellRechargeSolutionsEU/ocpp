@@ -6,11 +6,11 @@ import enums.reflection.EnumUtils.{Nameable, Enumerable}
 
 sealed trait AuthorizationStatus extends Nameable
 object AuthorizationStatus extends Enumerable[AuthorizationStatus] {
-  object Accepted extends AuthorizationStatus
-  object IdTagBlocked extends AuthorizationStatus
-  object IdTagExpired extends AuthorizationStatus
-  object IdTagInvalid extends AuthorizationStatus
-  object ConcurrentTx extends AuthorizationStatus
+  case object Accepted extends AuthorizationStatus
+  case object IdTagBlocked extends AuthorizationStatus
+  case object IdTagExpired extends AuthorizationStatus
+  case object IdTagInvalid extends AuthorizationStatus
+  case object ConcurrentTx extends AuthorizationStatus
 
   val values = Set(Accepted, IdTagBlocked, IdTagExpired, IdTagInvalid, ConcurrentTx)
 }

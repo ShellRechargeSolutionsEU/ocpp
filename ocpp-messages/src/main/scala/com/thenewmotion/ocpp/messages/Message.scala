@@ -147,13 +147,13 @@ case object DiagnosticsStatusNotificationRes extends CentralSystemRes
 
 sealed trait FirmwareStatus extends Nameable
 object FirmwareStatus extends Enumerable[FirmwareStatus] {
-  object Downloaded extends FirmwareStatus
-  object DownloadFailed extends FirmwareStatus
-  object Downloading extends FirmwareStatus // ocpp 1.6
-  object InstallationFailed extends FirmwareStatus
-  object Installed extends FirmwareStatus
-  object Installing extends FirmwareStatus // ocpp 1.6
-  object Idle extends FirmwareStatus // ocpp 1.6
+  case object Downloaded extends FirmwareStatus
+  case object DownloadFailed extends FirmwareStatus
+  case object Downloading extends FirmwareStatus // ocpp 1.6
+  case object InstallationFailed extends FirmwareStatus
+  case object Installed extends FirmwareStatus
+  case object Installing extends FirmwareStatus // ocpp 1.6
+  case object Idle extends FirmwareStatus // ocpp 1.6
 
   val values = Set(
     Downloaded,
@@ -324,35 +324,35 @@ case class CancelReservationRes(accepted: Boolean) extends ChargePointRes
 
 sealed trait ConfigurationStatus extends Nameable
 object ConfigurationStatus extends Enumerable[ConfigurationStatus] {
-  object Accepted extends ConfigurationStatus
-  object Rejected extends ConfigurationStatus
-  object NotSupported extends ConfigurationStatus
-  object RebootRequired extends ConfigurationStatus
+  case object Accepted extends ConfigurationStatus
+  case object Rejected extends ConfigurationStatus
+  case object NotSupported extends ConfigurationStatus
+  case object RebootRequired extends ConfigurationStatus
 
   val values = Set(Accepted, Rejected, NotSupported, RebootRequired)
 }
 
 sealed trait AvailabilityStatus extends Nameable
 object AvailabilityStatus extends Enumerable[AvailabilityStatus] {
-  object Accepted extends AvailabilityStatus
-  object Rejected extends AvailabilityStatus
-  object Scheduled extends AvailabilityStatus
+  case object Accepted extends AvailabilityStatus
+  case object Rejected extends AvailabilityStatus
+  case object Scheduled extends AvailabilityStatus
 
   val values = Set(Accepted, Rejected, Scheduled)
 }
 
 sealed trait AvailabilityType extends Nameable
 object AvailabilityType extends Enumerable[AvailabilityType] {
-  object Operative extends AvailabilityType
-  object Inoperative extends AvailabilityType
+  case object Operative extends AvailabilityType
+  case object Inoperative extends AvailabilityType
 
   val values = Set(Operative, Inoperative)
 }
 
 sealed trait ResetType extends Nameable
 object ResetType extends Enumerable[ResetType] {
-  object Hard extends ResetType
-  object Soft extends ResetType
+  case object Hard extends ResetType
+  case object Soft extends ResetType
 
   val values = Set(Hard, Soft)
 }
@@ -361,8 +361,8 @@ case class KeyValue(key: String, readonly: Boolean, value: Option[String])
 
 sealed trait UpdateType extends Nameable
 object UpdateType extends Enumerable[UpdateType] {
-  object Differential extends UpdateType
-  object Full extends UpdateType
+  case object Differential extends UpdateType
+  case object Full extends UpdateType
 
   val values = Set(Differential, Full)
 }
@@ -393,11 +393,11 @@ case class AuthorisationRemove(idTag: IdTag) extends AuthorisationData
 
 sealed trait Reservation extends Nameable
 object Reservation extends Enumerable[Reservation] {
-  object Accepted extends Reservation
-  object Faulted extends Reservation
-  object Occupied extends Reservation
-  object Rejected extends Reservation
-  object Unavailable extends Reservation
+  case object Accepted extends Reservation
+  case object Faulted extends Reservation
+  case object Occupied extends Reservation
+  case object Rejected extends Reservation
+  case object Unavailable extends Reservation
 
   val values = Set(Accepted, Faulted, Occupied, Rejected, Unavailable)
 }
