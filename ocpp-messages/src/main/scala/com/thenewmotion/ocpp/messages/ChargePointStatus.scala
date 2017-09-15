@@ -7,7 +7,7 @@ import enums.reflection.EnumUtils.Nameable
 sealed trait ChargePointStatus { def info: Option[String] }
 object ChargePointStatus {
   final case class Occupied(
-    reason: Option[OccupiedReason], // only set in ocpp 1.6
+    kind: Option[OccupancyKind], // only set in ocpp 1.6
     info: Option[String] = None
   ) extends ChargePointStatus
   final case class Faulted(
@@ -21,12 +21,12 @@ object ChargePointStatus {
 }
 
 // ocpp 1.6
-sealed trait OccupiedReason extends Nameable
-object OccupiedReason extends Enumerable[Nameable] {
-  case object Preparing     extends OccupiedReason
-  case object Charging      extends OccupiedReason
-  case object SuspendedEVSE extends OccupiedReason
-  case object SuspendedEV   extends OccupiedReason
-  case object Finishing     extends OccupiedReason
+sealed trait OccupancyKind extends Nameable
+object OccupancyKind extends Enumerable[Nameable] {
+  case object Preparing     extends OccupancyKind
+  case object Charging      extends OccupancyKind
+  case object SuspendedEVSE extends OccupancyKind
+  case object SuspendedEV   extends OccupancyKind
+  case object Finishing     extends OccupancyKind
   val values = Set(Preparing, Charging, SuspendedEVSE, SuspendedEV, Finishing)
 }

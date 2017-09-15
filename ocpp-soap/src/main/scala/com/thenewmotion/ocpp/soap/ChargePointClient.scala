@@ -222,14 +222,12 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
 
     val req = SendLocalListRequest(update, x.listVersion.version, x.localAuthorisationList.map(authorisationData), x.hash)
     val res = ?(_.sendLocalList, req)
-
-    import ocpp.{UpdateStatus => ocpp}
     SendLocalListRes(res.status match {
-      case AcceptedValue10 => ocpp.Accepted(stringOption(res.hash))
-      case Failed => ocpp.Failed
-      case HashError => ocpp.HashError
-      case NotSupportedValue => ocpp.NotSupported
-      case VersionMismatch => ocpp.VersionMismatch
+      case AcceptedValue10 => ocpp.UpdateStatusWithHash.Accepted(stringOption(res.hash))
+      case Failed => ocpp.UpdateStatusWithoutHash.Failed
+      case HashError => ocpp.UpdateStatusWithoutHash.HashError
+      case NotSupportedValue => ocpp.UpdateStatusWithoutHash.NotSupported
+      case VersionMismatch => ocpp.UpdateStatusWithoutHash.VersionMismatch
     })
   }
 

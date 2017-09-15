@@ -6,7 +6,6 @@ import java.net.URISyntaxException
 
 import enums.reflection.EnumUtils.Enumerable
 import enums.reflection.EnumUtils.Nameable
-import messages.AuthorizationStatus
 import org.json4s.MappingException
 
 import scala.concurrent.duration._
@@ -14,10 +13,18 @@ import scala.concurrent.duration._
 object ConvertersV16 {
   def toV16(msg: messages.Message): Message = msg match {
     case messages.BootNotificationReq(chargePointVendor, chargePointModel, chargePointSerialNumber,
-    chargeBoxSerialNumber, firmwareVersion, iccid, imsi, meterType,
-    meterSerialNumber) =>
-      BootNotificationReq(chargePointVendor, chargePointModel, chargePointSerialNumber, chargeBoxSerialNumber,
-        firmwareVersion, iccid, imsi, meterType, meterSerialNumber)
+    chargeBoxSerialNumber, firmwareVersion, iccid, imsi, meterType, meterSerialNumber) =>
+      BootNotificationReq(
+        chargePointVendor,
+        chargePointModel,
+        chargePointSerialNumber,
+        chargeBoxSerialNumber,
+        firmwareVersion,
+        iccid,
+        imsi,
+        meterType,
+        meterSerialNumber
+      )
 
     case messages.BootNotificationRes(registrationAccepted, currentTime, interval) =>
       BootNotificationRes(registrationAccepted.name, currentTime, interval.toSeconds.toInt)
@@ -27,11 +34,13 @@ object ConvertersV16 {
     case messages.AuthorizeRes(idTag) => AuthorizeRes(idTag.toV16)
 
     case messages.StartTransactionReq(connector, idTag, timestamp, meterStart, reservationId) =>
-      StartTransactionReq(connectorId = connector.toOcpp,
+      StartTransactionReq(
+        connectorId = connector.toOcpp,
         idTag = idTag,
         timestamp = timestamp,
         meterStart = meterStart,
-        reservationId = reservationId)
+        reservationId = reservationId
+      )
 
     case messages.StartTransactionRes(transactionId, idTagInfo) => StartTransactionRes(transactionId, idTagInfo.toV16)
 
@@ -61,9 +70,7 @@ object ConvertersV16 {
     case messages.ChangeAvailabilityRes(status) => ChangeAvailabilityRes(status.name)
 
     case messages.StatusNotificationReq(scope, status, timestamp, vendorId) =>
-
       val (ocppStatus, errorCode, info, vendorErrorCode) = status.toV16Fields
-
       StatusNotificationReq(scope.toOcpp, ocppStatus, errorCode, info, timestamp, vendorId, vendorErrorCode)
 
     case messages.StatusNotificationRes => StatusNotificationRes()
@@ -127,8 +134,7 @@ object ConvertersV16 {
       SendLocalListReq(updateType.name, authListVersion.toV16, Some(authorisationData.map(_.toV16)))
 
     case messages.SendLocalListRes(status: messages.UpdateStatus) =>
-      val (ocppStatus, _) = status.toV16AndHash
-      SendLocalListRes(ocppStatus)
+      SendLocalListRes(status.toV16)
 
     case messages.ReserveNowReq(scope, expiryDate, idTag, parentIdTag, reservationId) =>
       ReserveNowReq(scope.toOcpp, expiryDate, idTag, parentIdTag, reservationId)
@@ -147,10 +153,18 @@ object ConvertersV16 {
   }
 
   def fromV16(msg: Message): messages.Message = msg match {
-    case BootNotificationReq(vendor, model, chargePointSerial, chargeBoxSerial, firmwareVersion, iccid, imsi, meterType,
-    meterSerial) =>
-      messages.BootNotificationReq(vendor, model, chargePointSerial, chargeBoxSerial, firmwareVersion, iccid, imsi,
-        meterType, meterSerial)
+    case BootNotificationReq(vendor, model, chargePointSerial, chargeBoxSerial, firmwareVersion, iccid, imsi, meterType, meterSerial) =>
+      messages.BootNotificationReq(
+        vendor,
+        model,
+        chargePointSerial,
+        chargeBoxSerial,
+        firmwareVersion,
+        iccid,
+        imsi,
+        meterType,
+        meterSerial
+      )
 
     case BootNotificationRes(statusString, currentTime, interval) =>
       messages.BootNotificationRes(
@@ -164,8 +178,13 @@ object ConvertersV16 {
     case AuthorizeRes(idTagInfo) => messages.AuthorizeRes(idTagInfo.fromV16)
 
     case StartTransactionReq(connectorId, idTag, timestamp, meterStart, reservationId) =>
-      messages.StartTransactionReq(messages.ConnectorScope.fromOcpp(connectorId), idTag, timestamp, meterStart,
-        reservationId)
+      messages.StartTransactionReq(
+        messages.ConnectorScope.fromOcpp(connectorId),
+        idTag,
+        timestamp,
+        meterStart,
+        reservationId
+      )
 
     case StartTransactionRes(transactionId, idTagInfo) => messages.StartTransactionRes(transactionId, idTagInfo.fromV16)
 
@@ -194,21 +213,30 @@ object ConvertersV16 {
     case ResetRes(status) => messages.ResetRes(statusStringToBoolean(status))
 
     case ChangeAvailabilityReq(connectorId, availabilityType) =>
-      messages.ChangeAvailabilityReq(scope = messages.Scope.fromOcpp(connectorId),
-        availabilityType = enumerableFromJsonString(messages.AvailabilityType, availabilityType))
+      messages.ChangeAvailabilityReq(
+        scope = messages.Scope.fromOcpp(connectorId),
+        availabilityType = enumerableFromJsonString(messages.AvailabilityType, availabilityType)
+      )
 
     case ChangeAvailabilityRes(status) =>
       messages.ChangeAvailabilityRes(enumerableFromJsonString(messages.AvailabilityStatus, status))
 
     case StatusNotificationReq(connector, status, errorCode, info, timestamp, vendorId, vendorErrorCode) =>
-      messages.StatusNotificationReq(messages.Scope.fromOcpp(connector),
+      messages.StatusNotificationReq(
+        messages.Scope.fromOcpp(connector),
         statusFieldsToOcppStatus(status, errorCode, info, vendorErrorCode),
         timestamp,
-        vendorId)
+        vendorId
+      )
 
     case StatusNotificationRes() => messages.StatusNotificationRes
 
-    case RemoteStartTransactionReq(idTag, connector, chargingProfile) => messages.RemoteStartTransactionReq(idTag, connector.map(messages.ConnectorScope.fromOcpp), chargingProfile.map(cp => chargingProfileFromV16(cp)))
+    case RemoteStartTransactionReq(idTag, connector, chargingProfile) =>
+      messages.RemoteStartTransactionReq(
+        idTag,
+        connector.map(messages.ConnectorScope.fromOcpp),
+        chargingProfile.map(cp => chargingProfileFromV16(cp))
+      )
 
     case RemoteStartTransactionRes(status) => messages.RemoteStartTransactionRes(statusStringToBoolean(status))
 
@@ -232,8 +260,12 @@ object ConvertersV16 {
       messages.FirmwareStatusNotificationRes
 
     case GetDiagnosticsReq(location, startTime, stopTime, retries, retryInterval) =>
-      messages.GetDiagnosticsReq(parseURI(location), startTime, stopTime,
-        messages.Retries.fromInts(retries, retryInterval))
+      messages.GetDiagnosticsReq(
+        parseURI(location),
+        startTime,
+        stopTime,
+        messages.Retries.fromInts(retries, retryInterval)
+      )
 
     case GetDiagnosticsRes(filename) => messages.GetDiagnosticsRes(filename)
 
@@ -277,7 +309,7 @@ object ConvertersV16 {
         hash = None
       )
 
-    case SendLocalListRes(status) => messages.SendLocalListRes(stringToUpdateStatus(status))
+    case SendLocalListRes(status) => messages.SendLocalListRes(updateStatusFromV16(status))
 
     case ReserveNowReq(connectorId, expiryDate, idTag, parentIdTag, reservationId) =>
       messages.ReserveNowReq(messages.Scope.fromOcpp(connectorId), expiryDate, idTag, parentIdTag, reservationId)
@@ -298,60 +330,56 @@ object ConvertersV16 {
   private def unexpectedMessage(msg: Any) =
     throw new Exception(s"Couldn't convert unexpected OCPP message $msg")
 
-  private implicit class RichIdTagInfo(i: messages.IdTagInfo) {
-    def toV16: IdTagInfo = IdTagInfo(status = AuthorizationStatusConverters.enumToJson(i.status),
-      expiryDate = i.expiryDate,
-      parentIdTag = i.parentIdTag)
+  private implicit class RichIdTagInfo(idTagInfo: messages.IdTagInfo) {
+    def toV16: IdTagInfo = IdTagInfo(
+      status = idTagInfo.status.name,
+      expiryDate = idTagInfo.expiryDate,
+      parentIdTag = idTagInfo.parentIdTag
+    )
   }
 
   private implicit class RichV16IdTagInfo(self: IdTagInfo) {
-    def fromV16: messages.IdTagInfo = {
-      val authStatus = try {
-        AuthorizationStatusConverters.jsonToEnum(self.status)
-      } catch {
-        case _: NoSuchElementException =>
-          throw new MappingException(s"Unrecognized authorization status ${self.status} in OCPP-JSON message")
-      }
-
-      messages.IdTagInfo(
-        status = authStatus,
-        expiryDate = self.expiryDate,
-        parentIdTag = self.parentIdTag)
-    }
-  }
-
-  private implicit class RichChargePointStatus(self: messages.ChargePointStatus) {
-    def toV16Fields: (String, String, Option[String], Option[String]) = {
-      def simpleStatus(name: String) = (name, "NoError", self.info, None)
-      import messages.ChargePointStatus
-      self match {
-        case ChargePointStatus.Available(_) => simpleStatus("Available")
-        case ChargePointStatus.Occupied(reasonOpt, _) => simpleStatus(
-          reasonOpt.getOrElse(throw new MappingException("Missing occupied reason field")).name
-        )
-        case ChargePointStatus.Unavailable(_) => simpleStatus("Unavailable")
-        case ChargePointStatus.Reserved(_) => simpleStatus("Reserved")
-        case ChargePointStatus.Faulted(errCode, inf, vendorErrCode) =>
-          ("Faulted", errCode.map(_.name).getOrElse(RichChargePointStatus.defaultErrorCode), inf, vendorErrCode)
-      }
-    }
+    def fromV16: messages.IdTagInfo = messages.IdTagInfo(
+      status = enumerableFromJsonString(messages.AuthorizationStatus, self.status),
+      expiryDate = self.expiryDate,
+      parentIdTag = self.parentIdTag
+    )
   }
 
   private object RichChargePointStatus {
     val defaultErrorCode = "NoError"
   }
 
+  private implicit class RichChargePointStatus(self: messages.ChargePointStatus) {
+    import RichChargePointStatus.defaultErrorCode
+    def toV16Fields: (String, String, Option[String], Option[String]) = {
+      def simpleStatus(name: String) = (name, defaultErrorCode, self.info, None)
+      import messages.ChargePointStatus
+      self match {
+        case ChargePointStatus.Available(_) => simpleStatus("Available")
+        case ChargePointStatus.Occupied(kind, _) => simpleStatus(
+          kind.getOrElse(throw new MappingException("Missing occupancy kind field")).name
+        )
+        case ChargePointStatus.Unavailable(_) => simpleStatus("Unavailable")
+        case ChargePointStatus.Reserved(_) => simpleStatus("Reserved")
+        case ChargePointStatus.Faulted(errCode, inf, vendorErrCode) =>
+          ("Faulted", errCode.map(_.name).getOrElse(defaultErrorCode), inf, vendorErrCode)
+      }
+    }
+  }
+
   private def statusFieldsToOcppStatus(status: String, errorCode: String, info: Option[String],
     vendorErrorCode: Option[String]): messages.ChargePointStatus = {
     import messages.ChargePointStatus
+    import RichChargePointStatus.defaultErrorCode
     status match {
       case "Available" => ChargePointStatus.Available(info)
-      case "Occupied" => ChargePointStatus.Occupied(reason = None, info)
+      case "Occupied" => ChargePointStatus.Occupied(kind = None, info)
       case "Unavailable" => ChargePointStatus.Unavailable(info)
       case "Reserved" => ChargePointStatus.Reserved(info)
       case "Faulted" =>
         val errorCodeString =
-          if (errorCode == RichChargePointStatus.defaultErrorCode)
+          if (errorCode == defaultErrorCode)
             None
           else
             Some(enumerableFromJsonString(messages.ChargePointErrorCode, errorCode))
@@ -360,9 +388,10 @@ object ConvertersV16 {
   }
 
   private implicit class RichMeter(self: messages.Meter) {
-    def toV16: Meter =
-      Meter(timestamp = self.timestamp,
-        sampledValue = self.values.map(valueToV16))
+    def toV16: Meter = Meter(
+      timestamp = self.timestamp,
+      sampledValue = self.values.map(valueToV16)
+    )
 
     def valueToV16(v: messages.Meter.Value): MeterValue = {
       import messages.Meter._
@@ -377,7 +406,7 @@ object ConvertersV16 {
       )
     }
 
-    def noneIfDefault[T <: Nameable](default: T, actual: T): Option[String] =
+    def noneIfDefault(default: Nameable, actual: Nameable): Option[String] =
       if (actual == default) None else Some(actual.name)
   }
 
@@ -405,18 +434,6 @@ object ConvertersV16 {
     property: Option[String], enum: Enumerable[V], default: V
   ): V = property.fold(default)(s => enumerableFromJsonString(enum, s))
 
-  private object AuthorizationStatusConverters {
-    val names = List(
-      (AuthorizationStatus.Accepted, "Accepted"),
-      (AuthorizationStatus.IdTagBlocked, "Blocked"),
-      (AuthorizationStatus.IdTagExpired, "Expired"),
-      (AuthorizationStatus.IdTagInvalid, "Invalid"),
-      (AuthorizationStatus.ConcurrentTx, "ConcurrentTx")
-    )
-    val jsonToEnum: String => AuthorizationStatus = Map(names.map(_.swap): _*)
-    val enumToJson: AuthorizationStatus => String = Map(names: _*)
-  }
-
   private implicit class BooleanToStatusString(val b: Boolean) extends AnyVal {
     def toStatusString = if (b) "Accepted" else "Rejected"
   }
@@ -424,8 +441,9 @@ object ConvertersV16 {
   private def statusStringToBoolean(statusString: String) = statusString match {
     case "Accepted" => true
     case "Rejected" => false
-    case _ =>
-      throw new MappingException(s"Did not recognize status $statusString (expected 'Accepted' or 'Rejected')")
+    case _ => throw new MappingException(
+      s"Did not recognize status $statusString (expected 'Accepted' or 'Rejected')"
+    )
   }
 
   private implicit class RichKeyValue(val self: messages.KeyValue) {
@@ -461,77 +479,25 @@ object ConvertersV16 {
   }
 
   private implicit class RichV16AuthorisationData(self: AuthorisationData) {
-    def fromV16: messages.AuthorisationData = messages.AuthorisationData(self.idTag, self.idTagInfo.map(_.fromV16))
+    def fromV16: messages.AuthorisationData = messages.AuthorisationData(
+      self.idTag, self.idTagInfo.map(_.fromV16)
+    )
   }
 
   private implicit class RichUpdateStatus(self: messages.UpdateStatus) {
-
-    import messages.UpdateStatus._
-
-    def toV16AndHash: (String, Option[String]) = {
-      val hashString = self match {
-        case Accepted(hash) => hash
-        case _ => None
-      }
-
-      (enumToName(self), hashString)
-    }
-
-    def enumToName(v: messages.UpdateStatus): String = v match {
-      case Accepted(_) => "Accepted"
-      case Failed => "Failed"
-      case x => x.toString
+    def toV16: String = self match {
+      case updateStatus: messages.UpdateStatusWithoutHash => updateStatus.name
+      case messages.UpdateStatusWithHash.Accepted(_) => "Accepted"
     }
   }
 
-  private implicit class RichTriggerMessage(self: messages.TriggerMessageReq) {
-
-    import messages.MessageTriggerWithConnector
-    import messages.MessageTriggerWithoutConnector
-
-    def toV16: TriggerMessageReq = {
-      self.requestedMessage match {
-        case messageTrigger: MessageTriggerWithoutConnector =>
-          TriggerMessageReq(messageTrigger.name, None)
-        case MessageTriggerWithConnector.MeterValues(connector) =>
-          TriggerMessageReq("MeterValues", connector.map(_.toOcpp))
-        case MessageTriggerWithConnector.StatusNotification(connector) =>
-          TriggerMessageReq("StatusNotification", connector.map(_.toOcpp))
+  private def updateStatusFromV16(status: String): messages.UpdateStatus = {
+    messages.UpdateStatusWithoutHash.withName(status) match {
+      case Some(updateStatus) => updateStatus
+      case None => status match {
+        case "Accepted" => messages.UpdateStatusWithHash.Accepted(hash = None)
+        case _ => throw new MappingException(s"Value $status is not valid for UpdateStatus")
       }
-    }
-  }
-
-  private def triggerFromV16(v16t: TriggerMessageReq): messages.TriggerMessageReq =
-    messages.TriggerMessageReq {
-      import messages.ConnectorScope
-      import messages.MessageTriggerWithConnector
-      import messages.MessageTriggerWithoutConnector
-      v16t match {
-        case TriggerMessageReq(requestedMessage, connectorId) =>
-          MessageTriggerWithoutConnector.withName(requestedMessage) match {
-            case Some(messageTrigger) => messageTrigger
-            case None => requestedMessage match {
-              case "MeterValues" =>
-                MessageTriggerWithConnector.MeterValues(connectorId.map(ConnectorScope.fromOcpp))
-              case "StatusNotification" =>
-                MessageTriggerWithConnector.StatusNotification(connectorId.map(ConnectorScope.fromOcpp))
-              case _ => throw new MappingException(
-                s"Value $requestedMessage is not valid for MessageTrigger"
-              )
-            }
-          }
-      }
-    }
-
-  private def stringToUpdateStatus(status: String) = {
-    import messages.UpdateStatus._
-    status match {
-      case "Accepted" => Accepted(None)
-      case "Failed" => Failed
-      case "HashError" => HashError
-      case "NotSupportedValue" => NotSupported
-      case "VersionMismatch" => VersionMismatch
-      case _ => throw new MappingException(s"Unrecognized value $status for OCPP update status")
     }
   }
 
@@ -555,27 +521,89 @@ object ConvertersV16 {
     case e: URISyntaxException => throw MappingException(s"Invalid URL $s in OCPP-JSON message", e)
   }
 
+  private implicit class RichTriggerMessage(self: messages.TriggerMessageReq) {
+
+    import messages.MessageTriggerWithConnector
+    import messages.MessageTriggerWithoutConnector
+
+    def toV16: TriggerMessageReq = {
+      self.requestedMessage match {
+        case messageTrigger: MessageTriggerWithoutConnector =>
+          TriggerMessageReq(messageTrigger.name, None)
+        case MessageTriggerWithConnector.MeterValues(connector) =>
+          TriggerMessageReq("MeterValues", connector.map(_.toOcpp))
+        case MessageTriggerWithConnector.StatusNotification(connector) =>
+          TriggerMessageReq("StatusNotification", connector.map(_.toOcpp))
+      }
+    }
+  }
+
+  private def triggerFromV16(v16t: TriggerMessageReq): messages.TriggerMessageReq =
+    messages.TriggerMessageReq {
+      import messages.ConnectorScope.fromOcpp
+      import messages.MessageTriggerWithConnector
+      import messages.MessageTriggerWithoutConnector
+      v16t match {
+        case TriggerMessageReq(requestedMessage, connectorId) =>
+          MessageTriggerWithoutConnector.withName(requestedMessage) match {
+            case Some(messageTrigger) => messageTrigger
+            case None => requestedMessage match {
+              case "MeterValues" =>
+                MessageTriggerWithConnector.MeterValues(connectorId.map(fromOcpp))
+              case "StatusNotification" =>
+                MessageTriggerWithConnector.StatusNotification(connectorId.map(fromOcpp))
+              case _ => throw new MappingException(
+                s"Value $requestedMessage is not valid for MessageTrigger"
+              )
+            }
+          }
+      }
+    }
+
   private def periodFromV16(v16sp: ChargingSchedulePeriod): messages.ChargingSchedulePeriod =
     messages.ChargingSchedulePeriod(v16sp.startPeriod.seconds, v16sp.limit.toDouble, v16sp.numberPhases)
 
   private implicit class RichChargingProfile(cp: messages.ChargingProfile) {
-    def toV16: ChargingProfile =
-      ChargingProfile(cp.id, cp.stackLevel, cp.chargingProfilePurpose.toString, cp.chargingProfileKind.toString,
-        scheduleToV16(cp.chargingSchedule), cp.transactionId, None, cp.validFrom, cp.validTo)
+    def toV16: ChargingProfile = ChargingProfile(
+      cp.id,
+      cp.stackLevel,
+      cp.chargingProfilePurpose.toString,
+      cp.chargingProfileKind.toString,
+      scheduleToV16(cp.chargingSchedule),
+      cp.transactionId,
+      None,
+      cp.validFrom,
+      cp.validTo
+    )
 
     def scheduleToV16(cs: messages.ChargingSchedule): ChargingSchedule =
-      ChargingSchedule(cs.chargingRateUnit.toString, cs.chargingSchedulePeriod.map(periodToV16),
-        cs.duration.map(_.toSeconds.toInt), cs.startsAt, cs.minChargingRate.map(_.toFloat))
+      ChargingSchedule(
+        cs.chargingRateUnit.toString,
+        cs.chargingSchedulePeriod.map(periodToV16),
+        cs.duration.map(_.toSeconds.toInt),
+        cs.startsAt,
+        cs.minChargingRate.map(_.toFloat)
+      )
 
     def periodToV16(csp: messages.ChargingSchedulePeriod): ChargingSchedulePeriod =
-      ChargingSchedulePeriod(csp.startOffset.toSeconds.toInt, csp.amperesLimit.toFloat, csp.numberPhases)
+      ChargingSchedulePeriod(
+        csp.startOffset.toSeconds.toInt,
+        csp.amperesLimit.toFloat,
+        csp.numberPhases
+      )
   }
 
   private def chargingProfileFromV16(v16p: ChargingProfile): messages.ChargingProfile =
-    messages.ChargingProfile(v16p.chargingProfileId, v16p.stackLevel,
+    messages.ChargingProfile(
+      v16p.chargingProfileId,
+      v16p.stackLevel,
       enumerableFromJsonString(messages.ChargingProfilePurpose, v16p.chargingProfilePurpose),
-      stringToProfileKind(v16p.chargingProfileKind), scheduleFromV16(v16p.chargingSchedule),
-      v16p.transactionId, v16p.validFrom, v16p.validTo)
+      stringToProfileKind(v16p.chargingProfileKind),
+      scheduleFromV16(v16p.chargingSchedule),
+      v16p.transactionId,
+      v16p.validFrom,
+      v16p.validTo
+    )
 
   private def stringToProfileKind(v16cpk: String): messages.ChargingProfileKind = {
     import messages.ChargingProfileKind._
@@ -596,5 +624,6 @@ object ConvertersV16 {
       v16cs.chargingSchedulePeriod.map(periodFromV16),
       v16cs.minChargingRate.map(_.toDouble),
       v16cs.startSchedule,
-      v16cs.duration.map(_.seconds))
+      v16cs.duration.map(_.seconds)
+    )
 }

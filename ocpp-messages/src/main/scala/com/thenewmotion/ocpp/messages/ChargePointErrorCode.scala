@@ -20,7 +20,6 @@ object ChargePointErrorCode extends Enumerable[ChargePointErrorCode] {
   case object WeakSignal           extends ChargePointErrorCode
   case object InternalError        extends ChargePointErrorCode // ocpp 1.6
   case object LocalListConflict    extends ChargePointErrorCode // ocpp 1.6
-  case object NoError              extends ChargePointErrorCode // ocpp 1.6
   case object OtherError           extends ChargePointErrorCode
 
   val values = Set(
@@ -38,7 +37,6 @@ object ChargePointErrorCode extends Enumerable[ChargePointErrorCode] {
     WeakSignal,
     InternalError,
     LocalListConflict,
-    NoError,
     OtherError
   )
 }

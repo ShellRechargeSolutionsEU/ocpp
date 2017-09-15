@@ -349,7 +349,7 @@ class OcppMessageSerializationSpec extends Specification {
     val sendLocalListReq = SendLocalListReq(UpdateType.Full, listVersion = AuthListSupported(1),
       localAuthorisationList = List(AuthorisationData(idTag = "044943121F1D80",
         idTagInfo = Some(IdTagInfo(AuthorizationStatus.Accepted, Some(testTime), Some(""))))), hash = Some(""))
-    val sendLocalListRes = SendLocalListRes(status = UpdateStatus.Accepted(Some("")))
+    val sendLocalListRes = SendLocalListRes(status = UpdateStatusWithHash.Accepted(Some("")))
 
     val reserveNowReq = ReserveNowReq(connector = ChargePointScope,
       expiryDate = testTime,

@@ -65,13 +65,13 @@ private[soap] object ConvertersV15 {
 
   implicit class RichUpdateStatus(val self: messages.UpdateStatus) extends AnyVal {
     def toV15: (UpdateStatus, Option[String]) = {
-      import messages.UpdateStatus
+      import messages.{UpdateStatusWithoutHash, UpdateStatusWithHash}
       self match {
-        case UpdateStatus.Accepted(h)     => (AcceptedValue10,                 h)
-        case UpdateStatus.Failed          => (Failed,                       None)
-        case UpdateStatus.HashError       => (ocpp.v15.HashError,           None)
-        case UpdateStatus.NotSupported    => (ocpp.v15.NotSupportedValue,   None)
-        case UpdateStatus.VersionMismatch => (ocpp.v15.VersionMismatch,     None)
+        case UpdateStatusWithHash.Accepted(h)        => (AcceptedValue10,                 h)
+        case UpdateStatusWithoutHash.Failed          => (Failed,                       None)
+        case UpdateStatusWithoutHash.HashError       => (ocpp.v15.HashError,           None)
+        case UpdateStatusWithoutHash.NotSupported    => (ocpp.v15.NotSupportedValue,   None)
+        case UpdateStatusWithoutHash.VersionMismatch => (ocpp.v15.VersionMismatch,     None)
       }
     }
   }

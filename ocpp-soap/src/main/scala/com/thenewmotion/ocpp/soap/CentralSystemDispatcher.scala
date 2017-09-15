@@ -92,7 +92,7 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemReq, C
         req =>
           val status = req.status match {
             case Available => ocpp.ChargePointStatus.Available()
-            case Occupied => ocpp.ChargePointStatus.Occupied(reason = None)
+            case Occupied => ocpp.ChargePointStatus.Occupied(kind = None)
             case Unavailable => ocpp.ChargePointStatus.Unavailable()
             case Faulted =>
               val errorCode: Option[ocpp.ChargePointErrorCode] = {
@@ -219,7 +219,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
       case StatusNotification => ?[StatusNotificationRequest, StatusNotificationResponse] { req =>
         val status = req.status match {
           case Available => ocpp.ChargePointStatus.Available()
-          case OccupiedValue => ocpp.ChargePointStatus.Occupied(reason = None)
+          case OccupiedValue => ocpp.ChargePointStatus.Occupied(kind = None)
           case UnavailableValue => ocpp.ChargePointStatus.Unavailable()
           case FaultedValue =>
             val errorCode = {

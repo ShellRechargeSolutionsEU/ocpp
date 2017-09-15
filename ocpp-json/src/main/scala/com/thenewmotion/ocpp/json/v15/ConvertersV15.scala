@@ -6,7 +6,6 @@ import java.net.URISyntaxException
 
 import enums.reflection.EnumUtils.Enumerable
 import enums.reflection.EnumUtils.Nameable
-import messages.AuthorizationStatus
 import org.json4s.MappingException
 
 import scala.concurrent.duration._
@@ -14,10 +13,18 @@ import scala.concurrent.duration._
 object ConvertersV15 {
   def toV15(msg: messages.Message): Message = msg match {
     case messages.BootNotificationReq(chargePointVendor, chargePointModel, chargePointSerialNumber,
-    chargeBoxSerialNumber, firmwareVersion, iccid, imsi, meterType,
-    meterSerialNumber) =>
-      BootNotificationReq(chargePointVendor, chargePointModel, chargePointSerialNumber, chargeBoxSerialNumber,
-        firmwareVersion, iccid, imsi, meterType, meterSerialNumber)
+    chargeBoxSerialNumber, firmwareVersion, iccid, imsi, meterType, meterSerialNumber) =>
+      BootNotificationReq(
+        chargePointVendor,
+        chargePointModel,
+        chargePointSerialNumber,
+        chargeBoxSerialNumber,
+        firmwareVersion,
+        iccid,
+        imsi,
+        meterType,
+        meterSerialNumber
+      )
 
     case messages.BootNotificationRes(registrationAccepted, currentTime, heartbeatInterval) =>
       BootNotificationRes(registrationAccepted.name, currentTime, heartbeatInterval.toSeconds.toInt)
@@ -27,11 +34,13 @@ object ConvertersV15 {
     case messages.AuthorizeRes(idTag) => AuthorizeRes(idTag.toV15)
 
     case messages.StartTransactionReq(connector, idTag, timestamp, meterStart, reservationId) =>
-      StartTransactionReq(connectorId = connector.toOcpp,
+      StartTransactionReq(
+        connectorId = connector.toOcpp,
         idTag = idTag,
         timestamp = timestamp,
         meterStart = meterStart,
-        reservationId = reservationId)
+        reservationId = reservationId
+      )
 
     case messages.StartTransactionRes(transactionId, idTagInfo) => StartTransactionRes(transactionId, idTagInfo.toV15)
 
@@ -65,9 +74,7 @@ object ConvertersV15 {
     case messages.ChangeAvailabilityRes(status) => ChangeAvailabilityRes(status.name)
 
     case messages.StatusNotificationReq(scope, status, timestamp, vendorId) =>
-
       val (ocppStatus, errorCode, info, vendorErrorCode) = status.toV15Fields
-
       StatusNotificationReq(scope.toOcpp, ocppStatus, errorCode, info, timestamp, vendorId, vendorErrorCode)
 
     case messages.StatusNotificationRes => StatusNotificationRes()
@@ -131,8 +138,7 @@ object ConvertersV15 {
       SendLocalListReq(updateType.name, authListVersion.toV15, Some(authorisationData.map(_.toV15)), hash)
 
     case messages.SendLocalListRes(status: messages.UpdateStatus) =>
-      val (ocppStatus, hash) = status.toV15AndHash
-      SendLocalListRes(ocppStatus, hash)
+      SendLocalListRes.tupled(status.toV15Fields)
 
     case messages.ReserveNowReq(scope, expiryDate, idTag, parentIdTag, reservationId) =>
       ReserveNowReq(scope.toOcpp, expiryDate, idTag, parentIdTag, reservationId)
@@ -151,10 +157,18 @@ object ConvertersV15 {
   }
 
   def fromV15(msg: Message): messages.Message = msg match {
-    case BootNotificationReq(vendor, model, chargePointSerial, chargeBoxSerial, firmwareVersion, iccid, imsi, meterType,
-    meterSerial) =>
-      messages.BootNotificationReq(vendor, model, chargePointSerial, chargeBoxSerial, firmwareVersion, iccid, imsi,
-        meterType, meterSerial)
+    case BootNotificationReq(vendor, model, chargePointSerial, chargeBoxSerial, firmwareVersion, iccid, imsi, meterType, meterSerial) =>
+      messages.BootNotificationReq(
+        vendor,
+        model,
+        chargePointSerial,
+        chargeBoxSerial,
+        firmwareVersion,
+        iccid,
+        imsi,
+        meterType,
+        meterSerial
+      )
 
     case BootNotificationRes(statusString, currentTime, heartbeatInterval) =>
       messages.BootNotificationRes(
@@ -168,13 +182,25 @@ object ConvertersV15 {
     case AuthorizeRes(idTagInfo) => messages.AuthorizeRes(idTagInfo.fromV15)
 
     case StartTransactionReq(connectorId, idTag, timestamp, meterStart, reservationId) =>
-      messages.StartTransactionReq(messages.ConnectorScope.fromOcpp(connectorId), idTag, timestamp, meterStart,
-        reservationId)
+      messages.StartTransactionReq(
+        messages.ConnectorScope.fromOcpp(connectorId),
+        idTag,
+        timestamp,
+        meterStart,
+        reservationId
+      )
 
     case StartTransactionRes(transactionId, idTagInfo) => messages.StartTransactionRes(transactionId, idTagInfo.fromV15)
 
     case StopTransactionReq(transactionId, idTag, timestamp, meterStop, transactionData) =>
-      messages.StopTransactionReq(transactionId, idTag, timestamp, meterStop, messages.StopReason.Local, transactionDataFromV15(transactionData))
+      messages.StopTransactionReq(
+        transactionId,
+        idTag,
+        timestamp,
+        meterStop,
+        messages.StopReason.Local,
+        transactionDataFromV15(transactionData)
+      )
 
     case StopTransactionRes(idTagInfo) => messages.StopTransactionRes(idTagInfo.map(_.fromV15))
 
@@ -190,22 +216,30 @@ object ConvertersV15 {
     case ResetRes(status) => messages.ResetRes(statusStringToBoolean(status))
 
     case ChangeAvailabilityReq(connectorId, availabilityType) =>
-      messages.ChangeAvailabilityReq(scope = messages.Scope.fromOcpp(connectorId),
-        availabilityType = enumerableFromJsonString(messages.AvailabilityType, availabilityType))
+      messages.ChangeAvailabilityReq(
+        scope = messages.Scope.fromOcpp(connectorId),
+        availabilityType = enumerableFromJsonString(messages.AvailabilityType, availabilityType)
+      )
 
     case ChangeAvailabilityRes(status) =>
       messages.ChangeAvailabilityRes(enumerableFromJsonString(messages.AvailabilityStatus, status))
 
     case StatusNotificationReq(connector, status, errorCode, info, timestamp, vendorId, vendorErrorCode) =>
-      messages.StatusNotificationReq(messages.Scope.fromOcpp(connector),
+      messages.StatusNotificationReq(
+        messages.Scope.fromOcpp(connector),
         statusFieldsToOcppStatus(status, errorCode, info, vendorErrorCode),
         timestamp,
-        vendorId)
+        vendorId
+      )
 
     case StatusNotificationRes() => messages.StatusNotificationRes
 
-    case RemoteStartTransactionReq(idTag, connector) => messages.RemoteStartTransactionReq(idTag,
-      connector.map(messages.ConnectorScope.fromOcpp), None)
+    case RemoteStartTransactionReq(idTag, connector) =>
+      messages.RemoteStartTransactionReq(
+        idTag,
+        connector.map(messages.ConnectorScope.fromOcpp),
+        None
+      )
 
     case RemoteStartTransactionRes(status) => messages.RemoteStartTransactionRes(statusStringToBoolean(status))
 
@@ -229,8 +263,12 @@ object ConvertersV15 {
       messages.FirmwareStatusNotificationRes
 
     case GetDiagnosticsReq(location, startTime, stopTime, retries, retryInterval) =>
-      messages.GetDiagnosticsReq(parseURI(location), startTime, stopTime,
-        messages.Retries.fromInts(retries, retryInterval))
+      messages.GetDiagnosticsReq(
+        parseURI(location),
+        startTime,
+        stopTime,
+        messages.Retries.fromInts(retries, retryInterval)
+      )
 
     case GetDiagnosticsRes(filename) => messages.GetDiagnosticsRes(filename)
 
@@ -274,7 +312,7 @@ object ConvertersV15 {
         hash = hash
       )
 
-    case SendLocalListRes(status, hash) => messages.SendLocalListRes(stringAndHashToUpdateStatus(status, hash))
+    case SendLocalListRes(status, hash) => messages.SendLocalListRes(updateStatusFromV15(status, hash))
 
     case ReserveNowReq(connectorId, expiryDate, idTag, parentIdTag, reservationId) =>
       messages.ReserveNowReq(messages.Scope.fromOcpp(connectorId), expiryDate, idTag, parentIdTag, reservationId)
@@ -291,31 +329,31 @@ object ConvertersV15 {
   private def unexpectedMessage(msg: Any) =
     throw new Exception(s"Couldn't convert unexpected OCPP message $msg")
 
-  private implicit class RichIdTagInfo(i: messages.IdTagInfo) {
-    def toV15: IdTagInfo = IdTagInfo(status = AuthorizationStatusConverters.enumToJson(i.status),
-      expiryDate = i.expiryDate,
-      parentIdTag = i.parentIdTag)
+  private implicit class RichIdTagInfo(idTagInfo: messages.IdTagInfo) {
+    def toV15: IdTagInfo = IdTagInfo(
+      status = idTagInfo.status.name,
+      expiryDate = idTagInfo.expiryDate,
+      parentIdTag = idTagInfo.parentIdTag
+    )
   }
 
   private implicit class RichV15IdTagInfo(self: IdTagInfo) {
-    def fromV15: messages.IdTagInfo = {
-      val authStatus = try {
-        AuthorizationStatusConverters.jsonToEnum(self.status)
-      } catch {
-        case _: NoSuchElementException =>
-          throw new MappingException(s"Unrecognized authorization status ${self.status} in OCPP-JSON message")
-      }
+    def fromV15: messages.IdTagInfo = messages.IdTagInfo(
+      status = enumerableFromJsonString(messages.AuthorizationStatus, self.status),
+      expiryDate = self.expiryDate,
+      parentIdTag = self.parentIdTag
+    )
+  }
 
-      messages.IdTagInfo(
-        status = authStatus,
-        expiryDate = self.expiryDate,
-        parentIdTag = self.parentIdTag)
-    }
+  private object RichChargePointStatus {
+    val defaultErrorCode = "NoError"
   }
 
   private implicit class RichChargePointStatus(self: messages.ChargePointStatus) {
+    import RichChargePointStatus.defaultErrorCode
     def toV15Fields: (String, String, Option[String], Option[String]) = {
-      def simpleStatus(name: String) = (name, "NoError", self.info, None)
+      def simpleStatus(name: String) = (name, defaultErrorCode, self.info, None)
+
       import messages.ChargePointStatus
       self match {
         case ChargePointStatus.Available(_) => simpleStatus("Available")
@@ -323,26 +361,23 @@ object ConvertersV15 {
         case ChargePointStatus.Unavailable(_) => simpleStatus("Unavailable")
         case ChargePointStatus.Reserved(_) => simpleStatus("Reserved")
         case ChargePointStatus.Faulted(errCode, inf, vendorErrCode) =>
-          ("Faulted", errCode.map(_.name).getOrElse(RichChargePointStatus.defaultErrorCode), inf, vendorErrCode)
+          ("Faulted", errCode.map(_.name).getOrElse(defaultErrorCode), inf, vendorErrCode)
       }
     }
-  }
-
-  private object RichChargePointStatus {
-    val defaultErrorCode = "NoError"
   }
 
   private def statusFieldsToOcppStatus(status: String, errorCode: String, info: Option[String],
     vendorErrorCode: Option[String]): messages.ChargePointStatus = {
     import messages.ChargePointStatus
+    import RichChargePointStatus.defaultErrorCode
     status match {
       case "Available" => ChargePointStatus.Available(info)
-      case "Occupied" => ChargePointStatus.Occupied(reason = None, info)
+      case "Occupied" => ChargePointStatus.Occupied(kind = None, info)
       case "Unavailable" => ChargePointStatus.Unavailable(info)
       case "Reserved" => ChargePointStatus.Reserved(info)
       case "Faulted" =>
         val errorCodeString =
-          if (errorCode == RichChargePointStatus.defaultErrorCode)
+          if (errorCode == defaultErrorCode)
             None
           else
             Some(enumerableFromJsonString(messages.ChargePointErrorCode, errorCode))
@@ -351,13 +386,13 @@ object ConvertersV15 {
   }
 
   private implicit class RichMeter(self: messages.Meter) {
-    def toV15: Meter =
-      Meter(timestamp = self.timestamp,
-        values = self.values.map(valueToV15))
+    def toV15: Meter = Meter(
+      timestamp = self.timestamp,
+      values = self.values.map(valueToV15)
+    )
 
     def valueToV15(v: messages.Meter.Value): MeterValue = {
       import messages.Meter._
-
       MeterValue(
         value = v.value,
         measurand = noneIfDefault(Measurand.EnergyActiveImportRegister, v.measurand),
@@ -368,7 +403,7 @@ object ConvertersV15 {
       )
     }
 
-    def noneIfDefault[T <: Nameable](default: T, actual: T): Option[String] =
+    def noneIfDefault(default: Nameable, actual: Nameable): Option[String] =
       if (actual == default) None else Some(actual.name)
   }
 
@@ -393,25 +428,22 @@ object ConvertersV15 {
       context = getMeterValueProperty(context, ReadingContext, ReadingContext.SamplePeriodic),
       format = getMeterValueProperty(format, ValueFormat, ValueFormat.Raw),
       location = getMeterValueProperty(location, Location, Location.Outlet),
-      unit = getMeterValueProperty(unit, UnitOfMeasure, UnitOfMeasure.Wh)
+      unit = unit.fold[UnitOfMeasure](UnitOfMeasure.Wh) {
+        unitString => UnitOfMeasure.withName(unitString) match {
+          case Some(unitOfMeasure) => unitOfMeasure
+          case None => unitString match {
+            case "Amp" => UnitOfMeasure.Amp
+            case "Volt" => UnitOfMeasure.Volt
+            case _ => throw new MappingException(s"Value $unitString is not valid for UnitOfMeasure")
+          }
+        }
+      }
     )
   }
 
   private def getMeterValueProperty[V <: Nameable](
     property: Option[String], enum: Enumerable[V], default: V
   ): V = property.fold(default)(s => enumerableFromJsonString(enum, s))
-
-  private object AuthorizationStatusConverters {
-    val names = List(
-      (AuthorizationStatus.Accepted, "Accepted"),
-      (AuthorizationStatus.IdTagBlocked, "Blocked"),
-      (AuthorizationStatus.IdTagExpired, "Expired"),
-      (AuthorizationStatus.IdTagInvalid, "Invalid"),
-      (AuthorizationStatus.ConcurrentTx, "ConcurrentTx")
-    )
-    val jsonToEnum: String => AuthorizationStatus = Map(names.map(_.swap): _*)
-    val enumToJson: AuthorizationStatus => String = Map(names: _*)
-  }
 
   private implicit class BooleanToStatusString(val b: Boolean) extends AnyVal {
     def toStatusString = if (b) "Accepted" else "Rejected"
@@ -420,8 +452,9 @@ object ConvertersV15 {
   private def statusStringToBoolean(statusString: String) = statusString match {
     case "Accepted" => true
     case "Rejected" => false
-    case _ =>
-      throw new MappingException(s"Did not recognize status $statusString (expected 'Accepted' or 'Rejected')")
+    case _ => throw new MappingException(
+      s"Did not recognize status $statusString (expected 'Accepted' or 'Rejected')"
+    )
   }
 
   private implicit class RichKeyValue(val self: messages.KeyValue) {
@@ -457,38 +490,27 @@ object ConvertersV15 {
   }
 
   private implicit class RichV15AuthorisationData(self: AuthorisationData) {
-    def fromV15: messages.AuthorisationData = messages.AuthorisationData(self.idTag, self.idTagInfo.map(_.fromV15))
+    def fromV15: messages.AuthorisationData = messages.AuthorisationData(
+      self.idTag, self.idTagInfo.map(_.fromV15)
+    )
   }
 
   private implicit class RichUpdateStatus(self: messages.UpdateStatus) {
-
-    import messages.UpdateStatus._
-
-    def toV15AndHash: (String, Option[String]) = {
-      val hashString = self match {
-        case Accepted(hash) => hash
-        case _ => None
-      }
-
-      (enumToName(self), hashString)
-    }
-
-    def enumToName(v: messages.UpdateStatus): String = v match {
-      case Accepted(_) => "Accepted"
-      case Failed => "Failed"
-      case x => x.toString
+    def toV15Fields: (String, Option[String]) = self match {
+      case updateStatus: messages.UpdateStatusWithoutHash => (updateStatus.name, None)
+      case messages.UpdateStatusWithHash.Accepted(hash) => ("Accepted", hash)
     }
   }
 
-  private def stringAndHashToUpdateStatus(status: String, hash: Option[String]) = {
-    import messages.UpdateStatus._
-    status match {
-      case "Accepted" => Accepted(hash)
-      case "Failed" => Failed
-      case "HashError" => HashError
-      case "NotSupportedValue" => NotSupported
-      case "VersionMismatch" => VersionMismatch
-      case _ => throw new MappingException(s"Unrecognized value $status for OCPP update status")
+  private def updateStatusFromV15(status: String, hash: Option[String]): messages.UpdateStatus = {
+    import messages.UpdateStatusWithoutHash
+    import messages.UpdateStatusWithHash
+    UpdateStatusWithoutHash.withName(status) match {
+      case Some(updateStatus) => updateStatus
+      case None => status match {
+        case "Accepted" => UpdateStatusWithHash.Accepted(hash)
+        case _ => throw new MappingException(s"Value $status is not valid for UpdateStatus")
+      }
     }
   }
 

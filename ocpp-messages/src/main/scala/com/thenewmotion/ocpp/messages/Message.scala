@@ -386,12 +386,21 @@ object UpdateType extends Enumerable[UpdateType] {
 }
 
 sealed trait UpdateStatus
-object UpdateStatus {
-  case class Accepted(hash: Option[String]) extends UpdateStatus
-  case object Failed extends UpdateStatus
-  case object HashError extends UpdateStatus
-  case object NotSupported extends UpdateStatus
-  case object VersionMismatch extends UpdateStatus
+sealed trait UpdateStatusWithoutHash extends UpdateStatus with Nameable
+sealed trait UpdateStatusWithHash extends UpdateStatus {
+  def hash: Option[String]
+}
+
+object UpdateStatusWithoutHash extends Enumerable[UpdateStatusWithoutHash] {
+  case object Failed extends UpdateStatusWithoutHash
+  case object HashError extends UpdateStatusWithoutHash
+  case object NotSupported extends UpdateStatusWithoutHash
+  case object VersionMismatch extends UpdateStatusWithoutHash
+  val values = Set(Failed, HashError, VersionMismatch, NotSupported)
+}
+
+object UpdateStatusWithHash {
+  final case class Accepted(hash: Option[String]) extends UpdateStatusWithHash
 }
 
 sealed trait AuthorisationData {
