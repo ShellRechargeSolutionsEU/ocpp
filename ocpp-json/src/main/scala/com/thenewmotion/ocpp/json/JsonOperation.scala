@@ -8,6 +8,11 @@ import org.json4s._
 import com.thenewmotion.ocpp.messages._
 import com.thenewmotion.ocpp.json.JsonDeserializable._
 
+/* TODO:
+  Can't we change this to JsonOperation[REQ < : Req : Manifest, RES <: Res : Manifest], and then call OcppJ.deserialize
+  directly instead of messing with this JsonDeserializable type? And can't we get rid of the whole JsonDeserializable
+  everywhere?
+ */
 class JsonOperation[REQ <: Req, RES <: Res](val action: Enumeration#Value)
                                            (implicit reqRes: ReqRes[REQ, RES],
                                             reqDeserializable: JsonDeserializable[REQ],
@@ -18,7 +23,7 @@ class JsonOperation[REQ <: Req, RES <: Res](val action: Enumeration#Value)
   def deserializeRes(jval: JValue): RES = ??? // jsonDeserializable[RES].deserialize(jval)
 
   private val reqClass = classTag[REQ].runtimeClass
-""
+
   def matchesRequest(req: Req): Boolean = reqClass.isInstance(req)
 }
 
