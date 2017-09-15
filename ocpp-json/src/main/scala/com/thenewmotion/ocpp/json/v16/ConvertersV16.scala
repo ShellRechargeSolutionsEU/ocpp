@@ -145,6 +145,57 @@ object ConvertersV16 {
 
     case messages.CancelReservationRes(accepted) => CancelReservationRes(accepted.toStatusString)
 
+    case messages.ClearChargingProfileReq(id, connectorId, chargingProfilePurpose, stackLevel) =>
+      ClearChargingProfileReq(
+        id,
+        connectorId.map(_.toOcpp),
+        chargingProfilePurpose.map(_.name),
+        stackLevel
+      )
+
+    case messages.ClearChargingProfileRes(status) => ClearChargingProfileRes(status.name)
+
+    case messages.GetCompositeScheduleReq(connectorId, duration, chargingRateUnit) =>
+      GetCompositeScheduleReq(
+        connectorId.toOcpp,
+        duration.toSeconds.toInt,
+        chargingRateUnit.map(_.name)
+      )
+
+    case messages.GetCompositeScheduleRes(status) =>
+      import messages.GetCompositeScheduleStatus._
+      GetCompositeScheduleRes.tupled {
+        status match {
+          case Accepted(connector, scheduleStart, chargingSchedule) =>
+            ("Accepted", Some(connector.toOcpp), scheduleStart, chargingSchedule.map(_.toV16))
+          case Rejected => ("Rejected", None, None, None)
+        }
+      }
+
+    case messages.SetChargingProfileReq(connectorId, csChargingProfiles) =>
+      SetChargingProfileReq(
+        connectorId.toOcpp,
+        csChargingProfiles.toV16
+      )
+
+    case messages.SetChargingProfileRes(status) => SetChargingProfileRes(status.name)
+
+    case messages.TriggerMessageReq(requestedMessage) =>
+      import messages.MessageTriggerWithoutConnector
+      import messages.MessageTriggerWithConnector
+      TriggerMessageReq.tupled {
+        requestedMessage match {
+          case messageTrigger: MessageTriggerWithoutConnector =>
+            (messageTrigger.name, None)
+          case MessageTriggerWithConnector.MeterValues(connectorId) =>
+            ("Metervalues", connectorId.map(_.toOcpp))
+          case MessageTriggerWithConnector.StatusNotification(connectorId) =>
+            ("StatusNotification", connectorId.map(_.toOcpp))
+        }
+      }
+
+    case messages.TriggerMessageRes(status) => TriggerMessageRes(status.name)
+
     case messages.CentralSystemDataTransferReq(_, _, _)
          | messages.CentralSystemDataTransferRes(_, _)
          | messages.ChargePointDataTransferReq(_, _, _)
@@ -320,11 +371,59 @@ object ConvertersV16 {
 
     case CancelReservationRes(status) => messages.CancelReservationRes(statusStringToBoolean(status))
 
+    case ClearChargingProfileReq(id, connectorId, chargingProfilePurpose, stackLevel) =>
+      messages.ClearChargingProfileReq(
+        id,
+        connectorId.map(messages.Scope.fromOcpp),
+        chargingProfilePurpose.map(enumerableFromJsonString(messages.ChargingProfilePurpose, _)),
+        stackLevel
+      )
+
+    case ClearChargingProfileRes(status) => messages.ClearChargingProfileRes(
+      enumerableFromJsonString(messages.ClearChargingProfileStatus, status)
+    )
+
+    case GetCompositeScheduleReq(connectorId, duration, chargingRateUnit) =>
+      messages.GetCompositeScheduleReq(
+        messages.Scope.fromOcpp(connectorId),
+        duration.seconds,
+        chargingRateUnit.map(enumerableFromJsonString(messages.UnitOfChargeRate, _))
+      )
+
+    case GetCompositeScheduleRes(status, connectorId, scheduleStart, chargingSchedule) =>
+      messages.GetCompositeScheduleRes(
+        status match {
+          case "Accepted" =>
+            messages.GetCompositeScheduleStatus.Accepted(
+              messages.Scope.fromOcpp(connectorId.getOrElse {
+                throw new MappingException("Missing connector id")
+              }),
+              scheduleStart,
+              chargingSchedule.map(chargingScheduleFromV16)
+            )
+          case "Rejected" =>
+            messages.GetCompositeScheduleStatus.Rejected
+        }
+      )
+
+    case SetChargingProfileReq(connectorId, csChargingProfiles) =>
+      messages.SetChargingProfileReq(
+        messages.Scope.fromOcpp(connectorId),
+        chargingProfileFromV16(csChargingProfiles)
+      )
+
+    case SetChargingProfileRes(status) => messages.SetChargingProfileRes(
+      enumerableFromJsonString(messages.ChargingProfileStatus, status)
+    )
+
+    case triggerMessageReq: TriggerMessageReq =>
+      triggerFromV16(triggerMessageReq)
+
+    case TriggerMessageRes(status) => messages.TriggerMessageRes(
+      enumerableFromJsonString(messages.TriggerMessageStatus, status)
+    )
+
     case DataTransferReq(_, _, _) | DataTransferRes(_, _) => unexpectedMessage(msg)
-
-    case triggerMessageReq: TriggerMessageReq => triggerFromV16(triggerMessageReq)
-
-    case TriggerMessageRes(status) => messages.TriggerMessageRes(enumerableFromJsonString(messages.TriggerMessageStatus, status))
   }
 
   private def unexpectedMessage(msg: Any) =
@@ -351,14 +450,16 @@ object ConvertersV16 {
   }
 
   private implicit class RichChargePointStatus(self: messages.ChargePointStatus) {
+
     import RichChargePointStatus.defaultErrorCode
+
     def toV16Fields: (String, String, Option[String], Option[String]) = {
       def simpleStatus(name: String) = (name, defaultErrorCode, self.info, None)
       import messages.ChargePointStatus
       self match {
         case ChargePointStatus.Available(_) => simpleStatus("Available")
         case ChargePointStatus.Occupied(kind, _) => simpleStatus(
-          kind.getOrElse(throw new MappingException("Missing occupancy kind field")).name
+          kind.getOrElse(throw new MappingException("Missing occupancy kind")).name
         )
         case ChargePointStatus.Unavailable(_) => simpleStatus("Unavailable")
         case ChargePointStatus.Reserved(_) => simpleStatus("Reserved")
@@ -560,6 +661,26 @@ object ConvertersV16 {
       }
     }
 
+  private implicit class RichChargingSchedule(cs: messages.ChargingSchedule) {
+    def toV16: ChargingSchedule =
+      ChargingSchedule(
+        cs.chargingRateUnit.toString,
+        periodToV16,
+        cs.duration.map(_.toSeconds.toInt),
+        cs.startsAt,
+        cs.minChargingRate.map(_.toFloat)
+      )
+
+    def periodToV16: List[ChargingSchedulePeriod] =
+      cs.chargingSchedulePeriods.map { csp =>
+        ChargingSchedulePeriod(
+          csp.startOffset.toSeconds.toInt,
+          csp.amperesLimit.toFloat,
+          csp.numberPhases
+        )
+      }
+  }
+
   private def periodFromV16(v16sp: ChargingSchedulePeriod): messages.ChargingSchedulePeriod =
     messages.ChargingSchedulePeriod(v16sp.startPeriod.seconds, v16sp.limit.toDouble, v16sp.numberPhases)
 
@@ -569,28 +690,12 @@ object ConvertersV16 {
       cp.stackLevel,
       cp.chargingProfilePurpose.toString,
       cp.chargingProfileKind.toString,
-      scheduleToV16(cp.chargingSchedule),
+      cp.chargingSchedule.toV16,
       cp.transactionId,
       None,
       cp.validFrom,
       cp.validTo
     )
-
-    def scheduleToV16(cs: messages.ChargingSchedule): ChargingSchedule =
-      ChargingSchedule(
-        cs.chargingRateUnit.toString,
-        cs.chargingSchedulePeriod.map(periodToV16),
-        cs.duration.map(_.toSeconds.toInt),
-        cs.startsAt,
-        cs.minChargingRate.map(_.toFloat)
-      )
-
-    def periodToV16(csp: messages.ChargingSchedulePeriod): ChargingSchedulePeriod =
-      ChargingSchedulePeriod(
-        csp.startOffset.toSeconds.toInt,
-        csp.amperesLimit.toFloat,
-        csp.numberPhases
-      )
   }
 
   private def chargingProfileFromV16(v16p: ChargingProfile): messages.ChargingProfile =
@@ -599,7 +704,7 @@ object ConvertersV16 {
       v16p.stackLevel,
       enumerableFromJsonString(messages.ChargingProfilePurpose, v16p.chargingProfilePurpose),
       stringToProfileKind(v16p.chargingProfileKind),
-      scheduleFromV16(v16p.chargingSchedule),
+      chargingScheduleFromV16(v16p.chargingSchedule),
       v16p.transactionId,
       v16p.validFrom,
       v16p.validTo
@@ -618,7 +723,7 @@ object ConvertersV16 {
     }
   }
 
-  private def scheduleFromV16(v16cs: ChargingSchedule): messages.ChargingSchedule =
+  private def chargingScheduleFromV16(v16cs: ChargingSchedule): messages.ChargingSchedule =
     messages.ChargingSchedule(
       enumerableFromJsonString(messages.UnitOfChargeRate, v16cs.chargingRateUnit),
       v16cs.chargingSchedulePeriod.map(periodFromV16),

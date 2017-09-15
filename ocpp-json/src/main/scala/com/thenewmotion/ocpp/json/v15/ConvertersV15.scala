@@ -152,7 +152,15 @@ object ConvertersV15 {
     case messages.CentralSystemDataTransferReq(_, _, _)
          | messages.CentralSystemDataTransferRes(_, _)
          | messages.ChargePointDataTransferReq(_, _, _)
-         | messages.ChargePointDataTransferRes(_, _) =>
+         | messages.ChargePointDataTransferRes(_, _)
+         | messages.ClearChargingProfileReq(_, _, _, _)
+         | messages.ClearChargingProfileRes(_)
+         | messages.GetCompositeScheduleReq(_, _, _)
+         | messages.GetCompositeScheduleRes(_)
+         | messages.SetChargingProfileReq(_, _)
+         | messages.SetChargingProfileRes(_)
+         | messages.TriggerMessageReq(_)
+         | messages.TriggerMessageRes(_) =>
       unexpectedMessage(msg)
   }
 
@@ -350,7 +358,9 @@ object ConvertersV15 {
   }
 
   private implicit class RichChargePointStatus(self: messages.ChargePointStatus) {
+
     import RichChargePointStatus.defaultErrorCode
+
     def toV15Fields: (String, String, Option[String], Option[String]) = {
       def simpleStatus(name: String) = (name, defaultErrorCode, self.info, None)
 
@@ -428,8 +438,8 @@ object ConvertersV15 {
       context = getMeterValueProperty(context, ReadingContext, ReadingContext.SamplePeriodic),
       format = getMeterValueProperty(format, ValueFormat, ValueFormat.Raw),
       location = getMeterValueProperty(location, Location, Location.Outlet),
-      unit = unit.fold[UnitOfMeasure](UnitOfMeasure.Wh) {
-        unitString => UnitOfMeasure.withName(unitString) match {
+      unit = unit.fold[UnitOfMeasure](UnitOfMeasure.Wh) { unitString =>
+        UnitOfMeasure.withName(unitString) match {
           case Some(unitOfMeasure) => unitOfMeasure
           case None => unitString match {
             case "Amp" => UnitOfMeasure.Amp

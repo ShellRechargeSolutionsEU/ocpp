@@ -180,7 +180,7 @@ case class ChargingSchedulePeriod(
 
 case class ChargingSchedule(
   chargingRateUnit: UnitOfChargingRate,
-  chargingSchedulePeriod: List[ChargingSchedulePeriod],
+  chargingSchedulePeriods: List[ChargingSchedulePeriod],
   minChargingRate: Option[Double],
   startsAt: Option[ZonedDateTime],
   duration: Option[FiniteDuration]
