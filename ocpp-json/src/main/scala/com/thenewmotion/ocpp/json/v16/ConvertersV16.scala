@@ -494,9 +494,9 @@ object ConvertersV16 {
         case messageTrigger: MessageTriggerWithoutConnector =>
           TriggerMessageReq(messageTrigger.name, None)
         case MessageTriggerWithConnector.MeterValues(connector) =>
-          TriggerMessageReq("MeterValues", connector.map(_.id))
+          TriggerMessageReq("MeterValues", connector.map(_.toOcpp))
         case MessageTriggerWithConnector.StatusNotification(connector) =>
-          TriggerMessageReq("StatusNotification", connector.map(_.id))
+          TriggerMessageReq("StatusNotification", connector.map(_.toOcpp))
       }
     }
   }

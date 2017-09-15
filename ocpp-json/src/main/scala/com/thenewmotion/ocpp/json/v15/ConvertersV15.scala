@@ -302,7 +302,7 @@ object ConvertersV15 {
       val authStatus = try {
         AuthorizationStatusConverters.jsonToEnum(self.status)
       } catch {
-        case e: NoSuchElementException =>
+        case _: NoSuchElementException =>
           throw new MappingException(s"Unrecognized authorization status ${self.status} in OCPP-JSON message")
       }
 
