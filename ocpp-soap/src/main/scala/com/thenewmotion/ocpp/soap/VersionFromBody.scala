@@ -13,7 +13,7 @@ object VersionFromBody {
 
   import Version._
 
-  private def fromNamespace(namespace: String): Option[Version.Value] = {
+  private def fromNamespace(namespace: String): Option[Version] = {
     val V12Regex = """^urn://Ocpp/C[sp]/2010/08/$""".r
     val V15Regex = """^urn://Ocpp/C[sp]/2012/06/$""".r
 
@@ -25,14 +25,14 @@ object VersionFromBody {
     }
   }
 
-  def apply(body: NodeSeq): Option[Value] =
+  def apply(body: NodeSeq): Option[Version] =
     for {
       n <- body.headOption
       e <- n.asInstanceOfOpt[Elem]
       v <- fromNamespace(e.namespace)
     } yield v
 
-  def apply(body: Body): Option[Value] = (for {
+  def apply(body: Body): Option[Version] = (for {
     data <- body.any
     elem <- data.value.asInstanceOfOpt[Elem]
     v <- apply(elem)

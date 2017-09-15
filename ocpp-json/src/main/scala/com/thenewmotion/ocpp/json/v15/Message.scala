@@ -2,9 +2,11 @@ package com.thenewmotion.ocpp.json.v15
 
 import java.time.ZonedDateTime
 
+import com.thenewmotion.ocpp.json.VersionSpecificMessage
+
 // we use fieldless case classes instead of case objects because that plays nicer with lift-json
 
-sealed trait Message
+sealed trait Message extends VersionSpecificMessage
 
 sealed trait CentralSystemReq extends Message
 sealed trait CentralSystemRes extends Message

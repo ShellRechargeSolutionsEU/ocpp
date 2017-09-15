@@ -25,7 +25,7 @@ trait Dispatcher[REQ, RES] {
 
 abstract class AbstractDispatcher[REQ, RES](implicit evidence: OcppService[REQ, RES]) extends Dispatcher[REQ, RES] {
   implicit def faultToBody(x: soapenvelope12.Fault) = x.asBody
-  def version: Version.Value
+  def version: Version
 
   val actions: Enumeration
 

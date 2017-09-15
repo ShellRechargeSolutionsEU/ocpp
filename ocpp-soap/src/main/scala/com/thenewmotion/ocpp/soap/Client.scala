@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
  */
 trait Client {
   def chargeBoxIdentity: String
-  def version: Version.Value
+  def version: Version
 }
 
 private[ocpp] trait ScalaxbClient {

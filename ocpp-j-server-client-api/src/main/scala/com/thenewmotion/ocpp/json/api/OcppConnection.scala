@@ -1,12 +1,14 @@
 package com.thenewmotion.ocpp.json.api
 
+import com.thenewmotion.ocpp.{Version, messages}
 import com.thenewmotion.ocpp.messages._
 import org.slf4j.LoggerFactory
-import com.thenewmotion.ocpp.json.v15.Ocpp15J
-import scala.concurrent.{Promise, Future}
-import scala.util.{Try, Success, Failure}
+
+import scala.concurrent.{Future, Promise}
+import scala.util.{Failure, Success, Try}
 import scala.collection.mutable
 import com.thenewmotion.ocpp.json._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
@@ -107,9 +109,11 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
       }
     }
 
-    private def responseToSrpc[REQ <: INREQ, RES <: OUTRES](callId: String, response: OUTRES): TransportMessage =
-        ResponseMessage(callId, Ocpp15J.serialize(response))
-
+    private def responseToSrpc[REQ <: INREQ, RES <: OUTRES](callId: String, response: OUTRES): TransportMessage = {
+      //TODO hardcoded on 1.5 needs to come from parameter or something
+      implicit val versionVariant = JsonDeserializable.V15Variant
+      ResponseMessage(callId, OcppJ.serialize[messages.Message, Version.V15.type](response))
+    }
 
     private def handleIncomingResponse(res: ResponseMessage) {
       callIdCache.remove(res.callId) match {
@@ -150,8 +154,11 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
       val responsePromise = Promise[RES]()
 
       callIdCache.put(callId, OutstandingRequest[REQ, RES](jsonOperation, responsePromise))
-      // TODO have a way to not hardcode the OCPP version number when (de)serializing OCPP
-      srpcConnection.send(RequestMessage(callId, getProcedureName(req), Ocpp15J.serialize(req)))
+
+      //TODO hardcoded on 1.5 needs to come from parameter or something
+      implicit val versionVariant = JsonDeserializable.V15Variant
+      val msg:messages.Message = req
+      srpcConnection.send(RequestMessage(callId, getProcedureName(req), OcppJ.serialize[messages.Message, Version.V15.type](msg)))
       responsePromise.future
     }
 

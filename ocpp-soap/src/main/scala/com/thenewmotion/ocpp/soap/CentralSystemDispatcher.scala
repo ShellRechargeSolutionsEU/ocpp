@@ -8,7 +8,7 @@ import com.thenewmotion.ocpp.{messages => ocpp}
 import messages._
 
 object CentralSystemDispatcher {
-  def apply(version: Version.Value): Dispatcher[CentralSystemReq, CentralSystemRes] = version match {
+  def apply(version: Version): Dispatcher[CentralSystemReq, CentralSystemRes] = version match {
     case Version.V12 => CentralSystemDispatcherV12
     case Version.V15 => CentralSystemDispatcherV15
   }

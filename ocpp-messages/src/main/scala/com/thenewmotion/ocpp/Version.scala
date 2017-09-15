@@ -1,7 +1,12 @@
 package com.thenewmotion.ocpp
 
-object Version extends Enumeration {
-  val V12 = Value("1.2")
-  val V15 = Value("1.5")
-  val V16 = Value("1.6")
+import enums.reflection.EnumUtils.{Enumerable, Nameable}
+
+trait Version extends Nameable
+
+object Version extends Enumerable[Version] {
+  case object V12 extends Version
+  case object V15 extends Version
+  case object V16 extends Version
+  val values = Set(V12, V15, V16)
 }

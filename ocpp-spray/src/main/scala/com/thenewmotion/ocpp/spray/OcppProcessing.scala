@@ -16,7 +16,7 @@ import com.thenewmotion.ocpp.soap._
 /**
  * The information about the charge point available in an incoming request
  */
-case class ChargerInfo(ocppVersion: Version.Value, endpointUrl: Option[Uri], chargerId: String, ipAddress: Option[InetAddress])
+case class ChargerInfo(ocppVersion: Version, endpointUrl: Option[Uri], chargerId: String, ipAddress: Option[InetAddress])
 
 object OcppProcessing {
 
@@ -25,7 +25,7 @@ object OcppProcessing {
   type ResponseFunc[T] = Option[T] => HttpResponse
   type ChargerId = String
   type ProcessingFunc[REQ, RES] = (ChargerInfo, REQ) => Future[RES]
-  type OcppMessageLogger = (ChargerId, Version.Value, Any) => Unit
+  type OcppMessageLogger = (ChargerId, Version, Any) => Unit
 
   def apply[REQ, RES](req: HttpRequest)(f: ProcessingFunc[REQ, RES])
                      (implicit ocppService: OcppService[REQ, RES], ec: ExecutionContext): Future[HttpResponse] = {
@@ -73,7 +73,7 @@ object OcppProcessing {
     }
   }
 
-  private def parseVersion(body: Body): Either[HttpResponse, Version.Value] = {
+  private def parseVersion(body: Body): Either[HttpResponse, Version] = {
     VersionFromBody(body) match {
       case Some(version) => Right(version)
       case None => ProtocolError("Can't find an ocpp version")
@@ -115,7 +115,7 @@ object OcppProcessing {
       OcppResponse(ProtocolError(msg))
     }
 
-  private[spray] def dispatch[REQ, RES](version: Version.Value, body: Body, f: REQ => Future[RES])
+  private[spray] def dispatch[REQ, RES](version: Version, body: Body, f: REQ => Future[RES])
                                 (implicit ocppService: OcppService[REQ, RES], ec: ExecutionContext): Future[Body] =
     ocppService(version).dispatch(body, f)
 

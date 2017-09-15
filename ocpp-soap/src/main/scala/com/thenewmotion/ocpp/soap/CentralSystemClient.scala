@@ -11,7 +11,7 @@ trait CentralSystemClient extends CentralSystem with Client
 
 object CentralSystemClient {
   def apply(chargeBoxIdentity: String,
-            version: Version.Value,
+            version: Version,
             uri: Uri,
             http: Http,
             endpoint: Option[Uri] = None): CentralSystemClient = version match {

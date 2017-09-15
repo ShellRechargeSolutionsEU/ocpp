@@ -8,7 +8,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import messages._
 
 object ChargePointDispatcher {
-  def apply(version: Version.Value): Dispatcher[ChargePointReq, ChargePointRes] = version match {
+  def apply(version: Version): Dispatcher[ChargePointReq, ChargePointRes] = version match {
     case Version.V12 => sys.error("Requests to the charge point are not yet supported with OCPP 1.2")
     case Version.V15 => ChargePointDispatcherV15
   }
@@ -22,7 +22,7 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePointReq, Charg
   import com.thenewmotion.ocpp.v15.{ChargePointService => _, Value => _, _}
   import ConvertersV15._
 
-  def version: Version.Value = Version.V15
+  def version: Version = Version.V15
   val actions = ChargePointAction
   import actions._
 

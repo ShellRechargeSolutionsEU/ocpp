@@ -13,7 +13,7 @@ trait ChargePointClient extends ChargePoint with Client
 
 object ChargePointClient {
   def apply(chargeBoxIdentity: String,
-            version: Version.Value,
+            version: Version,
             uri: Uri,
             http: Http,
             endpoint: Option[Uri] = None): ChargePointClient = version match {
