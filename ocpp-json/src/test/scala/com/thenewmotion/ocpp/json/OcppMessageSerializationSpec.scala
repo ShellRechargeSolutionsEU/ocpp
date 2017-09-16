@@ -10,12 +10,12 @@ import org.specs2.mutable.Specification
 import org.specs2.matcher.MatchResult
 import org.json4s._
 import org.json4s.native.JsonParser
-import v15.Ocpp15J
 import messages._
 import messages.Meter._
-import JsonDeserializable._
 
 class OcppMessageSerializationSpec extends Specification {
+
+  import OcppMessageSerializers.Ocpp15._
 
   "OCPP message deserialization" should {
 
@@ -23,14 +23,14 @@ class OcppMessageSerializationSpec extends Specification {
 
       for (testMsg <- testMsgs) yield {
         withJsonFromFile(testMsg.jsonFileBase) { (messageAST: JValue) =>
-          Ocpp15J.deserialize(messageAST)(testMsg.jsonSerializable) mustEqual testMsg.msg
+          OcppJ.deserialize(messageAST)(testMsg.versionVariant) mustEqual testMsg.msg
         }
       }
     }
 
     "read StartTransaction requests with a local time in them" in {
       withJsonFromFile("starttransaction.localtime.request") { (messageAST: JValue) =>
-        Ocpp15J.deserialize(messageAST)(jsonDeserializable[StartTransactionReq]) mustEqual TestMsgs.startTransactionReqWithLocalTime
+        OcppJ.deserialize[StartTransactionReq, Version.V15.type](messageAST) mustEqual TestMsgs.startTransactionReqWithLocalTime
       }
     }
   }
@@ -40,7 +40,7 @@ class OcppMessageSerializationSpec extends Specification {
     "serialize messages of all types" in {
       for (testMsg <- testMsgs) yield {
         withJsonFromFile(testMsg.jsonFileBase) { (messageAST: JValue) =>
-          Ocpp15J.serialize(testMsg.msg) must beEqualToJson(messageAST)
+          testMsg.serialize must beEqualToJson(messageAST)
         }
       }
     }
@@ -49,17 +49,17 @@ class OcppMessageSerializationSpec extends Specification {
   "OCPP message serialization error handling" should {
     "throw a MappingException in case a message contains an invalid URL" in
       withJsonFromFile("updatefirmware.invalidurl.request") { messageAST =>
-        Ocpp15J.deserialize[UpdateFirmwareReq](messageAST) must throwA[MappingException]
+        OcppJ.deserialize[UpdateFirmwareReq, Version.V15.type](messageAST) must throwA[MappingException]
       }
 
     "throw a MappingException in case a MeterValues request mentions an invalid property name" in
       withJsonFromFile("metervalues.invalidproperty.request") { messageAST =>
-        Ocpp15J.deserialize[MeterValuesReq](messageAST) must throwA[MappingException]
+        OcppJ.deserialize[MeterValuesReq, Version.V15.type](messageAST) must throwA[MappingException]
       }
 
     "throw a MappingException in case an invalid status enum is given" in
       withJsonFromFile("changeavailability.invalidstatus.response") { messageAST =>
-        Ocpp15J.deserialize[ChangeAvailabilityRes](messageAST) must throwA[MappingException]
+        OcppJ.deserialize[ChangeAvailabilityRes, Version.V15.type](messageAST) must throwA[MappingException]
       }
   }
 
@@ -78,10 +78,12 @@ class OcppMessageSerializationSpec extends Specification {
     case JField(field, value) if value != JNothing => JField(field, stripJNothingFields(value))
   }
 
-  case class TestableMsg[T <: Message](jsonSerializable: JsonDeserializable[T], msg: T, jsonFileBase: String)
+  case class TestableMsg[M <: Message](msg: M, jsonFileBase: String, versionVariant: OcppMessageSerializer[M, Version.V15.type]) {
+    def serialize: JValue = OcppJ.serialize(msg)(versionVariant)
+  }
   object TestableMsg {
-    def apply[T <: Message : JsonDeserializable](msg: T, jsonFileBase: String) =
-      new TestableMsg(jsonDeserializable[T], msg, jsonFileBase)
+    def forFile[M <: Message](msg: M, jsonFileBase: String)(implicit msgSer: OcppMessageSerializer[M, Version.V15.type]): TestableMsg[M] =
+      TestableMsg(msg, jsonFileBase, msgSer)
   }
 
   private def withJsonFromFile(jsonFileBase: String)(test: JValue => MatchResult[_]) = {
@@ -97,57 +99,57 @@ class OcppMessageSerializationSpec extends Specification {
   private val testTime = utcDateTime(2013,2,1,15,9,18)
 
   private val testMsgs = List(
-    TestableMsg(TestMsgs.bootNotificationReq, "bootnotification.request"),
-    TestableMsg(TestMsgs.bootNotificationRes, "bootnotification.response"),
-    TestableMsg(TestMsgs.authorizeReq, "authorize.request"),
-    TestableMsg(TestMsgs.authorizeRes, "authorize.response"),
-    TestableMsg(TestMsgs.startTransactionReq, "starttransaction.request"),
-    TestableMsg(TestMsgs.startTransactionRes, "starttransaction.response"),
-    TestableMsg(TestMsgs.stopTransactionReq, "stoptransaction.request"),
-    TestableMsg(TestMsgs.stopTransactionRes, "stoptransaction.response"),
-    TestableMsg(TestMsgs.unlockConnectorReq, "unlockconnector.request"),
-    TestableMsg(TestMsgs.unlockConnectorRes, "unlockconnector.response"),
-    TestableMsg(TestMsgs.resetReq, "reset.request"),
-    TestableMsg(TestMsgs.resetRes, "reset.response"),
-    TestableMsg(TestMsgs.changeAvailabilityReq, "changeavailability.request"),
-    TestableMsg(TestMsgs.changeAvailabilityReqForWholeCharger, "changeavailability.wholecharger.request"),
-    TestableMsg(TestMsgs.changeAvailabilityRes, "changeavailability.response"),
-    TestableMsg(TestMsgs.statusNotificationReq, "statusnotification.request"),
-    TestableMsg(TestMsgs.statusNotificationReqInError, "statusnotification.inerror.request"),
+    TestableMsg.forFile(TestMsgs.bootNotificationReq, "bootnotification.request"),
+    TestableMsg.forFile(TestMsgs.bootNotificationRes, "bootnotification.response"),
+    TestableMsg.forFile(TestMsgs.authorizeReq, "authorize.request"),
+    TestableMsg.forFile(TestMsgs.authorizeRes, "authorize.response"),
+    TestableMsg.forFile(TestMsgs.startTransactionReq, "starttransaction.request"),
+    TestableMsg.forFile(TestMsgs.startTransactionRes, "starttransaction.response"),
+    TestableMsg.forFile(TestMsgs.stopTransactionReq, "stoptransaction.request"),
+    TestableMsg.forFile(TestMsgs.stopTransactionRes, "stoptransaction.response"),
+    TestableMsg.forFile(TestMsgs.unlockConnectorReq, "unlockconnector.request"),
+    TestableMsg.forFile(TestMsgs.unlockConnectorRes, "unlockconnector.response"),
+    TestableMsg.forFile(TestMsgs.resetReq, "reset.request"),
+    TestableMsg.forFile(TestMsgs.resetRes, "reset.response"),
+    TestableMsg.forFile(TestMsgs.changeAvailabilityReq, "changeavailability.request"),
+    TestableMsg.forFile(TestMsgs.changeAvailabilityReqForWholeCharger, "changeavailability.wholecharger.request"),
+    TestableMsg.forFile(TestMsgs.changeAvailabilityRes, "changeavailability.response"),
+    TestableMsg.forFile(TestMsgs.statusNotificationReq, "statusnotification.request"),
+    TestableMsg.forFile(TestMsgs.statusNotificationReqInError, "statusnotification.inerror.request"),
     // The case that there is an error but the message gives NoError as the error code. Makes no sense but the OCPP
     // standard doesn't disallow it.
-    TestableMsg(TestMsgs.statusNotificationReqInErrorNoError, "statusnotification.inerror-noerror.request"),
-    TestableMsg(TestMsgs.statusNotificationRes, "statusnotification.response"),
-    TestableMsg(TestMsgs.remoteStartTransactionReq, "remotestarttransaction.request"),
-    TestableMsg(TestMsgs.remoteStartTransactionRes, "remotestarttransaction.response"),
-    TestableMsg(TestMsgs.remoteStopTransactionReq, "remotestoptransaction.request"),
-    TestableMsg(TestMsgs.remoteStopTransactionRes, "remotestoptransaction.response"),
-    TestableMsg(TestMsgs.heartbeatReq, "heartbeat.request"),
-    TestableMsg(TestMsgs.heartbeatRes, "heartbeat.response"),
-    TestableMsg(TestMsgs.updateFirmwareReq, "updatefirmware.request"),
-    TestableMsg(TestMsgs.updateFirmwareRes, "updatefirmware.response"),
-    TestableMsg(TestMsgs.firmwareStatusNotificationReq, "firmwarestatusnotification.request"),
-    TestableMsg(TestMsgs.firmwareStatusNotificationRes, "firmwarestatusnotification.response"),
-    TestableMsg(TestMsgs.getDiagnosticsReq, "getdiagnostics.request"),
-    TestableMsg(TestMsgs.getDiagnosticsRes, "getdiagnostics.response"),
-    TestableMsg(TestMsgs.diagnosticsStatusNotificationReq, "diagnosticsstatusnotification.request"),
-    TestableMsg(TestMsgs.diagnosticsStatusNotificationRes, "diagnosticsstatusnotification.response"),
-    TestableMsg(TestMsgs.meterValuesReq, "metervalues.request"),
-    TestableMsg(TestMsgs.meterValuesRes, "metervalues.response"),
-    TestableMsg(TestMsgs.changeConfigurationReq, "changeconfiguration.request"),
-    TestableMsg(TestMsgs.changeConfigurationRes, "changeconfiguration.response"),
-    TestableMsg(TestMsgs.clearCacheReq, "clearcache.request"),
-    TestableMsg(TestMsgs.clearCacheRes, "clearcache.response"),
-    TestableMsg(TestMsgs.getConfigurationReq, "getconfiguration.request"),
-    TestableMsg(TestMsgs.getConfigurationRes, "getconfiguration.response"),
-    TestableMsg(TestMsgs.getLocalListVersionReq, "getlocallistversion.request"),
-    TestableMsg(TestMsgs.getLocalListVersionRes, "getlocallistversion.response"),
-    TestableMsg(TestMsgs.sendLocalListReq, "sendlocallist.request"),
-    TestableMsg(TestMsgs.sendLocalListRes, "sendlocallist.response"),
-    TestableMsg(TestMsgs.reserveNowReq, "reservenow.request"),
-    TestableMsg(TestMsgs.reserveNowRes, "reservenow.response"),
-    TestableMsg(TestMsgs.cancelReservationReq, "cancelreservation.request"),
-    TestableMsg(TestMsgs.cancelReservationRes, "cancelreservation.response")
+    TestableMsg.forFile(TestMsgs.statusNotificationReqInErrorNoError, "statusnotification.inerror-noerror.request"),
+    TestableMsg.forFile(TestMsgs.statusNotificationRes, "statusnotification.response"),
+    TestableMsg.forFile(TestMsgs.remoteStartTransactionReq, "remotestarttransaction.request"),
+    TestableMsg.forFile(TestMsgs.remoteStartTransactionRes, "remotestarttransaction.response"),
+    TestableMsg.forFile(TestMsgs.remoteStopTransactionReq, "remotestoptransaction.request"),
+    TestableMsg.forFile(TestMsgs.remoteStopTransactionRes, "remotestoptransaction.response"),
+    TestableMsg.forFile(TestMsgs.heartbeatReq, "heartbeat.request"),
+    TestableMsg.forFile(TestMsgs.heartbeatRes, "heartbeat.response"),
+    TestableMsg.forFile(TestMsgs.updateFirmwareReq, "updatefirmware.request"),
+    TestableMsg.forFile(TestMsgs.updateFirmwareRes, "updatefirmware.response"),
+    TestableMsg.forFile(TestMsgs.firmwareStatusNotificationReq, "firmwarestatusnotification.request"),
+    TestableMsg.forFile(TestMsgs.firmwareStatusNotificationRes, "firmwarestatusnotification.response"),
+    TestableMsg.forFile(TestMsgs.getDiagnosticsReq, "getdiagnostics.request"),
+    TestableMsg.forFile(TestMsgs.getDiagnosticsRes, "getdiagnostics.response"),
+    TestableMsg.forFile(TestMsgs.diagnosticsStatusNotificationReq, "diagnosticsstatusnotification.request"),
+    TestableMsg.forFile(TestMsgs.diagnosticsStatusNotificationRes, "diagnosticsstatusnotification.response"),
+    TestableMsg.forFile(TestMsgs.meterValuesReq, "metervalues.request"),
+    TestableMsg.forFile(TestMsgs.meterValuesRes, "metervalues.response"),
+    TestableMsg.forFile(TestMsgs.changeConfigurationReq, "changeconfiguration.request"),
+    TestableMsg.forFile(TestMsgs.changeConfigurationRes, "changeconfiguration.response"),
+    TestableMsg.forFile(TestMsgs.clearCacheReq, "clearcache.request"),
+    TestableMsg.forFile(TestMsgs.clearCacheRes, "clearcache.response"),
+    TestableMsg.forFile(TestMsgs.getConfigurationReq, "getconfiguration.request"),
+    TestableMsg.forFile(TestMsgs.getConfigurationRes, "getconfiguration.response"),
+    TestableMsg.forFile(TestMsgs.getLocalListVersionReq, "getlocallistversion.request"),
+    TestableMsg.forFile(TestMsgs.getLocalListVersionRes, "getlocallistversion.response"),
+    TestableMsg.forFile(TestMsgs.sendLocalListReq, "sendlocallist.request"),
+    TestableMsg.forFile(TestMsgs.sendLocalListRes, "sendlocallist.response"),
+    TestableMsg.forFile(TestMsgs.reserveNowReq, "reservenow.request"),
+    TestableMsg.forFile(TestMsgs.reserveNowRes, "reservenow.response"),
+    TestableMsg.forFile(TestMsgs.cancelReservationReq, "cancelreservation.request"),
+    TestableMsg.forFile(TestMsgs.cancelReservationRes, "cancelreservation.response")
   )
 
   private object TestMsgs {

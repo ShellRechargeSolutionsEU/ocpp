@@ -1,25 +1,25 @@
-package com.thenewmotion.ocpp.json
+package com.thenewmotion.ocpp
+package json
 
-import com.thenewmotion.ocpp.{Version, messages}
 import org.json4s._
+import native.JsonMethods.{compact, render}
+import messages.Message
 
-/** Reading and writing OCPP 1.5 messages encoded with JSON */
+
+/** Reading and writing OCPP 1.x messages encoded with JSON */
 object OcppJ {
 
   implicit val formats: Formats = DefaultFormats + new ZonedDateTimeJsonFormat
 
-  def serialize[M <: messages.Message, V <: Version](msg: M)(implicit versionVariant: VersionVariant[_, V]): JValue =
-    Extraction.decompose(versionVariant.to(msg))
+  def serialize[M <: Message, V <: Version](msg: M)(implicit versionVariant: OcppMessageSerializer[M, V]): JValue =
+    versionVariant.serialize(msg)
 
-//  def write[M <: messages.Message](msg: M)(implicit versionVariant: VersionVariant[M, _, Version.type]): String =
-//    compact(render(serialize(msg)))
+  def write[M <: messages.Message, V <: Version](msg: M)(implicit versionVariant: OcppMessageSerializer[M, V]): String =
+    compact(render(serialize[M, V](msg)))
 
-  def deserialize[M <: VersionSpecificMessage : Manifest](json: JValue)(implicit versionVariant: VersionVariant[M, Version]): messages.Message = {
-    val msg = Extraction.extract[M](json)
-    versionVariant.from(msg)
-  }
-//  def read[M <: messages.Message : JsonDeserializable](s: String)(implicit versionVariant: VersionVariant[M, _, Version.type]): M =
-//    deserialize[M](JsonParser.parse(s))
+  def deserialize[M <: Message, V <: Version](json: JValue)(implicit versionVariant: OcppMessageSerializer[M, V]): M =
+    versionVariant.deserialize(json)
 
-
+  def read[M <: Message, V <: Version](s: String)(implicit versionVariant: OcppMessageSerializer[M,  V]): M =
+    deserialize[M, V](native.JsonParser.parse(s))
 }

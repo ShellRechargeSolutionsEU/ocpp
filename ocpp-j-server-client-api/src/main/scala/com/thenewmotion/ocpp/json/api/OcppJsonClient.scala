@@ -22,7 +22,7 @@ abstract class OcppJsonClient(
     val srpcConnection = new DefaultSrpcConnection
     val ocppConnection = new ChargePointOcppConnection
 
-    override def onRequest(req: ChargePointReq): Future[ChargePointRes] =
+    override def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES] =
       OcppJsonClient.this.onRequest(req)
 
     override def onOcppError(error: OcppError): Unit = OcppJsonClient.this.onError(error)

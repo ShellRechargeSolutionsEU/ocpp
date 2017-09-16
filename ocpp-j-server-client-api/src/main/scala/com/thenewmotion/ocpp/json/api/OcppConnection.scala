@@ -1,13 +1,13 @@
-package com.thenewmotion.ocpp.json.api
+package com.thenewmotion.ocpp
+package json
+package api
 
-import com.thenewmotion.ocpp.{Version, messages}
 import com.thenewmotion.ocpp.messages._
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
 import scala.collection.mutable
-import com.thenewmotion.ocpp.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -33,7 +33,7 @@ trait OcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES 
 
   def ocppConnection: OcppConnection
 
-  def onRequest(req: INREQ): Future[OUTRES]
+  def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
   def onOcppError(error: OcppError)
 }
 
@@ -42,7 +42,7 @@ case class OcppError(error: PayloadErrorCode.Value, description: String)
 case class OcppException(ocppError: OcppError) extends Exception(s"${ocppError.error}: ${ocppError.description}")
 object OcppException {
   def apply(error: PayloadErrorCode.Value, description: String): OcppException =
-    OcppException(new OcppError(error, description))
+    OcppException(OcppError(error, description))
 }
 
 trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES <: Res]
@@ -52,14 +52,14 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
 
   trait DefaultOcppConnection extends OcppConnection {
     /** The operations that the other side can request from us */
-    val ourOperations: JsonOperations[INREQ, OUTRES]
-    val theirOperations: JsonOperations[OUTREQ, INRES]
+    val ourOperations: JsonOperations[INREQ, OUTRES, Version.V15.type]
+    val theirOperations: JsonOperations[OUTREQ, INRES, Version.V15.type]
 
     private val logger = LoggerFactory.getLogger(DefaultOcppConnection.this.getClass)
 
     private[this] val callIdGenerator = CallIdGenerator()
 
-    sealed case class OutstandingRequest[REQ <: OUTREQ, RES <: INRES](operation: JsonOperation[REQ, RES],
+    sealed case class OutstandingRequest[REQ <: OUTREQ, RES <: INRES](operation: JsonOperation[REQ, RES, Version.V15.type],
                                                                       responsePromise: Promise[RES])
 
     private[this] val callIdCache: mutable.Map[String, OutstandingRequest[_, _]] = mutable.Map()
@@ -85,9 +85,8 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
         case NotImplemented => respondWithError(PayloadErrorCode.NotImplemented, s"Unknown operation $opName")
         case Unsupported => respondWithError(PayloadErrorCode.NotSupported, s"We do not support $opName")
         case Supported(operation) =>
-          val ocppMsg = operation.deserializeReq(req.payload)
-          val responseSrpc = onRequest(ocppMsg) map {
-            responseToSrpc(req.callId, _)
+          val responseSrpc = operation.reqRes(req.payload)((req, rr) => onRequest(req)(rr)) map { res =>
+            ResponseMessage(req.callId, res)
           } recover {
             case e: Exception =>
               logger.warn(s"Exception processing OCPP request {}: {} {}",
@@ -107,12 +106,6 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
                 s"OCPP response future failed for $opName with call ID ${req.callId}. This ought to be impossible.")
           }
       }
-    }
-
-    private def responseToSrpc[REQ <: INREQ, RES <: OUTRES](callId: String, response: OUTRES): TransportMessage = {
-      //TODO hardcoded on 1.5 needs to come from parameter or something
-      implicit val versionVariant = JsonDeserializable.V15Variant
-      ResponseMessage(callId, OcppJ.serialize[messages.Message, Version.V15.type](response))
     }
 
     private def handleIncomingResponse(res: ResponseMessage) {
@@ -148,17 +141,16 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
       }
     }
 
-    private def sendRequestWithJsonOperation[REQ <: OUTREQ, RES <: INRES](req: REQ,
-                                                                          jsonOperation: JsonOperation[REQ, RES]) = {
+    private def sendRequestWithJsonOperation[REQ <: OUTREQ, RES <: INRES](
+      req: REQ,
+      jsonOperation: JsonOperation[REQ, RES, Version.V15.type]
+    ) = {
       val callId = callIdGenerator.next()
       val responsePromise = Promise[RES]()
 
       callIdCache.put(callId, OutstandingRequest[REQ, RES](jsonOperation, responsePromise))
 
-      //TODO hardcoded on 1.5 needs to come from parameter or something
-      implicit val versionVariant = JsonDeserializable.V15Variant
-      val msg:messages.Message = req
-      srpcConnection.send(RequestMessage(callId, getProcedureName(req), OcppJ.serialize[messages.Message, Version.V15.type](msg)))
+      srpcConnection.send(RequestMessage(callId, getProcedureName(req), jsonOperation.serializeReq(req)))
       responsePromise.future
     }
 
@@ -167,7 +159,7 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
     }
   }
 
-  def onRequest(req: INREQ): Future[OUTRES]
+  def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
   def onOcppError(error: OcppError): Unit
 
   def onSrpcMessage(msg: TransportMessage) = ocppConnection.onSrpcMessage(msg)
@@ -178,8 +170,8 @@ trait ChargePointOcppConnectionComponent
   this: SrpcComponent =>
 
   class ChargePointOcppConnection extends DefaultOcppConnection {
-    val ourOperations = ChargePointOperations
-    val theirOperations = CentralSystemOperations
+    val ourOperations = ChargePointOperationsV15
+    val theirOperations = CentralSystemOperationsV15
   }
 }
 

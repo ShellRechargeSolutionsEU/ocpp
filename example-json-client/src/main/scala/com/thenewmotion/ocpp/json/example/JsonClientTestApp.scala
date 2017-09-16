@@ -21,11 +21,12 @@ object JsonClientTestApp extends App {
   private val logger = LoggerFactory.getLogger(JsonClientTestApp.getClass)
 
   val connection = new OcppJsonClient(chargerId, new URI(centralSystemUri), authPassword, ocppProtocol) {
-    def onRequest(req: ChargePointReq): Future[ChargePointRes] = Future {
+    // TODO: get rid of asInstanceOf, by creating specific onBootNotification etc callbacks? Or moving it into OcppConnection?
+    def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES] = Future {
       req match {
         case GetLocalListVersionReq =>
           logger.info("Received GetLocalListVersionReq")
-          GetLocalListVersionRes(AuthListNotSupported)
+          GetLocalListVersionRes(AuthListNotSupported).asInstanceOf[RES]
         case x =>
           logger.info(s"Received $x")
           throw OcppException(PayloadErrorCode.NotSupported, "Demo app doesn't support that")

@@ -8,7 +8,6 @@ import org.scalacheck.Gen
 import org.scalacheck.Prop.forAll
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
-import v15.Ocpp15J
 
 object JsonV15MessageSerializationSpec extends Specification with ScalaCheck {
 

@@ -135,7 +135,13 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
       }
       val ocppConnection = new ChargePointOcppConnection
 
-      def onRequest(request: ChargePointReq) = Future { DefaultOcppConnectionScope.this.onRequest(request) }
+      def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](
+        request: REQ
+      )(
+        implicit reqRes: ReqRes[REQ, RES]
+        // TODO get rid of asInstanceOf
+      ): Future[RES] = Future { DefaultOcppConnectionScope.this.onRequest(request).asInstanceOf[RES] }
+
       def onOcppError(err: OcppError) = DefaultOcppConnectionScope.this.onError(err)
     }
   }
