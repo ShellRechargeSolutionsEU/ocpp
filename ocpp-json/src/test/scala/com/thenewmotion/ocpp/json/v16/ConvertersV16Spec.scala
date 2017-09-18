@@ -19,9 +19,7 @@ object ConvertersV16Spec extends Specification with ScalaCheck {
 
     "result in the same object after v16->generic->v16 transformation" in {
       forAll(messageGen) { msg =>
-        // println(s"before: $msg")
         val after = ConvertersV16.toV16(ConvertersV16.fromV16(msg))
-        // println(s"after:  $after")
         after == msg
       }
     }
@@ -91,6 +89,37 @@ object Generators {
       "Available", "Preparing", "Charging", "SuspendedEV", "SuspendedEVSE",
       "Finishing", "Unavailable", "Reserved", "Faulted"
     )
+
+  def rateLimitGen: Gen[Float] = Gen.chooseNum(0, 32).map(x => (x * 10).toFloat / 10)
+
+  def chargingSchedulePeriodGen: Gen[ChargingSchedulePeriod] =
+    for {
+      startPeriod <- Gen.chooseNum(1, 4000000)
+      limit <- rateLimitGen
+      numberPhases <- Gen.option(Gen.oneOf(1, 2, 3))
+    } yield ChargingSchedulePeriod(startPeriod, limit, numberPhases)
+
+  def chargingScheduleGen: Gen[ChargingSchedule] =
+    for {
+      chargingRateUnit <- enumerableNameGen(messages.UnitOfChargeRate)
+      chargingSchedulePeriod <- Gen.listOf(chargingSchedulePeriodGen)
+      duration <- Gen.option(Gen.chooseNum(1, 4000000))
+      startSchedule <- Gen.option(dateTimeGen)
+      minChargingRate <- Gen.option(rateLimitGen)
+    } yield ChargingSchedule(chargingRateUnit, chargingSchedulePeriod, duration, startSchedule,minChargingRate)
+
+  def chargingProfileGen: Gen[ChargingProfile] =
+    for {
+      id <- Gen.choose(1, 32500)
+      stackLevel <- Gen.choose(1, 10)
+      purpose <- enumerableNameGen(messages.ChargingProfilePurpose)
+      kind <- Gen.oneOf("Relative", "Absolute", "Recurring")
+      schedule <- chargingScheduleGen
+      transactionId <- Gen.option(transactionIdGen)
+      recurrencyKind <- if (kind == "Recurring") Gen.some(Gen.oneOf("Daily", "Weekly")) else Gen.const(None)
+      validFrom <- Gen.option(dateTimeGen)
+      validTo <- Gen.option(dateTimeGen)
+    } yield ChargingProfile(id, stackLevel, purpose, kind, schedule, transactionId, recurrencyKind, validFrom, validTo)
 
   def enumerableGen[T <: Nameable](e: Enumerable[T]): Gen[T]  =
     Gen.oneOf(e.values.toList)
@@ -226,6 +255,16 @@ object Generators {
           Gen.const(None)
     } yield StatusNotificationReq(connectorId, status, errorCode, info, timestamp, vendorId, vendorErrorCode)
 
+  def statusNotificationResGen: Gen[StatusNotificationRes] =
+    Gen.const(StatusNotificationRes())
+
+  def remoteStartTransactionReqGen: Gen[RemoteStartTransactionReq] =
+    for {
+      idTag <- idTagGen
+      connectorId <- Gen.option(connectorIdGen)
+      chargingProfile <- Gen.option(chargingProfileGen)
+    } yield RemoteStartTransactionReq(idTag, connectorId, chargingProfile)
+
   def updateFirmwareReqGen: Gen[UpdateFirmwareReq] =
     for {
       retrieveDate <- dateTimeGen
@@ -251,6 +290,8 @@ object Generators {
       changeAvailabilityReqGen,
       changeAvailabilityResGen,
       statusNotificationReqGen,
+      statusNotificationResGen,
+      remoteStartTransactionReqGen,
       updateFirmwareReqGen,
       updateFirmwareResGen
     )

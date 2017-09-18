@@ -670,7 +670,7 @@ object ConvertersV16 {
   private implicit class RichChargingSchedule(cs: messages.ChargingSchedule) {
     def toV16: ChargingSchedule =
       ChargingSchedule(
-        cs.chargingRateUnit.toString,
+        cs.chargingRateUnit.name,
         periodToV16,
         cs.duration.map(_.toSeconds.toInt),
         cs.startsAt,
@@ -709,23 +709,23 @@ object ConvertersV16 {
       v16p.chargingProfileId,
       v16p.stackLevel,
       enumerableFromJsonString(messages.ChargingProfilePurpose, v16p.chargingProfilePurpose),
-      stringToProfileKind(v16p.chargingProfileKind),
+      stringToProfileKind(v16p.chargingProfileKind, v16p.recurrencyKind),
       chargingScheduleFromV16(v16p.chargingSchedule),
       v16p.transactionId,
       v16p.validFrom,
       v16p.validTo
     )
 
-  private def stringToProfileKind(v16cpk: String): messages.ChargingProfileKind = {
+  private def stringToProfileKind(v16cpk: String, v16rk: Option[String]): messages.ChargingProfileKind = {
     import messages.ChargingProfileKind._
     import messages.RecurrencyKind._
 
-    v16cpk match {
-      case "Absolute" => Absolute
-      case "Relative" => Relative
-      case "Weekly" => Recurring(Weekly)
-      case "Daily" => Recurring(Daily)
-      case _ => throw new MappingException(s"Unrecognized value $v16cpk for OCPP profile kind")
+    (v16cpk, v16rk) match {
+      case ("Absolute", _)               => Absolute
+      case ("Relative", _)               => Relative
+      case ("Recurring", Some("Weekly")) => Recurring(Weekly)
+      case ("Recurring", Some("Daily"))  => Recurring(Daily)
+      case _ => throw new MappingException(s"Unrecognized values ($v16cpk, $v16rk) for OCPP profile/recurrency kind")
     }
   }
 
