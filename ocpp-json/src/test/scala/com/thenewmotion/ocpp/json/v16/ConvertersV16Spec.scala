@@ -265,6 +265,15 @@ object Generators {
       chargingProfile <- Gen.option(chargingProfileGen)
     } yield RemoteStartTransactionReq(idTag, connectorId, chargingProfile)
 
+  def remoteStartTransactionResGen: Gen[RemoteStartTransactionRes] =
+    acceptanceGen.map(RemoteStartTransactionRes)
+
+  def remoteStopTransactionReqGen: Gen[RemoteStopTransactionReq] =
+    transactionIdGen.map(RemoteStopTransactionReq)
+
+  def remoteStopTransactionResGen: Gen[RemoteStopTransactionRes] =
+    acceptanceGen.map(RemoteStopTransactionRes)
+
   def updateFirmwareReqGen: Gen[UpdateFirmwareReq] =
     for {
       retrieveDate <- dateTimeGen
@@ -292,6 +301,9 @@ object Generators {
       statusNotificationReqGen,
       statusNotificationResGen,
       remoteStartTransactionReqGen,
+      remoteStartTransactionResGen,
+      remoteStopTransactionReqGen,
+      remoteStopTransactionResGen,
       updateFirmwareReqGen,
       updateFirmwareResGen
     )

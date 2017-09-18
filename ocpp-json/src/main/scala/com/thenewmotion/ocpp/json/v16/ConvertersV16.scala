@@ -691,14 +691,22 @@ object ConvertersV16 {
     messages.ChargingSchedulePeriod(v16sp.startPeriod.seconds, v16sp.limit.toDouble, v16sp.numberPhases)
 
   private implicit class RichChargingProfile(cp: messages.ChargingProfile) {
+
+    import messages.ChargingProfileKind._
     def toV16: ChargingProfile = ChargingProfile(
       cp.id,
       cp.stackLevel,
-      cp.chargingProfilePurpose.toString,
-      cp.chargingProfileKind.toString,
+      cp.chargingProfilePurpose.name,
+      cp.chargingProfileKind match {
+        case Recurring(_) => "Recurring"
+        case k            => k.toString
+      },
       cp.chargingSchedule.toV16,
       cp.transactionId,
-      None,
+      cp.chargingProfileKind match {
+        case Recurring(recKind) => Some(recKind.name)
+        case _                  => None
+      },
       cp.validFrom,
       cp.validTo
     )
