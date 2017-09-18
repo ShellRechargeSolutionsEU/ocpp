@@ -1,20 +1,14 @@
 package com.thenewmotion.ocpp
 package json
 
-import org.json4s.{DefaultFormats, Extraction, JValue, MappingException}
+import org.json4s.{DefaultFormats, Extraction, JValue}
 
 /**
  * A typeclass of all types that can be serialized to/from any supported OCPP-JSON version
  *
- * @tparam T The message type, for example com.thenewmotion.ocpp.messages.AuthorizeReq
+ * @tparam M The message type, for example com.thenewmotion.ocpp.messages.AuthorizeReq
+ * @tparam V The version to/from which the message can be serialized
  */
-trait JsonDeserializable[T <: messages.Message] {
-
-  def fromVersionSpecific(msg: VersionSpecificMessage): T
-
-  def deserialize(json: JValue): T
-}
-
 trait OcppMessageSerializer[M <: messages.Message, V <: Version] {
 
   protected type VersionSpecific
@@ -46,7 +40,6 @@ object OcppMessageSerializer {
       override protected def from(msg: SpecM): M = _from(msg)
   }
 }
-
 
 object OcppMessageSerializers {
 
