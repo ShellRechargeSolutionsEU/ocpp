@@ -27,8 +27,7 @@ object ConvertersV16Spec extends Specification with ScalaCheck {
 object Generators {
 
   def transactionIdGen = Gen.chooseNum(1, 4000)
-  // TODO defaulting to Local breaks our property (None is not preserved)
-  def stopReasonGen = enumerableNameGen(messages.StopReason).map(Some(_))
+  def stopReasonGen = enumerableWithDefaultNameGen(messages.StopReason)
 
   // currently None goes to Some(List()) after two-way conversion
   def txnDataGen = Gen.some(Gen.listOf(meterGen))
@@ -55,15 +54,15 @@ object Generators {
     value <- Gen.alphaNumStr
   // TODO defaulting breaks property
   // TODO create an EnumerableWithDefault trait
-    context <- enumerableNameGenWithDefault(messages.Meter.ReadingContext, messages.Meter.ReadingContext.SamplePeriodic)
+    context <- enumerableWithDefaultNameGen(messages.Meter.ReadingContext)
   // TODO generating these creates freak java.lang.InternalError
     format <- Gen.const(None) // enumerableNameGenWithDefault(messages.Meter.ValueFormat, messages.Meter.ValueFormat.Raw)
-    measurand <- enumerableNameGenWithDefault(messages.Meter.Measurand, messages.Meter.Measurand.EnergyActiveImportRegister)
+    measurand <- enumerableWithDefaultNameGen(messages.Meter.Measurand)
   // TODO move Phase enumeration under Meter
     phase <- Gen.option(enumerableNameGen(messages.Phase))
     // TODO generating these creates freak java.lang.InternalError
     location <- Gen.const(None) // enumerableNameGenWithDefault(messages.Meter.Location, messages.Meter.Location.Outlet)
-    unit <- enumerableNameGenWithDefault(messages.Meter.UnitOfMeasure, messages.Meter.UnitOfMeasure.Wh)
+    unit <- enumerableWithDefaultNameGen(messages.Meter.UnitOfMeasure)
   } yield MeterValue(value, context, format, measurand, phase, location, unit)
 
   def enumerableGen[T <: Nameable](e: Enumerable[T]): Gen[T]  =
@@ -75,6 +74,14 @@ object Generators {
     enumerableGen(e) map {
       case `default`       => None
       case nonDefaultValue => Some(nonDefaultValue.name)
+    }
+
+  def enumerableWithDefaultNameGen[T <: Nameable](e: messages.EnumerableWithDefault[T]): Gen[Option[String]] =
+    enumerableGen(e) map { value =>
+      if (value == e.default)
+        None
+      else
+        Some(value.name)
     }
 
   def startTransactionReqGen: Gen[StartTransactionReq] =

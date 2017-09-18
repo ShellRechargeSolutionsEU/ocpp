@@ -49,7 +49,7 @@ object ConvertersV16 {
         transactionId = transactionId,
         idTag = idTag,
         timestamp = timestamp,
-        reason = Some(stopReason.name),
+        reason = noneIfDefault(messages.StopReason, stopReason),
         meterStop = meterStop,
         transactionData = Some(meters.map(_.toV16))
       )
@@ -245,9 +245,7 @@ object ConvertersV16 {
         idTag,
         timestamp,
         meterStop,
-        stopReason.fold(messages.StopReason.Local: messages.StopReason) {
-          enumerableFromJsonString(messages.StopReason, _)
-        },
+        defaultIfNone(messages.StopReason, stopReason),
         meters.fold(List.empty[messages.Meter])(_.map(meterFromV16))
       )
 
@@ -498,17 +496,14 @@ object ConvertersV16 {
       import messages.Meter._
       MeterValue(
         value = v.value,
-        measurand = noneIfDefault(Measurand.EnergyActiveImportRegister, v.measurand),
+        measurand = noneIfDefault(Measurand, v.measurand),
         phase = v.phase.map(_.name),
-        context = noneIfDefault(ReadingContext.SamplePeriodic, v.context),
-        format = noneIfDefault(ValueFormat.Raw, v.format),
-        location = noneIfDefault(Location.Outlet, v.location),
-        unit = noneIfDefault(UnitOfMeasure.Wh, v.unit)
+        context = noneIfDefault(ReadingContext, v.context),
+        format = noneIfDefault(ValueFormat, v.format),
+        location = noneIfDefault(Location, v.location),
+        unit = noneIfDefault(UnitOfMeasure, v.unit)
       )
     }
-
-    def noneIfDefault(default: Nameable, actual: Nameable): Option[String] =
-      if (actual == default) None else Some(actual.name)
   }
 
   private def meterFromV16(v16m: Meter): messages.Meter = {
@@ -522,12 +517,12 @@ object ConvertersV16 {
 
     Value(
       value = value,
-      measurand = getMeterValueProperty(measurand, Measurand, Measurand.EnergyActiveImportRegister),
+      measurand = defaultIfNone(Measurand, measurand),
       phase = phase.map(enumerableFromJsonString(Phase, _)),
-      context = getMeterValueProperty(context, ReadingContext, ReadingContext.SamplePeriodic),
-      format = getMeterValueProperty(format, ValueFormat, ValueFormat.Raw),
-      location = getMeterValueProperty(location, Location, Location.Outlet),
-      unit = getMeterValueProperty(unit, UnitOfMeasure, UnitOfMeasure.Wh)
+      context = defaultIfNone(ReadingContext, context),
+      format = defaultIfNone(ValueFormat, format),
+      location = defaultIfNone(Location, location),
+      unit = defaultIfNone(UnitOfMeasure, unit)
     )
   }
 
@@ -612,6 +607,12 @@ object ConvertersV16 {
         throw new MappingException(s"Value $s is not valid for ${enum.getClass.getSimpleName}")
       case Some(v) => v
     }
+
+  private def noneIfDefault[T <: Nameable](enumerable: messages.EnumerableWithDefault[T], actual: T): Option[String] =
+    if (actual == enumerable.default) None else Some(actual.name)
+
+  private def defaultIfNone[T <: Nameable](enumerable: messages.EnumerableWithDefault[T], str: Option[String]): T =
+    str.map(enumerableFromJsonString(enumerable, _)).getOrElse(enumerable.default)
 
   /**
    * Parses a URI and throws a lift-json MappingException if the syntax is wrong

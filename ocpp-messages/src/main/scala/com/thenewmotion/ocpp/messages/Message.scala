@@ -9,7 +9,7 @@ import enums.reflection.EnumUtils.Enumerable
 import enums.reflection.EnumUtils.Nameable
 
 sealed trait StopReason extends Nameable
-object StopReason extends Enumerable[StopReason] {
+object StopReason extends EnumerableWithDefault[StopReason] {
   case object EmergencyStop extends StopReason
   case object EVDisconnected extends StopReason
   case object HardReset extends StopReason
@@ -21,8 +21,11 @@ object StopReason extends Enumerable[StopReason] {
   case object DeAuthorized extends StopReason
   case object Local extends StopReason
   case object Other extends StopReason
+
   val values = Set(EmergencyStop, EVDisconnected, HardReset, PowerLoss,
     Reboot, Remote, SoftReset, UnlockCommand, DeAuthorized, Local, Other)
+
+  val default = Local
 }
 
 sealed trait RegistrationStatus extends Nameable
@@ -448,4 +451,8 @@ object Retries {
 
   def fromInts(numberOfRetries: Option[Int], intervalInSeconds: Option[Int]): Retries =
     Retries(numberOfRetries, intervalInSeconds.map(_.seconds))
+}
+
+trait EnumerableWithDefault[T <: Nameable] extends Enumerable[T] {
+  val default: T
 }

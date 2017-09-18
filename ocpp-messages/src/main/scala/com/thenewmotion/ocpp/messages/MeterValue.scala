@@ -34,7 +34,7 @@ object Meter {
   }
 
   sealed trait Measurand extends Nameable
-  object Measurand extends Enumerable[Measurand] {
+  object Measurand extends EnumerableWithDefault[Measurand] {
     case object EnergyActiveExportRegister extends Measurand { override def name = "Energy.Active.Export.Register" }
     case object EnergyActiveImportRegister extends Measurand { override def name = "Energy.Active.Import.Register" }
     case object EnergyReactiveExportRegister extends Measurand { override def name = "Energy.Reactive.Export.Register" }
@@ -82,18 +82,23 @@ object Meter {
       FanSpeedInRotationsPerMinute,
       StateOfChargeInPercentage
     )
+
+    val default = EnergyActiveImportRegister
   }
 
+
   sealed trait ValueFormat extends Nameable
-  object ValueFormat extends Enumerable[ValueFormat] {
+  object ValueFormat extends EnumerableWithDefault[ValueFormat] {
     case object Raw extends ValueFormat
     case object Signed extends ValueFormat
 
     val values = Set(Raw, Signed)
+
+    val default = Raw
   }
 
   sealed trait ReadingContext extends Nameable
-  object ReadingContext extends Enumerable[ReadingContext] {
+  object ReadingContext extends EnumerableWithDefault[ReadingContext] {
     case object InterruptionBegin extends ReadingContext { override def name = "Interruption.Begin" }
     case object InterruptionEnd extends ReadingContext { override def name = "Interruption.End" }
     case object SampleClock extends ReadingContext { override def name = "Sample.Clock" }
@@ -104,10 +109,12 @@ object Meter {
     case object Other extends ReadingContext { override def name = "Other" } // ocpp 1.6
 
     val values = Set(InterruptionBegin, InterruptionEnd, SampleClock, SamplePeriodic, TransactionBegin, TransactionEnd, Trigger, Other)
+
+    val default = SamplePeriodic
   }
 
   sealed trait Location extends Nameable
-  object Location extends Enumerable[Location] {
+  object Location extends EnumerableWithDefault[Location] {
     case object Inlet extends Location
     case object Outlet extends Location
     case object Body extends Location
@@ -116,10 +123,11 @@ object Meter {
     case object Cable extends Location
     case object Ev extends Location { override def name = "EV" }
     val values = Set(Inlet, Outlet, Body, Cable, Ev)
+    val default = Outlet
   }
 
   sealed trait UnitOfMeasure extends Nameable
-  object UnitOfMeasure extends Enumerable[UnitOfMeasure] {
+  object UnitOfMeasure extends EnumerableWithDefault[UnitOfMeasure] {
     case object Wh         extends UnitOfMeasure { override def name = "Wh" }
     case object Kwh        extends UnitOfMeasure { override def name = "kWh" }
     case object Varh       extends UnitOfMeasure { override def name = "varh" }
@@ -138,8 +146,11 @@ object Meter {
     case object Va         extends UnitOfMeasure { override def name = "VA" }
     case object Kva        extends UnitOfMeasure { override def name = "kVA" }
     case object Percent    extends UnitOfMeasure { override def name = "Percent" }
+
     def values = Set(Wh, Kwh, Varh, Kvarh, W, Kw, Var, Kvar, Amp, Volt, Celsius,
       Fahrenheit, Kelvin, Va, Kva, Percent)
+
+    val default = Wh
   }
 }
 
