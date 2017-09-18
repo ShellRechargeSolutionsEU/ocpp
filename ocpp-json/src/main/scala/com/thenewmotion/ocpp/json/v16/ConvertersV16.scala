@@ -512,7 +512,6 @@ object ConvertersV16 {
 
   private def meterValueFromV16(v16m: MeterValue): messages.Meter.Value = {
     import messages.Meter._
-    import messages.Phase
     import v16m._
 
     Value(

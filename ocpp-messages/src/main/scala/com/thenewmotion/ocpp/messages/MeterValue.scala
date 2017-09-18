@@ -113,6 +113,21 @@ object Meter {
     val default = SamplePeriodic
   }
 
+  sealed trait Phase extends Nameable
+  object Phase extends Enumerable[Phase] {
+    case object L1 extends Phase
+    case object L2 extends Phase
+    case object L3 extends Phase
+    case object N extends Phase
+    case object L1N extends Phase { override def name = "L1-N"}
+    case object L2N extends Phase { override def name = "L2-N"}
+    case object L3N extends Phase { override def name = "L3-N"}
+    case object L1L2 extends Phase { override def name = "L1-L2"}
+    case object L2L3 extends Phase { override def name = "L2-L3"}
+    case object L3L1 extends Phase { override def name = "L3-L1"}
+    val values = Set(L1, L2, L3, N, L1N, L2N, L3N, L1L2, L2L3, L3L1)
+  }
+
   sealed trait Location extends Nameable
   object Location extends EnumerableWithDefault[Location] {
     case object Inlet extends Location

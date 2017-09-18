@@ -52,14 +52,12 @@ object Generators {
 
   def meterValueGen: Gen[MeterValue] = for {
     value <- Gen.alphaNumStr
-  // TODO defaulting breaks property
-  // TODO create an EnumerableWithDefault trait
     context <- enumerableWithDefaultNameGen(messages.Meter.ReadingContext)
-  // TODO generating these creates freak java.lang.InternalError
+    // TODO generating these creates freak java.lang.InternalError
     format <- Gen.const(None) // enumerableNameGenWithDefault(messages.Meter.ValueFormat, messages.Meter.ValueFormat.Raw)
     measurand <- enumerableWithDefaultNameGen(messages.Meter.Measurand)
-  // TODO move Phase enumeration under Meter
-    phase <- Gen.option(enumerableNameGen(messages.Phase))
+    // TODO generating these creates freak java.lang.InternalError
+    phase <- Gen.const(None) // Gen.option(enumerableNameGen(messages.Meter.Phase))
     // TODO generating these creates freak java.lang.InternalError
     location <- Gen.const(None) // enumerableNameGenWithDefault(messages.Meter.Location, messages.Meter.Location.Outlet)
     unit <- enumerableWithDefaultNameGen(messages.Meter.UnitOfMeasure)
