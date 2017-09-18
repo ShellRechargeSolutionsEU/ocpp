@@ -469,11 +469,17 @@ object ConvertersV16 {
 
   private def statusFieldsToOcppStatus(status: String, errorCode: String, info: Option[String],
     vendorErrorCode: Option[String]): messages.ChargePointStatus = {
-    import messages.ChargePointStatus
+    import messages.{ChargePointStatus, OccupancyKind}
+    import OccupancyKind._
+
     import RichChargePointStatus.defaultErrorCode
     status match {
       case "Available" => ChargePointStatus.Available(info)
-      case "Occupied" => ChargePointStatus.Occupied(kind = None, info)
+      case "Preparing" => ChargePointStatus.Occupied(Some(Preparing))
+      case "Charging"  => ChargePointStatus.Occupied(Some(Charging))
+      case "SuspendedEV" => ChargePointStatus.Occupied(Some(SuspendedEV))
+      case "SuspendedEVSE" => ChargePointStatus.Occupied(Some(SuspendedEVSE))
+      case "Finishing" => ChargePointStatus.Occupied(Some(Finishing))
       case "Unavailable" => ChargePointStatus.Unavailable(info)
       case "Reserved" => ChargePointStatus.Reserved(info)
       case "Faulted" =>

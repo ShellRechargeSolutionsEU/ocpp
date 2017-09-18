@@ -3,6 +3,7 @@ package json
 package v16
 
 import java.time.{ZonedDateTime, Instant, ZoneId}
+import java.net.URI
 
 import enums.reflection.EnumUtils.{Nameable, Enumerable}
 import org.scalacheck.Gen
@@ -18,7 +19,10 @@ object ConvertersV16Spec extends Specification with ScalaCheck {
 
     "result in the same object after v16->generic->v16 transformation" in {
       forAll(messageGen) { msg =>
-        ConvertersV16.toV16(ConvertersV16.fromV16(msg)) == msg
+        // println(s"before: $msg")
+        val after = ConvertersV16.toV16(ConvertersV16.fromV16(msg))
+        // println(s"after:  $after")
+        after == msg
       }
     }
   }
@@ -26,17 +30,28 @@ object ConvertersV16Spec extends Specification with ScalaCheck {
 
 object Generators {
 
-  def transactionIdGen = Gen.chooseNum(1, 4000)
-  def stopReasonGen = enumerableWithDefaultNameGen(messages.StopReason)
+  def transactionIdGen: Gen[Int] = Gen.chooseNum(1, 4000)
+  def stopReasonGen: Gen[Option[String]] = enumerableWithDefaultNameGen(messages.StopReason)
 
   // currently None goes to Some(List()) after two-way conversion
-  def txnDataGen = Gen.some(Gen.listOf(meterGen))
+  def txnDataGen: Gen[Option[List[Meter]]] = Gen.some(Gen.listOf(meterGen))
 
-  def connectorIdGen = Gen.chooseNum(1, 4)
+  def connectorIdGen: Gen[Int] = Gen.chooseNum(1, 4)
+  def connectorIdIncludingChargePointGen: Gen[Int] = Gen.chooseNum(0, 4)
   def idTagGen = Gen.listOf(Gen.alphaNumChar).map(_.mkString).suchThat(_.nonEmpty) // alphaNumStr
+
+  def idTagInfoGen: Gen[IdTagInfo] =
+    for {
+      status <- enumerableNameGen(messages.AuthorizationStatus)
+      expiryDate <- Gen.option(dateTimeGen)
+      parentIdTag <- Gen.option(idTagGen)
+    } yield IdTagInfo(status, expiryDate, parentIdTag)
+
   def meterStartGen = Gen.chooseNum(0, 6000000)
   def meterStopGen = Gen.chooseNum(0, 6000000)
   def reservationIdGen = Gen.option(Gen.choose(0, 100))
+
+  def acceptanceGen = Gen.oneOf(Gen.const("Accepted"), Gen.const("Rejected"))
 
   def dateTimeGen: Gen[ZonedDateTime] =
     for {
@@ -63,6 +78,20 @@ object Generators {
     unit <- enumerableWithDefaultNameGen(messages.Meter.UnitOfMeasure)
   } yield MeterValue(value, context, format, measurand, phase, location, unit)
 
+
+  def uriGen: Gen[String] = for {
+    scheme <- Gen.alphaStr.filter(_.nonEmpty)
+    host <- Gen.alphaNumStr.filter(_.nonEmpty)
+    path <- Gen.listOf(Gen.alphaNumStr).map(elems => "/" + elems.mkString("/"))
+    fragment <- Gen.alphaNumStr
+  } yield new URI(scheme, host, path, fragment).toString
+
+  def chargePointStatusGen: Gen[String] =
+    Gen.oneOf(
+      "Available", "Preparing", "Charging", "SuspendedEV", "SuspendedEVSE",
+      "Finishing", "Unavailable", "Reserved", "Faulted"
+    )
+
   def enumerableGen[T <: Nameable](e: Enumerable[T]): Gen[T]  =
     Gen.oneOf(e.values.toList)
 
@@ -81,6 +110,44 @@ object Generators {
       else
         Some(value.name)
     }
+
+  def words: Gen[String] = Gen.listOf(Gen.oneOf(Gen.const(' '), Gen.alphaNumChar)).map(_.mkString)
+
+  def bootNotificationReqGen: Gen[BootNotificationReq] =
+    for {
+      chargePointVendor <- Gen.alphaNumStr
+      chargePointModel <- words
+      chargePointSerialNumber <- Gen.option(Gen.alphaNumStr)
+      chargeBoxSerialNumber <- Gen.option(Gen.alphaNumStr)
+      firmwareVersion <- Gen.option(Gen.alphaNumStr)
+      iccid <- Gen.option(Gen.numStr)
+      imsi <- Gen.option(Gen.numStr)
+      meterType <- Gen.option(Gen.alphaNumStr)
+      meterSerialNumber <- Gen.option(Gen.alphaNumStr)
+    } yield BootNotificationReq(
+      chargePointVendor,
+      chargePointModel,
+      chargePointSerialNumber,
+      chargeBoxSerialNumber,
+      firmwareVersion,
+      iccid,
+      imsi,
+      meterType,
+      meterSerialNumber
+    )
+
+  def bootNotificationResGen: Gen[BootNotificationRes] =
+    for {
+      status <- enumerableNameGen(messages.RegistrationStatus)
+      currentTime <- dateTimeGen
+      interval <- Gen.chooseNum(0, 100000)
+    } yield BootNotificationRes(status, currentTime, interval)
+
+  def authorizeReqGen: Gen[AuthorizeReq] =
+    idTagGen.map(AuthorizeReq)
+
+  def authorizeResGen: Gen[AuthorizeRes] =
+    idTagInfoGen.map(AuthorizeRes)
 
   def startTransactionReqGen: Gen[StartTransactionReq] =
     for {
@@ -118,7 +185,74 @@ object Generators {
       )
     }
 
+  def unlockConnectorReqGen: Gen[UnlockConnectorReq] =
+    connectorIdGen.map(UnlockConnectorReq)
+
+  def unlockConnectorResGen: Gen [UnlockConnectorRes] =
+    enumerableNameGen(messages.UnlockStatus).map(UnlockConnectorRes)
+
+  def resetReqGen: Gen[ResetReq] =
+    enumerableNameGen(messages.ResetType).map(ResetReq)
+
+  def resetResGen: Gen[ResetRes] =
+    acceptanceGen.map(ResetRes)
+
+  def changeAvailabilityReqGen: Gen[ChangeAvailabilityReq] =
+    for {
+      connectorId <- connectorIdIncludingChargePointGen
+      avaType <- enumerableNameGen(messages.AvailabilityType)
+    } yield ChangeAvailabilityReq(connectorId, avaType)
+
+  def changeAvailabilityResGen: Gen[ChangeAvailabilityRes] =
+    enumerableNameGen(messages.AvailabilityStatus).map(ChangeAvailabilityRes)
+
+  def statusNotificationReqGen: Gen[StatusNotificationReq] =
+    for {
+      connectorId <- connectorIdIncludingChargePointGen
+      status <- chargePointStatusGen
+      errorCode <- if (status == "Faulted")
+          enumerableNameGen(messages.ChargePointErrorCode)
+        else
+          Gen.const("NoError")
+      info <- if (status == "Faulted")
+          Gen.option(words)
+        else
+          Gen.const(None)
+      timestamp <- Gen.option(dateTimeGen)
+      vendorId <- Gen.option(Gen.alphaNumStr)
+      vendorErrorCode <- if (status == "Faulted")
+          Gen.option(Gen.alphaNumStr)
+        else
+          Gen.const(None)
+    } yield StatusNotificationReq(connectorId, status, errorCode, info, timestamp, vendorId, vendorErrorCode)
+
+  def updateFirmwareReqGen: Gen[UpdateFirmwareReq] =
+    for {
+      retrieveDate <- dateTimeGen
+      location <- uriGen
+      retries <- Gen.option(Gen.chooseNum(1, 5))
+      retryInterval <- Gen.option(Gen.chooseNum(0, 600))
+    } yield UpdateFirmwareReq(retrieveDate, location, retries, retryInterval)
+
+  def updateFirmwareResGen: Gen[UpdateFirmwareRes] = Gen.const(UpdateFirmwareRes())
+
   def messageGen: Gen[Message] =
-    Gen.oneOf(startTransactionReqGen, stopTransactionReqGen)
+    Gen.oneOf(
+      bootNotificationReqGen,
+      bootNotificationResGen,
+      authorizeReqGen,
+      authorizeResGen,
+      startTransactionReqGen,
+      stopTransactionReqGen,
+      unlockConnectorReqGen,
+      unlockConnectorResGen,
+      resetReqGen,
+      resetResGen,
+      changeAvailabilityReqGen,
+      changeAvailabilityResGen,
+      statusNotificationReqGen,
+      updateFirmwareReqGen,
+      updateFirmwareResGen
+    )
 }
 
