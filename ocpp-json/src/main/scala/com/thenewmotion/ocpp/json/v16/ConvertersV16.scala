@@ -738,14 +738,14 @@ object ConvertersV16 {
         periodToV16,
         cs.duration.map(_.toSeconds.toInt),
         cs.startsAt,
-        cs.minChargingRate.map(_.toFloat)
+        cs.minChargingRate.map(toOneDigitFraction)
       )
 
     def periodToV16: List[ChargingSchedulePeriod] =
       cs.chargingSchedulePeriods.map { csp =>
         ChargingSchedulePeriod(
           csp.startOffset.toSeconds.toInt,
-          csp.amperesLimit.toFloat,
+          toOneDigitFraction(csp.amperesLimit),
           csp.numberPhases
         )
       }
@@ -753,6 +753,8 @@ object ConvertersV16 {
 
   private def periodFromV16(v16sp: ChargingSchedulePeriod): messages.ChargingSchedulePeriod =
     messages.ChargingSchedulePeriod(v16sp.startPeriod.seconds, v16sp.limit.toDouble, v16sp.numberPhases)
+
+  private def toOneDigitFraction(v: Double): Float = (v * 10).round.toFloat / 10
 
   private implicit class RichChargingProfile(cp: messages.ChargingProfile) {
 
