@@ -67,8 +67,7 @@ object ConvertersV16Spec extends Specification with ScalaCheck {
     testMessageClass(getCompositeScheduleResGen)
     testMessageClass(setChargingProfileReqGen)
     testMessageClass(setChargingProfileResGen)
-    // TODO bombs out with MatchErrors
-    // testMessageClass(triggerMessageReqGen)
+    testMessageClass(triggerMessageReqGen)
     testMessageClass(triggerMessageResGen)
   }
 
@@ -124,12 +123,12 @@ object Generators {
   def meterValueGen: Gen[MeterValue] = for {
     value <- Gen.alphaNumStr
     context <- enumerableWithDefaultNameGen(messages.Meter.ReadingContext)
-    // TODO generating these creates freak java.lang.InternalError
+    // Hmm, generating these creates freak java.lang.InternalError
     format <- Gen.const(None) // enumerableNameGenWithDefault(messages.Meter.ValueFormat, messages.Meter.ValueFormat.Raw)
     measurand <- enumerableWithDefaultNameGen(messages.Meter.Measurand)
-    // TODO generating these creates freak java.lang.InternalError
+    // Hmm, generating these creates freak java.lang.InternalError
     phase <- Gen.const(None) // Gen.option(enumerableNameGen(messages.Meter.Phase))
-    // TODO generating these creates freak java.lang.InternalError
+    // Hmm, generating these creates freak java.lang.InternalError
     location <- Gen.const(None) // enumerableNameGenWithDefault(messages.Meter.Location, messages.Meter.Location.Outlet)
     unit <- enumerableWithDefaultNameGen(messages.Meter.UnitOfMeasure)
   } yield MeterValue(value, context, format, measurand, phase, location, unit)
@@ -488,6 +487,7 @@ object Generators {
         Gen.const("MeterValues"))
       connectorId <- requestedMessage match {
         case "StatusNotification" | "MeterValues" => Gen.option(connectorIdIncludingChargePointGen)
+        case _ => Gen.const(None)
       }
     } yield TriggerMessageReq(requestedMessage, connectorId)
 
