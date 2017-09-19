@@ -15,7 +15,7 @@ import messages.meter._
 
 class OcppMessageSerializationSpec extends Specification {
 
-  import OcppMessageSerializers.Ocpp15._
+  import v15.ConvertersV15._
 
   "OCPP message deserialization" should {
 
