@@ -45,15 +45,12 @@ object Helpers {
 
   def meterValueGen: Gen[MeterValue] = for {
     value <- alphaNumStr
-    context <- enumerableWithDefaultNameGen(messages.Meter.ReadingContext)
-    // Hmm, generating these creates freak java.lang.InternalError
-    format <- const(None) // enumerableNameGenWithDefault(messages.Meter.ValueFormat, messages.Meter.ValueFormat.Raw)
-    measurand <- enumerableWithDefaultNameGen(messages.Meter.Measurand)
-    // Hmm, generating these creates freak java.lang.InternalError
-    phase <- const(None) // option(enumerableNameGen(messages.Meter.Phase))
-    // Hmm, generating these creates freak java.lang.InternalError
-    location <- const(None) // enumerableNameGenWithDefault(messages.Meter.Location, messages.Meter.Location.Outlet)
-    unit <- enumerableWithDefaultNameGen(messages.Meter.UnitOfMeasure)
+    context <- enumerableWithDefaultNameGen(messages.meter.ReadingContext)
+    format <- enumerableNameGenWithDefault(messages.meter.ValueFormat, messages.meter.ValueFormat.Raw)
+    measurand <- enumerableWithDefaultNameGen(messages.meter.Measurand)
+    phase <- option(enumerableNameGen(messages.meter.Phase))
+    location <- enumerableNameGenWithDefault(messages.meter.Location, messages.meter.Location.Outlet)
+    unit <- enumerableWithDefaultNameGen(messages.meter.UnitOfMeasure)
   } yield MeterValue(value, context, format, measurand, phase, location, unit)
 
 

@@ -288,7 +288,7 @@ object ConvertersV15 {
     case DiagnosticsStatusNotificationRes() => messages.DiagnosticsStatusNotificationRes
 
     case MeterValuesReq(connectorId, transactionId, values) =>
-      val meters: List[messages.Meter] = values.fold(List.empty[messages.Meter])(_.map(meterFromV15))
+      val meters: List[messages.meter.Meter] = values.fold(List.empty[messages.meter.Meter])(_.map(meterFromV15))
       messages.MeterValuesReq(messages.Scope.fromOcpp(connectorId), transactionId, meters)
 
     case MeterValuesRes() => messages.MeterValuesRes
@@ -395,14 +395,14 @@ object ConvertersV15 {
     }
   }
 
-  private implicit class RichMeter(self: messages.Meter) {
+  private implicit class RichMeter(self: messages.meter.Meter) {
     def toV15: Meter = Meter(
       timestamp = self.timestamp,
       values = self.values.map(valueToV15)
     )
 
-    def valueToV15(v: messages.Meter.Value): MeterValue = {
-      import messages.Meter._
+    def valueToV15(v: messages.meter.Value): MeterValue = {
+      import messages.meter._
       MeterValue(
         value = v.value,
         measurand = noneIfDefault(Measurand.EnergyActiveImportRegister, v.measurand),
@@ -417,18 +417,18 @@ object ConvertersV15 {
       if (actual == default) None else Some(actual.name)
   }
 
-  private def transactionDataFromV15(v15td: Option[List[TransactionData]]): List[messages.Meter] =
-    v15td.fold(List.empty[messages.Meter])(metersFromV15)
+  private def transactionDataFromV15(v15td: Option[List[TransactionData]]): List[messages.meter.Meter] =
+    v15td.fold(List.empty[messages.meter.Meter])(metersFromV15)
 
-  private def metersFromV15(v15mv: List[TransactionData]): List[messages.Meter] =
-    v15mv.flatMap(_.values.fold(List.empty[messages.Meter])(_.map(meterFromV15)))
+  private def metersFromV15(v15mv: List[TransactionData]): List[messages.meter.Meter] =
+    v15mv.flatMap(_.values.fold(List.empty[messages.meter.Meter])(_.map(meterFromV15)))
 
-  private def meterFromV15(v15m: Meter): messages.Meter = {
-    messages.Meter(v15m.timestamp, v15m.values.map(meterValueFromV15))
+  private def meterFromV15(v15m: Meter): messages.meter.Meter = {
+    messages.meter.Meter(v15m.timestamp, v15m.values.map(meterValueFromV15))
   }
 
-  private def meterValueFromV15(v15m: MeterValue): messages.Meter.Value = {
-    import messages.Meter._
+  private def meterValueFromV15(v15m: MeterValue): messages.meter.Value = {
+    import messages.meter._
     import v15m._
 
     Value(

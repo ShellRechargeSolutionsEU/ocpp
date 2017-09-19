@@ -246,7 +246,7 @@ object ConvertersV16 {
         timestamp,
         meterStop,
         defaultIfNone(messages.StopReason, stopReason),
-        meters.fold(List.empty[messages.Meter])(_.map(meterFromV16))
+        meters.fold(List.empty[messages.meter.Meter])(_.map(meterFromV16))
       )
 
     case StopTransactionRes(idTagInfo) => messages.StopTransactionRes(idTagInfo.map(_.fromV16))
@@ -326,7 +326,7 @@ object ConvertersV16 {
     case DiagnosticsStatusNotificationRes() => messages.DiagnosticsStatusNotificationRes
 
     case MeterValuesReq(connectorId, transactionId, values) =>
-      val meters: List[messages.Meter] = values.map(meterFromV16)
+      val meters: List[messages.meter.Meter] = values.map(meterFromV16)
       messages.MeterValuesReq(messages.Scope.fromOcpp(connectorId), transactionId, meters)
 
     case MeterValuesRes() => messages.MeterValuesRes
@@ -492,14 +492,14 @@ object ConvertersV16 {
     }
   }
 
-  private implicit class RichMeter(self: messages.Meter) {
+  private implicit class RichMeter(self: messages.meter.Meter) {
     def toV16: Meter = Meter(
       timestamp = self.timestamp,
       sampledValue = self.values.map(valueToV16)
     )
 
-    def valueToV16(v: messages.Meter.Value): MeterValue = {
-      import messages.Meter._
+    def valueToV16(v: messages.meter.Value): MeterValue = {
+      import messages.meter._
       MeterValue(
         value = v.value,
         measurand = noneIfDefault(Measurand, v.measurand),
@@ -512,12 +512,12 @@ object ConvertersV16 {
     }
   }
 
-  private def meterFromV16(v16m: Meter): messages.Meter = {
-    messages.Meter(v16m.timestamp, v16m.sampledValue.map(meterValueFromV16))
+  private def meterFromV16(v16m: Meter): messages.meter.Meter = {
+    messages.meter.Meter(v16m.timestamp, v16m.sampledValue.map(meterValueFromV16))
   }
 
-  private def meterValueFromV16(v16m: MeterValue): messages.Meter.Value = {
-    import messages.Meter._
+  private def meterValueFromV16(v16m: MeterValue): messages.meter.Value = {
+    import messages.meter._
     import v16m._
 
     Value(

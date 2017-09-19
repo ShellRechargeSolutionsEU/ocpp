@@ -129,7 +129,9 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemReq, C
 
       case MeterValues => ?[MeterValuesRequest, MeterValuesResponse] {
         req =>
-          def toMeter(x: MeterValue): Meter = Meter(x.timestamp.toDateTime, List(Meter.DefaultValue(x.value)))
+          def toMeter(x: MeterValue): meter.Meter =
+            meter.Meter(x.timestamp.toDateTime, List(meter.DefaultValue(x.value)))
+
           MeterValuesReq(messages.Scope.fromOcpp(req.connectorId), None, req.values.map(toMeter).toList)
       } { _ => MeterValuesResponse() }
 
@@ -197,7 +199,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
 
       case StopTransaction => ?[StopTransactionRequest, StopTransactionResponse] { req =>
         import req._
-        def toMeter(x: MeterValue) = Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
+        def toMeter(x: MeterValue) = messages.meter.Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
 
         StopTransactionReq(
           transactionId,
@@ -266,7 +268,9 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
 
       case MeterValues => ?[MeterValuesRequest, MeterValuesResponse] {
         req =>
-          def toMeter(x: MeterValue): Meter = Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
+          def toMeter(x: MeterValue): meter.Meter =
+            meter.Meter(x.timestamp.toDateTime, x.value.map(toValue).toList)
+
           MeterValuesReq(messages.Scope.fromOcpp(req.connectorId), req.transactionId, req.values.map(toMeter).toList)
       }  (_ => MeterValuesResponse())
 
@@ -292,9 +296,9 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
     }
   }
 
-  def toValue(x: com.thenewmotion.ocpp.v15.Value): Meter.Value = {
-    import Meter.{ReadingContext => ocpp}
-    def toReadingContext(x: ReadingContext): Meter.ReadingContext = {
+  def toValue(x: com.thenewmotion.ocpp.v15.Value): meter.Value = {
+    import meter.{ReadingContext => ocpp}
+    def toReadingContext(x: ReadingContext): meter.ReadingContext = {
       x match {
         case Interruptionu46Begin => ocpp.InterruptionBegin
         case Interruptionu46End => ocpp.InterruptionEnd
@@ -305,16 +309,16 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
       }
     }
 
-    def toValueFormat(x: ValueFormat): Meter.ValueFormat = {
-      import Meter.{ValueFormat => ocpp}
+    def toValueFormat(x: ValueFormat): meter.ValueFormat = {
+      import meter.{ValueFormat => ocpp}
       x match {
         case Raw => ocpp.Raw
         case SignedData => ocpp.Signed
       }
     }
 
-    def toMeasurand(x: Measurand): Meter.Measurand = {
-      import Meter.{Measurand => ocpp}
+    def toMeasurand(x: Measurand): meter.Measurand = {
+      import meter.{Measurand => ocpp}
       x match {
         case Energyu46Activeu46Exportu46Register => ocpp.EnergyActiveExportRegister
         case Energyu46Activeu46Importu46Register => ocpp.EnergyActiveImportRegister
@@ -335,9 +339,9 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
       }
     }
 
-    def toLocation(x: Location): Meter.Location = {
+    def toLocation(x: Location): meter.Location = {
       import com.thenewmotion.ocpp.v15._
-      import Meter.{Location => ocpp}
+      import meter.{Location => ocpp}
       x match {
         case Inlet => ocpp.Inlet
         case Outlet => ocpp.Outlet
@@ -345,8 +349,8 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
       }
     }
 
-    def toUnit(x: UnitOfMeasure): Meter.UnitOfMeasure = {
-      import Meter.{UnitOfMeasure => ocpp}
+    def toUnit(x: UnitOfMeasure): meter.UnitOfMeasure = {
+      import meter.{UnitOfMeasure => ocpp}
       x match {
         case Wh => ocpp.Wh
         case KWh => ocpp.Kwh
@@ -362,13 +366,13 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
       }
     }
 
-    Meter.Value(
+    meter.Value(
       x.value,
-      x.context.map(toReadingContext) getOrElse Meter.DefaultValue.readingContext,
-      x.format.map(toValueFormat) getOrElse Meter.DefaultValue.format,
-      x.measurand.map(toMeasurand) getOrElse Meter.DefaultValue.measurand,
+      x.context.map(toReadingContext) getOrElse meter.DefaultValue.readingContext,
+      x.format.map(toValueFormat) getOrElse meter.DefaultValue.format,
+      x.measurand.map(toMeasurand) getOrElse meter.DefaultValue.measurand,
       phase = None,
-      x.location.map(toLocation) getOrElse Meter.DefaultValue.location,
-      x.unit.map(toUnit) getOrElse Meter.DefaultValue.unitOfMeasure)
+      x.location.map(toLocation) getOrElse meter.DefaultValue.location,
+      x.unit.map(toUnit) getOrElse meter.DefaultValue.unitOfMeasure)
   }
 }

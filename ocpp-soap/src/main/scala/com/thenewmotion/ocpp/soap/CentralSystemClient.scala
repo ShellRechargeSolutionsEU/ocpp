@@ -60,9 +60,9 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
 
   def meterValues(req: messages.MeterValuesReq) {
     import req._
-    def toMeter(x: messages.Meter): Option[MeterValue] = {
+    def toMeter(x: messages.meter.Meter): Option[MeterValue] = {
       x.values.collectFirst {
-        case messages.Meter.DefaultValue(value) => MeterValue(x.timestamp.toXMLCalendar, value)
+        case messages.meter.DefaultValue(value) => MeterValue(x.timestamp.toXMLCalendar, value)
       }
     }
     ?(_.meterValues, MeterValuesRequest(scope.toOcpp, meters.flatMap(toMeter)))
@@ -313,9 +313,9 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
   }
 
 
-  def toMeterValue(x: messages.Meter): MeterValue = {
-    implicit def toReadingContext(x: messages.Meter.ReadingContext): ReadingContext = {
-      import messages.Meter.{ReadingContext => ocpp}
+  def toMeterValue(x: messages.meter.Meter): MeterValue = {
+    implicit def toReadingContext(x: messages.meter.ReadingContext): ReadingContext = {
+      import messages.meter.{ReadingContext => ocpp}
       x match {
         case ocpp.InterruptionBegin => Interruptionu46Begin
         case ocpp.InterruptionEnd => Interruptionu46End
@@ -326,16 +326,16 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       }
     }
 
-    implicit def toValueFormat(x: messages.Meter.ValueFormat): ValueFormat = {
-      import messages.Meter.{ValueFormat => ocpp}
+    implicit def toValueFormat(x: messages.meter.ValueFormat): ValueFormat = {
+      import messages.meter.{ValueFormat => ocpp}
       x match {
         case ocpp.Raw => Raw
         case ocpp.Signed => SignedData
       }
     }
 
-    implicit def toMeasurand(x: messages.Meter.Measurand): Measurand = {
-      import messages.Meter.{Measurand => ocpp}
+    implicit def toMeasurand(x: messages.meter.Measurand): Measurand = {
+      import messages.meter.{Measurand => ocpp}
       x match {
         case ocpp.EnergyActiveExportRegister => Energyu46Activeu46Exportu46Register
         case ocpp.EnergyActiveImportRegister => Energyu46Activeu46Importu46Register
@@ -356,8 +356,8 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       }
     }
 
-    implicit def toLocation(x: Meter.Location): Location = {
-      import Meter.{Location => ocpp}
+    implicit def toLocation(x: meter.Location): Location = {
+      import meter.{Location => ocpp}
       x match {
         case ocpp.Inlet => Inlet
         case ocpp.Outlet => Outlet
@@ -365,8 +365,8 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       }
     }
 
-    implicit def toUnit(x: messages.Meter.UnitOfMeasure): UnitOfMeasure = {
-      import messages.Meter.{UnitOfMeasure => ocpp}
+    implicit def toUnit(x: messages.meter.UnitOfMeasure): UnitOfMeasure = {
+      import messages.meter.{UnitOfMeasure => ocpp}
       x match {
         case ocpp.Wh => Wh
         case ocpp.Kwh => KWh
@@ -382,7 +382,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       }
     }
 
-    def toValue(x: messages.Meter.Value): Value = Value(
+    def toValue(x: messages.meter.Value): Value = Value(
       x.value,
       Map(
       "context" -> scalaxb.DataRecord(x.context.toString),

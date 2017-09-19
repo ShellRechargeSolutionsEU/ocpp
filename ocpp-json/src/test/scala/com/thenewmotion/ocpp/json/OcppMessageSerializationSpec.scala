@@ -11,7 +11,7 @@ import org.specs2.matcher.MatchResult
 import org.json4s._
 import org.json4s.native.JsonParser
 import messages._
-import messages.Meter._
+import messages.meter._
 
 class OcppMessageSerializationSpec extends Specification {
 
@@ -193,14 +193,14 @@ class OcppMessageSerializationSpec extends Specification {
       val testTimestamp = testTime
       val meterTimestamp = utcDateTime(2013, 3, 7, 16, 52, 16)
       val testMeter = Meter(timestamp = meterTimestamp, values = List(
-        Meter.Value(value = "0",
+        meter.Value(value = "0",
           context = ReadingContext.SamplePeriodic,
           measurand = Measurand.EnergyActiveImportRegister,
           phase = None,
           format = ValueFormat.Raw,
           location = Location.Outlet,
           unit = UnitOfMeasure.Wh),
-        Meter.Value(value = "0",
+        meter.Value(value = "0",
           context = ReadingContext.SamplePeriodic,
           measurand = Measurand.EnergyReactiveImportRegister,
           phase = None,
@@ -297,7 +297,7 @@ class OcppMessageSerializationSpec extends Specification {
         Meter(
           timestamp = utcDateTime(2013, 3, 7, 16, 52, 16),
           values = List(
-            Meter.Value(
+            meter.Value(
               value = "0",
               context = ReadingContext.SamplePeriodic,
               unit = UnitOfMeasure.Wh,
@@ -305,7 +305,7 @@ class OcppMessageSerializationSpec extends Specification {
               phase = None,
               format = ValueFormat.Raw,
               location = Location.Outlet),
-            Meter.Value(
+            meter.Value(
               value = "0",
               context = ReadingContext.SamplePeriodic,
               unit = UnitOfMeasure.Varh,
@@ -316,7 +316,7 @@ class OcppMessageSerializationSpec extends Specification {
         Meter(
           timestamp = utcDateTime(2013, 3, 7, 19, 52, 16),
           values = List(
-            Meter.Value(
+            meter.Value(
               value = "20",
               context = ReadingContext.SamplePeriodic,
               unit = UnitOfMeasure.Wh,
@@ -324,7 +324,7 @@ class OcppMessageSerializationSpec extends Specification {
               measurand = Measurand.EnergyActiveImportRegister,
               format = ValueFormat.Raw,
               location = Location.Outlet),
-            Meter.Value(
+            meter.Value(
               value = "20",
               context = ReadingContext.SamplePeriodic,
               unit = UnitOfMeasure.Varh,
