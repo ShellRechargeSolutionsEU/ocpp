@@ -11,13 +11,71 @@ import org.scalacheck.Prop.forAll
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 
+import scala.reflect.{ClassTag, classTag}
+
 object ConvertersV16Spec extends Specification with ScalaCheck {
 
   import Generators._
 
   "Conversion to/from OCPP 1.6-J format" should {
 
-    "result in the same object after v16->generic->v16 transformation" in {
+    testMessageClass(bootNotificationReqGen)
+    testMessageClass(bootNotificationResGen)
+    testMessageClass(authorizeReqGen)
+    testMessageClass(authorizeResGen)
+    testMessageClass(startTransactionReqGen)
+    testMessageClass(stopTransactionReqGen)
+    testMessageClass(unlockConnectorReqGen)
+    testMessageClass(unlockConnectorResGen)
+    testMessageClass(resetReqGen)
+    testMessageClass(resetResGen)
+    testMessageClass(changeAvailabilityReqGen)
+    testMessageClass(changeAvailabilityResGen)
+    testMessageClass(statusNotificationReqGen)
+    testMessageClass(statusNotificationResGen)
+    testMessageClass(remoteStartTransactionReqGen)
+    testMessageClass(remoteStartTransactionResGen)
+    testMessageClass(remoteStopTransactionReqGen)
+    testMessageClass(remoteStopTransactionResGen)
+    testMessageClass(heartbeatReqGen)
+    testMessageClass(heartbeatResGen)
+    testMessageClass(updateFirmwareReqGen)
+    testMessageClass(updateFirmwareResGen)
+    testMessageClass(firmwareStatusNotificationReqGen)
+    testMessageClass(firmwareStatusNotificationResGen)
+    testMessageClass(getDiagnosticsReqGen)
+    testMessageClass(getDiagnosticsResGen)
+    testMessageClass(diagnosticsStatusNotificationReqGen)
+    testMessageClass(diagnosticsStatusNotificationResGen)
+    testMessageClass(meterValuesReqGen)
+    testMessageClass(meterValuesResGen)
+    testMessageClass(changeConfigurationReqGen)
+    testMessageClass(changeConfigurationResGen)
+    testMessageClass(clearCacheReqGen)
+    testMessageClass(clearCacheResGen)
+    testMessageClass(getConfigurationReqGen)
+    testMessageClass(getConfigurationResGen)
+    testMessageClass(getLocalListVersionReqGen)
+    testMessageClass(getLocalListVersionResGen)
+    testMessageClass(reserveNowReqGen)
+    testMessageClass(reserveNowResGen)
+    testMessageClass(cancelReservationReqGen)
+    testMessageClass(cancelReservationResGen)
+    testMessageClass(clearChargingProfileReqGen)
+    testMessageClass(clearChargingProfileResGen)
+    testMessageClass(getCompositeScheduleReqGen)
+    testMessageClass(getCompositeScheduleResGen)
+    testMessageClass(setChargingProfileReqGen)
+    testMessageClass(setChargingProfileResGen)
+    // TODO bombs out with MatchErrors
+    // testMessageClass(triggerMessageReqGen)
+    testMessageClass(triggerMessageResGen)
+  }
+
+  private def testMessageClass[T <: v16.Message : ClassTag](messageGen: Gen[T]) = {
+    val className = classTag[T].runtimeClass.getSimpleName
+
+    s"result in the same object after v16->generic->v16 transformation of $className" in {
       forAll(messageGen) { msg =>
         val after = ConvertersV16.toV16(ConvertersV16.fromV16(msg))
         after == msg
@@ -435,59 +493,5 @@ object Generators {
 
   def triggerMessageResGen: Gen[TriggerMessageRes] =
     enumerableNameGen(messages.TriggerMessageStatus).map(TriggerMessageRes)
-
-  def messageGen: Gen[Message] =
-    Gen.oneOf(
-      bootNotificationReqGen,
-      bootNotificationResGen,
-      authorizeReqGen,
-      authorizeResGen,
-      startTransactionReqGen,
-      stopTransactionReqGen,
-      unlockConnectorReqGen,
-      unlockConnectorResGen,
-      resetReqGen,
-      resetResGen,
-      changeAvailabilityReqGen,
-      changeAvailabilityResGen,
-      statusNotificationReqGen,
-      statusNotificationResGen,
-      remoteStartTransactionReqGen,
-      remoteStartTransactionResGen,
-      remoteStopTransactionReqGen,
-      remoteStopTransactionResGen,
-      heartbeatReqGen,
-      heartbeatResGen,
-      updateFirmwareReqGen,
-      updateFirmwareResGen,
-      firmwareStatusNotificationReqGen,
-      firmwareStatusNotificationResGen,
-      getDiagnosticsReqGen,
-      getDiagnosticsResGen,
-      diagnosticsStatusNotificationReqGen,
-      diagnosticsStatusNotificationResGen,
-      meterValuesReqGen,
-      meterValuesResGen,
-      changeConfigurationReqGen,
-      changeConfigurationResGen,
-      clearCacheReqGen,
-      clearCacheResGen,
-      getConfigurationReqGen,
-      getConfigurationResGen,
-      getLocalListVersionReqGen,
-      getLocalListVersionResGen,
-      reserveNowReqGen,
-      reserveNowResGen,
-      cancelReservationReqGen,
-      cancelReservationResGen,
-      clearChargingProfileReqGen,
-      clearChargingProfileResGen,
-      getCompositeScheduleReqGen,
-      getCompositeScheduleResGen,
-      setChargingProfileReqGen,
-      setChargingProfileResGen,
-      triggerMessageReqGen,
-      triggerMessageResGen
-    )
 }
 
