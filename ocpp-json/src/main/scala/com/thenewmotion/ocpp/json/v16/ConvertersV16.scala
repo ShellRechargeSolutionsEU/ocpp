@@ -181,15 +181,15 @@ object ConvertersV16 {
     case messages.SetChargingProfileRes(status) => SetChargingProfileRes(status.name)
 
     case messages.TriggerMessageReq(requestedMessage) =>
-      import messages.MessageTriggerWithoutConnector
-      import messages.MessageTriggerWithConnector
+      import messages.MessageTriggerWithoutScope
+      import messages.MessageTriggerWithScope
       TriggerMessageReq.tupled {
         requestedMessage match {
-          case messageTrigger: MessageTriggerWithoutConnector =>
+          case messageTrigger: MessageTriggerWithoutScope =>
             (messageTrigger.name, None)
-          case MessageTriggerWithConnector.MeterValues(connectorId) =>
-            ("Metervalues", connectorId.map(_.toOcpp))
-          case MessageTriggerWithConnector.StatusNotification(connectorId) =>
+          case MessageTriggerWithScope.MeterValues(connectorId) =>
+            ("MeterValues", connectorId.map(_.toOcpp))
+          case MessageTriggerWithScope.StatusNotification(connectorId) =>
             ("StatusNotification", connectorId.map(_.toOcpp))
         }
       }
@@ -628,37 +628,20 @@ object ConvertersV16 {
     case e: URISyntaxException => throw MappingException(s"Invalid URL $s in OCPP-JSON message", e)
   }
 
-  private implicit class RichTriggerMessage(self: messages.TriggerMessageReq) {
-
-    import messages.MessageTriggerWithConnector
-    import messages.MessageTriggerWithoutConnector
-
-    def toV16: TriggerMessageReq = {
-      self.requestedMessage match {
-        case messageTrigger: MessageTriggerWithoutConnector =>
-          TriggerMessageReq(messageTrigger.name, None)
-        case MessageTriggerWithConnector.MeterValues(connector) =>
-          TriggerMessageReq("MeterValues", connector.map(_.toOcpp))
-        case MessageTriggerWithConnector.StatusNotification(connector) =>
-          TriggerMessageReq("StatusNotification", connector.map(_.toOcpp))
-      }
-    }
-  }
-
   private def triggerFromV16(v16t: TriggerMessageReq): messages.TriggerMessageReq =
     messages.TriggerMessageReq {
       import messages.ConnectorScope.fromOcpp
-      import messages.MessageTriggerWithConnector
-      import messages.MessageTriggerWithoutConnector
+      import messages.MessageTriggerWithScope
+      import messages.MessageTriggerWithoutScope
       v16t match {
         case TriggerMessageReq(requestedMessage, connectorId) =>
-          MessageTriggerWithoutConnector.withName(requestedMessage) match {
+          MessageTriggerWithoutScope.withName(requestedMessage) match {
             case Some(messageTrigger) => messageTrigger
             case None => requestedMessage match {
               case "MeterValues" =>
-                MessageTriggerWithConnector.MeterValues(connectorId.map(fromOcpp))
+                MessageTriggerWithScope.MeterValues(connectorId.map(fromOcpp))
               case "StatusNotification" =>
-                MessageTriggerWithConnector.StatusNotification(connectorId.map(fromOcpp))
+                MessageTriggerWithScope.StatusNotification(connectorId.map(fromOcpp))
               case _ => throw new MappingException(
                 s"Value $requestedMessage is not valid for MessageTrigger"
               )

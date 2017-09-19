@@ -98,6 +98,8 @@ object Generators {
 
   def stackLevelGen: Gen[Int] = Gen.choose(1, 10)
 
+  def chargingRateUnitGen: Gen[String] = enumerableNameGen(messages.UnitOfChargeRate)
+
   def chargingSchedulePeriodGen: Gen[ChargingSchedulePeriod] =
     for {
       startPeriod <- Gen.chooseNum(1, 4000000)
@@ -107,7 +109,7 @@ object Generators {
 
   def chargingScheduleGen: Gen[ChargingSchedule] =
     for {
-      chargingRateUnit <- enumerableNameGen(messages.UnitOfChargeRate)
+      chargingRateUnit <- chargingRateUnitGen
       chargingSchedulePeriod <- Gen.listOf(chargingSchedulePeriodGen)
       duration <- Gen.option(Gen.chooseNum(1, 4000000))
       startSchedule <- Gen.option(dateTimeGen)
@@ -396,6 +398,44 @@ object Generators {
   def clearChargingProfileResGen: Gen[ClearChargingProfileRes] =
     enumerableNameGen(messages.ClearChargingProfileStatus).map(ClearChargingProfileRes)
 
+  def getCompositeScheduleReqGen: Gen[GetCompositeScheduleReq] =
+    for {
+      connectorId <- connectorIdIncludingChargePointGen
+      duration <- Gen.chooseNum(1, 10000000)
+      chargingRateUnit <- Gen.option(chargingRateUnitGen)
+    } yield GetCompositeScheduleReq(connectorId, duration, chargingRateUnit)
+
+  def getCompositeScheduleResGen: Gen[GetCompositeScheduleRes] =
+    for {
+      status <- acceptanceGen
+      connectorId <- if (status == "Accepted") Gen.some(connectorIdIncludingChargePointGen) else Gen.const(None)
+      scheduleStart <- if (status == "Accepted") Gen.some(dateTimeGen) else Gen.const(None)
+      schedule <- if (status == "Accepted") Gen.some(chargingScheduleGen) else Gen.const(None)
+    } yield GetCompositeScheduleRes(status, connectorId, scheduleStart, schedule)
+
+  def setChargingProfileReqGen: Gen[SetChargingProfileReq] =
+    for {
+      connectorId <- connectorIdIncludingChargePointGen
+      chargingProfile <- chargingProfileGen
+    } yield SetChargingProfileReq(connectorId, chargingProfile)
+
+  def setChargingProfileResGen: Gen[SetChargingProfileRes] =
+    enumerableNameGen(messages.ChargingProfileStatus).map(SetChargingProfileRes)
+
+  def triggerMessageReqGen: Gen[TriggerMessageReq] =
+    for {
+      requestedMessage <- Gen.oneOf(
+        enumerableNameGen(messages.MessageTriggerWithoutScope),
+        Gen.const("StatusNotification"),
+        Gen.const("MeterValues"))
+      connectorId <- requestedMessage match {
+        case "StatusNotification" | "MeterValues" => Gen.option(connectorIdIncludingChargePointGen)
+      }
+    } yield TriggerMessageReq(requestedMessage, connectorId)
+
+  def triggerMessageResGen: Gen[TriggerMessageRes] =
+    enumerableNameGen(messages.TriggerMessageStatus).map(TriggerMessageRes)
+
   def messageGen: Gen[Message] =
     Gen.oneOf(
       bootNotificationReqGen,
@@ -441,7 +481,13 @@ object Generators {
       cancelReservationReqGen,
       cancelReservationResGen,
       clearChargingProfileReqGen,
-      clearChargingProfileResGen
+      clearChargingProfileResGen,
+      getCompositeScheduleReqGen,
+      getCompositeScheduleResGen,
+      setChargingProfileReqGen,
+      setChargingProfileResGen,
+      triggerMessageReqGen,
+      triggerMessageResGen
     )
 }
 

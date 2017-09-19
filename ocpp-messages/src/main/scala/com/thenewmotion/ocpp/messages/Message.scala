@@ -214,16 +214,16 @@ case class GetCompositeScheduleRes(
 
 // ocpp 1.6: trigger message
 sealed trait MessageTrigger
-sealed trait MessageTriggerWithoutConnector extends MessageTrigger with Nameable
-sealed trait MessageTriggerWithConnector extends MessageTrigger {
-  def connector: Option[ConnectorScope]
+sealed trait MessageTriggerWithoutScope extends MessageTrigger with Nameable
+sealed trait MessageTriggerWithScope extends MessageTrigger {
+  def scope: Option[Scope]
 }
 
-object MessageTriggerWithoutConnector extends Enumerable[MessageTriggerWithoutConnector] {
-  case object BootNotification extends MessageTriggerWithoutConnector
-  case object DiagnosticsStatusNotification extends MessageTriggerWithoutConnector
-  case object FirmwareStatusNotification extends MessageTriggerWithoutConnector
-  case object Heartbeat extends MessageTriggerWithoutConnector
+object MessageTriggerWithoutScope extends Enumerable[MessageTriggerWithoutScope] {
+  case object BootNotification extends MessageTriggerWithoutScope
+  case object DiagnosticsStatusNotification extends MessageTriggerWithoutScope
+  case object FirmwareStatusNotification extends MessageTriggerWithoutScope
+  case object Heartbeat extends MessageTriggerWithoutScope
   val values = Set(
     BootNotification,
     DiagnosticsStatusNotification,
@@ -232,13 +232,13 @@ object MessageTriggerWithoutConnector extends Enumerable[MessageTriggerWithoutCo
   )
 }
 
-object MessageTriggerWithConnector {
+object MessageTriggerWithScope {
   final case class MeterValues(
-    connector: Option[ConnectorScope]
-  ) extends MessageTriggerWithConnector
+    scope: Option[ConnectorScope]
+  ) extends MessageTriggerWithScope
   final case class StatusNotification(
-    connector: Option[ConnectorScope]
-  ) extends MessageTriggerWithConnector
+    scope: Option[ConnectorScope]
+  ) extends MessageTriggerWithScope
 }
 
 case class TriggerMessageReq(
