@@ -8,7 +8,7 @@ object MessageGenerators {
 
   import Helpers._
 
-  def bootNotificationReqGen: Gen[BootNotificationReq] =
+  def bootNotificationReq: Gen[BootNotificationReq] =
     for {
       chargePointVendor <- alphaNumStr
       chargePointModel <- words
@@ -31,20 +31,20 @@ object MessageGenerators {
       meterSerialNumber
     )
 
-  def bootNotificationResGen: Gen[BootNotificationRes] =
+  def bootNotificationRes: Gen[BootNotificationRes] =
     for {
       status <- enumerableNameGen(messages.RegistrationStatus)
       currentTime <- dateTimeGen
       interval <- chooseNum(0, 100000)
     } yield BootNotificationRes(status, currentTime, interval)
 
-  def authorizeReqGen: Gen[AuthorizeReq] =
+  def authorizeReq: Gen[AuthorizeReq] =
     idTagGen.map(AuthorizeReq)
 
-  def authorizeResGen: Gen[AuthorizeRes] =
+  def authorizeRes: Gen[AuthorizeRes] =
     idTagInfoGen.map(AuthorizeRes)
 
-  def startTransactionReqGen: Gen[StartTransactionReq] =
+  def startTransactionReq: Gen[StartTransactionReq] =
     for {
       connectorId <- connectorIdGen
       idTag <- idTagGen
@@ -61,7 +61,7 @@ object MessageGenerators {
       )
     }
 
-  def stopTransactionReqGen: Gen[StopTransactionReq] =
+  def stopTransactionReq: Gen[StopTransactionReq] =
     for {
       transactionId <- transactionIdGen
       idTag <- option(idTagGen)
@@ -80,28 +80,28 @@ object MessageGenerators {
       )
     }
 
-  def unlockConnectorReqGen: Gen[UnlockConnectorReq] =
+  def unlockConnectorReq: Gen[UnlockConnectorReq] =
     connectorIdGen.map(UnlockConnectorReq)
 
-  def unlockConnectorResGen: Gen [UnlockConnectorRes] =
+  def unlockConnectorRes: Gen [UnlockConnectorRes] =
     enumerableNameGen(messages.UnlockStatus).map(UnlockConnectorRes)
 
-  def resetReqGen: Gen[ResetReq] =
+  def resetReq: Gen[ResetReq] =
     enumerableNameGen(messages.ResetType).map(ResetReq)
 
-  def resetResGen: Gen[ResetRes] =
+  def resetRes: Gen[ResetRes] =
     acceptanceGen.map(ResetRes)
 
-  def changeAvailabilityReqGen: Gen[ChangeAvailabilityReq] =
+  def changeAvailabilityReq: Gen[ChangeAvailabilityReq] =
     for {
       connectorId <- connectorIdIncludingChargePointGen
       avaType <- enumerableNameGen(messages.AvailabilityType)
     } yield ChangeAvailabilityReq(connectorId, avaType)
 
-  def changeAvailabilityResGen: Gen[ChangeAvailabilityRes] =
+  def changeAvailabilityRes: Gen[ChangeAvailabilityRes] =
     enumerableNameGen(messages.AvailabilityStatus).map(ChangeAvailabilityRes)
 
-  def statusNotificationReqGen: Gen[StatusNotificationReq] =
+  def statusNotificationReq: Gen[StatusNotificationReq] =
     for {
       connectorId <- connectorIdIncludingChargePointGen
       status <- chargePointStatusGen
@@ -121,31 +121,31 @@ object MessageGenerators {
         const(None)
     } yield StatusNotificationReq(connectorId, status, errorCode, info, timestamp, vendorId, vendorErrorCode)
 
-  def statusNotificationResGen: Gen[StatusNotificationRes] =
+  def statusNotificationRes: Gen[StatusNotificationRes] =
     const(StatusNotificationRes())
 
-  def remoteStartTransactionReqGen: Gen[RemoteStartTransactionReq] =
+  def remoteStartTransactionReq: Gen[RemoteStartTransactionReq] =
     for {
       idTag <- idTagGen
       connectorId <- option(connectorIdGen)
       chargingProfile <- option(chargingProfileGen)
     } yield RemoteStartTransactionReq(idTag, connectorId, chargingProfile)
 
-  def remoteStartTransactionResGen: Gen[RemoteStartTransactionRes] =
+  def remoteStartTransactionRes: Gen[RemoteStartTransactionRes] =
     acceptanceGen.map(RemoteStartTransactionRes)
 
-  def remoteStopTransactionReqGen: Gen[RemoteStopTransactionReq] =
+  def remoteStopTransactionReq: Gen[RemoteStopTransactionReq] =
     transactionIdGen.map(RemoteStopTransactionReq)
 
-  def remoteStopTransactionResGen: Gen[RemoteStopTransactionRes] =
+  def remoteStopTransactionRes: Gen[RemoteStopTransactionRes] =
     acceptanceGen.map(RemoteStopTransactionRes)
 
-  def heartbeatReqGen: Gen[HeartbeatReq] = const(HeartbeatReq())
+  def heartbeatReq: Gen[HeartbeatReq] = const(HeartbeatReq())
 
-  def heartbeatResGen: Gen[HeartbeatRes] =
+  def heartbeatRes: Gen[HeartbeatRes] =
     dateTimeGen.map(HeartbeatRes)
 
-  def updateFirmwareReqGen: Gen[UpdateFirmwareReq] =
+  def updateFirmwareReq: Gen[UpdateFirmwareReq] =
     for {
       retrieveDate <- dateTimeGen
       location <- uriGen
@@ -153,15 +153,15 @@ object MessageGenerators {
       retryInterval <- option(chooseNum(0, 600))
     } yield UpdateFirmwareReq(retrieveDate, location, retries, retryInterval)
 
-  def updateFirmwareResGen: Gen[UpdateFirmwareRes] = const(UpdateFirmwareRes())
+  def updateFirmwareRes: Gen[UpdateFirmwareRes] = const(UpdateFirmwareRes())
 
-  def firmwareStatusNotificationReqGen: Gen[FirmwareStatusNotificationReq] =
+  def firmwareStatusNotificationReq: Gen[FirmwareStatusNotificationReq] =
     enumerableNameGen(messages.FirmwareStatus).map(FirmwareStatusNotificationReq)
 
-  def firmwareStatusNotificationResGen: Gen[FirmwareStatusNotificationRes] =
+  def firmwareStatusNotificationRes: Gen[FirmwareStatusNotificationRes] =
     const(FirmwareStatusNotificationRes())
 
-  def getDiagnosticsReqGen: Gen[GetDiagnosticsReq] =
+  def getDiagnosticsReq: Gen[GetDiagnosticsReq] =
     for {
       location <- uriGen
       startTime <- option(dateTimeGen)
@@ -170,57 +170,55 @@ object MessageGenerators {
       retryInterval <- option(chooseNum(0, 600))
     } yield GetDiagnosticsReq(location, startTime, stopTime, retries, retryInterval)
 
-  def getDiagnosticsResGen: Gen[GetDiagnosticsRes] =
+  def getDiagnosticsRes: Gen[GetDiagnosticsRes] =
     option(alphaNumStr).map(GetDiagnosticsRes)
 
-  def diagnosticsStatusNotificationReqGen: Gen[DiagnosticsStatusNotificationReq] =
+  def diagnosticsStatusNotificationReq: Gen[DiagnosticsStatusNotificationReq] =
     enumerableNameGen(messages.DiagnosticsStatus).map(DiagnosticsStatusNotificationReq)
 
-  def diagnosticsStatusNotificationResGen: Gen[DiagnosticsStatusNotificationRes] =
+  def diagnosticsStatusNotificationRes: Gen[DiagnosticsStatusNotificationRes] =
     const(DiagnosticsStatusNotificationRes())
 
-  def meterValuesReqGen: Gen[MeterValuesReq] =
+  def meterValuesReq: Gen[MeterValuesReq] =
     for {
       connectorId <- connectorIdIncludingChargePointGen
       transactionId <- option(transactionIdGen)
       meters <- listOf(meterGen)
     } yield MeterValuesReq(connectorId, transactionId, meters)
 
-  def meterValuesResGen: Gen[MeterValuesRes] = const(MeterValuesRes())
+  def meterValuesRes: Gen[MeterValuesRes] = const(MeterValuesRes())
 
-  def changeConfigurationReqGen: Gen[ChangeConfigurationReq] =
+  def changeConfigurationReq: Gen[ChangeConfigurationReq] =
     for {
       key <- alphaNumStr
       value <- words
     } yield ChangeConfigurationReq(key, value)
 
-  def changeConfigurationResGen: Gen[ChangeConfigurationRes] =
+  def changeConfigurationRes: Gen[ChangeConfigurationRes] =
     enumerableNameGen(messages.ConfigurationStatus).map(ChangeConfigurationRes)
 
-  def clearCacheReqGen: Gen[ClearCacheReq] = const(ClearCacheReq())
+  def clearCacheReq: Gen[ClearCacheReq] = const(ClearCacheReq())
 
-  def clearCacheResGen: Gen[ClearCacheRes] =
+  def clearCacheRes: Gen[ClearCacheRes] =
     acceptanceGen.map(ClearCacheRes)
 
-  def getConfigurationReqGen: Gen[GetConfigurationReq] =
+  def getConfigurationReq: Gen[GetConfigurationReq] =
     for {
-    // TODO None comes back as Some(List())
-      keys <- some(listOf(alphaNumStr))
+      keys <- optionalNonEmptyList(alphaNumStr)
     } yield GetConfigurationReq(keys)
 
-  def getConfigurationResGen:Gen[GetConfigurationRes] =
+  def getConfigurationRes: Gen[GetConfigurationRes] =
     for {
-    // TODO also here, None comes back as Some(List())
-      entries <- some(listOf(configurationEntryGen))
-      unknownKeys <- some(listOf(alphaNumStr))
+      entries <- optionalNonEmptyList(configurationEntryGen)
+      unknownKeys <- optionalNonEmptyList(alphaNumStr)
     } yield GetConfigurationRes(entries, unknownKeys)
 
-  def getLocalListVersionReqGen: Gen[GetLocalListVersionReq] = const(GetLocalListVersionReq())
+  def getLocalListVersionReq: Gen[GetLocalListVersionReq] = const(GetLocalListVersionReq())
 
-  def getLocalListVersionResGen: Gen[GetLocalListVersionRes] =
+  def getLocalListVersionRes: Gen[GetLocalListVersionRes] =
     chooseNum(1, 500).map(GetLocalListVersionRes)
 
-  def reserveNowReqGen: Gen[ReserveNowReq] =
+  def reserveNowReq: Gen[ReserveNowReq] =
     for {
       connectorId <- connectorIdIncludingChargePointGen
       expiryDate <- dateTimeGen
@@ -229,16 +227,16 @@ object MessageGenerators {
       reservationId <- reservationIdGen
     } yield ReserveNowReq(connectorId, expiryDate, idTag, parentIdTag, reservationId)
 
-  def reserveNowResGen: Gen[ReserveNowRes] =
+  def reserveNowRes: Gen[ReserveNowRes] =
     enumerableNameGen(messages.Reservation).map(ReserveNowRes)
 
-  def cancelReservationReqGen: Gen[CancelReservationReq] =
+  def cancelReservationReq: Gen[CancelReservationReq] =
     reservationIdGen.map(CancelReservationReq)
 
-  def cancelReservationResGen: Gen[CancelReservationRes] =
+  def cancelReservationRes: Gen[CancelReservationRes] =
     acceptanceGen.map(CancelReservationRes)
 
-  def clearChargingProfileReqGen: Gen[ClearChargingProfileReq] =
+  def clearChargingProfileReq: Gen[ClearChargingProfileReq] =
     for {
       id <- option(chargingProfileIdGen)
       connectorId <- option(connectorIdIncludingChargePointGen)
@@ -246,17 +244,17 @@ object MessageGenerators {
       stackLevel <- option(stackLevelGen)
     } yield ClearChargingProfileReq(id, connectorId, chargingProfilePurpose, stackLevel)
 
-  def clearChargingProfileResGen: Gen[ClearChargingProfileRes] =
+  def clearChargingProfileRes: Gen[ClearChargingProfileRes] =
     enumerableNameGen(messages.ClearChargingProfileStatus).map(ClearChargingProfileRes)
 
-  def getCompositeScheduleReqGen: Gen[GetCompositeScheduleReq] =
+  def getCompositeScheduleReq: Gen[GetCompositeScheduleReq] =
     for {
       connectorId <- connectorIdIncludingChargePointGen
       duration <- chooseNum(1, 10000000)
       chargingRateUnit <- option(chargingRateUnitGen)
     } yield GetCompositeScheduleReq(connectorId, duration, chargingRateUnit)
 
-  def getCompositeScheduleResGen: Gen[GetCompositeScheduleRes] =
+  def getCompositeScheduleRes: Gen[GetCompositeScheduleRes] =
     for {
       status <- acceptanceGen
       connectorId <- if (status == "Accepted") some(connectorIdIncludingChargePointGen) else const(None)
@@ -264,16 +262,16 @@ object MessageGenerators {
       schedule <- if (status == "Accepted") some(chargingScheduleGen) else const(None)
     } yield GetCompositeScheduleRes(status, connectorId, scheduleStart, schedule)
 
-  def setChargingProfileReqGen: Gen[SetChargingProfileReq] =
+  def setChargingProfileReq: Gen[SetChargingProfileReq] =
     for {
       connectorId <- connectorIdIncludingChargePointGen
       chargingProfile <- chargingProfileGen
     } yield SetChargingProfileReq(connectorId, chargingProfile)
 
-  def setChargingProfileResGen: Gen[SetChargingProfileRes] =
+  def setChargingProfileRes: Gen[SetChargingProfileRes] =
     enumerableNameGen(messages.ChargingProfileStatus).map(SetChargingProfileRes)
 
-  def triggerMessageReqGen: Gen[TriggerMessageReq] =
+  def triggerMessageReq: Gen[TriggerMessageReq] =
     for {
       requestedMessage <- oneOf(
         enumerableNameGen(messages.MessageTriggerWithoutScope),
@@ -285,6 +283,6 @@ object MessageGenerators {
       }
     } yield TriggerMessageReq(requestedMessage, connectorId)
 
-  def triggerMessageResGen: Gen[TriggerMessageRes] =
+  def triggerMessageRes: Gen[TriggerMessageRes] =
     enumerableNameGen(messages.TriggerMessageStatus).map(TriggerMessageRes)
 }

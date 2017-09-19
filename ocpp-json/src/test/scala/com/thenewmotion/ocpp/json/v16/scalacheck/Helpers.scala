@@ -12,8 +12,7 @@ object Helpers {
   def transactionIdGen: Gen[Int] = chooseNum(1, 4000)
   def stopReasonGen: Gen[Option[String]] = enumerableWithDefaultNameGen(messages.StopReason)
 
-  // currently None goes to Some(List()) after two-way conversion
-  def txnDataGen: Gen[Option[List[Meter]]] = some(listOf(meterGen))
+  def txnDataGen: Gen[Option[List[Meter]]] = optionalNonEmptyList(meterGen)
 
   def connectorIdGen: Gen[Int] = chooseNum(1, 4)
   def connectorIdIncludingChargePointGen: Gen[Int] = chooseNum(0, 4)
@@ -138,4 +137,16 @@ object Helpers {
 
   def words: Gen[String] = listOf(oneOf(const(' '), alphaNumChar)).map(_.mkString)
 
+  /**
+   * Some fields in OCPP-J messages are optional lists of things, where absence of the field means the same as an empty
+   * list. In those cases, we always want to encode the message with the field absent instead of with an empty list.
+   *
+   * Deciding on one option keeps things sinmple, makes it testable, and even saves a few bytes of bandwidth.
+   *
+   * @param gen
+   * @tparam A
+   * @return
+   */
+  def optionalNonEmptyList[A](gen: Gen[A]): Gen[Option[List[A]]] =
+    oneOf(const(None), some(listOf(gen).filter(_.nonEmpty)))
 }

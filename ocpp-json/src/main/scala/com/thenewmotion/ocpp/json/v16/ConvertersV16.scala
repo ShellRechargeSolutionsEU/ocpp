@@ -51,7 +51,7 @@ object ConvertersV16 {
         timestamp = timestamp,
         reason = noneIfDefault(messages.StopReason, stopReason),
         meterStop = meterStop,
-        transactionData = Some(meters.map(_.toV16))
+        transactionData = noneIfEmpty(meters.map(_.toV16))
       )
 
     case messages.StopTransactionRes(idTagInfo) => StopTransactionRes(idTagInfo.map(_.toV16))
@@ -121,10 +121,10 @@ object ConvertersV16 {
 
     case messages.ClearCacheRes(accepted) => ClearCacheRes(accepted.toStatusString)
 
-    case messages.GetConfigurationReq(keys) => GetConfigurationReq(Some(keys))
+    case messages.GetConfigurationReq(keys) => GetConfigurationReq(noneIfEmpty(keys))
 
     case messages.GetConfigurationRes(values, unknownKeys) =>
-      GetConfigurationRes(configurationKey = Some(values.map(_.toV16)), unknownKey = Some(unknownKeys))
+      GetConfigurationRes(configurationKey = noneIfEmpty(values.map(_.toV16)), unknownKey = noneIfEmpty(unknownKeys))
 
     case messages.GetLocalListVersionReq => GetLocalListVersionReq()
 
@@ -618,6 +618,9 @@ object ConvertersV16 {
 
   private def defaultIfNone[T <: Nameable](enumerable: messages.EnumerableWithDefault[T], str: Option[String]): T =
     str.map(enumerableFromJsonString(enumerable, _)).getOrElse(enumerable.default)
+
+  private def noneIfEmpty[T](l: List[T]): Option[List[T]] =
+    if (l.isEmpty) None else Some(l)
 
   /**
    * Parses a URI and throws a lift-json MappingException if the syntax is wrong
