@@ -1,0 +1,15 @@
+{
+  "updateType": "Full",
+  "listVersion": 1,
+  "localAuthorisationList": [
+    {
+      "idTag": "044943121F1D80",
+      "idTagInfo": {
+        "status": "Accepted",
+        "expiryDate": "2013-02-01T15:09:18Z",
+        "parentIdTag": ""
+      }
+    }
+  ],
+  "hash": ""
+}

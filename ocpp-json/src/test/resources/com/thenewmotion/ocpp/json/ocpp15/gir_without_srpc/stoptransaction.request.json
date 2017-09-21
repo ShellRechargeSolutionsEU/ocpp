@@ -1,0 +1,46 @@
+{
+  "transactionId": 2,
+  "idTag": "04F8692AA23E80",
+  "timestamp": "2013-02-01T15:09:18Z",
+  "meterStop": 20,
+  "transactionData": [
+    {
+      "values": [
+        {
+          "timestamp": "2013-03-07T16:52:16Z",
+          "values": [
+            {
+              "value": "0",
+              "unit": "Wh",
+              "measurand": "Energy.Active.Import.Register"
+            },
+            {
+              "value": "0",
+              "unit": "varh",
+              "measurand": "Energy.Reactive.Import.Register"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "values": [
+        {
+          "timestamp": "2013-03-07T16:52:16Z",
+          "values": [
+            {
+              "value": "0",
+              "unit": "Wh",
+              "measurand": "Energy.Active.Import.Register"
+            },
+            {
+              "value": "0",
+              "unit": "varh",
+              "measurand": "Energy.Reactive.Import.Register"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

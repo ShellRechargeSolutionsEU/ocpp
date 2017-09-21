@@ -1,0 +1,13 @@
+{
+  "configurationKey": [
+    {
+      "key": "KVCBX_PROFILE",
+      "readonly": true,
+      "value": "NQC-ACDC"
+    }
+  ],
+  "unknownKey": [
+    "UNKNOWN_KEY1",
+    "UNKNOWN_KEY2"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "connectorId": 2,
+  "transactionId": 2,
+  "values": [
+    {
+      "timestamp": "2013-03-07T16:52:16Z",
+      "values": [
+        {
+          "value": "0",
+          "unit": "Wh",
+          "measurand": "Energy.Active.Import.Register"
+        },
+        {
+          "value": "0",
+          "unit": "varh",
+          "measurand": "Energy.Reactive.Import.Register"
+        }
+      ]
+    },
+    {
+      "timestamp": "2013-03-07T19:52:16Z",
+      "values": [
+        {
+          "value": "20",
+          "unit": "Wh",
+          "measurand": "Energy.Active.Import.Register"
+        },
+        {
+          "value": "20",
+          "unit": "varh",
+          "measurand": "Energy.Reactive.Import.Register"
+        }
+      ]
+    }
+  ]
+}
