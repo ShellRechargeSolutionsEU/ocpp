@@ -50,12 +50,12 @@ object ClearChargingProfileStatus extends Enumerable[ClearChargingProfileStatus]
   val values = Set(Accepted, Unknown)
 }
 
-sealed trait GetCompositeScheduleStatus
-object GetCompositeScheduleStatus {
+sealed trait CompositeScheduleStatus
+object CompositeScheduleStatus {
   final case class Accepted(
     connector: Scope,
     scheduleStart: Option[ZonedDateTime],
     chargingSchedule: Option[ChargingSchedule]
-  ) extends GetCompositeScheduleStatus
-  case object Rejected extends GetCompositeScheduleStatus
+  ) extends CompositeScheduleStatus
+  case object Rejected extends CompositeScheduleStatus
 }

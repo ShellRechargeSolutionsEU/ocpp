@@ -209,7 +209,7 @@ case class GetCompositeScheduleReq(
   chargingRateUnit: Option[UnitOfChargingRate]
 ) extends ChargePointReq
 case class GetCompositeScheduleRes(
-  status: GetCompositeScheduleStatus
+  status: CompositeScheduleStatus
 ) extends ChargePointRes
 
 // ocpp 1.6: trigger message
