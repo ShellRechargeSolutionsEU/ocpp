@@ -6,7 +6,7 @@ import org.json4s.MappingException
 
 import scala.concurrent.duration._
 
-object ConvertersV16 extends CommonSerialization {
+object SerializationV16 extends SerializationCommon {
 
   implicit val AuthorizeReqV16Variant = OcppMessageSerializer.variantFor[messages.AuthorizeReq, Version.V16.type, v16.AuthorizeReq](
     (msg: messages.AuthorizeReq) => AuthorizeReq(msg.idTag),

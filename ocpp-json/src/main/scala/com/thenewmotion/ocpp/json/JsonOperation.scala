@@ -87,7 +87,7 @@ trait JsonOperations[REQ <: Req, RES <: Res, V <: Version] {
 object CentralSystemOperationsV15 extends JsonOperations[CentralSystemReq, CentralSystemRes, Version.V15.type] {
 
   import CentralSystemAction._
-  import v15.ConvertersV15._
+  import v15.SerializationV15._
 
   val enum = CentralSystemAction
 
@@ -131,7 +131,7 @@ object CentralSystemOperationsV15 extends JsonOperations[CentralSystemReq, Centr
 
 object ChargePointOperationsV15 extends JsonOperations[ChargePointReq, ChargePointRes, Version.V15.type] {
   import ChargePointAction._
-  import v15.ConvertersV15._
+  import v15.SerializationV15._
 
   val enum = ChargePointAction
 

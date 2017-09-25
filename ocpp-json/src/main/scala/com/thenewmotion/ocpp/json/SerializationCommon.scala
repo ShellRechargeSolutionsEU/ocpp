@@ -9,7 +9,7 @@ import enums.reflection.EnumUtils.Nameable
 
 import org.json4s.MappingException
 
-private[json] trait CommonSerialization {
+private[json] trait SerializationCommon {
   /**
    * Tries to get select the enumerable value whose name is equal to the given string. If no such enum value exists,
    * throws a net.liftweb.json.MappingException.

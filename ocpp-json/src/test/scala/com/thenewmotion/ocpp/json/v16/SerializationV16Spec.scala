@@ -9,9 +9,9 @@ import org.specs2.mutable.Specification
 
 import scala.reflect.{ClassTag, classTag}
 
-object ConvertersV16Spec extends Specification with ScalaCheck {
+object SerializationV16Spec extends Specification with ScalaCheck {
 
-  import ConvertersV16._
+  import SerializationV16._
   import scalacheck.MessageGenerators._
 
   "Conversion to/from OCPP 1.6-J format" should {
