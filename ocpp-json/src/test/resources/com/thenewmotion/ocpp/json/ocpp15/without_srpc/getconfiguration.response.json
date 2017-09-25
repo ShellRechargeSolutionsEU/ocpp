@@ -6,5 +6,8 @@
             "value": "NQC-ACDC"
         }
     ],
-    "unknownKey": []
+    "unknownKey": [
+        "UNKNOWN_KEY1",
+        "UNKNOWN_KEY2"
+    ]
 }

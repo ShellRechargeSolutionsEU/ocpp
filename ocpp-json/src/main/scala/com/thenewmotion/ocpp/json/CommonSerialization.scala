@@ -30,6 +30,9 @@ private[json] trait CommonSerialization {
   def noneIfEmpty[T](l: List[T]): Option[List[T]] =
     if (l.isEmpty) None else Some(l)
 
+  def emptyIfNone[T](o: Option[List[T]]): List[T] =
+    o.fold(List.empty[T])(identity)
+
   /**
    * Parses a URI and throws a lift-json MappingException if the syntax is wrong
    */

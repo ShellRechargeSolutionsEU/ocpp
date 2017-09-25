@@ -343,7 +343,7 @@ class OcppMessageSerializationSpec extends Specification {
     val getConfigurationReq = GetConfigurationReq(keys = List("apeschaap", "hompeschomp"))
     val getConfigurationRes = GetConfigurationRes(
       values = List(KeyValue(key = "KVCBX_PROFILE", readonly = true, value = Some("NQC-ACDC"))),
-      unknownKeys = List())
+      unknownKeys = List("UNKNOWN_KEY1", "UNKNOWN_KEY2"))
 
     val getLocalListVersionReq = GetLocalListVersionReq
     val getLocalListVersionRes = GetLocalListVersionRes(AuthListSupported(0))
