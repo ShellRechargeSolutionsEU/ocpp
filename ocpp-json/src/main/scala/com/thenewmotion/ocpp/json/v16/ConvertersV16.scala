@@ -217,7 +217,6 @@ object ConvertersV16 {
     )
   )
 
-
   implicit val ClearChargingProfileReqV16Variant = OcppMessageSerializer.variantFor[messages.ClearChargingProfileReq, Version.V16.type, v16.ClearChargingProfileReq](
     (msg: messages.ClearChargingProfileReq) => ClearChargingProfileReq(
       msg.id,
