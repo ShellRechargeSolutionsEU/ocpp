@@ -29,7 +29,7 @@ object ChargingProfilePurpose extends Enumerable[ChargingProfilePurpose] {
 }
 
 sealed trait UnitOfChargingRate extends Nameable
-object UnitOfChargeRate extends Enumerable[UnitOfChargingRate] {
+object UnitOfChargingRate extends Enumerable[UnitOfChargingRate] {
   case object Watts extends UnitOfChargingRate { override def name = "W" }
   case object Amperes extends UnitOfChargingRate { override def name = "A" }
   val values = Set(Watts, Amperes)

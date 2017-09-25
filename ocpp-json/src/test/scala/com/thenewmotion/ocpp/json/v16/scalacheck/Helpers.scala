@@ -75,7 +75,7 @@ object Helpers {
 
   def stackLevelGen: Gen[Int] = choose(1, 10)
 
-  def chargingRateUnitGen: Gen[String] = enumerableNameGen(messages.UnitOfChargeRate)
+  def chargingRateUnitGen: Gen[String] = enumerableNameGen(messages.UnitOfChargingRate)
 
   def chargingSchedulePeriodGen: Gen[ChargingSchedulePeriod] =
     for {

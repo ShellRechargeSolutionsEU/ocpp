@@ -249,7 +249,7 @@ object ConvertersV16 {
     (msg: v16.GetCompositeScheduleReq) => messages.GetCompositeScheduleReq(
       messages.Scope.fromOcpp(msg.connectorId),
       msg.duration.seconds,
-      msg.chargingRateUnit.map(enumerableFromJsonString(messages.UnitOfChargeRate, _))
+      msg.chargingRateUnit.map(enumerableFromJsonString(messages.UnitOfChargingRate, _))
     )
   )
 
@@ -806,7 +806,7 @@ object ConvertersV16 {
 
   private def chargingScheduleFromV16(v16cs: ChargingSchedule): messages.ChargingSchedule =
     messages.ChargingSchedule(
-      enumerableFromJsonString(messages.UnitOfChargeRate, v16cs.chargingRateUnit),
+      enumerableFromJsonString(messages.UnitOfChargingRate, v16cs.chargingRateUnit),
       v16cs.chargingSchedulePeriod.map(periodFromV16),
       v16cs.minChargingRate.map(_.toDouble),
       v16cs.startSchedule,
