@@ -2,16 +2,11 @@ package com.thenewmotion.ocpp
 package json
 package v16
 
-import java.net.URI
-import java.net.URISyntaxException
-
-import enums.reflection.EnumUtils.Enumerable
-import enums.reflection.EnumUtils.Nameable
 import org.json4s.MappingException
 
 import scala.concurrent.duration._
 
-object ConvertersV16 {
+object ConvertersV16 extends CommonSerialization {
 
   implicit val AuthorizeReqV16Variant = OcppMessageSerializer.variantFor[messages.AuthorizeReq, Version.V16.type, v16.AuthorizeReq](
     (msg: messages.AuthorizeReq) => AuthorizeReq(msg.idTag),
@@ -660,35 +655,6 @@ object ConvertersV16 {
         case _ => throw new MappingException(s"Value $status is not valid for UpdateStatus")
       }
     }
-  }
-
-  /**
-   * Tries to get select the enumerable value whose name is equal to the given string. If no such enum value exists,
-   * throws a net.liftweb.json.MappingException.
-   */
-  private def enumerableFromJsonString[T <: Nameable](enum: Enumerable[T], s: String): T =
-    enum.withName(s) match {
-      case None =>
-        throw new MappingException(s"Value $s is not valid for ${enum.getClass.getSimpleName}")
-      case Some(v) => v
-    }
-
-  private def noneIfDefault[T <: Nameable](enumerable: messages.EnumerableWithDefault[T], actual: T): Option[String] =
-    if (actual == enumerable.default) None else Some(actual.name)
-
-  private def defaultIfNone[T <: Nameable](enumerable: messages.EnumerableWithDefault[T], str: Option[String]): T =
-    str.map(enumerableFromJsonString(enumerable, _)).getOrElse(enumerable.default)
-
-  private def noneIfEmpty[T](l: List[T]): Option[List[T]] =
-    if (l.isEmpty) None else Some(l)
-
-  /**
-   * Parses a URI and throws a lift-json MappingException if the syntax is wrong
-   */
-  private def parseURI(s: String) = try {
-    new URI(s)
-  } catch {
-    case e: URISyntaxException => throw MappingException(s"Invalid URL $s in OCPP-JSON message", e)
   }
 
   private implicit class RichTriggerMessageReq(self: messages.TriggerMessageReq) {
