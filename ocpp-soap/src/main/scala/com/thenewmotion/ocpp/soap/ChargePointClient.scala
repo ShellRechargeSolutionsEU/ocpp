@@ -113,6 +113,10 @@ private[ocpp] class ChargePointClientV12(val chargeBoxIdentity: String, uri: Uri
   def dataTransfer(req: ChargePointDataTransferReq) = notSupported("dataTransfer")
   def reserveNow(req: ReserveNowReq) = notSupported("reserveNow")
   def cancelReservation(req: CancelReservationReq) = notSupported("cancelReservation")
+  def clearChargingProfile(req: ClearChargingProfileReq) = notSupported("clearChargingProfile")
+  def getCompositeSchedule(req: GetCompositeScheduleReq) = notSupported("getCompositeSchedule")
+  def setChargingProfile(req: SetChargingProfileReq) = notSupported("setChargingProfile")
+  def triggerMessage(req: TriggerMessageReq) = notSupported("triggerMessage")
 }
 
 private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http, endpoint: Option[Uri])
@@ -271,4 +275,9 @@ private[ocpp] class ChargePointClientV15(val chargeBoxIdentity: String, uri: Uri
       case AcceptedValue9 => true
       case RejectedValue8 => false
     })
+
+  def clearChargingProfile(req: ClearChargingProfileReq) = notSupported("clearChargingProfile")
+  def getCompositeSchedule(req: GetCompositeScheduleReq) = notSupported("getCompositeSchedule")
+  def setChargingProfile(req: SetChargingProfileReq) = notSupported("setChargingProfile")
+  def triggerMessage(req: TriggerMessageReq) = notSupported("triggerMessage")
 }

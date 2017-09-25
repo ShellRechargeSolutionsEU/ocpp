@@ -82,6 +82,22 @@ object ReqRes {
     def apply(req: CancelReservationReq)(implicit service: ChargePoint) = service.cancelReservation(req)
   }
 
+  implicit object ClearChargingProfileReqRes extends ChargePointReqRes[ClearChargingProfileReq, ClearChargingProfileRes] {
+    def apply(req: ClearChargingProfileReq)(implicit service: ChargePoint) = service.clearChargingProfile(req)
+  }
+
+  implicit object GetCompositeScheduleReqRes extends ChargePointReqRes[GetCompositeScheduleReq, GetCompositeScheduleRes] {
+    def apply(req: GetCompositeScheduleReq)(implicit service: ChargePoint) = service.getCompositeSchedule(req)
+  }
+
+  implicit object SetChargingProfileReqRes extends ChargePointReqRes[SetChargingProfileReq, SetChargingProfileRes] {
+    def apply(req: SetChargingProfileReq)(implicit service: ChargePoint) = service.setChargingProfile(req)
+  }
+
+  implicit object TriggerMessageReqRes extends ChargePointReqRes[TriggerMessageReq, TriggerMessageRes] {
+    def apply(req: TriggerMessageReq)(implicit service: ChargePoint) = service.triggerMessage(req)
+  }
+
   implicit object GenericChargePointReqRes extends ChargePointReqRes[ChargePointReq, ChargePointRes] {
     def apply(req: ChargePointReq)(implicit service: ChargePoint) = req match {
       case x: RemoteStartTransactionReq => RemoteStartTransactionReqRes(x)
@@ -99,6 +115,10 @@ object ReqRes {
       case x: ChargePointDataTransferReq => ChargePointDataTransferReqRes(x)(service)
       case x: ReserveNowReq => ReserveNowReqRes(x)
       case x: CancelReservationReq => CancelReservationReqRes(x)
+      case x: ClearChargingProfileReq => ClearChargingProfileReqRes(x)
+      case x: GetCompositeScheduleReq => GetCompositeScheduleReqRes(x)
+      case x: SetChargingProfileReq => SetChargingProfileReqRes(x)
+      case x: TriggerMessageReq => TriggerMessageReqRes(x)
     }
   }
 

@@ -1,8 +1,5 @@
 package com.thenewmotion.ocpp.messages
 
-/**
- * @author Yaroslav Klymko
- */
 trait ChargePoint {
   def remoteStartTransaction(req: RemoteStartTransactionReq): RemoteStartTransactionRes
   def remoteStopTransaction(req: RemoteStopTransactionReq): RemoteStopTransactionRes
@@ -19,6 +16,10 @@ trait ChargePoint {
   def dataTransfer(req: ChargePointDataTransferReq): ChargePointDataTransferRes
   def reserveNow(req: ReserveNowReq): ReserveNowRes
   def cancelReservation(req: CancelReservationReq): CancelReservationRes
+  def clearChargingProfile(req: ClearChargingProfileReq): ClearChargingProfileRes
+  def getCompositeSchedule(req: GetCompositeScheduleReq): GetCompositeScheduleRes
+  def setChargingProfile(req: SetChargingProfileReq): SetChargingProfileRes
+  def triggerMessage(req: TriggerMessageReq): TriggerMessageRes
 
   def apply[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ChargePointReqRes[REQ, RES]): RES = reqRes(req)(this)
 }
