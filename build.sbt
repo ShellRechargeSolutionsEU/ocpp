@@ -37,6 +37,7 @@ def scalaxbModule(name: String, packageNameForGeneratedCode: String) =
   module(name)
    .enablePlugins(ScalaxbPlugin)
    .settings(
+     scalacOptions -="-Ywarn-unused-import",
      libraryDependencies ++= Seq(
        scalaXml,
        scalaParser,
@@ -65,6 +66,7 @@ val ocpp15Soap = scalaxbModule("ocpp-15", "com.thenewmotion.ocpp.v15")
 val ocppSoap = module("ocpp-soap")
   .dependsOn(messages, ocpp12Soap, ocpp15Soap)
   .settings(
+    scalacOptions -= "-Ywarn-value-discard",
     libraryDependencies ++= Seq(
       slf4jApi, scalax, specs2Mock))
 val ocppSpray = module("ocpp-spray")

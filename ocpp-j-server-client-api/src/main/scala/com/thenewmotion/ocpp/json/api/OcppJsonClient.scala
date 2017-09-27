@@ -28,7 +28,7 @@ abstract class OcppJsonClient(
 
     override def onOcppError(error: OcppError): Unit = OcppJsonClient.this.onError(error)
 
-    override def onDisconnect(): Unit = OcppJsonClient.this.onDisconnect
+    override def onDisconnect(): Unit = OcppJsonClient.this.onDisconnect()
   }
 
   def send[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES] =

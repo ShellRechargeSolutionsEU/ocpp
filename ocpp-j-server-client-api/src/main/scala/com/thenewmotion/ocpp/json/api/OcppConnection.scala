@@ -108,26 +108,30 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
       }
     }
 
-    private def handleIncomingResponse(res: ResponseMessage) {
+    private def handleIncomingResponse(res: ResponseMessage): Unit = {
       callIdCache.remove(res.callId) match {
         case None =>
           logger.info("Received response for no request: {}", res)
         case Some(OutstandingRequest(op, resPromise)) =>
           Try(op.deserializeRes(res.payload)) match {
-            case Success(response) => resPromise.success(response)
+            case Success(response) =>
+              resPromise.success(response)
+              ()
             case Failure(e) =>
               logger.info("Failed to parse OCPP response {} to call {} (operation {})", res.payload, res.callId, op, e)
               resPromise.failure(e)
+              ()
           }
       }
     }
 
-    private def handleIncomingError(err: ErrorResponseMessage) = err match {
+    private def handleIncomingError(err: ErrorResponseMessage): Unit = err match {
       case ErrorResponseMessage(callId, errCode, description, details) =>
         callIdCache.remove(callId) match {
           case None => onOcppError(OcppError(errCode, description))
           case Some(OutstandingRequest(operation, futureResponse)) =>
             futureResponse failure new OcppException(OcppError(errCode, description))
+            ()
         }
     }
 

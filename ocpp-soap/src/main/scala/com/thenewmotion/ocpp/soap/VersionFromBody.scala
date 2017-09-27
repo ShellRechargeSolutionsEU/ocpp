@@ -1,14 +1,10 @@
 package com.thenewmotion.ocpp
 package soap
 
-import scala.language.implicitConversions
 import xml.{Elem, NodeSeq}
 import com.github.t3hnar.scalax.RichAny
 import soapenvelope12.Body
 
-/**
- * @author Yaroslav Klymko
- */
 object VersionFromBody {
 
   import Version._

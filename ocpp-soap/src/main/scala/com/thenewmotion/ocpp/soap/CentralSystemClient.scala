@@ -97,8 +97,6 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
     import req._
     def toErrorCode(x: messages.ChargePointErrorCode): ChargePointErrorCode = {
       import messages.{ChargePointErrorCode => ocpp}
-      def notSupportedCode(x: messages.ChargePointErrorCode) =
-        notSupported("statusNotification(ChargePointErrorCode.%s)".format(x))
 
       x match {
         case ocpp.ConnectorLockFailure => ConnectorLockFailure
@@ -113,6 +111,9 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
         case ocpp.UnderVoltage => notSupportedCode(ocpp.UnderVoltage)
         case ocpp.WeakSignal => notSupportedCode(ocpp.WeakSignal)
         case ocpp.OtherError => notSupportedCode(ocpp.OtherError)
+        case ocpp.InternalError => notSupportedCode(ocpp.InternalError)
+        case ocpp.OverVoltage => notSupportedCode(ocpp.OverVoltage)
+        case ocpp.LocalListConflict => notSupportedCode(ocpp.LocalListConflict)
       }
     }
 
@@ -146,6 +147,9 @@ class CentralSystemClientV12(val chargeBoxIdentity: String, uri: Uri, http: Http
         case ocpp.DownloadFailed => DownloadFailed
         case ocpp.InstallationFailed => InstallationFailed
         case ocpp.Installed => Installed
+        case ocpp.Installing => notSupportedCode(ocpp.Installing)
+        case ocpp.Idle => notSupportedCode(ocpp.Idle)
+        case ocpp.Downloading => notSupportedCode(ocpp.Downloading)
       }
     }
     ?(_.firmwareStatusNotification, FirmwareStatusNotificationRequest(firmwareStatus))
@@ -256,6 +260,9 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
         case ocpp.UnderVoltage => UnderVoltage
         case ocpp.WeakSignal => WeakSignal
         case ocpp.OtherError => OtherError
+        case ocpp.InternalError => notSupportedCode(ocpp.InternalError)
+        case ocpp.OverVoltage => notSupportedCode(ocpp.OverVoltage)
+        case ocpp.LocalListConflict => notSupportedCode(ocpp.LocalListConflict)
       }
     }
 
@@ -288,6 +295,9 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       case ocpp.DownloadFailed => DownloadFailed
       case ocpp.InstallationFailed => InstallationFailed
       case ocpp.Installed => Installed
+      case ocpp.Installing => notSupportedCode(ocpp.Installing)
+      case ocpp.Idle => notSupportedCode(ocpp.Idle)
+      case ocpp.Downloading => notSupportedCode(ocpp.Downloading)
     }
     ?(_.firmwareStatusNotification, FirmwareStatusNotificationRequest(firmwareStatus))
   }
@@ -323,6 +333,8 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
         case ocpp.SamplePeriodic => Sampleu46Periodic
         case ocpp.TransactionBegin => Transactionu46Begin
         case ocpp.TransactionEnd => Transactionu46End
+        case ocpp.Trigger => notSupportedCode(ocpp.Trigger)
+        case ocpp.Other => notSupportedCode(ocpp.Other)
       }
     }
 
@@ -353,6 +365,12 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
         case ocpp.CurrentImport => Currentu46Import
         case ocpp.Voltage => Voltage
         case ocpp.Temperature => Temperature
+        case ocpp.CurrentOffered => notSupportedCode(ocpp.CurrentOffered)
+        case ocpp.FanSpeedInRotationsPerMinute => notSupportedCode(ocpp.FanSpeedInRotationsPerMinute)
+        case ocpp.Frequency => notSupportedCode(ocpp.Frequency)
+        case ocpp.PowerFactor => notSupportedCode(ocpp.PowerFactor)
+        case ocpp.PowerOffered => notSupportedCode(ocpp.PowerOffered)
+        case ocpp.StateOfChargeInPercentage => notSupportedCode(ocpp.StateOfChargeInPercentage)
       }
     }
 
@@ -362,6 +380,8 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
         case ocpp.Inlet => Inlet
         case ocpp.Outlet => Outlet
         case ocpp.Body => Body
+        case ocpp.Cable => notSupportedCode(ocpp.Cable)
+        case ocpp.Ev => notSupportedCode(ocpp.Ev)
       }
     }
 
@@ -379,6 +399,11 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
         case ocpp.Amp => Amp
         case ocpp.Volt => Volt
         case ocpp.Celsius => Celsius
+        case ocpp.Fahrenheit => notSupportedCode(ocpp.Fahrenheit)
+        case ocpp.Kelvin => notSupportedCode(ocpp.Kelvin)
+        case ocpp.Kva => notSupportedCode(ocpp.Kva)
+        case ocpp.Percent => notSupportedCode(ocpp.Percent)
+        case ocpp.Va => notSupportedCode(ocpp.Va)
       }
     }
 

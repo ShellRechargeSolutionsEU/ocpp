@@ -1,6 +1,7 @@
 package com.thenewmotion.ocpp
 package soap
 
+import enums.reflection.EnumUtils.Nameable
 import org.slf4j.LoggerFactory
 
 /**
@@ -34,7 +35,11 @@ private[ocpp] trait ScalaxbClient {
     }
   }
 
-  def notSupported(action: String): Nothing = throw new ActionNotSupportedException(version, action)
+  def notSupported(action: String): Nothing =
+    throw new ActionNotSupportedException(version, action)
+
+  def notSupportedCode(code: Nameable) =
+    notSupported(s"unknown enumeration value ${code.name}")
 
   def logNotSupported(name: String, value: Any) {
     logger.warn(s"$name is not supported in OCPP $version, value: $value")

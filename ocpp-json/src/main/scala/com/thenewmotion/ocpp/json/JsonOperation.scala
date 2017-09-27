@@ -81,7 +81,7 @@ trait JsonOperations[REQ <: Req, RES <: Res, V <: Version] {
    * @return The JsonOperation instance for the OCPP operation of the given ReqRes object
    * @throws NoSuchElementException If the OCPP operation for the given ReqRes is not supported with OCPP-JSON
    */
-  def jsonOpForReqRes[Req <: REQ, Res <: RES](reqRes: ReqRes[Req, Res]): JsonOperation[Req, Res, V]
+  def jsonOpForReqRes[Q <: REQ, S <: RES](reqRes: ReqRes[Q, S]): JsonOperation[Q, S, V]
 }
 
 object CentralSystemOperationsV15 extends JsonOperations[CentralSystemReq, CentralSystemRes, Version.V15.type] {
@@ -113,7 +113,7 @@ object CentralSystemOperationsV15 extends JsonOperations[CentralSystemReq, Centr
     stopTransactionJsonOp
   )
 
-  def jsonOpForReqRes[Req <: CentralSystemReq, Res <: CentralSystemRes](reqRes: ReqRes[Req, Res]): JsonOperation[Req, Res, Version.V15.type] = {
+  def jsonOpForReqRes[Q <: CentralSystemReq, S <: CentralSystemRes](reqRes: ReqRes[Q, S]): JsonOperation[Q, S, Version.V15.type] = {
     import ReqRes._
     reqRes match {
       case AuthorizeReqRes => authorizeJsonOp
@@ -167,7 +167,7 @@ object ChargePointOperationsV15 extends JsonOperations[ChargePointReq, ChargePoi
     updateFirmwareJsonOp
   )
 
-  def jsonOpForReqRes[Req <: ChargePointReq, Res <: ChargePointRes](reqRes: ReqRes[Req, Res]): JsonOperation[Req, Res, Version.V15.type] = {
+  def jsonOpForReqRes[Q <: ChargePointReq, S <: ChargePointRes](reqRes: ReqRes[Q, S]): JsonOperation[Q, S, Version.V15.type] = {
     import ReqRes._
 
     reqRes match {

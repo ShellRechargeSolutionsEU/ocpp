@@ -10,5 +10,5 @@ trait OcppEndpoint[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES <: Res] {
 
   def onError(error: OcppError): Unit
 
-  def onDisconnect: Unit
+  def onDisconnect(): Unit
 }
