@@ -15,21 +15,20 @@ object JsonClientTestApp extends App {
 
   private val chargerId = args.headOption.getOrElse("test-charger")
   private val centralSystemUri = if (args.length >= 2) args(1) else "ws://localhost:8080/ocppws"
-  private val authPassword = if (args.length >= 3) Some(args(2)) else None
-  private val ocppProtocols = if (args.length >= 4) args(3).split(",").toList else List("ocpp15")
+  // TODO fix this so people can normally use "1.5" or "1.6" as a version. Preferably by changing the enum names.
+  private val version =
+    if (args.length >= 3)
+      Version.withName(args(2))
+        .getOrElse(sys.error(s"Unrecognized version ${args(3)}"))
+    else
+      Version.V16
 
   private val logger = LoggerFactory.getLogger(JsonClientTestApp.getClass)
 
-  //TODO this should come from the websocket negotiation
-  implicit val version = ocppProtocols.head match {
-    case "ocpp1.2" => Version.V12
-    case "ocpp1.5" => Version.V15
-    case "ocpp1.6" => Version.V16
-  }
-
-  val connection = new OcppJsonClient(chargerId, new URI(centralSystemUri), authPassword, ocppProtocols) {
+  // TODO make authPassword optional to make example app code cleaner
+  val connection = new OcppJsonClient(chargerId, new URI(centralSystemUri), None, version) {
     // TODO: get rid of asInstanceOf, by creating specific onBootNotification etc callbacks? Or moving it into OcppConnection?
-    def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES], version:Version): Future[RES] = Future {
+    def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES] = Future {
       req match {
         case GetLocalListVersionReq =>
           logger.info("Received GetLocalListVersionReq")

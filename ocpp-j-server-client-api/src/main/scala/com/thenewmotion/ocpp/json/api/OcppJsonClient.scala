@@ -13,26 +13,28 @@ abstract class OcppJsonClient(
     chargerId: String,
     centralSystemUri: URI,
     authPassword: Option[String],
-  // TODO give Version argument instead of String
-    ocppProtocols: List[String])(implicit sslContext: SSLContext = SSLContext.getDefault)
+    version: Version)(implicit sslContext: SSLContext = SSLContext.getDefault)
   extends OcppEndpoint[CentralSystemReq, CentralSystemRes, ChargePointReq, ChargePointRes] {
 
-  implicit val version = ocppProtocols.head match {
-    case "ocpp1.2" => Version.V12
-    case "ocpp1.5" => Version.V15
-    case "ocpp1.6" => Version.V16
+  // TODO OCPP-layer-specific, should go to OcppConnectionComponent
+  val subProtocol = version match {
+    case Version.V15 => "ocpp1.5"
+    case Version.V16 => "ocpp1.6"
   }
   private[this] val ocppStack = new ChargePointOcppConnectionComponent with DefaultSrpcComponent with SimpleClientWebSocketComponent {
+    // TODO this should give us back a negotiated WebSocket subprotocol later on,
+    // which we then use to determine the negotiated OCPP version to initialize the ChargePointOcppConnection
     val webSocketConnection = new SimpleClientWebSocketConnection(
       chargerId,
       centralSystemUri,
       authPassword,
-      ocppProtocols
+      List(subProtocol)
     )
-    val srpcConnection = new DefaultSrpcConnection
-    val ocppConnection = new ChargePointOcppConnection(version)
 
-    override def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES], version:Version): Future[RES] =
+    val srpcConnection = new DefaultSrpcConnection
+    val ocppConnection = defaultChargePointOcppConnection(version)
+
+    override def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES] =
       OcppJsonClient.this.onRequest(req)
 
     override def onOcppError(error: OcppError): Unit = OcppJsonClient.this.onError(error)
@@ -40,7 +42,7 @@ abstract class OcppJsonClient(
     override def onDisconnect(): Unit = OcppJsonClient.this.onDisconnect()
   }
 
-  def send[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES], version:Version): Future[RES] =
+  def send[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES] =
     ocppStack.ocppConnection.sendRequest(req)
 
   def close() = ocppStack.webSocketConnection.close()

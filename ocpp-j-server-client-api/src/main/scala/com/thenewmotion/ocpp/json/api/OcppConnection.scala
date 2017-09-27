@@ -25,7 +25,7 @@ trait OcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES 
 
   trait OcppConnection {
     /** Send an outgoing OCPP request */
-    def sendRequest[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES], version:Version): Future[RES]
+    def sendRequest[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
 
     /** Handle an incoming SRPC message */
     def onSrpcMessage(msg: TransportMessage)
@@ -33,7 +33,7 @@ trait OcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES 
 
   def ocppConnection: OcppConnection
 
-  def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES], version:Version): Future[RES]
+  def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
   def onOcppError(error: OcppError)
 }
 
@@ -51,15 +51,18 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
   this: SrpcComponent =>
 
   trait DefaultOcppConnection extends OcppConnection {
+    /** The version of the OCPP protocol used on this connection */
+    type V <: Version
+
     /** The operations that the other side can request from us */
-    val ourOperations: JsonOperations[INREQ, OUTRES, Version.V15.type]
-    val theirOperations: JsonOperations[OUTREQ, INRES, Version.V15.type]
+    val ourOperations: JsonOperations[INREQ, OUTRES, V]
+    val theirOperations: JsonOperations[OUTREQ, INRES, V]
 
     private val logger = LoggerFactory.getLogger(DefaultOcppConnection.this.getClass)
 
     private[this] val callIdGenerator = CallIdGenerator()
 
-    sealed case class OutstandingRequest[REQ <: OUTREQ, RES <: INRES](operation: JsonOperation[REQ, RES, Version.V15.type],
+    sealed case class OutstandingRequest[REQ <: OUTREQ, RES <: INRES](operation: JsonOperation[REQ, RES, V],
                                                                       responsePromise: Promise[RES])
 
     private[this] val callIdCache: mutable.Map[String, OutstandingRequest[_, _]] = mutable.Map()
@@ -147,7 +150,7 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
 
     private def sendRequestWithJsonOperation[REQ <: OUTREQ, RES <: INRES](
       req: REQ,
-      jsonOperation: JsonOperation[REQ, RES, Version.V15.type]
+      jsonOperation: JsonOperation[REQ, RES, V]
     ) = {
       val callId = callIdGenerator.next()
       val responsePromise = Promise[RES]()
@@ -163,7 +166,7 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
     }
   }
 
-  def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES], version:Version): Future[RES]
+  def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
   def onOcppError(error: OcppError): Unit
 
   def onSrpcMessage(msg: TransportMessage) = ocppConnection.onSrpcMessage(msg)
@@ -173,16 +176,34 @@ trait ChargePointOcppConnectionComponent
   extends DefaultOcppConnectionComponent[CentralSystemReq, CentralSystemRes, ChargePointReq, ChargePointRes] {
   this: SrpcComponent =>
 
-  //TODO Change this once ChargePointOperationsV16 is there
-  class ChargePointOcppConnection(version:Version) extends DefaultOcppConnection {
-    val ourOperations = version match {
-      case Version.V15 => ChargePointOperationsV15
-      case Version.V16 => ChargePointOperationsV15
-    }
-    val theirOperations = version match {
-      case Version.V15 => CentralSystemOperationsV15
-      case Version.V16 => CentralSystemOperationsV15
-    }
+  class ChargePointOcppConnection[Ver <: Version](
+    implicit val ourOperations: JsonOperations[ChargePointReq, ChargePointRes, Ver],
+    val theirOperations: JsonOperations[CentralSystemReq, CentralSystemRes, Ver]
+  ) extends DefaultOcppConnection {
+
+    type V = Ver
+  }
+
+  def defaultChargePointOcppConnection(version: Version) = version match {
+    case Version.V15 => new ChargePointOcppConnection[Version.V15.type]
+    case Version.V16 => new ChargePointOcppConnection[Version.V16.type]
   }
 }
 
+trait CentralSystemOcppConnectionComponent
+  extends DefaultOcppConnectionComponent[ChargePointReq, ChargePointRes, CentralSystemReq, CentralSystemRes] {
+  this: SrpcComponent =>
+
+  class CentralSystemOcppConnection[Ver <: Version](
+    implicit val ourOperations: JsonOperations[CentralSystemReq, CentralSystemRes, Ver],
+    val theirOperations: JsonOperations[ChargePointReq, ChargePointRes, Ver]
+  ) extends DefaultOcppConnection {
+
+    type V = Ver
+  }
+
+  def defaultCentralSystemOcppConnection(version: Version) = version match {
+    case Version.V15 => new CentralSystemOcppConnection[Version.V15.type]
+    case Version.V16 => new CentralSystemOcppConnection[Version.V16.type]
+  }
+}
