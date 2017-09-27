@@ -21,7 +21,6 @@ import scala.concurrent.{Future, ExecutionContext}
  * @param reqRes
  * @param reqSerializer
  * @param resSerializer
- * @param reqTag
  * @tparam REQ
  * @tparam RES
  * @tparam V
@@ -32,8 +31,7 @@ class JsonOperation[REQ <: Req, RES <: Res, V <: Version](
 (
   implicit val reqRes: ReqRes[REQ, RES],
   reqSerializer: OcppMessageSerializer[REQ, V],
-  resSerializer: OcppMessageSerializer[RES, V],
-  reqTag: ClassTag[REQ]
+  resSerializer: OcppMessageSerializer[RES, V]
 ) {
   def serializeReq(req: REQ): JValue = reqSerializer.serialize(req)
   def deserializeReq(jval: JValue): REQ = reqSerializer.deserialize(jval)
@@ -43,10 +41,6 @@ class JsonOperation[REQ <: Req, RES <: Res, V <: Version](
 
   def reqRes(reqJson: JValue)(f: (REQ, ReqRes[REQ, RES]) => Future[RES])(implicit ec: ExecutionContext): Future[JValue] =
     f(deserializeReq(reqJson), reqRes).map(serializeRes)
-
-  private val reqClass = classTag[REQ].runtimeClass
-
-  def matchesRequest(req: Req): Boolean = reqClass.isInstance(req)
 }
 
 trait JsonOperations[REQ <: Req, RES <: Res, V <: Version] {
@@ -274,7 +268,11 @@ object ChargePointOperationsV16 extends JsonOperations[ChargePointReq, ChargePoi
     resetJsonOp,
     sendLocalListJsonOp,
     unlockConnectorJsonOp,
-    updateFirmwareJsonOp
+    updateFirmwareJsonOp,
+    setChargingProfileJsonOp,
+    clearChargingProfileJsonOp,
+    getCompositeScheduleJsonOp,
+    triggerMessageJsonOp
   )
 
   def jsonOpForReqRes[Q <: ChargePointReq, S <: ChargePointRes](reqRes: ReqRes[Q, S]): JsonOperation[Q, S, Version.V16.type] = {
@@ -295,6 +293,10 @@ object ChargePointOperationsV16 extends JsonOperations[ChargePointReq, ChargePoi
       case SendLocalListReqRes => sendLocalListJsonOp
       case UnlockConnectorReqRes => unlockConnectorJsonOp
       case UpdateFirmwareReqRes => updateFirmwareJsonOp
+      case SetChargingProfileReqRes => setChargingProfileJsonOp
+      case ClearChargingProfileReqRes => clearChargingProfileJsonOp
+      case GetCompositeScheduleReqRes => getCompositeScheduleJsonOp
+      case TriggerMessageReqRes => triggerMessageJsonOp
       case _ => throw new NoSuchElementException(s"Not a charge point ReqRes: $reqRes")
     }
   }
