@@ -9,6 +9,7 @@ abstract class OcppJsonClient(
     chargerId: String,
     centralSystemUri: URI,
     authPassword: Option[String],
+  // TODO give Version argument instead of String
     ocppProtocol: String)(implicit sslContext: SSLContext = SSLContext.getDefault)
   extends OcppEndpoint[CentralSystemReq, CentralSystemRes, ChargePointReq, ChargePointRes] {
 
