@@ -25,7 +25,7 @@ trait OcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES 
 
   trait OcppConnection {
     /** Send an outgoing OCPP request */
-    def sendRequest[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
+    def sendRequest[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES], version:Version): Future[RES]
 
     /** Handle an incoming SRPC message */
     def onSrpcMessage(msg: TransportMessage)
@@ -33,7 +33,7 @@ trait OcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES 
 
   def ocppConnection: OcppConnection
 
-  def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
+  def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES], version:Version): Future[RES]
   def onOcppError(error: OcppError)
 }
 
@@ -163,7 +163,7 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
     }
   }
 
-  def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
+  def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES], version:Version): Future[RES]
   def onOcppError(error: OcppError): Unit
 
   def onSrpcMessage(msg: TransportMessage) = ocppConnection.onSrpcMessage(msg)
@@ -173,9 +173,16 @@ trait ChargePointOcppConnectionComponent
   extends DefaultOcppConnectionComponent[CentralSystemReq, CentralSystemRes, ChargePointReq, ChargePointRes] {
   this: SrpcComponent =>
 
-  class ChargePointOcppConnection extends DefaultOcppConnection {
-    val ourOperations = ChargePointOperationsV15
-    val theirOperations = CentralSystemOperationsV15
+  //TODO Change this once ChargePointOperationsV16 is there
+  class ChargePointOcppConnection(version:Version) extends DefaultOcppConnection {
+    val ourOperations = version match {
+      case Version.V15 => ChargePointOperationsV15
+      case Version.V16 => ChargePointOperationsV15
+    }
+    val theirOperations = version match {
+      case Version.V15 => CentralSystemOperationsV15
+      case Version.V16 => CentralSystemOperationsV15
+    }
   }
 }
 

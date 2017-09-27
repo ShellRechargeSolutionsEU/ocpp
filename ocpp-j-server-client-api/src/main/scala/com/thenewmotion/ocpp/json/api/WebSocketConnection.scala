@@ -74,14 +74,14 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
     chargerId: String,
     uri: URI,
     authPassword: Option[String],
-    ocppProtocol: String
+    ocppProtocols: List[String]
   )(implicit sslContext: SSLContext = SSLContext.getDefault) extends WebSocketConnection {
 
     private[this] val logger = LoggerFactory.getLogger(SimpleClientWebSocketConnection.this.getClass)
 
     private val actualUri = uriWithChargerId(uri, chargerId)
 
-    private val headers = (Map("Sec-WebSocket-Protocol" -> ocppProtocol) ++
+    private val headers = (Map("Sec-WebSocket-Protocol" -> ocppProtocols.mkString(",")) ++
       authPassword.fold(Map.empty[String, String]) { password =>
         def toBytes = s"$chargerId:".toCharArray.map(_.toByte) ++
           password.sliding(2, 2).map { byteAsHex =>
@@ -95,6 +95,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
     private val client = new WebSocketClient(actualUri, new Draft_17(), headers, 0) {
 
       override def onOpen(h: ServerHandshake): Unit =
+        //TODO figure out what version the handshake settled on
         logger.debug("WebSocket connection opened to {}", actualUri)
 
       override def onMessage(msg: String): Unit = {
