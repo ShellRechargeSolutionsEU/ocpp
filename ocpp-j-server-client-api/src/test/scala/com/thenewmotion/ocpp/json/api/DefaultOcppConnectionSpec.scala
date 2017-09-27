@@ -133,7 +133,7 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
       val srpcConnection = new SrpcConnection {
         def send(msg: TransportMessage) = sentSrpcMessagePromise.success(msg)
       }
-      val ocppConnection = new ChargePointOcppConnection
+      val ocppConnection = new ChargePointOcppConnection(Version.V15)
 
       def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](
         request: REQ
