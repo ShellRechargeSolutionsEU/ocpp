@@ -41,8 +41,3 @@ object OcppMessageSerializer {
   }
 }
 
-object OcppMessageSerializers {
-
-  object Ocpp15 {
-  }
-}
