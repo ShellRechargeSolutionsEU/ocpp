@@ -18,5 +18,9 @@ object ChargePointAction extends Enumeration {
   Reset,
   SendLocalList,
   UnlockConnector,
-  UpdateFirmware = Value
+  UpdateFirmware,
+  SetChargingProfile,
+  ClearChargingProfile,
+  GetCompositeSchedule,
+  TriggerMessage = Value
 }
