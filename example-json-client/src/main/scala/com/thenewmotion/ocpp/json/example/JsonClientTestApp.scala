@@ -4,12 +4,10 @@ package example
 
 import java.net.URI
 import org.slf4j.LoggerFactory
+import scala.concurrent._
 
 import messages._
 import api._
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent._
 
 object JsonClientTestApp extends App {
 
@@ -26,15 +24,75 @@ object JsonClientTestApp extends App {
 
   // TODO make authPassword optional to make example app code cleaner
   val connection = new OcppJsonClient(chargerId, new URI(centralSystemUri), None, version) {
-    def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES] = Future {
-      req match {
-        case GetLocalListVersionReq =>
-          logger.info("Received GetLocalListVersionReq")
-          GetLocalListVersionRes(AuthListNotSupported).asInstanceOf[RES]
-        case x =>
-          logger.info(s"Received $x")
-          throw OcppException(PayloadErrorCode.NotSupported, "Demo app doesn't support that")
-      }
+
+    /*
+     * The example app answers to GetConfiguration requests that it doesn't have
+     * any configuration. To other requests it just answers that that message
+     * type is not supported.
+     */
+    val requestHandler = new ChargePoint {
+      def getConfiguration(req: GetConfigurationReq): Future[GetConfigurationRes] =
+        Future.successful(GetConfigurationRes(
+          values = List(),
+          unknownKeys = req.keys
+        ))
+
+      def remoteStartTransaction(q: RemoteStartTransactionReq): Future[RemoteStartTransactionRes] =
+        notSupported("Remote Start Transaction")
+
+      def remoteStopTransaction(q: RemoteStopTransactionReq): Future[RemoteStopTransactionRes] =
+        notSupported("Remote Stop Transaction")
+
+      def unlockConnector(q: UnlockConnectorReq): Future[UnlockConnectorRes] =
+        notSupported("Unlock Connector")
+
+      def getDiagnostics(req: GetDiagnosticsReq): Future[GetDiagnosticsRes] =
+        notSupported("Get Diagnostics")
+
+      def changeConfiguration(req: ChangeConfigurationReq): Future[ChangeConfigurationRes] =
+        notSupported("Change Configuration")
+
+      def changeAvailability(req: ChangeAvailabilityReq): Future[ChangeAvailabilityRes] =
+        notSupported("Change Availability")
+
+      def clearCache: Future[ClearCacheRes] =
+        notSupported("Clear Cache")
+
+      def reset(req: ResetReq): Future[ResetRes] =
+        notSupported("Reset")
+
+      def updateFirmware(req: UpdateFirmwareReq): Future[Unit] =
+        notSupported("Update Firmware")
+
+      def sendLocalList(req: SendLocalListReq): Future[SendLocalListRes] =
+        notSupported("Send Local List")
+
+      def getLocalListVersion: Future[GetLocalListVersionRes] =
+        notSupported("Get Local List Version")
+
+      def dataTransfer(q: ChargePointDataTransferReq): Future[ChargePointDataTransferRes] =
+        notSupported("Data Transfer")
+
+      def reserveNow(q: ReserveNowReq): Future[ReserveNowRes] =
+        notSupported("Reserve Now")
+
+      def cancelReservation(q: CancelReservationReq): Future[CancelReservationRes] =
+        notSupported("Cancel Reservation")
+
+      def clearChargingProfile(req: ClearChargingProfileReq): Future[ClearChargingProfileRes] =
+        notSupported("Clear Charging Profile")
+
+      def getCompositeSchedule(req: GetCompositeScheduleReq): Future[GetCompositeScheduleRes] =
+        notSupported("Get Composite Schedule")
+
+      def setChargingProfile(req: SetChargingProfileReq): Future[SetChargingProfileRes] =
+        notSupported("Set Charging Profile")
+
+      def triggerMessage(req: TriggerMessageReq): Future[TriggerMessageRes] =
+        notSupported("Trigger Message")
+
+      def notSupported(opName: String): Future[Nothing] =
+        Future.failed(OcppException(PayloadErrorCode.NotSupported, s"Demo app doesn't support $opName"))
     }
 
     def onError(err: OcppError): Unit =

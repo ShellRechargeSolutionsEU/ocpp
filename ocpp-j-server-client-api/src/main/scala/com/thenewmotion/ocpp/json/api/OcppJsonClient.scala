@@ -4,7 +4,7 @@ import java.net.URI
 
 import com.thenewmotion.ocpp.messages._
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, ExecutionContext}
 import javax.net.ssl.SSLContext
 
 import com.thenewmotion.ocpp.Version
@@ -14,7 +14,7 @@ abstract class OcppJsonClient(
     centralSystemUri: URI,
     authPassword: Option[String],
     version: Version)(implicit sslContext: SSLContext = SSLContext.getDefault)
-  extends OcppEndpoint[CentralSystemReq, CentralSystemRes, ChargePointReq, ChargePointRes] {
+  extends ChargePointEndpoint {
 
   // TODO OCPP-layer-specific, should go to OcppConnectionComponent
   val subProtocol = version match {
@@ -46,4 +46,7 @@ abstract class OcppJsonClient(
     ocppStack.ocppConnection.sendRequest(req)
 
   def close() = ocppStack.webSocketConnection.close()
+
+  protected implicit val ec: ExecutionContext =
+    ExecutionContext.Implicits.global
 }
