@@ -37,7 +37,7 @@ trait OcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES 
   def onOcppError(error: OcppError)
 }
 
-// TODO support the 'details' field of OCPP error messages
+// for now, we don't support the 'details' field of OCPP-J error messages
 case class OcppError(error: PayloadErrorCode.Value, description: String)
 case class OcppException(ocppError: OcppError) extends Exception(s"${ocppError.error}: ${ocppError.description}")
 object OcppException {

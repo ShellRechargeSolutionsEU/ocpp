@@ -70,7 +70,5 @@ class TransportMessageParserSpec extends Specification {
       val requestData = messageData("srpc/wrongelementsmessage-toofew.json")
       TransportMessageParser.parse(requestData) must throwA[MappingException]
     }
-
   }
-
 }
