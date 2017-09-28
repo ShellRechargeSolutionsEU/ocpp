@@ -26,7 +26,6 @@ object JsonClientTestApp extends App {
 
   // TODO make authPassword optional to make example app code cleaner
   val connection = new OcppJsonClient(chargerId, new URI(centralSystemUri), None, version) {
-    // TODO: get rid of asInstanceOf, by creating specific onBootNotification etc callbacks? Or moving it into OcppConnection?
     def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES] = Future {
       req match {
         case GetLocalListVersionReq =>
@@ -38,9 +37,10 @@ object JsonClientTestApp extends App {
       }
     }
 
-    def onError(err: OcppError) = logger.warn(s"OCPP error: ${err.error} ${err.description}")
+    def onError(err: OcppError): Unit =
+      logger.warn(s"OCPP error: ${err.error} ${err.description}")
 
-    def onDisconnect = logger.warn("WebSocket disconnect")
+    def onDisconnect(): Unit = logger.warn("WebSocket disconnect")
   }
 
   connection.send(BootNotificationReq(

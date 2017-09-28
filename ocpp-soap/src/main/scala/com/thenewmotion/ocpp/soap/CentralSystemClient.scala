@@ -7,7 +7,7 @@ import java.time.ZonedDateTime
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 
-trait CentralSystemClient extends CentralSystem with Client
+trait CentralSystemClient extends SyncCentralSystem with Client
 
 object CentralSystemClient {
   def apply(chargeBoxIdentity: String,
