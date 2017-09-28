@@ -9,7 +9,7 @@ import messages._
 /**
  * @author Yaroslav Klymko
  */
-trait ChargePointClient extends ChargePoint with Client
+trait ChargePointClient extends SyncChargePoint with Client
 
 object ChargePointClient {
   def apply(chargeBoxIdentity: String,
