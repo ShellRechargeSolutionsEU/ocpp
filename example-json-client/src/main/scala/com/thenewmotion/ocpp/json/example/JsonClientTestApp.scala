@@ -15,7 +15,6 @@ object JsonClientTestApp extends App {
 
   private val chargerId = args.headOption.getOrElse("test-charger")
   private val centralSystemUri = if (args.length >= 2) args(1) else "ws://localhost:8080/ocppws"
-  // TODO fix this so people can normally use "1.5" or "1.6" as a version. Preferably by changing the enum names.
   private val version =
     if (args.length >= 3)
       Version.withName(args(2))
