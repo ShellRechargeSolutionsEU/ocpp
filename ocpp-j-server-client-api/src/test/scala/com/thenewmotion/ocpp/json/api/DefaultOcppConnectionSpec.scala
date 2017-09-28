@@ -50,7 +50,7 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
 
       awaitFirstSentMessage must beLike {
         case ErrorResponseMessage(callId, errorCode, description, details) =>
-          (callId, errorCode) mustEqual (srpcRemoteStopTransactionReq.callId, PayloadErrorCode.InternalError)
+          (callId, errorCode) mustEqual (srpcRemoteStopTransactionReq.callId -> PayloadErrorCode.InternalError)
       }
     }
 
@@ -59,7 +59,7 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
 
       awaitFirstSentMessage must beLike{
         case ErrorResponseMessage(callId, errorCode, description, details) =>
-          (callId, errorCode) mustEqual (srpcNonexistentOperationReq.callId, PayloadErrorCode.NotImplemented)
+          (callId, errorCode) mustEqual (srpcNonexistentOperationReq.callId -> PayloadErrorCode.NotImplemented)
       }
     }
 
@@ -68,7 +68,7 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
 
       awaitFirstSentMessage must beLike {
         case ErrorResponseMessage(callId, errorCode, description, details) =>
-          (callId, errorCode) mustEqual (srpcNotSupportedOperationReq.callId, PayloadErrorCode.NotSupported)
+          (callId, errorCode) mustEqual (srpcNotSupportedOperationReq.callId -> PayloadErrorCode.NotSupported)
       }
     }
 
@@ -131,7 +131,10 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
 
     val testConnection = new ChargePointOcppConnectionComponent with SrpcComponent {
       val srpcConnection = new SrpcConnection {
-        def send(msg: TransportMessage) = sentSrpcMessagePromise.success(msg)
+        def send(msg: TransportMessage) = {
+          sentSrpcMessagePromise.success(msg)
+          ()
+        }
       }
       val ocppConnection = defaultChargePointOcppConnection(Version.V15)
 
