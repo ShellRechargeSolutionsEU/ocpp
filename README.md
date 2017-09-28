@@ -67,9 +67,9 @@ The Open Charge Point Protocol (OCPP) is a network protocol for communication be
 
 There is an example OCPP 1.5-JSON client application in example-json-client/src/main/scala/com/thenewmotion/ocpp/json. You can run it like this:
 
-    sbt "project example-json-client" "run 01234567 ws://localhost:8017/ocppws V15"
+    sbt "project example-json-client" "run 01234567 ws://localhost:8017/ocppws 1.5"
 
-This means: connect to the Central System running at `ws://localhost:8017/ocppws`, as a charge point with ID 01234567, using OCPP version 1.5. Leave out the "V15", or type "V16", to use OCPP version 1.6 instead.
+This means: connect to the Central System running at `ws://localhost:8017/ocppws`, as a charge point with ID 01234567, using OCPP version 1.5. Leave out the "1.5", or type "1.6", to use OCPP version 1.6 instead.
 
 ## Acknowledgements
 
