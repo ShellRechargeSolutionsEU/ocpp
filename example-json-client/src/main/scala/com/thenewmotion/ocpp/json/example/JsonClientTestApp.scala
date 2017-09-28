@@ -22,8 +22,7 @@ object JsonClientTestApp extends App {
 
   private val logger = LoggerFactory.getLogger(JsonClientTestApp.getClass)
 
-  // TODO make authPassword optional to make example app code cleaner
-  val connection = new OcppJsonClient(chargerId, new URI(centralSystemUri), None, version) {
+  val connection = new OcppJsonClient(chargerId, new URI(centralSystemUri), version) {
 
     /*
      * The example app answers to GetConfiguration requests that it doesn't have
