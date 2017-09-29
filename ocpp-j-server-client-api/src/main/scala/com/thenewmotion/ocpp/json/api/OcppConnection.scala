@@ -49,10 +49,10 @@ trait OcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES 
 }
 
 // for now, we don't support the 'details' field of OCPP-J error messages
-case class OcppError(error: PayloadErrorCode.Value, description: String)
+case class OcppError(error: PayloadErrorCode, description: String)
 case class OcppException(ocppError: OcppError) extends Exception(s"${ocppError.error}: ${ocppError.description}")
 object OcppException {
-  def apply(error: PayloadErrorCode.Value, description: String): OcppException =
+  def apply(error: PayloadErrorCode, description: String): OcppException =
     OcppException(OcppError(error, description))
 }
 
@@ -91,7 +91,7 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
     private def handleIncomingRequest(req: RequestMessage) {
       import ourOperations._
 
-      def respondWithError(errCode: PayloadErrorCode.Value, description: String) =
+      def respondWithError(errCode: PayloadErrorCode, description: String) =
         srpcConnection.send(ErrorResponseMessage(req.callId, errCode, description))
 
       val opName = req.procedureName

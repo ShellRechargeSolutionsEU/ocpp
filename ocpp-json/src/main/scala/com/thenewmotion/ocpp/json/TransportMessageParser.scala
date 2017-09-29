@@ -8,12 +8,13 @@ import org.slf4j.LoggerFactory
 
 object TransportMessageParser {
 
-  private[this] val logger = LoggerFactory.getLogger(TransportMessageParser.this.getClass)
+  private[this] val logger =
+    LoggerFactory.getLogger(TransportMessageParser.this.getClass)
 
-  implicit val formats = DefaultFormats ++ TransportMessageJsonSerializers()
-  val CALLTYPE = BigInt(TransportMessageType.CALL.id)
-  val RESULTTYPE = BigInt(TransportMessageType.CALLRESULT.id)
-  val ERRORTYPE = BigInt(TransportMessageType.CALLERROR.id)
+  implicit val formats =
+    DefaultFormats ++ TransportMessageJsonSerializers()
+
+  import TransportMessageType._
 
   def parse(input: String): TransportMessage = {
     val parsedMsg = JsonParser.parse(input)
@@ -22,10 +23,10 @@ object TransportMessageParser {
 
   def parse(input: JValue): TransportMessage = {
     input match {
-      case JArray(JInt(CALLTYPE) :: rest)   => input.extract[RequestMessage]
-      case JArray(JInt(RESULTTYPE) :: rest) => input.extract[ResponseMessage]
-      case JArray(JInt(ERRORTYPE) :: rest)  => input.extract[ErrorResponseMessage]
-      case _                                => sys.error(s"Unrecognized JSON command message $input")
+      case JArray(JInt(CALL.`id`)       :: rest) => input.extract[RequestMessage]
+      case JArray(JInt(CALLRESULT.`id`) :: rest) => input.extract[ResponseMessage]
+      case JArray(JInt(CALLERROR.`id`)  :: rest) => input.extract[ErrorResponseMessage]
+      case _                                     => sys.error(s"Unrecognized JSON command message $input")
     }
   }
 
@@ -33,5 +34,6 @@ object TransportMessageParser {
     Extraction.decompose(input)
   }
 
-  def write(input: TransportMessage): String = compact(render(writeJValue(input)))
+  def write(input: TransportMessage): String =
+    compact(render(writeJValue(input)))
 }

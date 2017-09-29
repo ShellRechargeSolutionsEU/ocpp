@@ -5,7 +5,6 @@ val specs2V = "3.9.1"
 val slf4jV = "1.7.12"
 
 val json4sNative = "org.json4s" %% "json4s-native" % json4sV
-val json4sExt = "org.json4s" %% "json4s-ext" % json4sV
 val javaWebSocket = "org.java-websocket" % "Java-WebSocket" % "1.3.0"
 val slf4jApi = "org.slf4j" % "slf4j-api" % slf4jV
 val slf4jSimpleLogger = "org.slf4j" % "slf4j-simple" % slf4jV
@@ -56,7 +55,7 @@ val json = module("ocpp-json")
   .dependsOn(messages)
   .settings(
     libraryDependencies ++= Seq(
-      json4sNative, json4sExt, slf4jApi, scalaCheck, specs2ScalaCheck
+      json4sNative, slf4jApi, scalaCheck, specs2ScalaCheck
     )
   )
 
