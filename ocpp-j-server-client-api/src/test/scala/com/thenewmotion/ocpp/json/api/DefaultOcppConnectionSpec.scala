@@ -159,6 +159,11 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
         }
       }
     }
+
+    "translate OCPP versions to WebSocket subprotocol identifiers" in new TestScope {
+      chargePointConnectionV15.requestedSubProtocols mustEqual List("ocpp1.5")
+      chargePointConnectionV16.requestedSubProtocols mustEqual List("ocpp1.6")
+    }
   }
 
   private trait TestScope extends Scope {
