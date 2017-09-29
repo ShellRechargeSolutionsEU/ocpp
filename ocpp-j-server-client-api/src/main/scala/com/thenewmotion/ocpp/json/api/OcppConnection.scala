@@ -2,14 +2,14 @@ package com.thenewmotion.ocpp
 package json
 package api
 
-import com.thenewmotion.ocpp.messages._
-import org.slf4j.LoggerFactory
-
+import scala.language.higherKinds
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success, Try}
 import scala.collection.mutable
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import com.thenewmotion.ocpp.messages._
+import org.slf4j.LoggerFactory
 
 /**
  * The highest layer in the three-layer protocol stack of OCPP-J: OCPP message
@@ -18,17 +18,27 @@ import scala.concurrent.ExecutionContext.Implicits.global
  * When mixed into something that is also a SimpleRPC component, can do OCPP
  * request-response exchanges using the SimpleRPC connection.
  *
- * @tparam OUTREQ Type of outgoing requests
- * @tparam INRES Type of incoming responses
- * @tparam INREQ Type of incoming requests
- * @tparam OUTRES Type of outgoing responses
+ * @tparam OUTREQBOUND Supertype of outgoing requests (either ChargePointReq or CentralSystemReq)
+ * @tparam INRESBOUND Supertype of incoming responses (either ChargePointRes or CentralSystemRes)
+ * @tparam OUTREQRES Typeclass relating the types of incoming requests and outgoing responses
+ * @tparam INREQBOUND Supertype of incoming requests (either ChargePointReq or CentralSystemReq)
+ * @tparam OUTRESBOUND Supertype of outgoing responses (either ChargePointRes or CentralSystemRes)
+ * @tparam INREQRES Typeclass relating the types of outgoing requests and incoming responses
  */
-trait OcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES <: Res] {
+trait OcppConnectionComponent[
+  OUTREQBOUND <: Req,
+  INRESBOUND <: Res,
+  OUTREQRES[_ <: OUTREQBOUND, _ <: INRESBOUND],
+  INREQBOUND <: Req,
+  OUTRESBOUND <: Res,
+  INREQRES[_ <: INREQBOUND, _  <: OUTRESBOUND]
+] {
+
   this: SrpcComponent =>
 
   trait OcppConnection {
     /** Send an outgoing OCPP request */
-    def sendRequest[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
+    def sendRequest[REQ <: OUTREQBOUND, RES <: INRESBOUND](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES]
 
     /** Handle an incoming SRPC message */
     def onSrpcMessage(msg: TransportMessage)
@@ -36,7 +46,7 @@ trait OcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES 
 
   def ocppConnection: OcppConnection
 
-  def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
+  def onRequest[REQ <: INREQBOUND, RES <: OUTRESBOUND](req: REQ)(implicit reqRes: INREQRES[REQ, RES]): Future[RES]
   def onOcppError(error: OcppError)
 
   /** OCPP versions that we support, used during connection handshake */
@@ -56,8 +66,14 @@ object OcppException {
     OcppException(OcppError(error, description))
 }
 
-trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES <: Res]
-  extends OcppConnectionComponent[OUTREQ, INRES, INREQ, OUTRES] {
+trait DefaultOcppConnectionComponent[
+  OUTREQBOUND <: Req,
+  INRESBOUND <: Res,
+  OUTREQRES[_ <: OUTREQBOUND, _ <: INRESBOUND ] <: ReqRes[_, _],
+  INREQBOUND <: Req,
+  OUTRESBOUND <: Res,
+  INREQRES [_ <: INREQBOUND,  _ <: OUTRESBOUND] <: ReqRes[_, _]
+] extends OcppConnectionComponent[OUTREQBOUND, INRESBOUND, OUTREQRES, INREQBOUND, OUTRESBOUND, INREQRES] {
 
   this: SrpcComponent =>
 
@@ -66,15 +82,17 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
     type V <: Version
 
     /** The operations that the other side can request from us */
-    val ourOperations: JsonOperations[INREQ, OUTRES, V]
-    val theirOperations: JsonOperations[OUTREQ, INRES, V]
+    val ourOperations:   JsonOperations[INREQBOUND,  OUTRESBOUND, INREQRES, V]
+    val theirOperations: JsonOperations[OUTREQBOUND, INRESBOUND,  OUTREQRES, V]
 
     private val logger = LoggerFactory.getLogger(DefaultOcppConnection.this.getClass)
 
     private[this] val callIdGenerator = CallIdGenerator()
 
-    sealed case class OutstandingRequest[REQ <: OUTREQ, RES <: INRES](operation: JsonOperation[REQ, RES, V],
-                                                                      responsePromise: Promise[RES])
+    private[this] sealed case class OutstandingRequest[REQ <: OUTREQBOUND, RES <: INRESBOUND](
+      operation: JsonOperation[OUTREQBOUND, INRESBOUND, REQ, RES, OUTREQRES, V],
+      responsePromise: Promise[RES]
+    )
 
     private[this] val callIdCache: mutable.Map[String, OutstandingRequest[_, _]] = mutable.Map()
 
@@ -95,7 +113,7 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
         srpcConnection.send(ErrorResponseMessage(req.callId, errCode, description))
 
       val opName = req.procedureName
-      jsonOpForActionName(opName) match {
+      jsonOpForActionName(opName)  match {
         case NotImplemented => respondWithError(PayloadErrorCode.NotImplemented, s"Unknown operation $opName")
         case Unsupported => respondWithError(PayloadErrorCode.NotSupported, s"We do not support $opName")
         case Supported(operation) =>
@@ -149,7 +167,10 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
         }
     }
 
-    def sendRequest[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES] = {
+    def sendRequest[REQ <: OUTREQBOUND, RES <: INRESBOUND](req: REQ)(
+      implicit reqRes: OUTREQRES[REQ, RES]
+    ): Future[RES] = {
+
       Try(theirOperations.jsonOpForReqRes(reqRes)) match {
         case Success(operation) => sendRequestWithJsonOperation[REQ, RES](req, operation)
         case Failure(e: NoSuchElementException) =>
@@ -163,9 +184,9 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
       }
     }
 
-    private def sendRequestWithJsonOperation[REQ <: OUTREQ, RES <: INRES](
+    private def sendRequestWithJsonOperation[REQ <: OUTREQBOUND, RES <: INRESBOUND](
       req: REQ,
-      jsonOperation: JsonOperation[REQ, RES, V]
+      jsonOperation: JsonOperation[OUTREQBOUND, INRESBOUND, REQ, RES, OUTREQRES, V]
     ) = {
       val callId = callIdGenerator.next()
       val responsePromise = Promise[RES]()
@@ -181,7 +202,7 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
     }
   }
 
-  def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
+  def onRequest[REQ <: INREQBOUND, RES <: OUTRESBOUND](req: REQ)(implicit reqRes: INREQRES[REQ, RES]): Future[RES]
   def onOcppError(error: OcppError): Unit
 
   def onSrpcMessage(msg: TransportMessage) = ocppConnection.onSrpcMessage(msg)
@@ -191,12 +212,20 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
 }
 
 trait ChargePointOcppConnectionComponent
-  extends DefaultOcppConnectionComponent[CentralSystemReq, CentralSystemRes, ChargePointReq, ChargePointRes] {
+  extends DefaultOcppConnectionComponent[
+    CentralSystemReq,
+    CentralSystemRes,
+    CentralSystemReqRes,
+    ChargePointReq,
+    ChargePointRes,
+    ChargePointReqRes
+  ] {
+
   this: SrpcComponent =>
 
   class ChargePointOcppConnection[Ver <: Version](
-    implicit val ourOperations: JsonOperations[ChargePointReq, ChargePointRes, Ver],
-    val theirOperations: JsonOperations[CentralSystemReq, CentralSystemRes, Ver]
+    implicit val ourOperations: JsonOperations[ChargePointReq, ChargePointRes, ChargePointReqRes, Ver],
+    val theirOperations: JsonOperations[CentralSystemReq, CentralSystemRes, CentralSystemReqRes, Ver]
   ) extends DefaultOcppConnection {
 
     type V = Ver
@@ -209,12 +238,20 @@ trait ChargePointOcppConnectionComponent
 }
 
 trait CentralSystemOcppConnectionComponent
-  extends DefaultOcppConnectionComponent[ChargePointReq, ChargePointRes, CentralSystemReq, CentralSystemRes] {
+  extends DefaultOcppConnectionComponent[
+    ChargePointReq,
+    ChargePointRes,
+    ChargePointReqRes,
+    CentralSystemReq,
+    CentralSystemRes,
+    CentralSystemReqRes
+  ] {
+
   this: SrpcComponent =>
 
   class CentralSystemOcppConnection[Ver <: Version](
-    implicit val ourOperations: JsonOperations[CentralSystemReq, CentralSystemRes, Ver],
-    val theirOperations: JsonOperations[ChargePointReq, ChargePointRes, Ver]
+    implicit val ourOperations: JsonOperations[CentralSystemReq, CentralSystemRes, CentralSystemReqRes, Ver],
+    val theirOperations: JsonOperations[ChargePointReq, ChargePointRes, ChargePointReqRes, Ver]
   ) extends DefaultOcppConnection {
 
     type V = Ver

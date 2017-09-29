@@ -2,6 +2,7 @@ package com.thenewmotion.ocpp
 package json
 
 import scala.language.existentials
+import scala.language.higherKinds
 import enums.reflection.EnumUtils.{Nameable, Enumerable}
 import org.json4s._
 import messages._
@@ -24,11 +25,18 @@ import scala.concurrent.{Future, ExecutionContext}
  * @tparam RES
  * @tparam V
  */
-class JsonOperation[REQ <: Req, RES <: Res, V <: Version](
+class JsonOperation[
+  REQBOUND <: Req,
+  RESBOUND <: Res,
+  REQ <: REQBOUND,
+  RES <: RESBOUND,
+  REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqRes[_, _],
+  V <: Version
+](
   val action: Nameable
 )
 (
-  implicit val reqRes: ReqRes[REQ, RES],
+  implicit val reqRes: REQRES[REQ, RES],
   reqSerializer: OcppMessageSerializer[REQ, V],
   resSerializer: OcppMessageSerializer[RES, V]
 ) {
@@ -38,22 +46,43 @@ class JsonOperation[REQ <: Req, RES <: Res, V <: Version](
   def serializeRes(res: RES): JValue = resSerializer.serialize(res)
   def deserializeRes(jval: JValue): RES = resSerializer.deserialize(jval)
 
-  def reqRes(reqJson: JValue)(f: (REQ, ReqRes[REQ, RES]) => Future[RES])(implicit ec: ExecutionContext): Future[JValue] =
+  def reqRes(reqJson: JValue)(f: (REQ, REQRES[REQ, RES]) => Future[RES])(implicit ec: ExecutionContext): Future[JValue] =
     f(deserializeReq(reqJson), reqRes).map(serializeRes)
 }
 
-trait JsonOperations[REQ <: Req, RES <: Res, V <: Version] {
+/**
+ * The set of possible operations available for a given side of communication
+ * (either Charge Point or Central System) and version.
+ *
+ * There are instances with different types for each of the four possible
+ * combinations of side and version.
+ *
+ * The side of communication is given by REQBOUND and RESBOUND: they can be
+ * either ChargePointReq and ChargePointRes or CentralSystemReq and
+ * CentralSystemRes. The version is given by V, which can be either
+ * Version.V15.type or Version.V16.type.
+ */
+trait JsonOperations[
+  REQBOUND <: Req,
+  RESBOUND <: Res,
+  REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqRes[_, _],
+  V <: Version
+] {
+
+  type MyJsonOperation[REQ <: REQBOUND, RES <: RESBOUND] =
+    JsonOperation[REQBOUND, RESBOUND, REQ, RES, REQRES, V]
+
   sealed trait LookupResult
   case object NotImplemented extends LookupResult
   case object Unsupported extends LookupResult
-  case class Supported(op: JsonOperation[_ <: REQ, _ <: RES, V]) extends LookupResult
+  case class Supported(op: MyJsonOperation[_ <: REQBOUND, _ <: RESBOUND]) extends LookupResult
 
   type ActionType <: Nameable
   def enum: Enumerable[ActionType]
 
-  def operations: Traversable[JsonOperation[_ <: REQ, _ <: RES, V]]
+  def operations: Traversable[MyJsonOperation[_ <: REQBOUND, _ <: RESBOUND]]
 
-  def jsonOpForAction(action: ActionType): Option[JsonOperation[_ <: REQ, _ <: RES, V]] =
+  def jsonOpForAction(action: ActionType): Option[MyJsonOperation[_ <: REQBOUND, _ <: RESBOUND]] =
     operations.find(_.action == action)
 
   def jsonOpForActionName(operationName: String): LookupResult = {
@@ -67,27 +96,32 @@ trait JsonOperations[REQ <: Req, RES <: Res, V <: Version] {
   }
 
   /**
-   * @param reqRes A ReqRes object for a certain OCPP operation
+   * @tparam REQ The request type for the OCPP operation
+   * @tparam RES The response type for the OCPP operation
    *
-   * @tparam Q The request type for this OCPP operation
-   * @tparam S The response type for this OCPP operation
+   * @param reqRes A ReqRes object for a certain OCPP operation
    *
    * @return The JsonOperation instance for the OCPP operation of the given ReqRes object
    * @throws NoSuchElementException If the OCPP operation for the given ReqRes is not supported with OCPP-JSON
    */
-  def jsonOpForReqRes[Q <: REQ, S <: RES](reqRes: ReqRes[Q, S]): JsonOperation[Q, S, V]
+  def jsonOpForReqRes[REQ <: REQBOUND, RES <: RESBOUND](reqRes: REQRES[REQ, RES]): MyJsonOperation[REQ, RES]
 
-  protected def jsonOp[Q <: REQ, S <: RES](action: ActionType)(
-    implicit reqRes: ReqRes[Q, S],
-    reqSerializer: OcppMessageSerializer[Q, V],
-    resSerializer: OcppMessageSerializer[S, V]
-  ): JsonOperation[Q, S, V] =
-    new JsonOperation[Q, S, V](action)
+  protected def jsonOp[REQ <: REQBOUND, RES <: RESBOUND](action: ActionType)(
+    implicit reqRes: REQRES[REQ, RES],
+    reqSerializer: OcppMessageSerializer[REQ, V],
+    resSerializer: OcppMessageSerializer[RES, V]
+  ): MyJsonOperation[REQ, RES] =
+    new JsonOperation[REQBOUND, RESBOUND, REQ, RES, REQRES, V](action)
 }
 
 object JsonOperations {
 
-  implicit object CentralSystemV15 extends JsonOperations[CentralSystemReq, CentralSystemRes, Version.V15.type] {
+  implicit object CentralSystemV15 extends JsonOperations[
+    CentralSystemReq,
+    CentralSystemRes,
+    CentralSystemReqRes,
+    Version.V15.type
+  ] {
 
     import CentralSystemAction._
     import v15.SerializationV15._
@@ -105,7 +139,7 @@ object JsonOperations {
     val statusNotificationJsonOp = jsonOp[StatusNotificationReq, StatusNotificationRes.type](StatusNotification)
     val stopTransactionJsonOp = jsonOp[StopTransactionReq, StopTransactionRes](StopTransaction)
 
-    val operations: Traversable[JsonOperation[_ <: CentralSystemReq, _ <: CentralSystemRes, Version.V15.type]] = List(
+    val operations: Traversable[MyJsonOperation[_ <: CentralSystemReq, _ <: CentralSystemRes]] = List(
       authorizeJsonOp,
       bootNotificationJsonOp,
       diagnosticsStatusNotificationJsonOp,
@@ -117,7 +151,9 @@ object JsonOperations {
       stopTransactionJsonOp
     )
 
-    def jsonOpForReqRes[Q <: CentralSystemReq, S <: CentralSystemRes](reqRes: ReqRes[Q, S]): JsonOperation[Q, S, Version.V15.type] = {
+    def jsonOpForReqRes[REQ <: CentralSystemReq, RES <: CentralSystemRes](
+      reqRes: CentralSystemReqRes[REQ, RES]
+    ): MyJsonOperation[REQ, RES] = {
       import ReqRes._
       reqRes match {
         case AuthorizeReqRes => authorizeJsonOp
@@ -133,7 +169,7 @@ object JsonOperations {
     }
   }
 
-  implicit object CentralSystemV16 extends JsonOperations[CentralSystemReq, CentralSystemRes, Version.V16.type] {
+  implicit object CentralSystemV16 extends JsonOperations[CentralSystemReq, CentralSystemRes, CentralSystemReqRes, Version.V16.type] {
 
     import CentralSystemAction._
     import v16.SerializationV16._
@@ -151,7 +187,7 @@ object JsonOperations {
     val statusNotificationJsonOp = jsonOp[StatusNotificationReq, StatusNotificationRes.type](StatusNotification)
     val stopTransactionJsonOp = jsonOp[StopTransactionReq, StopTransactionRes](StopTransaction)
 
-    val operations: Traversable[JsonOperation[_ <: CentralSystemReq, _ <: CentralSystemRes, Version.V16.type]] = List(
+    val operations: Traversable[MyJsonOperation[_ <: CentralSystemReq, _ <: CentralSystemRes]] = List(
       authorizeJsonOp,
       bootNotificationJsonOp,
       diagnosticsStatusNotificationJsonOp,
@@ -163,7 +199,9 @@ object JsonOperations {
       stopTransactionJsonOp
     )
 
-    def jsonOpForReqRes[Q <: CentralSystemReq, S <: CentralSystemRes](reqRes: ReqRes[Q, S]): JsonOperation[Q, S, Version.V16.type] = {
+    def jsonOpForReqRes[REQ <: CentralSystemReq, RES <: CentralSystemRes](
+      reqRes: CentralSystemReqRes[REQ, RES]
+    ): MyJsonOperation[REQ, RES] = {
       import ReqRes._
       reqRes match {
         case AuthorizeReqRes => authorizeJsonOp
@@ -179,7 +217,7 @@ object JsonOperations {
     }
   }
 
-  implicit object ChargePointV15 extends JsonOperations[ChargePointReq, ChargePointRes, Version.V15.type] {
+  implicit object ChargePointV15 extends JsonOperations[ChargePointReq, ChargePointRes, ChargePointReqRes, Version.V15.type] {
 
     import ChargePointAction._
     import v15.SerializationV15._
@@ -202,7 +240,7 @@ object JsonOperations {
     val unlockConnectorJsonOp = jsonOp[UnlockConnectorReq, UnlockConnectorRes](UnlockConnector)
     val updateFirmwareJsonOp = jsonOp[UpdateFirmwareReq, UpdateFirmwareRes.type](UpdateFirmware)
 
-    val operations: Traversable[JsonOperation[_ <: ChargePointReq, _ <: ChargePointRes, Version.V15.type]] = List(
+    val operations: Traversable[MyJsonOperation[_ <: ChargePointReq, _ <: ChargePointRes]] = List(
       cancelReservationJsonOp,
       changeAvailabilityJsonOp,
       changeConfigurationJsonOp,
@@ -219,7 +257,9 @@ object JsonOperations {
       updateFirmwareJsonOp
     )
 
-    def jsonOpForReqRes[Q <: ChargePointReq, S <: ChargePointRes](reqRes: ReqRes[Q, S]): JsonOperation[Q, S, Version.V15.type] = {
+    def jsonOpForReqRes[REQ <: ChargePointReq, RES <: ChargePointRes](
+      reqRes: ChargePointReqRes[REQ, RES]
+    ): MyJsonOperation[REQ, RES] = {
       import ReqRes._
 
       reqRes match {
@@ -242,7 +282,7 @@ object JsonOperations {
     }
   }
 
-  implicit object ChargePointV16 extends JsonOperations[ChargePointReq, ChargePointRes, Version.V16.type] {
+  implicit object ChargePointV16 extends JsonOperations[ChargePointReq, ChargePointRes, ChargePointReqRes, Version.V16.type] {
 
     import ChargePointAction._
     import v16.SerializationV16._
@@ -269,7 +309,7 @@ object JsonOperations {
     val getCompositeScheduleJsonOp = jsonOp[GetCompositeScheduleReq, GetCompositeScheduleRes](GetCompositeSchedule)
     val triggerMessageJsonOp = jsonOp[TriggerMessageReq, TriggerMessageRes](TriggerMessage)
 
-    val operations: Traversable[JsonOperation[_ <: ChargePointReq, _ <: ChargePointRes, Version.V16.type]] = List(
+    val operations: Traversable[MyJsonOperation[_ <: ChargePointReq, _ <: ChargePointRes]] = List(
       cancelReservationJsonOp,
       changeAvailabilityJsonOp,
       changeConfigurationJsonOp,
@@ -290,7 +330,9 @@ object JsonOperations {
       triggerMessageJsonOp
     )
 
-    def jsonOpForReqRes[Q <: ChargePointReq, S <: ChargePointRes](reqRes: ReqRes[Q, S]): JsonOperation[Q, S, Version.V16.type] = {
+    def jsonOpForReqRes[REQ <: ChargePointReq, RES <: ChargePointRes](
+      reqRes: ChargePointReqRes[REQ, RES]
+    ): MyJsonOperation[REQ, RES] = {
       import ReqRes._
 
       reqRes match {

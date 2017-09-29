@@ -1,9 +1,9 @@
 package com.thenewmotion.ocpp
 package json.api
 
-import messages._
-
+import scala.language.higherKinds
 import scala.concurrent.{Future, ExecutionContext}
+import messages._
 
 /**
  * Generic interface of an OCPP connection endpoint as it appears to the
@@ -21,13 +21,27 @@ import scala.concurrent.{Future, ExecutionContext}
  *
  * @tparam OUTREQ The type of outgoing requests (either ChargePointReq or CentralSystemReq)
  * @tparam INRES The type of incoming responses (either ChargePointRes or CentralSystemRes)
+ * @tparam OUTREQRES Typeclass relating outgoing request types to incoming response types
  * @tparam INREQ The type of incoming requests (either CentralSystemReq or ChargePointReq)
  * @tparam OUTRES The type of outgoing responses (either CentralSystemRes or ChargePointRes)
+ * @tparam INREQRES Typeclass relating incoming request types to outgoing response types
  */
-trait GenericOcppEndpoint[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES <: Res] {
-  def send[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
+trait GenericOcppEndpoint[
+  OUTREQ <: Req,
+  INRES <: Res,
+  OUTREQRES[_ <: OUTREQ, _ <: INRES] <: ReqRes[_, _],
+  INREQ <: Req,
+  OUTRES <: Res,
+  INREQRES[_ <: INREQ, _ <: OUTRES] <: ReqRes[_, _]
+] {
+  def send[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES]
 
-  def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
+  def requestHandler: RequestHandler[INREQ, OUTRES, INREQRES]
+
+  final def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: INREQRES[REQ, RES]): Future[RES] =
+    requestHandler.apply(req)
+
+  protected implicit val ec: ExecutionContext
 
   def onDisconnect(): Unit
 
@@ -50,25 +64,14 @@ trait GenericOcppEndpoint[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES <: R
  * The "ec" member is to be overridden by library classes offering more concrete
  * implementations of an endpoint and not by library users themselves.
  */
-trait ChargePointEndpoint extends GenericOcppEndpoint[CentralSystemReq, CentralSystemRes, ChargePointReq, ChargePointRes] {
-  def send[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
-
-  protected def requestHandler: RequestHandler[ChargePointReq, ChargePointRes, ChargePointReqRes]
-
-  def onDisconnect(): Unit
-
-  def onError(error: OcppError): Unit
-
-  final def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES] =
-    reqRes match {
-      case r: ChargePointReqRes[REQ, RES] =>
-        requestHandler.apply(req)(r, ec)
-      case _ =>
-        sys.error("Impossible: received Central System request in Charge Point")
-    }
-
-  protected implicit val ec: ExecutionContext
-}
+trait ChargePointEndpoint extends GenericOcppEndpoint[
+  CentralSystemReq,
+  CentralSystemRes,
+  CentralSystemReqRes,
+  ChargePointReq,
+  ChargePointRes,
+  ChargePointReqRes
+]
 
 /**
  * Library interface for the Central System side.
@@ -88,22 +91,11 @@ trait ChargePointEndpoint extends GenericOcppEndpoint[CentralSystemReq, CentralS
  * The "ec" member is to be overridden by library classes offering more concrete
  * implementations of an endpoint and not by library users themselves.
  */
-trait CentralSystemEndpoint extends GenericOcppEndpoint[ChargePointReq, ChargePointRes, CentralSystemReq, CentralSystemRes] {
-  def send[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
-
-  protected def requestHandler: RequestHandler[CentralSystemReq, CentralSystemRes, CentralSystemReqRes]
-
-  def onDisconnect(): Unit
-
-  def onError(error: OcppError): Unit
-
-  final def onRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES] =
-    reqRes match {
-      case r: CentralSystemReqRes[REQ, RES] =>
-        requestHandler.apply(req)(r, ec)
-      case _ =>
-        sys.error("Impossible: received Central System request in Charge Point")
-    }
-
-  protected implicit val ec: ExecutionContext
-}
+trait CentralSystemEndpoint extends GenericOcppEndpoint[
+  ChargePointReq,
+  ChargePointRes,
+  ChargePointReqRes,
+  CentralSystemReq,
+  CentralSystemRes,
+  CentralSystemReqRes
+]

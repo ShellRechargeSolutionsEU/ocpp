@@ -45,7 +45,7 @@ abstract class OcppJsonClient(
     val srpcConnection = new DefaultSrpcConnection
     val ocppConnection = defaultChargePointOcppConnection(version)
 
-    override def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES] =
+    override def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ChargePointReqRes[REQ, RES]): Future[RES] =
       OcppJsonClient.this.onRequest(req)
 
     override def onOcppError(error: OcppError): Unit = OcppJsonClient.this.onError(error)
@@ -55,7 +55,7 @@ abstract class OcppJsonClient(
     def requestedVersions: List[Version] = List(version)
   }
 
-  def send[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES] =
+  def send[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: CentralSystemReqRes[REQ, RES]): Future[RES] =
     ocppStack.ocppConnection.sendRequest(req)
 
   def close() = ocppStack.webSocketConnection.close()
