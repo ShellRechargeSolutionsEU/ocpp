@@ -13,6 +13,9 @@ import org.java_websocket.client.DefaultSSLWebSocketClientFactory
 
 import scala.collection.JavaConverters._
 
+/**
+ * The lowest layer in the three-layer protocol stack of OCPP-J: WebSocket
+ */
 trait WebSocketComponent {
   trait WebSocketConnection {
     /**
@@ -46,13 +49,18 @@ trait WebSocketComponent {
    * Called when the WebSocket connection is disconnected
    */
   def onDisconnect(): Unit = {}
+
+  /**
+   * Called when connecting, to get a list of supported subprotocols
+   */
+  def requestedSubProtocols: List[String]
 }
 
 class DummyWebSocketComponent extends WebSocketComponent {
 
   private[this] val logger = LoggerFactory.getLogger(DummyWebSocketComponent.this.getClass)
 
-  class MockWebSocketConnection extends WebSocketConnection {
+  class DummyWebSocketConnection extends WebSocketConnection {
     def send(msg: JValue) = {
       val string = Serialization.write(msg)(DefaultFormats)
       logger.info(s"Sending $string")
@@ -61,11 +69,13 @@ class DummyWebSocketComponent extends WebSocketComponent {
     def close() = {}
   }
 
-  def webSocketConnection = new MockWebSocketConnection
+  def webSocketConnection = new DummyWebSocketConnection
 
   def onError(e: Throwable) = logger.info(s"DummyWebSocketComponent received error {}", e)
 
   def onMessage(jval: JValue) = logger.info("DummyWebSocketComponent received message {}", jval)
+
+  def requestedSubProtocols = List()
 }
 
 trait SimpleClientWebSocketComponent extends WebSocketComponent {
@@ -73,24 +83,29 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
   class SimpleClientWebSocketConnection(
     chargerId: String,
     uri: URI,
-    authPassword: Option[String],
-    ocppProtocols: List[String]
+    authPassword: Option[String]
   )(implicit sslContext: SSLContext = SSLContext.getDefault) extends WebSocketConnection {
 
     private[this] val logger = LoggerFactory.getLogger(SimpleClientWebSocketConnection.this.getClass)
 
     private val actualUri = uriWithChargerId(uri, chargerId)
 
-    private val headers = (Map("Sec-WebSocket-Protocol" -> ocppProtocols.mkString(",")) ++
-      authPassword.fold(Map.empty[String, String]) { password =>
+    private val authHeader: Option[(String, String)] =
+      authPassword.map { password =>
         def toBytes = s"$chargerId:".toCharArray.map(_.toByte) ++
           password.sliding(2, 2).map { byteAsHex =>
             Integer.parseInt(byteAsHex, 16).toByte
           }
 
         import org.apache.commons.codec.binary.Base64.encodeBase64String
-        Map("Authorization" -> s"Basic: ${encodeBase64String(toBytes)}")
-      }).asJava
+        "Authorization" -> s"Basic: ${encodeBase64String(toBytes)}"
+      }
+
+    private val headers: java.util.Map[String, String] =
+      List(
+        Some("Sec-WebSocket-Protocol" -> requestedSubProtocols.mkString(",")),
+        authHeader
+      ).flatten.toMap.asJava
 
     private val client = new WebSocketClient(actualUri, new Draft_17(), headers, 0) {
 
@@ -108,7 +123,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
         }
       }
 
-      override def onError(e: Exception) = {
+      override def onError(e: Exception): Unit = {
         logger.debug("Received error {}", e)
         SimpleClientWebSocketComponent.this.onError(e)
       }
