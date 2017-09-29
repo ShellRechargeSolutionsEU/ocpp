@@ -145,6 +145,8 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
       ): Future[RES] = Future { DefaultOcppConnectionScope.this.onRequest(request).asInstanceOf[RES] }
 
       def onOcppError(err: OcppError) = DefaultOcppConnectionScope.this.onError(err)
+
+      def requestedVersions: List[Version] = List(Version.V15)
     }
   }
 }

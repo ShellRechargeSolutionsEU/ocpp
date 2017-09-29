@@ -12,8 +12,11 @@ import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
- * A component that, when mixed into something that is also an SRPC component, can send and receive OCPP-JSON messages
- * over that SRPC connection.
+ * The highest layer in the three-layer protocol stack of OCPP-J: OCPP message
+ * exchange.
+ *
+ * When mixed into something that is also a SimpleRPC component, can do OCPP
+ * request-response exchanges using the SimpleRPC connection.
  *
  * @tparam OUTREQ Type of outgoing requests
  * @tparam INRES Type of incoming responses
@@ -35,6 +38,14 @@ trait OcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES 
 
   def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
   def onOcppError(error: OcppError)
+
+  /** OCPP versions that we support, used during connection handshake */
+  def requestedVersions: List[Version]
+
+  protected final val wsSubProtocolForOcppVersion = Map[Version, String](
+    Version.V15 -> "ocpp1.5",
+    Version.V16 -> "ocpp1.6"
+  )
 }
 
 // for now, we don't support the 'details' field of OCPP-J error messages
@@ -170,6 +181,9 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
   def onOcppError(error: OcppError): Unit
 
   def onSrpcMessage(msg: TransportMessage) = ocppConnection.onSrpcMessage(msg)
+
+  def requestedSubProtocols: List[String] =
+    requestedVersions.map(wsSubProtocolForOcppVersion)
 }
 
 trait ChargePointOcppConnectionComponent

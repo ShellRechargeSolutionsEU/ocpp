@@ -33,19 +33,13 @@ abstract class OcppJsonClient(
 )(implicit sslContext: SSLContext = SSLContext.getDefault)
   extends ChargePointEndpoint {
 
-  // TODO OCPP-layer-specific, should go to OcppConnectionComponent
-  val subProtocol = version match {
-    case Version.V15 => "ocpp1.5"
-    case Version.V16 => "ocpp1.6"
-  }
   private[this] val ocppStack = new ChargePointOcppConnectionComponent with DefaultSrpcComponent with SimpleClientWebSocketComponent {
     // TODO this should give us back a negotiated WebSocket subprotocol later on,
     // which we then use to determine the negotiated OCPP version to initialize the ChargePointOcppConnection
     val webSocketConnection = new SimpleClientWebSocketConnection(
       chargerId,
       centralSystemUri,
-      authPassword,
-      List(subProtocol)
+      authPassword
     )
 
     val srpcConnection = new DefaultSrpcConnection
@@ -57,6 +51,8 @@ abstract class OcppJsonClient(
     override def onOcppError(error: OcppError): Unit = OcppJsonClient.this.onError(error)
 
     override def onDisconnect(): Unit = OcppJsonClient.this.onDisconnect()
+
+    def requestedVersions: List[Version] = List(version)
   }
 
   def send[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES] =
