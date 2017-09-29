@@ -48,11 +48,12 @@ trait JsonOperations[REQ <: Req, RES <: Res, V <: Version] {
   case object Unsupported extends LookupResult
   case class Supported(op: JsonOperation[_ <: REQ, _ <: RES, V]) extends LookupResult
 
-  def enum: Enumerable[_ <: Nameable]
+  type ActionType <: Nameable
+  def enum: Enumerable[ActionType]
 
   def operations: Traversable[JsonOperation[_ <: REQ, _ <: RES, V]]
 
-  def jsonOpForAction(action: Nameable): Option[JsonOperation[_ <: REQ, _ <: RES, V]] =
+  def jsonOpForAction(action: ActionType): Option[JsonOperation[_ <: REQ, _ <: RES, V]] =
     operations.find(_.action == action)
 
   def jsonOpForActionName(operationName: String): LookupResult = {
@@ -76,7 +77,7 @@ trait JsonOperations[REQ <: Req, RES <: Res, V <: Version] {
    */
   def jsonOpForReqRes[Q <: REQ, S <: RES](reqRes: ReqRes[Q, S]): JsonOperation[Q, S, V]
 
-  protected def jsonOp[Q <: REQ, S <: RES](action: Nameable)(
+  protected def jsonOp[Q <: REQ, S <: RES](action: ActionType)(
     implicit reqRes: ReqRes[Q, S],
     reqSerializer: OcppMessageSerializer[Q, V],
     resSerializer: OcppMessageSerializer[S, V]
@@ -91,6 +92,7 @@ object JsonOperations {
     import CentralSystemAction._
     import v15.SerializationV15._
 
+    type ActionType = CentralSystemAction
     val enum = CentralSystemAction
 
     val authorizeJsonOp = jsonOp[AuthorizeReq, AuthorizeRes](Authorize)
@@ -136,6 +138,7 @@ object JsonOperations {
     import CentralSystemAction._
     import v16.SerializationV16._
 
+    type ActionType = CentralSystemAction
     val enum = CentralSystemAction
 
     val authorizeJsonOp = jsonOp[AuthorizeReq, AuthorizeRes](Authorize)
@@ -181,6 +184,7 @@ object JsonOperations {
     import ChargePointAction._
     import v15.SerializationV15._
 
+    type ActionType = ChargePointAction
     val enum = ChargePointAction
 
     val cancelReservationJsonOp = jsonOp[CancelReservationReq, CancelReservationRes](CancelReservation)
@@ -243,6 +247,7 @@ object JsonOperations {
     import ChargePointAction._
     import v16.SerializationV16._
 
+    type ActionType = ChargePointAction
     val enum = ChargePointAction
 
     val cancelReservationJsonOp = jsonOp[CancelReservationReq, CancelReservationRes](CancelReservation)
