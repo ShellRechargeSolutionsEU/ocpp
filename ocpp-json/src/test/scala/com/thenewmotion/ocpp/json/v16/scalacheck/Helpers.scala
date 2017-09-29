@@ -46,10 +46,10 @@ object Helpers {
   def meterValueGen: Gen[MeterValue] = for {
     value <- alphaNumStr
     context <- enumerableWithDefaultNameGen(messages.meter.ReadingContext)
-    format <- enumerableNameGenWithDefault(messages.meter.ValueFormat, messages.meter.ValueFormat.Raw)
+    format <- enumerableWithDefaultNameGen(messages.meter.ValueFormat)
     measurand <- enumerableWithDefaultNameGen(messages.meter.Measurand)
     phase <- option(enumerableNameGen(messages.meter.Phase))
-    location <- enumerableNameGenWithDefault(messages.meter.Location, messages.meter.Location.Outlet)
+    location <- enumerableWithDefaultNameGen(messages.meter.Location)
     unit <- enumerableWithDefaultNameGen(messages.meter.UnitOfMeasure)
   } yield MeterValue(value, context, format, measurand, phase, location, unit)
 
@@ -118,12 +118,20 @@ object Helpers {
 
   def enumerableNameGen[T <: Nameable](e: Enumerable[T]): Gen[String] = enumerableGen(e).map(_.name)
 
-  def enumerableNameGenWithDefault[T <: Nameable](e: Enumerable[T], default: T): Gen[Option[String]] =
-    enumerableGen(e) map {
-      case `default`       => None
-      case nonDefaultValue => Some(nonDefaultValue.name)
-    }
-
+  /**
+   * Some fields in OCPP-J messages are optional strings, where the absence of
+   * the field means that the message should be processed as if the field was
+   * present with a default value. In those cases, we always want to encode
+   * the message with the field absent instead of with an unnecessary string
+   * value.
+   *
+   * So we have this generator that makes sure that whenever we generate either
+   * a non-default value, or None.
+   *
+   * @param e
+   * @tparam T
+   * @return
+   */
   def enumerableWithDefaultNameGen[T <: Nameable](e: messages.EnumerableWithDefault[T]): Gen[Option[String]] =
     enumerableGen(e) map { value =>
       if (value == e.default)
