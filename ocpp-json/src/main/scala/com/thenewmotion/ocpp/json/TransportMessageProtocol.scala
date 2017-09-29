@@ -1,57 +1,68 @@
 package com.thenewmotion.ocpp
 package json
 
+import enums.reflection.EnumUtils.{Nameable, Enumerable}
 import org.json4s._
 
-object TransportMessageType extends Enumeration {
-  type MessageType = Value
-  val NOTUSED1, NOTUSED2, CALL, CALLRESULT, CALLERROR = Value
+sealed trait TransportMessageType extends Nameable { def id: BigInt }
+object TransportMessageType extends Enumerable[TransportMessageType] {
+  object CALL       extends TransportMessageType { val id: BigInt = 2 }
+  object CALLRESULT extends TransportMessageType { val id: BigInt = 3 }
+  object CALLERROR  extends TransportMessageType { val id: BigInt = 4 }
+
+  val values = Set(CALL, CALLRESULT, CALLERROR)
 }
 
 // Helper object to ensure proper use of error codes within the payload.
-object PayloadErrorCode extends Enumeration {
-  type ErrorCode = Value
+sealed trait PayloadErrorCode extends Nameable
+object PayloadErrorCode extends Enumerable[PayloadErrorCode] {
 
-  val NotImplemented = Value
-  val NotSupported = Value
-  val InternalError = Value
-  val ProtocolError = Value
-  val SecurityError = Value
-  val FormationViolation = Value
-  val PropertyConstraintViolation = Value
-  val OccurrenceConstraintViolation = Value
-  val TypeConstraintViolation = Value
-  val GenericError = Value
-}
+  object NotImplemented                extends PayloadErrorCode
+  object NotSupported                  extends PayloadErrorCode
+  object InternalError                 extends PayloadErrorCode
+  object ProtocolError                 extends PayloadErrorCode
+  object SecurityError                 extends PayloadErrorCode
+  object FormationViolation            extends PayloadErrorCode
+  object PropertyConstraintViolation   extends PayloadErrorCode
+  object OccurrenceConstraintViolation extends PayloadErrorCode
+  object TypeConstraintViolation       extends PayloadErrorCode
+  object GenericError                  extends PayloadErrorCode
 
-// Helper object to ensure registered protocol version.
-object Protocol extends Enumeration {
-  type Protocol = Value
-  val Ocpp12 = Value("ocpp1.2")
-  val Ocpp15 = Value("ocpp1.5")
+  val values = Set(
+    NotImplemented,
+    NotSupported,
+    InternalError,
+    ProtocolError,
+    SecurityError,
+    FormationViolation,
+    PropertyConstraintViolation,
+    OccurrenceConstraintViolation,
+    TypeConstraintViolation,
+    GenericError
+  )
 }
 
 import TransportMessageType._
 
 sealed trait TransportMessage {
-  def MsgType: MessageType
+  def MsgType: TransportMessageType
 }
 // generic message structure (used to transform from and to json)
 case class RequestMessage(callId: String, procedureName: String, payload: JValue) extends TransportMessage {
-  def MsgType: TransportMessageType.MessageType = CALL
+  def MsgType: TransportMessageType = CALL
 }
 
 case class ResponseMessage(callId: String, payload: JValue) extends TransportMessage {
-  def MsgType: TransportMessageType.MessageType = CALLRESULT
+  def MsgType: TransportMessageType = CALLRESULT
 }
 
 //
-case class ErrorResponseMessage(callId: String, code: PayloadErrorCode.Value, description: String, details: JValue) extends TransportMessage {
-  def MsgType: TransportMessageType.MessageType = CALLERROR
+case class ErrorResponseMessage(callId: String, code: PayloadErrorCode, description: String, details: JValue) extends TransportMessage {
+  def MsgType: TransportMessageType = CALLERROR
 }
 
 object ErrorResponseMessage {
-  def apply(callId: String, code: PayloadErrorCode.Value, description: String): ErrorResponseMessage =
+  def apply(callId: String, code: PayloadErrorCode, description: String): ErrorResponseMessage =
     ErrorResponseMessage(callId, code, description, JObject(List()))
 }
 
