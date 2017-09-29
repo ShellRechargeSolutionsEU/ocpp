@@ -203,7 +203,7 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
       def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](
         request: REQ
       )(
-        implicit reqRes: ReqRes[REQ, RES]
+        implicit reqRes: ChargePointReqRes[REQ, RES]
       ): Future[RES] = Future { TestScope.this.onRequest(request).asInstanceOf[RES] }
 
       def onOcppError(err: OcppError) = TestScope.this.onError(err)
@@ -228,7 +228,7 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
       def onRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](
         request: REQ
       )(
-        implicit reqRes: ReqRes[REQ, RES]
+        implicit reqRes: CentralSystemReqRes[REQ, RES]
       ): Future[RES] = Future { TestScope.this.onRequest(request).asInstanceOf[RES] }
 
       def onOcppError(err: OcppError) = TestScope.this.onError(err)
