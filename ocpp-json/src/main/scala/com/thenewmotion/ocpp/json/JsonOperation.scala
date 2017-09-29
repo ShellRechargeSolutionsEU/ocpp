@@ -2,7 +2,7 @@ package com.thenewmotion.ocpp
 package json
 
 import scala.language.existentials
-import scala.util.{Success, Failure, Try}
+import enums.reflection.EnumUtils.{Nameable, Enumerable}
 import org.json4s._
 import messages._
 
@@ -25,7 +25,7 @@ import scala.concurrent.{Future, ExecutionContext}
  * @tparam V
  */
 class JsonOperation[REQ <: Req, RES <: Res, V <: Version](
-  val action: Enumeration#Value
+  val action: Nameable
 )
 (
   implicit val reqRes: ReqRes[REQ, RES],
@@ -48,20 +48,20 @@ trait JsonOperations[REQ <: Req, RES <: Res, V <: Version] {
   case object Unsupported extends LookupResult
   case class Supported(op: JsonOperation[_ <: REQ, _ <: RES, V]) extends LookupResult
 
-  def enum: Enumeration
+  def enum: Enumerable[_ <: Nameable]
 
   def operations: Traversable[JsonOperation[_ <: REQ, _ <: RES, V]]
 
-  def jsonOpForAction(action: Enumeration#Value): Option[JsonOperation[_ <: REQ, _ <: RES, V]] =
+  def jsonOpForAction(action: Nameable): Option[JsonOperation[_ <: REQ, _ <: RES, V]] =
     operations.find(_.action == action)
 
   def jsonOpForActionName(operationName: String): LookupResult = {
-    Try(enum.withName(operationName)) match {
-      case Success(action) => jsonOpForAction(action) match {
-        case None => Unsupported
+    enum.withName(operationName) match {
+      case Some(action) => jsonOpForAction(action) match {
+        case None             => Unsupported
         case Some(jsonAction) => Supported(jsonAction)
       }
-      case Failure(_)         => NotImplemented
+      case None         => NotImplemented
     }
   }
 
@@ -76,7 +76,7 @@ trait JsonOperations[REQ <: Req, RES <: Res, V <: Version] {
    */
   def jsonOpForReqRes[Q <: REQ, S <: RES](reqRes: ReqRes[Q, S]): JsonOperation[Q, S, V]
 
-  protected def jsonOp[Q <: REQ, S <: RES](action: Enumeration#Value)(
+  protected def jsonOp[Q <: REQ, S <: RES](action: Nameable)(
     implicit reqRes: ReqRes[Q, S],
     reqSerializer: OcppMessageSerializer[Q, V],
     resSerializer: OcppMessageSerializer[S, V]

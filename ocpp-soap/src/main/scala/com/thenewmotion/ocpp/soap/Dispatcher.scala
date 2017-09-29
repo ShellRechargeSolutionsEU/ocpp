@@ -2,12 +2,13 @@ package com.thenewmotion.ocpp
 package soap
 
 import scala.language.implicitConversions
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.{NodeSeq, Elem}
 import scalaxb.{DataRecord, XMLFormat, fromXMLEither}
 import soapenvelope12.Body
 import Fault._
-import scala.concurrent.{ExecutionContext, Future}
+import enums.reflection.EnumUtils.{Enumerable, Nameable}
 
+import scala.concurrent.{Future, ExecutionContext}
 
 /**
  * A dispatcher takes a SOAP message body and performs the requested action by calling the given function, and returns
@@ -27,7 +28,8 @@ abstract class AbstractDispatcher[REQ, RES](implicit evidence: OcppService[REQ, 
   implicit def faultToBody(x: soapenvelope12.Fault) = x.asBody
   def version: Version
 
-  val actions: Enumeration
+  type ActionType <: Nameable
+  val actions: Enumerable[ActionType]
 
   import com.github.t3hnar.scalax.RichAny
 
@@ -46,11 +48,11 @@ abstract class AbstractDispatcher[REQ, RES](implicit evidence: OcppService[REQ, 
     }
   }
 
-  protected def dispatch(action: actions.Value, xml: NodeSeq, f: REQ => Future[RES])
+  protected def dispatch(action: ActionType, xml: NodeSeq, f: REQ => Future[RES])
                         (implicit ec: ExecutionContext): Future[Body]
 
   protected def reqRes: ReqRes = new ReqRes {
-    def apply[XMLREQ, XMLRES](action: actions.Value, xml: NodeSeq, f: REQ => Future[RES])
+    def apply[XMLREQ, XMLRES](action: ActionType, xml: NodeSeq, f: REQ => Future[RES])
                                                    (reqTrans: XMLREQ => REQ)
                                                    (resTrans: RES => XMLRES)
                                                    (implicit ec: ExecutionContext,
@@ -72,7 +74,7 @@ abstract class AbstractDispatcher[REQ, RES](implicit evidence: OcppService[REQ, 
   protected def fault(x: soapenvelope12.Fault): Nothing = throw new FaultException(x)
 
   trait ReqRes {
-    def apply[XMLREQ, XMLRES](action: actions.Value, xml: NodeSeq, f: REQ => Future[RES])
+    def apply[XMLREQ, XMLRES](action: ActionType, xml: NodeSeq, f: REQ => Future[RES])
                                                    (reqTrans: XMLREQ => REQ)
                                                    (resTrans: RES => XMLRES)
                                                    (implicit ec: ExecutionContext,
