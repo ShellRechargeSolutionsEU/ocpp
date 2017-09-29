@@ -410,11 +410,11 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
     def toValue(x: messages.meter.Value): Value = Value(
       x.value,
       Map(
-      "context" -> scalaxb.DataRecord(x.context.toString),
-      "format" -> scalaxb.DataRecord(x.format.toString),
-      "measurand" -> scalaxb.DataRecord(x.measurand.toString),
-      "location" -> scalaxb.DataRecord(x.location.toString),
-      "unit" -> scalaxb.DataRecord(x.unit.toString)))
+      "context" -> scalaxb.DataRecord(x.context.name),
+      "format" -> scalaxb.DataRecord(x.format.name),
+      "measurand" -> scalaxb.DataRecord(x.measurand.name),
+      "location" -> scalaxb.DataRecord(x.location.name),
+      "unit" -> scalaxb.DataRecord(x.unit.name)))
 
     MeterValue(x.timestamp.toXMLCalendar, x.values.map(toValue))
   }

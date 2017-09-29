@@ -19,10 +19,12 @@ object CentralSystemDispatcherV12 extends AbstractDispatcher[CentralSystemReq, C
   import ConvertersV12._
 
   def version = Version.V12
-  val actions = CentralSystemAction
+
+  type ActionType = CentralSystemAction
+  override val actions = CentralSystemAction
   import actions._
 
-  def dispatch(action: Value, xml: NodeSeq, service: CentralSystemReq => Future[CentralSystemRes])(implicit ec: ExecutionContext) = {
+  def dispatch(action: CentralSystemAction, xml: NodeSeq, service: CentralSystemReq => Future[CentralSystemRes])(implicit ec: ExecutionContext) = {
     def ?[XMLREQ: XMLFormat, XMLRES: XMLFormat](reqTrans: XMLREQ => CentralSystemReq)(resTrans: CentralSystemRes => XMLRES) =
       reqRes(action, xml, service)(reqTrans)(resTrans)
 
@@ -145,11 +147,13 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
   import ConvertersV15._
 
   def version = Version.V15
+
+  type ActionType = CentralSystemAction
   val actions = CentralSystemAction
   import actions._
 
 
-  def dispatch(action: actions.Value, xml: NodeSeq, service: CentralSystemReq => Future[CentralSystemRes])(implicit ec: ExecutionContext) = {
+  def dispatch(action: ActionType, xml: NodeSeq, service: CentralSystemReq => Future[CentralSystemRes])(implicit ec: ExecutionContext) = {
     def ?[XMLREQ: XMLFormat, XMLRES: XMLFormat](reqTrans: XMLREQ => CentralSystemReq)(resTrans: CentralSystemRes => XMLRES) =
       reqRes(action, xml, service)(reqTrans)(resTrans)
 

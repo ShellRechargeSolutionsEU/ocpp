@@ -23,10 +23,12 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePointReq, Charg
   import ConvertersV15._
 
   def version: Version = Version.V15
+
+  type ActionType = ChargePointAction
   val actions = ChargePointAction
   import actions._
 
-  def dispatch(action: Value, xml: NodeSeq, service: ChargePointReq => Future[ChargePointRes])
+  def dispatch(action: ChargePointAction, xml: NodeSeq, service: ChargePointReq => Future[ChargePointRes])
               (implicit ec: ExecutionContext): Future[Body] = {
 
     def remoteStartStopStatus(accepted: Boolean) = if (accepted) AcceptedValue2 else RejectedValue2
@@ -64,9 +66,10 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePointReq, Charg
       } {
         case ChangeConfigurationRes(result) =>
           ChangeConfigurationResponse(result match {
-            case messages.ConfigurationStatus.Accepted => AcceptedValue8
-            case messages.ConfigurationStatus.Rejected => RejectedValue7
-            case messages.ConfigurationStatus.NotSupported => NotSupported
+            case messages.ConfigurationStatus.Accepted       => AcceptedValue8
+            case messages.ConfigurationStatus.Rejected       => RejectedValue7
+            case messages.ConfigurationStatus.NotSupported   => NotSupported
+            case messages.ConfigurationStatus.RebootRequired => NotSupported
           })
       }
 
@@ -179,6 +182,12 @@ object ChargePointDispatcherV15 extends AbstractDispatcher[ChargePointReq, Charg
           val retrySettings = Retries.fromInts(req.retries, req.retryInterval)
           UpdateFirmwareReq(retrieveDate, req.location, retrySettings)
       } (_ => UpdateFirmwareResponse() )
+
+      case SetChargingProfile   => sys.error("SetChargingProfile not supported yet in 1.5")
+      case ClearChargingProfile => sys.error("ClearChargingProfile not supported yet in 1.5")
+      case GetCompositeSchedule => sys.error("GetCompositeSchedule not supported yet in 1.5")
+      case TriggerMessage       => sys.error("TriggerMessage not supported yet in 1.5")
+      case DataTransfer         => sys.error("DataTransfer not supported yet in 1.5")
     }
   }
 }
