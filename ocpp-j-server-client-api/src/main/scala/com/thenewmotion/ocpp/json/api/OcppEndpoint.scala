@@ -39,8 +39,9 @@ trait GenericOcppEndpoint[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES <: R
  * Library interface for the Charge Point side.
  *
  * The library user has to provide:
- *   * An instance of [[com.thenewmotion.ocpp.messages.ChargePoint]], which will
- *     handle incoming requests
+ *   * A [[RequestHandler]], probably an instance of
+ *     [[com.thenewmotion.ocpp.messages.ChargePoint]], which will handle
+ *     incoming requests
  *   * Implementations of onError and onDisconnect to handle these events
  *
  * The trait provides the library user with:
@@ -52,7 +53,7 @@ trait GenericOcppEndpoint[OUTREQ <: Req, INRES <: Res, INREQ <: Req, OUTRES <: R
 trait ChargePointEndpoint extends GenericOcppEndpoint[CentralSystemReq, CentralSystemRes, ChargePointReq, ChargePointRes] {
   def send[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
 
-  protected def requestHandler: ChargePoint
+  protected def requestHandler: RequestHandler[ChargePointReq, ChargePointRes, ChargePointReqRes]
 
   def onDisconnect(): Unit
 
@@ -76,7 +77,8 @@ trait ChargePointEndpoint extends GenericOcppEndpoint[CentralSystemReq, CentralS
  * connected to the Central System.
  *
  * The library user has to provide:
- *   * An instance of [[com.thenewmotion.ocpp.messages.CentralSystem]], which will
+ *   * A [[RequestHandler]], probably an instance of
+ *     [[com.thenewmotion.ocpp.messages.CentralSystem]], which will
  *     handle incoming requests
  *   * Implementations of onError and onDisconnect to handle these events
  *
@@ -89,7 +91,7 @@ trait ChargePointEndpoint extends GenericOcppEndpoint[CentralSystemReq, CentralS
 trait CentralSystemEndpoint extends GenericOcppEndpoint[ChargePointReq, ChargePointRes, CentralSystemReq, CentralSystemRes] {
   def send[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ReqRes[REQ, RES]): Future[RES]
 
-  protected def requestHandler: CentralSystem
+  protected def requestHandler: RequestHandler[CentralSystemReq, CentralSystemRes, CentralSystemReqRes]
 
   def onDisconnect(): Unit
 

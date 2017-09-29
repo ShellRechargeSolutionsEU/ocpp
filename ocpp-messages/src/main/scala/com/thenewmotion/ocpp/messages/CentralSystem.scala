@@ -2,7 +2,8 @@ package com.thenewmotion.ocpp.messages
 
 import scala.concurrent.{Future, ExecutionContext}
 
-trait CentralSystem {
+trait CentralSystem extends RequestHandler[CentralSystemReq, CentralSystemRes, CentralSystemReqRes] {
+
   def authorize(req: AuthorizeReq): Future[AuthorizeRes]
   def startTransaction(req: StartTransactionReq): Future[StartTransactionRes]
   def stopTransaction(req: StopTransactionReq): Future[StopTransactionRes]

@@ -2,7 +2,8 @@ package com.thenewmotion.ocpp.messages
 
 import scala.concurrent.{Future, ExecutionContext}
 
-trait ChargePoint {
+trait ChargePoint extends RequestHandler[ChargePointReq, ChargePointRes, ChargePointReqRes] {
+
   def remoteStartTransaction(req: RemoteStartTransactionReq): Future[RemoteStartTransactionRes]
   def remoteStopTransaction(req: RemoteStopTransactionReq): Future[RemoteStopTransactionRes]
   def unlockConnector(req: UnlockConnectorReq): Future[UnlockConnectorRes]
