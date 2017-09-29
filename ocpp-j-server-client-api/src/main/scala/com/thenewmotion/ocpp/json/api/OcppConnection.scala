@@ -154,7 +154,11 @@ trait DefaultOcppConnectionComponent[OUTREQ <: Req, INRES <: Res, INREQ <: Req, 
         case Success(operation) => sendRequestWithJsonOperation[REQ, RES](req, operation)
         case Failure(e: NoSuchElementException) =>
           val operationName = getProcedureName(req)
-          throw new Exception(s"Tried to send unsupported OCPP request $operationName")
+          // TODO make sure we can give a version in this error message
+          Future.failed(OcppException(
+            PayloadErrorCode.NotSupported,
+            s"Tried to send request for OCPP operation $operationName, which is not unknown at version XXX"
+          ))
         case Failure(e) => throw e
       }
     }
