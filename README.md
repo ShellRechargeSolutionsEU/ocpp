@@ -104,9 +104,10 @@ you can see how the client API is used:
 
 #### Handling requests
 
-To specify the request handler, we use a [_magnet pattern_]. You can specify
-the request handler in different ways. After the `val requestHandler: ChargePointRequestHandler =`,
-you see a [`ChargePoint`](ocpp-messages/src/main/scala/com/thenewmotion/ocpp/messages/ChargePoint.scala)
+To specify the request handler, we use a [_magnet pattern_](http://spray.io/blog/2012-12-13-the-magnet-pattern/).
+You can specify the request handler in different ways. After the
+`val requestHandler: ChargePointRequestHandler =`, you see a
+[`ChargePoint`](ocpp-messages/src/main/scala/com/thenewmotion/ocpp/messages/ChargePoint.scala)
 instance in the example program. But you can also specify the request handler
 as a function from `ChargePointReq` to `Future[ChargePointRes]`:
 
