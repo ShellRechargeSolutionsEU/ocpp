@@ -31,11 +31,16 @@ abstract class OcppJsonClient(
 )(implicit sslContext: SSLContext = SSLContext.getDefault)
   extends CakeBasedChargePointEndpoint {
 
+  protected implicit val ec: ExecutionContext =
+    ExecutionContext.Implicits.global
+
   val connectionCake: ConnectionCake =
     new ConnectionCake
       with ChargePointOcppConnectionComponent
       with DefaultSrpcComponent
       with SimpleClientWebSocketComponent {
+
+    implicit val executionContext: ExecutionContext = ec
 
     // TODO this should give us back a negotiated WebSocket subprotocol later on,
     // which we then use to determine the negotiated OCPP version to initialize the ChargePointOcppConnection
@@ -50,7 +55,4 @@ abstract class OcppJsonClient(
 
     def requestedVersions: List[Version] = List(version)
   }
-
-  protected implicit val ec: ExecutionContext =
-    ExecutionContext.Implicits.global
 }

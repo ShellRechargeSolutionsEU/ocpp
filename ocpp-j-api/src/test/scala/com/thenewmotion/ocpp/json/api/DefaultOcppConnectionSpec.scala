@@ -10,7 +10,8 @@ import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods.{render, pretty}
 import java.time.ZonedDateTime
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.ExecutionContext
+import ExecutionContext.Implicits.global
 
 import messages._
 
@@ -192,6 +193,9 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
     def awaitFirstSentMessage: TransportMessage = Await.result(sentSrpcMessage, FiniteDuration(1, "second"))
 
     def chargePointConnection(version: Version) = new ChargePointOcppConnectionComponent with SrpcComponent {
+
+      implicit val executionContext: ExecutionContext = global
+
       val srpcConnection = new SrpcConnection {
         def send(msg: TransportMessage) = {
           sentSrpcMessagePromise.success(msg)
@@ -215,6 +219,8 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
     val chargePointConnectionV16 = chargePointConnection(Version.V16)
 
     val centralSystemConnectionV15 = new CentralSystemOcppConnectionComponent with SrpcComponent {
+
+      implicit val executionContext: ExecutionContext = global
 
       def srpcConnection = new SrpcConnection {
         def send(msg: TransportMessage) = {

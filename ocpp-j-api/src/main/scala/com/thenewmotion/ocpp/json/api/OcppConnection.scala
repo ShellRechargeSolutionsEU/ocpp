@@ -3,11 +3,9 @@ package json
 package api
 
 import scala.language.higherKinds
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Future, Promise}
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.{Future, Promise, ExecutionContext}
+import scala.util.{Success, Failure, Try}
 import scala.collection.mutable
-
 import com.thenewmotion.ocpp.messages._
 import org.slf4j.LoggerFactory
 
@@ -76,6 +74,8 @@ trait DefaultOcppConnectionComponent[
 ] extends OcppConnectionComponent[OUTREQBOUND, INRESBOUND, OUTREQRES, INREQBOUND, OUTRESBOUND, INREQRES] {
 
   this: SrpcComponent =>
+
+  implicit val executionContext: ExecutionContext
 
   trait DefaultOcppConnection extends OcppConnection {
     /** The version of the OCPP protocol used on this connection */
