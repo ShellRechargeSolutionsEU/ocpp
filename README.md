@@ -68,7 +68,7 @@ and add this to your dependencies:
 ```xml
     <dependency>
         <groupId>com.thenewmotion.ocpp</groupId>
-        <artifactId>ocpp-5.1_2.11</artifactId>
+        <artifactId>ocpp-j-api_2.11</artifactId>
         <version>5.1-SNAPSHOT</version>
     </dependency>
 ```
@@ -84,7 +84,7 @@ This means: connect to the Central System running at
 version 1.5. Leave out the "1.5", or type "1.6", to use OCPP version 1.6
 instead.
 
-If you look at the code of the code by clicking [here]([included](example-json-client/src/main/scala/com/thenewmotion/ocpp/json/example/JsonClientTestApp.scala),
+If you look at the code of the code by clicking [here](example-json-client/src/main/scala/com/thenewmotion/ocpp/json/example/JsonClientTestApp.scala),
 you can see how the client API is used:
 
  * A connection is established by creating an instance of `OcppJsonClient`. The
@@ -105,7 +105,7 @@ you can see how the client API is used:
 #### Handling requests
 
 To specify the request handler, we use a [_magnet pattern_]. You can specify
-the request handler in different ways. After the `def requestHandler: ChargePointRequestHandler =`,
+the request handler in different ways. After the `val requestHandler: ChargePointRequestHandler =`,
 you see a [`ChargePoint`](ocpp-messages/src/main/scala/com/thenewmotion/ocpp/messages/ChargePoint.scala)
 instance in the example program. But you can also specify the request handler
 as a function from `ChargePointReq` to `Future[ChargePointRes]`:
