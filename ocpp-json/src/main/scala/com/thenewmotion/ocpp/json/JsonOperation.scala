@@ -151,6 +151,10 @@ object JsonOperations {
       stopTransactionJsonOp
     )
 
+    // TODO we could also define a reqResToAction function in one place,
+    // and then define jsonOpForReqRes in terms of reqResToAction +
+    // jsonOpForAction instead of spelling out these mappings four times
+    // for each (side, version) combination here
     def jsonOpForReqRes[REQ <: CentralSystemReq, RES <: CentralSystemRes](
       reqRes: CentralSystemReqRes[REQ, RES]
     ): MyJsonOperation[REQ, RES] = {
