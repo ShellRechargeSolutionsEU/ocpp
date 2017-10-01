@@ -174,11 +174,10 @@ trait DefaultOcppConnectionComponent[
       Try(theirOperations.jsonOpForReqRes(reqRes)) match {
         case Success(operation) => sendRequestWithJsonOperation[REQ, RES](req, operation)
         case Failure(e: NoSuchElementException) =>
-          val operationName = getProcedureName(req)
           // TODO make sure we can give a version in this error message
           Future.failed(OcppException(
             PayloadErrorCode.NotSupported,
-            s"Tried to send request for OCPP operation $operationName, which is not unknown at version XXX"
+            s"OCPP operation not supported at version XXX"
           ))
         case Failure(e) => throw e
       }
@@ -193,15 +192,13 @@ trait DefaultOcppConnectionComponent[
 
       callIdCache.put(callId, OutstandingRequest[REQ, RES](jsonOperation, responsePromise))
 
+      val actionName = jsonOperation.action.name
+
       // TODO make sure a failure to serialize (e.g. version incompatibility)
       // will lead to failed future for request sender, not in an exception
       // thrown directly at him
-      srpcConnection.send(RequestMessage(callId, getProcedureName(req), jsonOperation.serializeReq(req)))
+      srpcConnection.send(RequestMessage(callId, actionName, jsonOperation.serializeReq(req)))
       responsePromise.future
-    }
-
-    private def getProcedureName(c: Message) = {
-      c.getClass.getSimpleName.replaceFirst("Re[qs]\\$?$", "")
     }
   }
 
