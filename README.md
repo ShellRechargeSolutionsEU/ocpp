@@ -206,6 +206,35 @@ OCPP-S is what this library started with, but by now it is undocumented legacy.
 It may be split off to bitrot in its own little project on the next major
 version.
 
+### Changes compared to version 4.x
+
+This library had been stable for a few years between 2014 and 2017, with 4.x.x
+version numbers, supporting OCPP-S 1.2 and 1.5, and OCPP-J 1.5, but not 1.6. Now
+that 1.6 support has been added, many wildly incompatible changes to the library
+interface were made while we were at it. The most important ones to be aware of
+when porting older code:
+
+ - The `CentralSystem` and `ChargePoint` traits were renamed to
+   `SyncCentralSystem` and `SyncChargPoint`. The names `CentralSystem` and
+   `ChargePoint` are now used for asynchronous versions of these traits that
+   return `Future`s.
+ - In the high-level JSON API, request-response-handling has become more
+   type-safe. Your request handler is no longer just a function from requests
+   to responses, but now a `RequestHandler` which will also verify that you
+   produce the right response type for the given request.
+ - The library now uses [enum-utils](https://github.com/NewMotion/enum-utils)
+   instead of Scala's `Enumeration`s
+ - The library now uses Java 8's `java.time` for date and time handling instead
+   of `com.thenewmotion.time`.
+ - `JsonDeserializable` was renamed to `JsonOperation` and now handles not only
+   deserialization but also serialization of OCPP messages for OCPP-J.
+ - `OcppJsonClient` now takes a version parameter
+
+## TODO
+
+ - Building for Scala 2.12. May require dropping the SOAP and/or switching JSON
+   libraries.
+
 ## Acknowledgements
 
 Most of the example messages in the ocpp-json unit tests were taken from
