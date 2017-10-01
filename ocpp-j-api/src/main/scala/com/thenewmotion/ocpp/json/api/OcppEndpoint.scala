@@ -135,9 +135,7 @@ trait CakeBasedOcppEndpoint[
  *
  * The trait provides the library user with:
  *   * A send method to send requests to the Central System
- *
- * The "ec" member is to be overridden by library classes offering more concrete
- * implementations of an endpoint and not by library users themselves.
+ *   * A close method to close the connection
  */
 trait ChargePointEndpoint extends OcppEndpoint[
   CentralSystemReq,
@@ -171,9 +169,7 @@ trait CakeBasedChargePointEndpoint extends CakeBasedOcppEndpoint[
  *
  * The trait provides the library user with:
  *   * A send method to send requests to the Charge Point
- *
- * The "ec" member is to be overridden by library classes offering more concrete
- * implementations of an endpoint and not by library users themselves.
+ *   * A close method to close the connection
  */
 trait CentralSystemEndpoint extends OcppEndpoint[
   ChargePointReq,
