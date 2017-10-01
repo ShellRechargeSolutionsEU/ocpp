@@ -48,7 +48,7 @@ trait WebSocketComponent {
   /**
    * Called when the WebSocket connection is disconnected
    */
-  def onDisconnect(): Unit = {}
+  def onDisconnect(): Unit
 
   /**
    * Called when connecting, to get a list of supported subprotocols
@@ -74,6 +74,8 @@ class DummyWebSocketComponent extends WebSocketComponent {
   def onError(e: Throwable) = logger.info(s"DummyWebSocketComponent received error {}", e)
 
   def onMessage(jval: JValue) = logger.info("DummyWebSocketComponent received message {}", jval)
+
+  def onDisconnect(): Unit = {}
 
   def requestedSubProtocols = List()
 }

@@ -9,15 +9,12 @@ import messages._
  * Generic interface of an OCPP connection endpoint as it appears to the
  * library user:
  *
- *  * The send method sends outgoing requests over the OCPP connection
- *  * onRequest should be implemented to handle incoming requests
- *  * onDisconnect should be implemented to handle a disconnection
- *  * onError should be implemented to handle errors
- *
- * The signature of the onRequest method is a bit awkward to implement. See the
- * [[ChargePointEndpoint]] and [[CentralSystemEndpoint]] traits for extensions
- * of this trait that make it possible to handle incoming requests in a nicer
- * way.
+ *  * The send method should be called to send outgoing requests
+ *  * The close method should be called to close the connection
+ *  * onRequest should be overridden to handle incoming requests
+ *  * onDisconnect should be overridden to handle a disconnection
+ *  * onError should be overridden to handle OCPP errors sent by the other
+ *    party
  *
  * @tparam OUTREQ The type of outgoing requests (either ChargePointReq or CentralSystemReq)
  * @tparam INRES The type of incoming responses (either ChargePointRes or CentralSystemRes)
@@ -26,7 +23,7 @@ import messages._
  * @tparam OUTRES The type of outgoing responses (either CentralSystemRes or ChargePointRes)
  * @tparam INREQRES Typeclass relating incoming request types to outgoing response types
  */
-trait GenericOcppEndpoint[
+trait OcppEndpoint[
   OUTREQ <: Req,
   INRES <: Res,
   OUTREQRES[_ <: OUTREQ, _ <: INRES] <: ReqRes[_, _],
@@ -36,10 +33,53 @@ trait GenericOcppEndpoint[
 ] {
   def send[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES]
 
+  def close(): Unit
+
   def requestHandler: RequestHandler[INREQ, OUTRES, INREQRES]
 
-  final def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(implicit reqRes: INREQRES[REQ, RES]): Future[RES] =
-    requestHandler.apply(req)
+  def onDisconnect(): Unit
+
+  def onError(error: OcppError): Unit
+}
+
+trait CakeBasedOcppEndpoint[
+  OUTREQ <: Req,
+  INRES <: Res,
+  OUTREQRES[_ <: OUTREQ, _ <: INRES] <: ReqRes[_, _],
+  INREQ <: Req,
+  OUTRES <: Res,
+  INREQRES[_ <: INREQ, _ <: OUTRES] <: ReqRes[_, _]
+] {
+  def send[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES] =
+    connectionCake.sendRequest(req)
+
+  def close(): Unit = connectionCake.close()
+
+  def requestHandler: RequestHandler[INREQ, OUTRES, INREQRES]
+
+  protected val connectionCake: ConnectionCake
+
+  protected trait ConnectionCake {
+    self: OcppConnectionComponent[OUTREQ, INRES, OUTREQRES, INREQ, OUTRES, INREQRES]
+      with SrpcComponent
+      with WebSocketComponent =>
+
+    def sendRequest[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES] =
+      ocppConnection.sendRequest(req)
+
+    def close(): Unit = webSocketConnection.close()
+
+    final def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(
+      implicit reqRes: INREQRES[REQ, RES]
+    ): Future[RES] =
+      requestHandler.apply(req)
+
+    def onOcppError(error: OcppError): Unit =
+      CakeBasedOcppEndpoint.this.onError(error)
+
+    def onDisconnect(): Unit =
+      CakeBasedOcppEndpoint.this.onDisconnect()
+  }
 
   protected implicit val ec: ExecutionContext
 
@@ -64,7 +104,16 @@ trait GenericOcppEndpoint[
  * The "ec" member is to be overridden by library classes offering more concrete
  * implementations of an endpoint and not by library users themselves.
  */
-trait ChargePointEndpoint extends GenericOcppEndpoint[
+trait ChargePointEndpoint extends OcppEndpoint[
+  CentralSystemReq,
+  CentralSystemRes,
+  CentralSystemReqRes,
+  ChargePointReq,
+  ChargePointRes,
+  ChargePointReqRes
+]
+
+trait CakeBasedChargePointEndpoint extends CakeBasedOcppEndpoint[
   CentralSystemReq,
   CentralSystemRes,
   CentralSystemReqRes,
@@ -91,7 +140,16 @@ trait ChargePointEndpoint extends GenericOcppEndpoint[
  * The "ec" member is to be overridden by library classes offering more concrete
  * implementations of an endpoint and not by library users themselves.
  */
-trait CentralSystemEndpoint extends GenericOcppEndpoint[
+trait CentralSystemEndpoint extends OcppEndpoint[
+  ChargePointReq,
+  ChargePointRes,
+  ChargePointReqRes,
+  CentralSystemReq,
+  CentralSystemRes,
+  CentralSystemReqRes
+]
+
+trait CakeBasedCentralSystemEndpoint extends CakeBasedOcppEndpoint[
   ChargePointReq,
   ChargePointRes,
   ChargePointReqRes,
