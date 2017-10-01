@@ -3,10 +3,8 @@ package json
 package api
 
 import java.net.URI
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.ExecutionContext
 import javax.net.ssl.SSLContext
-
-import messages._
 
 /**
  * An OCPP-J client implemented using Java-WebSocket.
@@ -31,9 +29,14 @@ abstract class OcppJsonClient(
   version: Version,
   authPassword: Option[String] = None
 )(implicit sslContext: SSLContext = SSLContext.getDefault)
-  extends ChargePointEndpoint {
+  extends CakeBasedChargePointEndpoint {
 
-  private[this] val ocppStack = new ChargePointOcppConnectionComponent with DefaultSrpcComponent with SimpleClientWebSocketComponent {
+  val connectionCake: ConnectionCake =
+    new ConnectionCake
+      with ChargePointOcppConnectionComponent
+      with DefaultSrpcComponent
+      with SimpleClientWebSocketComponent {
+
     // TODO this should give us back a negotiated WebSocket subprotocol later on,
     // which we then use to determine the negotiated OCPP version to initialize the ChargePointOcppConnection
     val webSocketConnection = new SimpleClientWebSocketConnection(
@@ -45,20 +48,8 @@ abstract class OcppJsonClient(
     val srpcConnection = new DefaultSrpcConnection
     val ocppConnection = defaultChargePointOcppConnection(version)
 
-    override def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ChargePointReqRes[REQ, RES]): Future[RES] =
-      OcppJsonClient.this.onRequest(req)
-
-    override def onOcppError(error: OcppError): Unit = OcppJsonClient.this.onError(error)
-
-    override def onDisconnect(): Unit = OcppJsonClient.this.onDisconnect()
-
     def requestedVersions: List[Version] = List(version)
   }
-
-  def send[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: CentralSystemReqRes[REQ, RES]): Future[RES] =
-    ocppStack.ocppConnection.sendRequest(req)
-
-  def close() = ocppStack.webSocketConnection.close()
 
   protected implicit val ec: ExecutionContext =
     ExecutionContext.Implicits.global
