@@ -29,7 +29,7 @@ object JsonClientTestApp extends App {
      * any configuration. To other requests it just answers that that message
      * type is not supported.
      */
-    val requestHandler = new ChargePoint {
+    val requestHandler: ChargePointRequestHandler = new ChargePoint {
       def getConfiguration(req: GetConfigurationReq): Future[GetConfigurationRes] =
         Future.successful(GetConfigurationRes(
           values = List(),
