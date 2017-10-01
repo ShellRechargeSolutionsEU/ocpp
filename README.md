@@ -48,7 +48,7 @@ resolvers += "TNM" at "http://nexus.thenewmotion.com/content/groups/public"
 
 ```
 
-and this in your `build.sbt` when using SBT:
+and this to your `build.sbt`:
 
 ```
 libraryDependencies += "com.thenewmotion" %% "ocpp-j-api" % "5.1-SNAPSHOT"
@@ -216,7 +216,7 @@ interface were made while we were at it. The most important ones to be aware of
 when porting older code:
 
  - The `CentralSystem` and `ChargePoint` traits were renamed to
-   `SyncCentralSystem` and `SyncChargPoint`. The names `CentralSystem` and
+   `SyncCentralSystem` and `SyncChargePoint`. The names `CentralSystem` and
    `ChargePoint` are now used for asynchronous versions of these traits that
    return `Future`s.
  - In the high-level JSON API, request-response-handling has become more
