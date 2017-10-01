@@ -84,7 +84,7 @@ This means: connect to the Central System running at
 version 1.5. Leave out the "1.5", or type "1.6", to use OCPP version 1.6
 instead.
 
-If you look at the code of the code by clicking [here](example-json-client/src/main/scala/com/thenewmotion/ocpp/json/example/JsonClientTestApp.scala),
+If you look at the code of the example by clicking [here](example-json-client/src/main/scala/com/thenewmotion/ocpp/json/example/JsonClientTestApp.scala),
 you can see how the client API is used:
 
  * A connection is established by creating an instance of `OcppJsonClient`. The
