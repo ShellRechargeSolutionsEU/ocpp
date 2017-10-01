@@ -193,6 +193,9 @@ trait DefaultOcppConnectionComponent[
 
       callIdCache.put(callId, OutstandingRequest[REQ, RES](jsonOperation, responsePromise))
 
+      // TODO make sure a failure to serialize (e.g. version incompatibility)
+      // will lead to failed future for request sender, not in an exception
+      // thrown directly at him
       srpcConnection.send(RequestMessage(callId, getProcedureName(req), jsonOperation.serializeReq(req)))
       responsePromise.future
     }

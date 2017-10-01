@@ -74,8 +74,8 @@ val ocppSpray = module("ocpp-spray")
     libraryDependencies ++= Seq(
       sprayHttp, sprayHttpX, akka, specs2Mock))
 
-val ocppJServerClientApi =
-  module("ocpp-j-server-client-api")
+val ocppJApi =
+  module("ocpp-j-api")
     .dependsOn(messages, json)
     .settings(
       libraryDependencies ++= Seq(
@@ -84,9 +84,8 @@ val ocppJServerClientApi =
 
 val exampleJsonClient =
   module("example-json-client")
-  .dependsOn(json, ocppJServerClientApi)
+  .dependsOn(json, ocppJApi)
   .settings(
-    libraryDependencies ++= Seq(slf4jApi, slf4jSimpleLogger),
     outputStrategy in run := Some(StdoutOutput),
     publish := {}
   )

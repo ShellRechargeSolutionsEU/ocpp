@@ -31,14 +31,49 @@ trait OcppEndpoint[
   OUTRES <: Res,
   INREQRES[_ <: INREQ, _ <: OUTRES] <: ReqRes[_, _]
 ] {
+
+  /**
+   * Send a request to the party at the other side of this connection
+   *
+   * @param req The request to send
+   * @param reqRes Evidence of the request-response relationship of the REQ and RES types
+   * @tparam REQ The type of request (e.g. BootNotificationReq, ResetReq, ...)
+   * @tparam RES The type of response (e.g. BootNotificationRes, ResetRes, ...)
+   * @return A future that will be completed with the response from the other
+   *         side. If the other side fails to respond, the future will be failed.
+   */
   def send[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES]
 
+  /**
+   * Close the connection
+   */
   def close(): Unit
 
+  /**
+   * A handler for incoming requests.
+   *
+   * RequestHandler is a magnet type. You can actually specify:
+   *   - a function from INREQ to OUTRES
+   *   - a function from INREQ to Future[OUTRES]
+   *   - an instance of [[com.thenewmotion.ocpp.messages.ChargePoint]] or [[com.thenewmotion.ocpp.messages.CentralSystem]]
+   *   - an instance of [[com.thenewmotion.ocpp.messages.SyncChargePoint]] or [[com.thenewmotion.ocpp.messages.SyncCentralSystem]]
+   * @return
+   */
   def requestHandler: RequestHandler[INREQ, OUTRES, INREQRES]
 
+  /**
+   * A callback that is called when the connection has been closed
+   */
   def onDisconnect(): Unit
 
+  /**
+   * A callback that is called when an OCPP error is received which does not
+   * relate to a request that was sent to the send method. If an error is
+   * received about a specific request, it will be reported by failing the
+   * result Future for that request instead.
+   *
+   * @param error
+   */
   def onError(error: OcppError): Unit
 }
 
