@@ -199,7 +199,38 @@ TODO
 
 ### Just serializing
 
-TODO
+If you do not need the connection management provided by the high-level API,
+you can still use the `ocpp-json` module for serializing and deserializing OCPP
+messages that you will send or receive using other libraries.
+
+To do so, call the methods in the [OcppJ](ocpp-json/src/main/scala/com/thenewmotion/ocpp/json/OcppJ.scala)
+object after importing either
+`com.thenewmotion.ocpp.json.v15.SerializationV15._`
+or `com.thenewmotion.ocpp.json.v16.SerializationV16._` to select which OCPP
+version to use:
+
+```scala
+
+    import com.thenewmotion.ocpp.json.OcppJ
+    import com.thenewmotion.ocpp.messages
+    import com.thenewmotion.ocpp.Version
+    import com.thenewmotion.ocpp.json.v16.SerializationV16._
+
+    OcppJ.write(AuthorizeReq(idTag = "ABCDEF012"))
+    // this results in:
+    // res6: String = {"idTag":"ABCDEF012"}
+
+    OcppJ.read[AuthorizeReq, Version.V16.type]("""{"idTag":"ABCDEF012"}""")
+    // this results in:
+    // res10: com.thenewmotion.ocpp.messages.AuthorizeReq = AuthorizeReq(ABCDEF012)
+```
+
+There are also `serialize` and `deserialize` methods on the `OcppJ` object that
+use json4s `JValue`s as the representation of JSON instead of raw `String`s.
+You can use those to build the [SRPC](http://www.gir.fr/ocppjs/ocpp_srpc_spec.shtml)
+messages that are sent over the WebSocket. See [TransportMessage](ocpp-json/src/main/scala/com/thenewmotion/ocpp/json/TransportMessageProtocol.scala)
+and [TransportMessageJsonSerializers](ocpp-json/src/main/scala/com/thenewmotion/ocpp/json/TransportMessageJsonSerializers.scala)
+for how to work with those.
 
 ### SOAP
 
