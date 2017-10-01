@@ -42,6 +42,7 @@ trait DefaultSrpcComponent extends SrpcComponent {
   def onMessage(jval: JValue): Unit =
     onSrpcMessage(TransportMessageParser.parse(jval))
 
+  // TODO don't throw these away!
   def onError(ex: Throwable): Unit =
     logger.error("WebSocket error", ex)
 }
