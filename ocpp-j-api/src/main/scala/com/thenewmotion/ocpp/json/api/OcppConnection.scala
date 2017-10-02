@@ -109,7 +109,10 @@ trait DefaultOcppConnectionComponent[
     private def handleIncomingRequest(req: RequestMessage) {
       import ourOperations._
 
-      def respondWithError(errCode: PayloadErrorCode, description: String) =
+      def respondWithError(
+        errCode: PayloadErrorCode,
+        description: String
+      ): Unit =
         srpcConnection.send(ErrorResponseMessage(req.callId, errCode, description))
 
       val opName = req.procedureName
@@ -171,22 +174,21 @@ trait DefaultOcppConnectionComponent[
       implicit reqRes: OUTREQRES[REQ, RES]
     ): Future[RES] = {
 
-      Try(theirOperations.jsonOpForReqRes(reqRes)) match {
-        case Success(operation) => sendRequestWithJsonOperation[REQ, RES](req, operation)
-        case Failure(e: NoSuchElementException) =>
+      theirOperations.jsonOpForReqRes(reqRes) match {
+        case Some(operation) => sendRequestWithJsonOperation[REQ, RES](req, operation)
+        case None =>
           // TODO make sure we can give a version in this error message
           Future.failed(OcppException(
             PayloadErrorCode.NotSupported,
             s"OCPP operation not supported at version XXX"
           ))
-        case Failure(e) => throw e
       }
     }
 
     private def sendRequestWithJsonOperation[REQ <: OUTREQBOUND, RES <: INRESBOUND](
       req: REQ,
       jsonOperation: JsonOperation[OUTREQBOUND, INRESBOUND, REQ, RES, OUTREQRES, V]
-    ) = {
+    ): Future[RES] = {
       val callId = callIdGenerator.next()
       val responsePromise = Promise[RES]()
 

@@ -104,7 +104,10 @@ trait JsonOperations[
    * @return The JsonOperation instance for the OCPP operation of the given ReqRes object
    * @throws NoSuchElementException If the OCPP operation for the given ReqRes is not supported with OCPP-JSON
    */
-  def jsonOpForReqRes[REQ <: REQBOUND, RES <: RESBOUND](reqRes: REQRES[REQ, RES]): MyJsonOperation[REQ, RES]
+  def jsonOpForReqRes[REQ <: REQBOUND, RES <: RESBOUND](reqRes: REQRES[REQ, RES]): Option[MyJsonOperation[REQ, RES]] =
+    jsonOpForReqResPF.lift(reqRes)
+
+  protected def jsonOpForReqResPF[REQ <: REQBOUND, RES <: RESBOUND]: PartialFunction[REQRES[REQ, RES], MyJsonOperation[REQ, RES]]
 
   protected def jsonOp[REQ <: REQBOUND, RES <: RESBOUND](action: ActionType)(
     implicit reqRes: REQRES[REQ, RES],
@@ -151,15 +154,10 @@ object JsonOperations {
       stopTransactionJsonOp
     )
 
-    // TODO we could also define a reqResToAction function in one place,
-    // and then define jsonOpForReqRes in terms of reqResToAction +
-    // jsonOpForAction instead of spelling out these mappings four times
-    // for each (side, version) combination here
-    def jsonOpForReqRes[REQ <: CentralSystemReq, RES <: CentralSystemRes](
-      reqRes: CentralSystemReqRes[REQ, RES]
-    ): MyJsonOperation[REQ, RES] = {
+    def jsonOpForReqResPF[REQ <: CentralSystemReq, RES <: CentralSystemRes]: PartialFunction[CentralSystemReqRes[REQ, RES], MyJsonOperation[REQ, RES]] = {
       import ReqRes._
-      reqRes match {
+
+      {
         case AuthorizeReqRes => authorizeJsonOp
         case BootNotificationReqRes => bootNotificationJsonOp
         case FirmwareStatusNotificationReqRes => firmwareStatusNotificationJsonOp
@@ -168,7 +166,6 @@ object JsonOperations {
         case StartTransactionReqRes => startTransactionJsonOp
         case StatusNotificationReqRes => statusNotificationJsonOp
         case StopTransactionReqRes => stopTransactionJsonOp
-        case _ => throw new NoSuchElementException(s"Not a central system ReqRes: $reqRes")
       }
     }
   }
@@ -203,11 +200,12 @@ object JsonOperations {
       stopTransactionJsonOp
     )
 
-    def jsonOpForReqRes[REQ <: CentralSystemReq, RES <: CentralSystemRes](
-      reqRes: CentralSystemReqRes[REQ, RES]
-    ): MyJsonOperation[REQ, RES] = {
+    def jsonOpForReqResPF[REQ <: CentralSystemReq, RES <: CentralSystemRes]:
+      PartialFunction[CentralSystemReqRes[REQ, RES], MyJsonOperation[REQ, RES]] = {
+
       import ReqRes._
-      reqRes match {
+
+      {
         case AuthorizeReqRes => authorizeJsonOp
         case BootNotificationReqRes => bootNotificationJsonOp
         case FirmwareStatusNotificationReqRes => firmwareStatusNotificationJsonOp
@@ -216,7 +214,6 @@ object JsonOperations {
         case StartTransactionReqRes => startTransactionJsonOp
         case StatusNotificationReqRes => statusNotificationJsonOp
         case StopTransactionReqRes => stopTransactionJsonOp
-        case _ => throw new NoSuchElementException(s"Not a central system ReqRes: $reqRes")
       }
     }
   }
@@ -261,12 +258,10 @@ object JsonOperations {
       updateFirmwareJsonOp
     )
 
-    def jsonOpForReqRes[REQ <: ChargePointReq, RES <: ChargePointRes](
-      reqRes: ChargePointReqRes[REQ, RES]
-    ): MyJsonOperation[REQ, RES] = {
+    def jsonOpForReqResPF[REQ <: ChargePointReq, RES <: ChargePointRes] : PartialFunction[ChargePointReqRes[REQ, RES], MyJsonOperation[REQ, RES]] = {
       import ReqRes._
 
-      reqRes match {
+      {
         case CancelReservationReqRes => cancelReservationJsonOp
         case ChangeAvailabilityReqRes => changeAvailabilityJsonOp
         case ChangeConfigurationReqRes => changeConfigurationJsonOp
@@ -281,7 +276,6 @@ object JsonOperations {
         case SendLocalListReqRes => sendLocalListJsonOp
         case UnlockConnectorReqRes => unlockConnectorJsonOp
         case UpdateFirmwareReqRes => updateFirmwareJsonOp
-        case _ => throw new NoSuchElementException(s"Not a charge point ReqRes: $reqRes")
       }
     }
   }
@@ -334,12 +328,10 @@ object JsonOperations {
       triggerMessageJsonOp
     )
 
-    def jsonOpForReqRes[REQ <: ChargePointReq, RES <: ChargePointRes](
-      reqRes: ChargePointReqRes[REQ, RES]
-    ): MyJsonOperation[REQ, RES] = {
+    def jsonOpForReqResPF[REQ <: ChargePointReq, RES <: ChargePointRes]: PartialFunction[ChargePointReqRes[REQ, RES], MyJsonOperation[REQ, RES]] = {
       import ReqRes._
 
-      reqRes match {
+      {
         case CancelReservationReqRes => cancelReservationJsonOp
         case ChangeAvailabilityReqRes => changeAvailabilityJsonOp
         case ChangeConfigurationReqRes => changeConfigurationJsonOp
@@ -358,7 +350,6 @@ object JsonOperations {
         case ClearChargingProfileReqRes => clearChargingProfileJsonOp
         case GetCompositeScheduleReqRes => getCompositeScheduleJsonOp
         case TriggerMessageReqRes => triggerMessageJsonOp
-        case _ => throw new NoSuchElementException(s"Not a charge point ReqRes: $reqRes")
       }
     }
   }
