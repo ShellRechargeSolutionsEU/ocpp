@@ -57,7 +57,6 @@ trait OcppEndpoint[
    *   - a function from INREQ to Future[OUTRES]
    *   - an instance of [[com.thenewmotion.ocpp.messages.ChargePoint]] or [[com.thenewmotion.ocpp.messages.CentralSystem]]
    *   - an instance of [[com.thenewmotion.ocpp.messages.SyncChargePoint]] or [[com.thenewmotion.ocpp.messages.SyncCentralSystem]]
-   * @return
    */
   def requestHandler: RequestHandler[INREQ, OUTRES, INREQRES]
 
@@ -84,7 +83,14 @@ trait CakeBasedOcppEndpoint[
   INREQ <: Req,
   OUTRES <: Res,
   INREQRES[_ <: INREQ, _ <: OUTRES] <: ReqRes[_, _]
-] {
+] extends OcppEndpoint[
+  OUTREQ,
+  INRES,
+  OUTREQRES,
+  INREQ,
+  OUTRES,
+  INREQRES
+]  {
   def send[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES] =
     connectionCake.sendRequest(req)
 
@@ -99,24 +105,27 @@ trait CakeBasedOcppEndpoint[
       with SrpcComponent
       with WebSocketComponent =>
 
-    def sendRequest[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES] =
+    final def sendRequest[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES] =
       ocppConnection.sendRequest(req)
 
-    def close(): Unit = webSocketConnection.close()
+    final def close(): Unit = webSocketConnection.close()
 
     final def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(
       implicit reqRes: INREQRES[REQ, RES]
     ): Future[RES] =
       requestHandler.apply(req)
 
-    def onOcppError(error: OcppError): Unit =
+    final def onOcppError(error: OcppError): Unit =
       CakeBasedOcppEndpoint.this.onError(error)
 
-    def onDisconnect(): Unit =
+    final def onDisconnect(): Unit =
       CakeBasedOcppEndpoint.this.onDisconnect()
+
+    final implicit val executionContext: ExecutionContext =
+      CakeBasedOcppEndpoint.this.ec
   }
 
-  protected implicit val ec: ExecutionContext
+  protected val ec: ExecutionContext
 
   def onDisconnect(): Unit
 
@@ -137,15 +146,6 @@ trait CakeBasedOcppEndpoint[
  *   * A send method to send requests to the Central System
  *   * A close method to close the connection
  */
-trait ChargePointEndpoint extends OcppEndpoint[
-  CentralSystemReq,
-  CentralSystemRes,
-  CentralSystemReqRes,
-  ChargePointReq,
-  ChargePointRes,
-  ChargePointReqRes
-]
-
 trait CakeBasedChargePointEndpoint extends CakeBasedOcppEndpoint[
   CentralSystemReq,
   CentralSystemRes,
@@ -158,8 +158,8 @@ trait CakeBasedChargePointEndpoint extends CakeBasedOcppEndpoint[
 /**
  * Library interface for the Central System side.
  *
- * There will be one instance of CentralSystemEndpoint for each charge point
- * connected to the Central System.
+ * There will be one instance of CakeBasedCentralSystemEndpoint for each charge
+ * point connected to the Central System.
  *
  * The library user has to provide:
  *   * A [[RequestHandler]], probably an instance of
@@ -171,15 +171,6 @@ trait CakeBasedChargePointEndpoint extends CakeBasedOcppEndpoint[
  *   * A send method to send requests to the Charge Point
  *   * A close method to close the connection
  */
-trait CentralSystemEndpoint extends OcppEndpoint[
-  ChargePointReq,
-  ChargePointRes,
-  ChargePointReqRes,
-  CentralSystemReq,
-  CentralSystemRes,
-  CentralSystemReqRes
-]
-
 trait CakeBasedCentralSystemEndpoint extends CakeBasedOcppEndpoint[
   ChargePointReq,
   ChargePointRes,

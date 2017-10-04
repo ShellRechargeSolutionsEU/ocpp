@@ -15,7 +15,7 @@ import javax.net.ssl.SSLContext
  *
  * This class is to be used by instantiating your own subclass of it, which
  * should provide a handler for incoming requests, a handler for errors, and a
- * disconnection handler as explained at [[ChargePointEndpoint]].
+ * disconnection handler as explained at [[OcppEndpoint]].
  *
  * @param chargerId The charge point identity of the charge point for which you
  *                  want to set up a connection
@@ -39,8 +39,6 @@ abstract class OcppJsonClient(
       with ChargePointOcppConnectionComponent
       with DefaultSrpcComponent
       with SimpleClientWebSocketComponent {
-
-    implicit val executionContext: ExecutionContext = ec
 
     // TODO this should give us back a negotiated WebSocket subprotocol later on,
     // which we then use to determine the negotiated OCPP version to initialize the ChargePointOcppConnection
