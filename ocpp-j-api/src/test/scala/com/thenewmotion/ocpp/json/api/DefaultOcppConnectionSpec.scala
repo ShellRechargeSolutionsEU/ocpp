@@ -75,6 +75,16 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
             (callId, errorCode) mustEqual (srpcNotSupportedOperationReq.callId -> PayloadErrorCode.NotSupported)
         }
       }
+
+      "responding with a NotSupported error for requests for the wrong version of OCPP" in new TestScope {
+        chargePointConnectionV15.onSrpcMessage(srpcTriggerMessageReq)
+
+        awaitFirstSentMessage must beLike {
+          case ErrorResponseMessage(callId, errorCode, description, details) =>
+            (callId, errorCode) mustEqual (srpcTriggerMessageReq.callId -> PayloadErrorCode.NotSupported)
+        }
+
+      }
     }
 
     "handle outgoing requests" in {
@@ -177,6 +187,9 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
     val srpcNotSupportedOperationReq =
       RequestMessage("another-test-call-id", "DataTransfer",
         ("vendorId" -> "TheNewMotion") ~ ("messageId" -> "GaKoffieHalen") ~ ("data" -> "met suiker, zonder melk"))
+
+    val srpcTriggerMessageReq =
+      RequestMessage("test-calli-d-3", "TriggerMessage", "requestMessage" -> "Heartbeat")
 
     // workaround to prevent errors when making Mockito throw OcppException
     trait OcppRequestHandler extends (Req => Res) {
