@@ -366,7 +366,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
         case ocpp.Voltage => Voltage
         case ocpp.Temperature => Temperature
         case ocpp.CurrentOffered => notSupportedCode(ocpp.CurrentOffered)
-        case ocpp.FanSpeedInRotationsPerMinute => notSupportedCode(ocpp.FanSpeedInRotationsPerMinute)
+        case ocpp.FanSpeedInRevolutionsPerMinute => notSupportedCode(ocpp.FanSpeedInRevolutionsPerMinute)
         case ocpp.Frequency => notSupportedCode(ocpp.Frequency)
         case ocpp.PowerFactor => notSupportedCode(ocpp.PowerFactor)
         case ocpp.PowerOffered => notSupportedCode(ocpp.PowerOffered)
