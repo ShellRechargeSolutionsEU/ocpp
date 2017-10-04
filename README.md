@@ -51,7 +51,7 @@ resolvers += "TNM" at "http://nexus.thenewmotion.com/content/groups/public"
 and this to your `build.sbt`:
 
 ```
-libraryDependencies += "com.thenewmotion" %% "ocpp-j-api" % "5.1-SNAPSHOT"
+libraryDependencies += "com.thenewmotion" %% "ocpp-j-api" % "6.0-beta1"
 ```
 
 With Maven, you'd set up the repository in your pom.xml:
@@ -69,7 +69,7 @@ and add this to your dependencies:
     <dependency>
         <groupId>com.thenewmotion.ocpp</groupId>
         <artifactId>ocpp-j-api_2.11</artifactId>
-        <version>5.1-SNAPSHOT</version>
+        <version>6.0-beta1</version>
     </dependency>
 ```
 
