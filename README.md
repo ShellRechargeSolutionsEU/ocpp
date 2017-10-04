@@ -235,8 +235,8 @@ for how to work with those.
 ### SOAP
 
 OCPP-S is what this library started with, but by now it is undocumented legacy.
-It may be split off to bitrot in its own little project on the next major
-version.
+It may be split off to enjoy retirement in its own little project on the next
+major version.
 
 ### Changes compared to version 4.x
 
@@ -264,8 +264,13 @@ when porting older code:
 
 ## TODO
 
+ - OCPP 1.5/1.6 version handshaking in the OCPP JSON client
+
  - Building for Scala 2.12. May require dropping the SOAP and/or switching JSON
    libraries.
+
+ - Explaining how to build a server endpoint interface under "roll your own
+   ednpoint" above
 
 ## Acknowledgements
 
