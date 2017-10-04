@@ -170,7 +170,12 @@ object JsonOperations {
     }
   }
 
-  implicit object CentralSystemV16 extends JsonOperations[CentralSystemReq, CentralSystemRes, CentralSystemReqRes, Version.V16.type] {
+  implicit object CentralSystemV16 extends JsonOperations[
+    CentralSystemReq,
+    CentralSystemRes,
+    CentralSystemReqRes,
+    Version.V16.type
+  ] {
 
     import CentralSystemAction._
     import v16.SerializationV16._
@@ -218,7 +223,12 @@ object JsonOperations {
     }
   }
 
-  implicit object ChargePointV15 extends JsonOperations[ChargePointReq, ChargePointRes, ChargePointReqRes, Version.V15.type] {
+  implicit object ChargePointV15 extends JsonOperations[
+    ChargePointReq,
+    ChargePointRes,
+    ChargePointReqRes,
+    Version.V15.type
+  ] {
 
     import ChargePointAction._
     import v15.SerializationV15._
@@ -280,7 +290,12 @@ object JsonOperations {
     }
   }
 
-  implicit object ChargePointV16 extends JsonOperations[ChargePointReq, ChargePointRes, ChargePointReqRes, Version.V16.type] {
+  implicit object ChargePointV16 extends JsonOperations[
+    ChargePointReq,
+    ChargePointRes,
+    ChargePointReqRes,
+    Version.V16.type
+  ] {
 
     import ChargePointAction._
     import v16.SerializationV16._
