@@ -54,7 +54,7 @@ object Measurand extends EnumerableWithDefault[Measurand] {
   case object Voltage extends Measurand { override def name = "Voltage" }
   case object Temperature extends Measurand { override def name = "Temperature" }
   case object Frequency extends Measurand { override def name = "Frequency" } // ocpp 1.6
-  case object FanSpeedInRotationsPerMinute extends Measurand { override def name = "RPM" } // ocpp 1.6
+  case object FanSpeedInRevolutionsPerMinute extends Measurand { override def name = "RPM" } // ocpp 1.6
   case object StateOfChargeInPercentage extends Measurand { override def name = "SoC" } // ocpp 1.6
 
   val values = Set(
@@ -78,7 +78,7 @@ object Measurand extends EnumerableWithDefault[Measurand] {
     Voltage,
     Temperature,
     Frequency,
-    FanSpeedInRotationsPerMinute,
+    FanSpeedInRevolutionsPerMinute,
     StateOfChargeInPercentage
   )
 
