@@ -177,10 +177,9 @@ trait DefaultOcppConnectionComponent[
       theirOperations.jsonOpForReqRes(reqRes) match {
         case Some(operation) => sendRequestWithJsonOperation[REQ, RES](req, operation)
         case None =>
-          // TODO make sure we can give a version in this error message
           Future.failed(OcppException(
             PayloadErrorCode.NotSupported,
-            s"OCPP operation not supported at version XXX"
+            s"Operation not supported at version this version of OCPP"
           ))
       }
     }
