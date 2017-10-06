@@ -160,6 +160,7 @@ object JsonOperations {
       {
         case AuthorizeReqRes => authorizeJsonOp
         case BootNotificationReqRes => bootNotificationJsonOp
+        case DiagnosticsStatusNotificationReqRes => diagnosticsStatusNotificationJsonOp
         case FirmwareStatusNotificationReqRes => firmwareStatusNotificationJsonOp
         case HeartbeatReqRes => heartbeatJsonOp
         case MeterValuesReqRes => meterValuesJsonOp
@@ -213,6 +214,7 @@ object JsonOperations {
       {
         case AuthorizeReqRes => authorizeJsonOp
         case BootNotificationReqRes => bootNotificationJsonOp
+        case DiagnosticsStatusNotificationReqRes => diagnosticsStatusNotificationJsonOp
         case FirmwareStatusNotificationReqRes => firmwareStatusNotificationJsonOp
         case HeartbeatReqRes => heartbeatJsonOp
         case MeterValuesReqRes => meterValuesJsonOp
