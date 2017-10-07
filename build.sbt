@@ -42,10 +42,14 @@ def scalaxbModule(name: String, packageNameForGeneratedCode: String) =
        scalaParser,
        dispatch
      ),
+
      scalaxbDispatchVersion in (Compile, scalaxb) := dispatchV,
      scalaxbPackageName in (Compile, scalaxb)     := packageNameForGeneratedCode,
      // please give us good old synchronous HTTP clients for now
-     scalaxbAsync in scalaxb in Compile := false)
+     scalaxbAsync in scalaxb in Compile := false,
+
+     coverageExcludedPackages := ".*"
+   )
 
 
 val messages = module("ocpp-messages")
