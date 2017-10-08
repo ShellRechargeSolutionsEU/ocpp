@@ -193,9 +193,122 @@ enforce the OCPP requirement that you wait for the response before sending the
 next request. A simple way to obey it is chaining the send operations in a `for`
 comprehension, as shown in the example app.
 
-### Rolling your own `OcppEndpoint`
+### Using the cake pattern directly
 
-TODO
+If you want to build an OCPP-J client using a different WebSocket
+implementation, or an OCPP-J server, you'll have to use the
+[cake](http://www.cakesolutions.net/teamblogs/2011/12/19/cake-pattern-in-depth)
+layers directly.
+
+The OCPP cake has three layers:
+
+ * [`OcppConnectionComponent`](ocpp-j-api/src/main/scala/com/thenewmotion/ocpp/json/api/OcppConnection.scala): matches requests to responses, and handles serialization and deserialization between OCPP request/response objects and SRPC messages
+ * [`SrpcComponent`](ocpp-j-api/src/main/scala/com/thenewmotion/ocpp/json/api/SrpcConnection.scala): serializes and deserializes SRPC messages to JSON
+ * [`WebSocketComponent`](ocpp-j-api/src/main/scala/com/thenewmotion/ocpp/json/api/WebSocketConnection.scala): reads and writes JSON messages from and to a WebSocket connection
+
+There are default implementations for the `OcppConnectionComponent` and
+`SrpcComponent`. The `WebSocketComponent` you will have to create yourself to
+integrate with your WebSocket implementation of choice.
+
+To put it in a diagram:
+
+```
+    +--------------V--------------------^--------------+
+    |     com.thenewmotion.ocpp.messages.{Req, Res}    |
+    |                                                  |
+    |         OcppConnectionComponent layer            |
+    |                                                  |
+    +--------------V--------------------^--------------+
+    |    com.thenewmotion.ocpp.json.TransportMessage   |
+    |                                                  |
+    |              SrpcComponent layer                 |
+    |                                                  |
+    +--------------V--------------------^--------------+
+    |                org.json4s.JValue                 |
+    |                                                  |
+    |           WebSocketComponent layer               |
+    |                                                  |
+    +--------------V--------------------^--------------+
+               (WebSocket lib specific types)
+```
+
+So the `OcppConnectionComponent` layer exchanges OCPP requests and responses
+with your app. It exchanges SRPC messages, represented as
+[TransportMessage](ocpp-json/src/main/scala/com/thenewmotion/ocpp/json/TransportMessageProtocol.scala)
+objects, with the `SrpcComponent` layer. The `SrpcComponent` layer exchanges
+JSON messages, represented as `org.json4s.JValue` objects, with the WebSocket
+layer. The WebSocket layer then speaks to the WebSocket library, using whatever
+types that library uses, usually just `String`s.
+
+Now this is not the whole picture yet: besides just OCPP messages, the layers
+also exchange connection commands and events, like "close this connection!" or
+"an error occurred sending that request". The traits also define methods to
+exchange those, and so the total amount of methods in your
+`OcppConnectionComponent with SrpcComponent with WebSocketComponent` instance
+may be intimidating at first. Let's make a version of the above diagram that
+shows the methods defined by each layer:
+
+```
+      OcppConnectionComponent.ocppConnection.sendRequest (call)      OcppConnectionComponent.onRequest (override)
+      OcppConnectionComponent.requestedVersions (override)           OcppConnectionComponent.onOcppError (override)
+    +------------------V-----------------------------------------------^--------------------------------------------------+
+    |                                                                                                                     |
+    |                                    OcppConnectionComponent layer                                                    |
+    |                                                                                                                     |
+    |                                                                                                                     |
+    | SrpcConnectionComponent.srpcConnection.send (call)             SrpcConnectionComponent.onSrpcMessage (override)     |
+    +------------------V-----------------------------------------------^--------------------------------------------------+
+    |                                                                                                                     |
+    |                                          SrpcComponent layer                                                        |
+    |                                                                                                                     |
+    | WebSocketConnectionComponent.webSocketConnection.send (call)   WebSocketConnectionComponent.onMessage (override)    |
+    | WebSocketConnectionComponent.webSocketConnection.close (call)  WebSocketConnectionComponent.onDisconnect (override) |
+    | WebSocketConnectionComponent.requestedSubProtocols (override)  WebSocketConnectionComponent.onError (override)      |
+    +------------------V-----------------------------------------------^--------------------------------------------------+
+    |                                                                                                                     |
+    |                                       WebSocketComponent layer                                                      |
+    |                                                                                                                     |
+    | (WebSocket library dependent)                                  (WebSocket library dependent)                        |
+    +------------------V-----------------------------------------------^--------------------------------------------------+
+```
+
+So each layer defines the interface that the highers layer can use to
+communicate with it. For every layer, you see on the left how the higher layer
+can give it information, and on the right how the higher layer gets information
+from it.
+
+For instance, on top you see that the user of the whole cake can give
+information to the OCPP layer by calling the `ocppConnection.sendRequest`
+method or by overriding the `OcppConnectionComponent.requestedVersions` method.
+And on the lower middle right you see that the SRPC cake layer can get
+information from the WebSocket layer by overriding the `onMessage`,
+`onDisconnect` and `onError` methods of the `WebSocketComponent`.
+
+There has to be one instance of the whole cake for every open WebSocket
+connection in the system. A server would typically maintain a mapping of
+WebSocket connection IDs from the underlying library to
+`OcppConnectionComponent with SrpcComponent with WebSocketComponent` instances
+for them. When it receives an incoming WebSocket message, it will look up the
+cake for that connection, and pass the message to the WebSocket layer of that
+cake.
+
+So now with this background information, the steps to constructing your cake would be:
+
+ * Determine the kind of interface you want to the logic in the rest of your app
+
+ * Create a trait extending `WebSocketComponent` that uses your WebSocket implementation of choice
+
+ * Create the cake:
+
+      * Do either `new CentralSystemOcppConnectionComponent with DefaultSrpcComponent with MyWebSocketComponent { ... }` or `new ChargePointCentralSystemOcppConnectionComponent with DefaultSrpcComponent with MyWebSocketComponent { ... }`
+
+      * Define in it a `val webSocketConnection`, `val srpcConnection` and `val ocppConnection`. For `ocppConnection`, use one of the `defaultChargePointOcppConnection(version)` and `defaultCentralSystemOcppConnection(version)` methods defined by the DefaultOcppConnectionComponent traits. For `val srpcConnection`, use `new DefaultSrpcConnection`.
+
+ * Define all the "(override)" methods shown at the top of the cake to connect your app's request and response processing to the OCPP cake
+
+ * Make the WebSocket layer call your WebSocket library to send messages over the socket, and make your WebSocket library call the cake for it to receive messages
+
+TODO: create a small server example to show how all this abstract hand-waving looks in practice
 
 ### Just serializing
 

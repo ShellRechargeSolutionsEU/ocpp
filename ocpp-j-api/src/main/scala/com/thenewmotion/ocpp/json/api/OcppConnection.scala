@@ -47,9 +47,6 @@ trait OcppConnectionComponent[
      * with it.
      */
     def sendRequestUntyped(req: OUTREQBOUND): Future[INRESBOUND]
-
-    /** Handle an incoming SRPC message */
-    def onSrpcMessage(msg: TransportMessage)
   }
 
   def ocppConnection: OcppConnection
@@ -57,7 +54,7 @@ trait OcppConnectionComponent[
   def onRequest[REQ <: INREQBOUND, RES <: OUTRESBOUND](req: REQ)(implicit reqRes: INREQRES[REQ, RES]): Future[RES]
   def onOcppError(error: OcppError)
 
-  /** OCPP versions that we support, used during connection handshake */
+  /** OCPP versions that we support, for use during connection handshake */
   def requestedVersions: List[Version]
 
   protected final val wsSubProtocolForOcppVersion = Map[Version, String](
@@ -92,8 +89,8 @@ trait DefaultOcppConnectionComponent[
     type V <: Version
 
     /** The operations that the other side can request from us */
-    val ourOperations:   JsonOperations[INREQBOUND,  OUTRESBOUND, INREQRES, V]
-    val theirOperations: JsonOperations[OUTREQBOUND, INRESBOUND,  OUTREQRES, V]
+    protected[this] val ourOperations:   JsonOperations[INREQBOUND,  OUTRESBOUND, INREQRES, V]
+    protected[this] val theirOperations: JsonOperations[OUTREQBOUND, INRESBOUND,  OUTREQRES, V]
 
     private val logger = LoggerFactory.getLogger(DefaultOcppConnection.this.getClass)
 
@@ -214,6 +211,9 @@ trait DefaultOcppConnectionComponent[
       responsePromise.future
     }
   }
+
+  def ocppConnection: DefaultOcppConnection
+
 
   def onRequest[REQ <: INREQBOUND, RES <: OUTRESBOUND](req: REQ)(implicit reqRes: INREQRES[REQ, RES]): Future[RES]
   def onOcppError(error: OcppError): Unit
