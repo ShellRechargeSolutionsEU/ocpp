@@ -132,23 +132,25 @@ trait DefaultOcppConnectionComponent[
         case Supported(operation) =>
           val responseSrpc = operation.reqRes(req.payload)((req, rr) => onRequest(req)(rr)) map { res =>
             ResponseMessage(req.callId, res)
-          } recover {
-            case e: Exception =>
-              logger.warn(s"Exception processing OCPP request {}: {} {}",
+          }
+
+          responseSrpc onComplete {
+            case Success(json) => srpcConnection.send(json)
+
+            case Failure(e) =>
+              logger.warn("Exception processing OCPP request {}: {} {}",
                 req.procedureName, e.getClass.getSimpleName, e.getMessage)
 
               val ocppError = e match {
                 case OcppException(err) => err
                 case _ => OcppError(PayloadErrorCode.InternalError, "Unexpected error processing request")
               }
-              ErrorResponseMessage(req.callId, ocppError.error, ocppError.description)
-          }
 
-          responseSrpc onComplete {
-            case Success(json) => srpcConnection.send(json)
-            case Failure(e) =>
-              logger.error(
-                s"OCPP response future failed for $opName with call ID ${req.callId}. This ought to be impossible.")
+              srpcConnection.send(ErrorResponseMessage(
+                req.callId,
+                ocppError.error,
+                ocppError.description
+              ))
           }
       }
     }
