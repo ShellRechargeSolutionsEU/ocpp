@@ -91,6 +91,7 @@ val exampleJsonClient =
   .dependsOn(json, ocppJApi)
   .settings(
     outputStrategy in run := Some(StdoutOutput),
+    coverageExcludedPackages := ".*",
     publish := {}
   )
 
