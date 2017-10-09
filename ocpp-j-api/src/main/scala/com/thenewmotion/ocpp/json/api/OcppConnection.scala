@@ -38,6 +38,16 @@ trait OcppConnectionComponent[
     /** Send an outgoing OCPP request */
     def sendRequest[REQ <: OUTREQBOUND, RES <: INRESBOUND](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES]
 
+    /**
+     * Alternative to sendRequest that allows you to write code that processes
+     * requests without knowing what type they are exactly.
+     *
+     * Downside is that it will not know which response you're getting back.
+     * You'll have to pattern match on it somewhere to do something meaningful
+     * with it.
+     */
+    def sendRequestUntyped(req: OUTREQBOUND): Future[INRESBOUND]
+
     /** Handle an incoming SRPC message */
     def onSrpcMessage(msg: TransportMessage)
   }
@@ -229,6 +239,20 @@ trait ChargePointOcppConnectionComponent
     val theirOperations: JsonOperations[CentralSystemReq, CentralSystemRes, CentralSystemReqRes, Ver]
   ) extends DefaultOcppConnection {
 
+    def sendRequestUntyped(req: CentralSystemReq): Future[CentralSystemRes] =
+      req match {
+        case r: AuthorizeReq                     => sendRequest(r)
+        case r: BootNotificationReq              => sendRequest(r)
+        case r: CentralSystemDataTransferReq     => sendRequest(r)
+        case r: DiagnosticsStatusNotificationReq => sendRequest(r)
+        case r: FirmwareStatusNotificationReq    => sendRequest(r)
+        case r: HeartbeatReq.type                => sendRequest(r)
+        case r: MeterValuesReq                   => sendRequest(r)
+        case r: StartTransactionReq              => sendRequest(r)
+        case r: StatusNotificationReq            => sendRequest(r)
+        case r: StopTransactionReq               => sendRequest(r)
+      }
+
     type V = Ver
   }
 
@@ -254,6 +278,29 @@ trait CentralSystemOcppConnectionComponent
     implicit val ourOperations: JsonOperations[CentralSystemReq, CentralSystemRes, CentralSystemReqRes, Ver],
     val theirOperations: JsonOperations[ChargePointReq, ChargePointRes, ChargePointReqRes, Ver]
   ) extends DefaultOcppConnection {
+
+    def sendRequestUntyped(req: ChargePointReq): Future[ChargePointRes] =
+      req match {
+        case r: CancelReservationReq        => sendRequest(r)
+        case r: ChangeAvailabilityReq       => sendRequest(r)
+        case r: ChangeConfigurationReq      => sendRequest(r)
+        case r: ChargePointDataTransferReq  => sendRequest(r)
+        case r: ClearCacheReq.type          => sendRequest(r)
+        case r: ClearChargingProfileReq     => sendRequest(r)
+        case r: GetConfigurationReq         => sendRequest(r)
+        case r: GetCompositeScheduleReq     => sendRequest(r)
+        case r: GetDiagnosticsReq           => sendRequest(r)
+        case r: GetLocalListVersionReq.type => sendRequest(r)
+        case r: RemoteStartTransactionReq   => sendRequest(r)
+        case r: RemoteStopTransactionReq    => sendRequest(r)
+        case r: ReserveNowReq               => sendRequest(r)
+        case r: ResetReq                    => sendRequest(r)
+        case r: SendLocalListReq            => sendRequest(r)
+        case r: SetChargingProfileReq       => sendRequest(r)
+        case r: TriggerMessageReq           => sendRequest(r)
+        case r: UnlockConnectorReq          => sendRequest(r)
+        case r: UpdateFirmwareReq           => sendRequest(r)
+      }
 
     type V = Ver
   }
