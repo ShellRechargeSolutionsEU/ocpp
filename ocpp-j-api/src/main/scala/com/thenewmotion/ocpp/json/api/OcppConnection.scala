@@ -204,11 +204,12 @@ trait DefaultOcppConnectionComponent[
 
       val actionName = jsonOperation.action.name
 
-      // TODO make sure a failure to serialize (e.g. version incompatibility)
-      // will lead to failed future for request sender, not in an exception
-      // thrown directly at him
-      srpcConnection.send(RequestMessage(callId, actionName, jsonOperation.serializeReq(req)))
-      responsePromise.future
+      Try (srpcConnection.send(
+        RequestMessage(callId, actionName, jsonOperation.serializeReq(req))
+      )) match {
+        case Success(()) => responsePromise.future
+        case Failure(e)  => Future.failed(e)
+      }
     }
   }
 

@@ -83,7 +83,6 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
           case ErrorResponseMessage(callId, errorCode, description, details) =>
             (callId, errorCode) mustEqual (srpcTriggerMessageReq.callId -> PayloadErrorCode.NotSupported)
         }
-
       }
     }
 
@@ -100,7 +99,7 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
         Await.result(futureResponse, FiniteDuration(1, "second")) must beAnInstanceOf[HeartbeatRes]
       }
 
-      "returning an error to the caller when a request is responded to with an error message" in new TestScope {
+      "returning a failed future when a request is responded to with an error message" in new TestScope {
         val futureResponse = chargePointConnectionV16.ocppConnection.sendRequest(HeartbeatReq)
 
         val callId = awaitFirstSentMessage.asInstanceOf[RequestMessage].callId
@@ -113,7 +112,7 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
         result.asInstanceOf[OcppException].ocppError mustEqual expectedError
       }
 
-      "returnning an error to the caller when tries to send a request for the wrong verson of OCPP" in new TestScope {
+      "returning a failed future when a request is sent for the wrong verson of OCPP" in new TestScope {
         val v16Message = TriggerMessageReq(MessageTriggerWithoutScope.Heartbeat)
 
         val futureResponse = centralSystemConnectionV15.ocppConnection.sendRequest(v16Message)
@@ -122,6 +121,14 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
           case err: OcppException =>
             err.ocppError.error mustEqual PayloadErrorCode.NotSupported
         }
+      }
+
+      "returning a failed future when the request cannot be sent" in new TestScope {
+        val futureResponse =
+          failingChargePointConnection.ocppConnection.sendRequest(HeartbeatReq)
+
+        val result = Await.result(futureResponse.failed, 1.second)
+        result must beAnInstanceOf[Exception]
       }
 
       "calling error handler if an OCPP error comes in for no particular request" in new TestScope {
@@ -203,33 +210,50 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
     val sentSrpcMessagePromise = Promise[TransportMessage]()
     val sentSrpcMessage: Future[TransportMessage] = sentSrpcMessagePromise.future
 
-    def awaitFirstSentMessage: TransportMessage = Await.result(sentSrpcMessage, FiniteDuration(1, "second"))
+    def awaitFirstSentMessage: TransportMessage = Await.result(sentSrpcMessage, 1.second)
 
-    def chargePointConnection(version: Version) = new ChargePointOcppConnectionComponent with SrpcComponent {
+    sealed trait SrpcMockType
+    case object Failing extends SrpcMockType
+    case object FillingFuture extends SrpcMockType
 
-      implicit val executionContext: ExecutionContext = global
+    def chargePointConnection(version: Version, srpcConn: SrpcMockType) =
+      new ChargePointOcppConnectionComponent with SrpcComponent {
 
-      val srpcConnection = new SrpcConnection {
-        def send(msg: TransportMessage) = {
-          sentSrpcMessagePromise.success(msg)
-          ()
+        implicit val executionContext: ExecutionContext = global
+
+        val futureFillingSrpcConnection = new SrpcConnection {
+          def send(msg: TransportMessage): Unit = {
+            sentSrpcMessagePromise.success(msg)
+            ()
+          }
         }
+
+        val failingSrpcConnection = new SrpcConnection {
+          def send(msg: TransportMessage): Unit =
+            throw new Exception("no way!")
+        }
+
+        val srpcConnection = srpcConn match {
+          case FillingFuture => futureFillingSrpcConnection
+          case Failing       => failingSrpcConnection
+        }
+
+        val ocppConnection = defaultChargePointOcppConnection(version)
+
+        def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](
+          request: REQ
+        )(
+          implicit reqRes: ChargePointReqRes[REQ, RES]
+        ): Future[RES] = Future { TestScope.this.onRequest(request).asInstanceOf[RES] }
+
+        def onOcppError(err: OcppError) = TestScope.this.onError(err)
+
+        def requestedVersions: List[Version] = List(version)
       }
-      val ocppConnection = defaultChargePointOcppConnection(version)
 
-      def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](
-        request: REQ
-      )(
-        implicit reqRes: ChargePointReqRes[REQ, RES]
-      ): Future[RES] = Future { TestScope.this.onRequest(request).asInstanceOf[RES] }
-
-      def onOcppError(err: OcppError) = TestScope.this.onError(err)
-
-      def requestedVersions: List[Version] = List(version)
-    }
-
-    val chargePointConnectionV15 = chargePointConnection(Version.V15)
-    val chargePointConnectionV16 = chargePointConnection(Version.V16)
+    val chargePointConnectionV15 = chargePointConnection(Version.V15, FillingFuture)
+    val chargePointConnectionV16 = chargePointConnection(Version.V16, FillingFuture)
+    val failingChargePointConnection = chargePointConnection(Version.V16, Failing)
 
     val centralSystemConnectionV15 = new CentralSystemOcppConnectionComponent with SrpcComponent {
 
