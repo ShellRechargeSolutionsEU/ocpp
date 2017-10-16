@@ -10,15 +10,15 @@ object MessageGenerators {
 
   def bootNotificationReq: Gen[BootNotificationReq] =
     for {
-      chargePointVendor <- alphaNumStr
-      chargePointModel <- words
-      chargePointSerialNumber <- option(alphaNumStr)
-      chargeBoxSerialNumber <- option(alphaNumStr)
-      firmwareVersion <- option(alphaNumStr)
-      iccid <- option(numStr)
-      imsi <- option(numStr)
-      meterType <- option(alphaNumStr)
-      meterSerialNumber <- option(alphaNumStr)
+      chargePointVendor <- Gen.resize(20, alphaNumStr)
+      chargePointModel <- Gen.resize(20, words)
+      chargePointSerialNumber <- option(Gen.resize(25, alphaNumStr))
+      chargeBoxSerialNumber <- option(Gen.resize(25, alphaNumStr))
+      firmwareVersion <- option(Gen.resize(50, alphaNumStr))
+      iccid <- option(Gen.resize(20, numStr))
+      imsi <- option(Gen.resize(20, numStr))
+      meterType <- option(Gen.resize(25, alphaNumStr))
+      meterSerialNumber <- option(Gen.resize(25, alphaNumStr))
     } yield BootNotificationReq(
       chargePointVendor,
       chargePointModel,
@@ -60,6 +60,7 @@ object MessageGenerators {
         reservationId
       )
     }
+  def startTransactionRes: Gen[StartTransactionRes] = ???
 
   def stopTransactionReq: Gen[StopTransactionReq] =
     for {
@@ -79,6 +80,8 @@ object MessageGenerators {
         transactionData
       )
     }
+
+  def stopTransactionRes: Gen[StopTransactionRes] = ???
 
   def unlockConnectorReq: Gen[UnlockConnectorReq] =
     connectorIdGen.map(UnlockConnectorReq)
@@ -110,13 +113,13 @@ object MessageGenerators {
       else
         const("NoError")
       info <- if (status == "Faulted")
-        option(words)
+        option(Gen.resize(50, words))
       else
         const(None)
       timestamp <- option(dateTimeGen)
-      vendorId <- option(alphaNumStr)
+      vendorId <- option(Gen.resize(255, alphaNumStr))
       vendorErrorCode <- if (status == "Faulted")
-        option(alphaNumStr)
+        option(Gen.resize(50, alphaNumStr))
       else
         const(None)
     } yield StatusNotificationReq(connectorId, status, errorCode, info, timestamp, vendorId, vendorErrorCode)
@@ -190,8 +193,8 @@ object MessageGenerators {
 
   def changeConfigurationReq: Gen[ChangeConfigurationReq] =
     for {
-      key <- alphaNumStr
-      value <- words
+      key <- Gen.resize(50, alphaNumStr)
+      value <- Gen.resize(500, words)
     } yield ChangeConfigurationReq(key, value)
 
   def changeConfigurationRes: Gen[ChangeConfigurationRes] =
@@ -204,13 +207,13 @@ object MessageGenerators {
 
   def getConfigurationReq: Gen[GetConfigurationReq] =
     for {
-      keys <- optionalNonEmptyList(alphaNumStr)
+      keys <- optionalNonEmptyList(Gen.resize(50, alphaNumStr))
     } yield GetConfigurationReq(keys)
 
   def getConfigurationRes: Gen[GetConfigurationRes] =
     for {
       entries <- optionalNonEmptyList(configurationEntryGen)
-      unknownKeys <- optionalNonEmptyList(alphaNumStr)
+      unknownKeys <- optionalNonEmptyList(Gen.resize(50,alphaNumStr))
     } yield GetConfigurationRes(entries, unknownKeys)
 
   def getLocalListVersionReq: Gen[GetLocalListVersionReq] = const(GetLocalListVersionReq())

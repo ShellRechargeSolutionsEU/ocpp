@@ -317,7 +317,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
       import meter.{ValueFormat => ocpp}
       x match {
         case Raw => ocpp.Raw
-        case SignedData => ocpp.Signed
+        case SignedData => ocpp.SignedData
       }
     }
 
