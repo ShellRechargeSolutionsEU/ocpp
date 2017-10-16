@@ -2,7 +2,9 @@ package com.thenewmotion.ocpp
 package json.v16
 package scalacheck
 
-import org.scalacheck.Gen, Gen._
+import org.scalacheck.Gen
+import Gen._
+import com.thenewmotion.ocpp.json.v16.scalacheck.Helpers.idTagInfoGen
 
 object MessageGenerators {
 
@@ -60,7 +62,13 @@ object MessageGenerators {
         reservationId
       )
     }
-  def startTransactionRes: Gen[StartTransactionRes] = ???
+  def startTransactionRes: Gen[StartTransactionRes] =
+    for {
+      transactionId <- transactionIdGen
+      idTagInfo <- idTagInfoGen
+    } yield {
+      StartTransactionRes(transactionId, idTagInfo)
+    }
 
   def stopTransactionReq: Gen[StopTransactionReq] =
     for {
@@ -81,7 +89,14 @@ object MessageGenerators {
       )
     }
 
-  def stopTransactionRes: Gen[StopTransactionRes] = ???
+  def stopTransactionRes: Gen[StopTransactionRes] =
+    for {
+      idTagInfo <- option(idTagInfoGen)
+    } yield {
+      StopTransactionRes(
+        idTagInfo
+      )
+    }
 
   def unlockConnectorReq: Gen[UnlockConnectorReq] =
     connectorIdGen.map(UnlockConnectorReq)
