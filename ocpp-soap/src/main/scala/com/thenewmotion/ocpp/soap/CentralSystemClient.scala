@@ -342,7 +342,7 @@ class CentralSystemClientV15(val chargeBoxIdentity: String, uri: Uri, http: Http
       import messages.meter.{ValueFormat => ocpp}
       x match {
         case ocpp.Raw => Raw
-        case ocpp.Signed => SignedData
+        case ocpp.SignedData => SignedData
       }
     }
 

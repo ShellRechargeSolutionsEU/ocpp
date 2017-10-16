@@ -5,6 +5,7 @@ val specs2V = "3.9.1"
 val slf4jV = "1.7.12"
 
 val json4sNative = "org.json4s" %% "json4s-native" % json4sV
+val json4sjackson = "org.json4s" %% "json4s-jackson" % json4sV
 val javaWebSocket = "org.java-websocket" % "Java-WebSocket" % "1.3.0"
 val slf4jApi = "org.slf4j" % "slf4j-api" % slf4jV
 val slf4jSimpleLogger = "org.slf4j" % "slf4j-simple" % slf4jV
@@ -21,6 +22,7 @@ val commonsCodec = "commons-codec" % "commons-codec" % "1.10"
 val enumUtils = "com.thenewmotion" %% "enum-utils" % "0.2.1"
 val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
 val specs2ScalaCheck = "org.specs2" %% "specs2-scalacheck" % specs2V % "test"
+val jsonSchemaValidator = "com.github.java-json-tools" % "json-schema-validator" % "2.2.8" % "test"
 
 def module(name: String) = Project(name, file(name))
   .enablePlugins(OssLibPlugin)
@@ -59,7 +61,7 @@ val json = module("ocpp-json")
   .dependsOn(messages)
   .settings(
     libraryDependencies ++= Seq(
-      json4sNative, slf4jApi, scalaCheck, specs2ScalaCheck
+      json4sNative, slf4jApi, scalaCheck, specs2ScalaCheck, jsonSchemaValidator, json4sjackson
     )
   )
 

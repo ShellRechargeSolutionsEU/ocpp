@@ -89,9 +89,9 @@ object Measurand extends EnumerableWithDefault[Measurand] {
 sealed trait ValueFormat extends Nameable
 object ValueFormat extends EnumerableWithDefault[ValueFormat] {
   case object Raw extends ValueFormat
-  case object Signed extends ValueFormat
+  case object SignedData extends ValueFormat
 
-  val values = Set(Raw, Signed)
+  val values = Set(Raw, SignedData)
 
   val default = Raw
 }

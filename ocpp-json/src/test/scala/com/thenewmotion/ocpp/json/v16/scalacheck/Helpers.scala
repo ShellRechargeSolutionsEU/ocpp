@@ -16,7 +16,7 @@ object Helpers {
 
   def connectorIdGen: Gen[Int] = chooseNum(1, 4)
   def connectorIdIncludingChargePointGen: Gen[Int] = chooseNum(0, 4)
-  def idTagGen: Gen[String] = alphaNumStr.filter(_.nonEmpty)
+  def idTagGen: Gen[String] = Gen.resize(20, alphaNumStr.filter(_.nonEmpty))
 
   def idTagInfoGen: Gen[IdTagInfo] =
     for {
@@ -108,9 +108,9 @@ object Helpers {
 
   def configurationEntryGen: Gen[ConfigurationEntry] =
     for {
-      key <- alphaNumStr
+      key <- Gen.resize(50,alphaNumStr)
       readOnly <- oneOf(true, false)
-      value <- option(words)
+      value <- option(Gen.resize(500, words))
     } yield ConfigurationEntry(key, readOnly, value)
 
   def enumerableGen[T <: Nameable](e: Enumerable[T]): Gen[T]  =
