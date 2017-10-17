@@ -29,7 +29,7 @@ object JsonClientTestApp extends App {
    * Then, we create an OcppJsonClient with those settings. And in there, we
    * also override some methods to handle events about the connection.
    */
-  val connection = new OcppJsonClient(chargerId, new URI(centralSystemUri), version) {
+  val connection = new OcppJsonClient(chargerId, new URI(centralSystemUri), List(version)) {
 
     /*
      * Here we define how we handle OCPP requests from the Central System to us.
