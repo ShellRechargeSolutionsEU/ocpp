@@ -20,13 +20,14 @@ import javax.net.ssl.SSLContext
  * @param chargerId The charge point identity of the charge point for which you
  *                  want to set up a connection
  * @param centralSystemUri The endpoint URI of the Central System to connect to.
- * @param version The OCPP version to use (either Version.V15 or Version.V16)
+ * @param versions A list of requested OCPP versions in order of preference e.g:
+ * List(Version.V16, Version.V15)
  * @param authPassword The Basic Auth password to use, hex-encoded
  */
 abstract class OcppJsonClient(
   chargerId: String,
   centralSystemUri: URI,
-  version: Version,
+  versions: List[Version],
   authPassword: Option[String] = None
 )(implicit sslContext: SSLContext = SSLContext.getDefault)
   extends CakeBasedChargePointEndpoint {
@@ -40,17 +41,19 @@ abstract class OcppJsonClient(
       with DefaultSrpcComponent
       with SimpleClientWebSocketComponent {
 
-    // TODO this should give us back a negotiated WebSocket subprotocol later on,
-    // which we then use to determine the negotiated OCPP version to initialize the ChargePointOcppConnection
+    def requestedVersions: List[Version] = versions
     val webSocketConnection = new SimpleClientWebSocketConnection(
       chargerId,
       centralSystemUri,
       authPassword
     )
 
-    val srpcConnection = new DefaultSrpcConnection
-    val ocppConnection = defaultChargePointOcppConnection(version)
+    val ocppConnection = defaultChargePointOcppConnection(
+      webSocketConnection.negotiatedVersion.getOrElse {
+        throw new RuntimeException(s"Server does not support requested versions: $versions")
+      }
+    )
 
-    def requestedVersions: List[Version] = List(version)
+    val srpcConnection = new DefaultSrpcConnection
   }
 }

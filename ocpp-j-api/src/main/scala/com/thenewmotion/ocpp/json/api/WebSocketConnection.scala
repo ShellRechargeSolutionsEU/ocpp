@@ -1,4 +1,5 @@
-package com.thenewmotion.ocpp.json.api
+package com.thenewmotion.ocpp
+package json.api
 
 import org.java_websocket.drafts.Draft_17
 import org.java_websocket.handshake.ServerHandshake
@@ -82,10 +83,14 @@ class DummyWebSocketComponent extends WebSocketComponent {
 
 trait SimpleClientWebSocketComponent extends WebSocketComponent {
 
+  import scala.concurrent.duration.FiniteDuration
+  import scala.concurrent.duration.DurationInt
+
   class SimpleClientWebSocketConnection(
     chargerId: String,
     uri: URI,
-    authPassword: Option[String]
+    authPassword: Option[String],
+    openTimeout: FiniteDuration = 10.seconds
   )(implicit sslContext: SSLContext = SSLContext.getDefault) extends WebSocketConnection {
 
     private[this] val logger = LoggerFactory.getLogger(SimpleClientWebSocketConnection.this.getClass)
@@ -109,11 +114,28 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
         authHeader
       ).flatten.toMap.asJava
 
-    private val client = new WebSocketClient(actualUri, new Draft_17(), headers, 0) {
+    import scala.concurrent.Promise
+    private val versionPromise = Promise[Option[Version]]()
 
-      override def onOpen(h: ServerHandshake): Unit =
-        //TODO figure out what version the handshake settled on
-        logger.debug("WebSocket connection opened to {}", actualUri)
+    private val client = new WebSocketClient(actualUri, new Draft_17(), headers, 0) {
+      override def onOpen(handShakeData: ServerHandshake): Unit = {
+        import scala.collection.JavaConverters._
+        val rfc2616Separators = "[()<>@,;:\"/\\[\\]?={} \t]+"
+        val subProtoHeaders = Option(handShakeData.iterateHttpFields())
+          .fold[List[String]](List.empty) {
+          _.asScala.filter(_ == "Sec-WebSocket-Protocol").toList
+        }
+
+        val version = subProtoHeaders.flatMap(_.split(rfc2616Separators))
+            .headOption match {
+            case Some("ocpp1.5") => Some(Version.V15)
+            case Some("ocpp1.6") => Some(Version.V16)
+            case _ => None
+          }
+
+        versionPromise.success(version)
+        logger.debug(s"WebSocket connection opened to $actualUri, version $version")
+      }
 
       override def onMessage(msg: String): Unit = {
         native.parseJsonOpt(msg) match {
@@ -156,6 +178,12 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
     }
 
     val connected = connect()
+
+    val negotiatedVersion = scala.concurrent.Await.result(
+      versionPromise.future,
+      openTimeout
+    )
+
     logger.info(s"Created SimpleClientWebSocketConnection, connected = $connected")
   }
 }
