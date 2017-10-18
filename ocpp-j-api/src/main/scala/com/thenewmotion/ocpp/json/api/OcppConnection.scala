@@ -49,6 +49,8 @@ trait OcppConnectionComponent[
     def sendRequestUntyped(req: OUTREQBOUND): Future[INRESBOUND]
   }
 
+  def ocppVersion: Version
+
   def ocppConnection: OcppConnection
 
   def onRequest[REQ <: INREQBOUND, RES <: OUTRESBOUND](req: REQ)(implicit reqRes: INREQRES[REQ, RES]): Future[RES]
@@ -259,7 +261,7 @@ trait ChargePointOcppConnectionComponent
     type V = Ver
   }
 
-  def defaultChargePointOcppConnection(version: Version) = version match {
+  def defaultChargePointOcppConnection = ocppVersion match {
     case Version.V15 => new ChargePointOcppConnection[Version.V15.type]
     case Version.V16 => new ChargePointOcppConnection[Version.V16.type]
   }
@@ -308,7 +310,7 @@ trait CentralSystemOcppConnectionComponent
     type V = Ver
   }
 
-  def defaultCentralSystemOcppConnection(version: Version) = version match {
+  def defaultCentralSystemOcppConnection = ocppVersion match {
     case Version.V15 => new CentralSystemOcppConnection[Version.V15.type]
     case Version.V16 => new CentralSystemOcppConnection[Version.V16.type]
   }
