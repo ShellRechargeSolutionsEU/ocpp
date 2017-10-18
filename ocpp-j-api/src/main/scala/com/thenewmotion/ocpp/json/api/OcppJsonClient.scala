@@ -30,35 +30,36 @@ abstract class OcppJsonClient(
   centralSystemUri: URI,
   versions: List[Version],
   authPassword: Option[String] = None
-)(implicit sslContext: SSLContext = SSLContext.getDefault)
-  extends CakeBasedChargePointEndpoint {
+)(implicit val ec: ExecutionContext,
+  sslContext: SSLContext = SSLContext.getDefault
+) extends CakeBasedChargePointEndpoint {
 
-  protected implicit val ec: ExecutionContext =
-    ExecutionContext.Implicits.global
+  import SimpleWebSocketClient._
+
+  val simpleWebSocketClient = new SimpleWebSocketClient(
+    chargerId,
+    centralSystemUri,
+    authPassword,
+    versions.map(wsSubProtocolForOcppVersion)
+  )
 
   val connection: ConnectionCake = new ConnectionCake
     with ChargePointOcppConnectionComponent
     with DefaultSrpcComponent
     with SimpleClientWebSocketComponent {
 
-    def requestedVersions: List[Version] = versions
-
-    val webSocketConnection = new SimpleClientWebSocketConnection(
-      chargerId,
-      centralSystemUri,
-      authPassword
-    )
+    lazy val webSocketConnection = new SimpleClientWebSocketConnection(simpleWebSocketClient)
 
     val subProtocol = webSocketConnection.subProtocol.getOrElse(
-      throw new RuntimeException(s"Server does not support requested versions: $versions")
+      throw new RuntimeException(s"Server does not support requested versions: ${versions.mkString(",")}")
     )
 
-    val ocppVersion = wsSubProtocolForOcppVersion.map(_.swap).getOrElse(
+    lazy val ocppVersion = ocppVersionForWsSubProtocol.getOrElse(
       subProtocol,
-      throw new RuntimeException(s"Client does not support requested versions: $versions")
+      throw new RuntimeException(s"Client does not support requested versions: ${versions.mkString(",")}")
     )
 
-    val ocppConnection = defaultChargePointOcppConnection
-    val srpcConnection = new DefaultSrpcConnection
+    lazy val ocppConnection = defaultChargePointOcppConnection
+    lazy val srpcConnection = new DefaultSrpcConnection
   }
 }

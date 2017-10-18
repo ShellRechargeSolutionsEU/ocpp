@@ -18,18 +18,18 @@ object JsonClientTestApp extends App {
    */
   private val chargerId = args.headOption.getOrElse("test-charger")
   private val centralSystemUri = if (args.length >= 2) args(1) else "ws://localhost:8080/ocppws"
-  private val version =
+  private val versions =
     if (args.length >= 3)
-      Version.withName(args(2))
-        .getOrElse(sys.error(s"Unrecognized version ${args(3)}"))
+      List(Version.withName(args(2))
+        .getOrElse(sys.error(s"Unrecognized version ${args(3)}")))
     else
-      Version.V16
+      List(Version.V16, Version.V15)
 
   /*
    * Then, we create an OcppJsonClient with those settings. And in there, we
    * also override some methods to handle events about the connection.
    */
-  val ocppJsonClient = new OcppJsonClient(chargerId, new URI(centralSystemUri), List(version)) {
+  val ocppJsonClient = new OcppJsonClient(chargerId, new URI(centralSystemUri), versions) {
 
     /*
      * Here we define how we handle OCPP requests from the Central System to us.
@@ -108,11 +108,12 @@ object JsonClientTestApp extends App {
     /*
      * Also define how we handle connection errors and disconnections.
      */
-    def onError(err: OcppError): Unit =
-      System.out.println(s"OCPP error: ${err.error} ${err.description}")
+    def onError(err: OcppError) = println(s"OCPP error: ${err.error} ${err.description}")
 
-    def onDisconnect(): Unit = System.out.println("WebSocket disconnect")
+    def onDisconnect() = println("WebSocket disconnect")
   }
+
+  println(s"Connected using OCPP version ${ocppJsonClient.connection.ocppVersion}")
 
   /*
    * Now let's send some OCPP requests to that Central System! Just like a real
@@ -141,9 +142,9 @@ object JsonClientTestApp extends App {
 
     _ <- ocppJsonClient.send(AuthorizeReq(idTag = "12345678")).map { res =>
       if (res.idTag.status == AuthorizationStatus.Accepted)
-        System.out.println("12345678 is authorized.")
+        println("12345678 is authorized.")
       else
-        System.out.println("12345678 has been rejected. No power to him!")
+        println("12345678 has been rejected. No power to him!")
     }
   } yield ()
 

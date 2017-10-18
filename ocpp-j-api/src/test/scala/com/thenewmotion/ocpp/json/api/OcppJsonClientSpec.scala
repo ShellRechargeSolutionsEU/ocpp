@@ -7,6 +7,8 @@ import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 
+import scala.concurrent.ExecutionContext.Implicits.global
+
 class OcppJsonClientSpec extends Specification with Mockito {
   "OcppJsonClient" should {
     "negotiate the correct ocpp version" in {
@@ -17,7 +19,7 @@ class OcppJsonClientSpec extends Specification with Mockito {
           def onError(err: OcppError) = println(s"OCPP error: ${err.error} ${err.description}")
           def onDisconnect() = println("WebSocket disconnect")
         }
-        ocppJsonClient.connection.version must beEqualTo(Version.V15)
+        ocppJsonClient.connection.ocppVersion must beEqualTo(Version.V15)
       }
 /*
       "when requesting ocpp1.6" in new TestScope {

@@ -105,7 +105,7 @@ trait CakeBasedOcppEndpoint[
       with SrpcComponent
       with WebSocketComponent =>
 
-    final val version: Version = ocppVersion
+    def ocppVersion: Version
 
     final def sendRequest[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES] =
       ocppConnection.sendRequest(req)
