@@ -3,6 +3,7 @@ package json
 package api
 
 import java.net.URI
+
 import scala.concurrent.ExecutionContext
 import javax.net.ssl.SSLContext
 
@@ -35,25 +36,29 @@ abstract class OcppJsonClient(
   protected implicit val ec: ExecutionContext =
     ExecutionContext.Implicits.global
 
-  val connectionCake: ConnectionCake =
-    new ConnectionCake
-      with ChargePointOcppConnectionComponent
-      with DefaultSrpcComponent
-      with SimpleClientWebSocketComponent {
+  val connection: ConnectionCake = new ConnectionCake
+    with ChargePointOcppConnectionComponent
+    with DefaultSrpcComponent
+    with SimpleClientWebSocketComponent {
 
     def requestedVersions: List[Version] = versions
+
     val webSocketConnection = new SimpleClientWebSocketConnection(
       chargerId,
       centralSystemUri,
       authPassword
     )
 
-    val ocppConnection = defaultChargePointOcppConnection(
-      webSocketConnection.negotiatedVersion.getOrElse {
-        throw new RuntimeException(s"Server does not support requested versions: $versions")
-      }
+    val subProtocol = webSocketConnection.subProtocol.getOrElse(
+      throw new RuntimeException(s"Server does not support requested versions: $versions")
     )
 
+    val ocppVersion = wsSubProtocolForOcppVersion.map(_.swap).getOrElse(
+      subProtocol,
+      throw new RuntimeException(s"Client does not support requested versions: $versions")
+    )
+
+    val ocppConnection = defaultChargePointOcppConnection
     val srpcConnection = new DefaultSrpcConnection
   }
 }

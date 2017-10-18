@@ -238,7 +238,9 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
           case Failing       => failingSrpcConnection
         }
 
-        val ocppConnection = defaultChargePointOcppConnection(version)
+        val ocppVersion = version
+
+        val ocppConnection = defaultChargePointOcppConnection
 
         def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](
           request: REQ
@@ -266,7 +268,9 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
         }
       }
 
-      val ocppConnection = defaultCentralSystemOcppConnection(Version.V15)
+      val ocppVersion = Version.V15
+
+      val ocppConnection = defaultCentralSystemOcppConnection
 
       def onRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](
         request: REQ

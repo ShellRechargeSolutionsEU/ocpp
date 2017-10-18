@@ -1,16 +1,16 @@
 package com.thenewmotion.ocpp
 package json.api
 
+import java.net.URI
+import javax.net.ssl.SSLContext
+
+import org.java_websocket.client.DefaultSSLWebSocketClientFactory
+import org.java_websocket.client.WebSocketClient
 import org.java_websocket.drafts.Draft_17
 import org.java_websocket.handshake.ServerHandshake
 import org.json4s._
 import org.json4s.native.Serialization
 import org.slf4j.LoggerFactory
-import org.java_websocket.client.WebSocketClient
-import java.net.URI
-import javax.net.ssl.SSLContext
-
-import org.java_websocket.client.DefaultSSLWebSocketClientFactory
 
 import scala.collection.JavaConverters._
 
@@ -83,8 +83,10 @@ class DummyWebSocketComponent extends WebSocketComponent {
 
 trait SimpleClientWebSocketComponent extends WebSocketComponent {
 
-  import scala.concurrent.duration.FiniteDuration
+  import scala.concurrent.Await
+  import scala.concurrent.Promise
   import scala.concurrent.duration.DurationInt
+  import scala.concurrent.duration.FiniteDuration
 
   class SimpleClientWebSocketConnection(
     chargerId: String,
@@ -95,46 +97,22 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
 
     private[this] val logger = LoggerFactory.getLogger(SimpleClientWebSocketConnection.this.getClass)
 
+    import SimpleClientWebSocketConnection._
+
     private val actualUri = uriWithChargerId(uri, chargerId)
 
-    private val authHeader: Option[(String, String)] =
-      authPassword.map { password =>
-        def toBytes = s"$chargerId:".toCharArray.map(_.toByte) ++
-          password.sliding(2, 2).map { byteAsHex =>
-            Integer.parseInt(byteAsHex, 16).toByte
-          }
+    private val headers: java.util.Map[String, String] = List(
+      authPassword.map(password => AuthHeader -> s"Basic: ${toBase64String(chargerId, password)}"),
+      noneIfEmpty(requestedSubProtocols).map(protocols => SubProtoHeader -> protocols.mkString(","))
+    ).flatten.toMap.asJava
 
-        import org.apache.commons.codec.binary.Base64.encodeBase64String
-        "Authorization" -> s"Basic: ${encodeBase64String(toBytes)}"
-      }
-
-    private val headers: java.util.Map[String, String] =
-      List(
-        Some("Sec-WebSocket-Protocol" -> requestedSubProtocols.mkString(",")),
-        authHeader
-      ).flatten.toMap.asJava
-
-    import scala.concurrent.Promise
-    private val versionPromise = Promise[Option[Version]]()
+    private val subProtocolPromise = Promise[Option[String]]()
 
     private val client = new WebSocketClient(actualUri, new Draft_17(), headers, 0) {
-      override def onOpen(handShakeData: ServerHandshake): Unit = {
-        import scala.collection.JavaConverters._
-        val rfc2616Separators = "[()<>@,;:\"/\\[\\]?={} \t]+"
-        val subProtoHeaders = Option(handShakeData.iterateHttpFields())
-          .fold[List[String]](List.empty) {
-          _.asScala.filter(_ == "Sec-WebSocket-Protocol").toList
-        }
-
-        val version = subProtoHeaders.flatMap(_.split(rfc2616Separators))
-            .headOption match {
-            case Some("ocpp1.5") => Some(Version.V15)
-            case Some("ocpp1.6") => Some(Version.V16)
-            case _ => None
-          }
-
-        versionPromise.success(version)
-        logger.debug(s"WebSocket connection opened to $actualUri, version $version")
+      override def onOpen(serverHandshake: ServerHandshake): Unit = {
+        val subProtocol = Option(serverHandshake.getFieldValue(SubProtoHeader))
+        subProtocolPromise.success(subProtocol)
+        logger.debug(s"WebSocket connection opened to $actualUri, sub protocol: $subProtocol")
       }
 
       override def onMessage(msg: String): Unit = {
@@ -156,12 +134,6 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
         SimpleClientWebSocketComponent.this.onDisconnect()
     }
 
-    private def uriWithChargerId(base: URI, chargerId: String): URI = {
-      val pathWithChargerId = base.getPath + s"/$chargerId"
-      new URI(base.getScheme, base.getUserInfo, base.getHost, base.getPort, pathWithChargerId, base.getQuery,
-        base.getFragment)
-    }
-
     def send(jval: JValue) = {
       logger.debug("Sending with Java-WebSocket: {}", jval)
       client.send(native.compactJson(native.renderJValue(jval)))
@@ -178,12 +150,37 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
     }
 
     val connected = connect()
-
-    val negotiatedVersion = scala.concurrent.Await.result(
-      versionPromise.future,
-      openTimeout
-    )
-
     logger.info(s"Created SimpleClientWebSocketConnection, connected = $connected")
+
+    val subProtocol = Await.result(subProtocolPromise.future, openTimeout)
+  }
+
+  object SimpleClientWebSocketConnection {
+    final val AuthHeader = "Authorization"
+    final val SubProtoHeader = "Sec-WebSocket-Protocol"
+
+    import org.apache.commons.codec.binary.Base64.encodeBase64String
+
+    private def noneIfEmpty[T](list: List[T]): Option[List[T]] =
+      if (list.isEmpty) None else Some(list)
+
+    private def toBase64String(chargerId: String, password: String) = {
+      def toBytes = s"$chargerId:".toCharArray.map(_.toByte) ++
+        password.sliding(2, 2).map { byteAsHex =>
+          Integer.parseInt(byteAsHex, 16).toByte
+        }
+      encodeBase64String(toBytes)
+    }
+
+    private def uriWithChargerId(base: URI, chargerId: String): URI =
+      new URI(
+        base.getScheme,
+        base.getUserInfo,
+        base.getHost,
+        base.getPort,
+        base.getPath + s"/$chargerId",
+        base.getQuery,
+        base.getFragment
+      )
   }
 }

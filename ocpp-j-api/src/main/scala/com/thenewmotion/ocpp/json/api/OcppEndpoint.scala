@@ -92,18 +92,20 @@ trait CakeBasedOcppEndpoint[
   INREQRES
 ]  {
   def send[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES] =
-    connectionCake.sendRequest(req)
+    connection.sendRequest(req)
 
-  def close(): Unit = connectionCake.close()
+  def close(): Unit = connection.close()
 
   def requestHandler: RequestHandler[INREQ, OUTRES, INREQRES]
 
-  protected val connectionCake: ConnectionCake
+  protected val connection: ConnectionCake
 
   protected trait ConnectionCake {
     self: OcppConnectionComponent[OUTREQ, INRES, OUTREQRES, INREQ, OUTRES, INREQRES]
       with SrpcComponent
       with WebSocketComponent =>
+
+    final val version: Version = ocppVersion
 
     final def sendRequest[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES] =
       ocppConnection.sendRequest(req)

@@ -29,7 +29,7 @@ object JsonClientTestApp extends App {
    * Then, we create an OcppJsonClient with those settings. And in there, we
    * also override some methods to handle events about the connection.
    */
-  val connection = new OcppJsonClient(chargerId, new URI(centralSystemUri), List(version)) {
+  val ocppJsonClient = new OcppJsonClient(chargerId, new URI(centralSystemUri), List(version)) {
 
     /*
      * Here we define how we handle OCPP requests from the Central System to us.
@@ -119,7 +119,7 @@ object JsonClientTestApp extends App {
    * charge point!
    */
   for {
-    _ <- connection.send(BootNotificationReq(
+    _ <- ocppJsonClient.send(BootNotificationReq(
       chargePointVendor = "The New Motion",
       chargePointModel = "Lolo 47.6",
       chargePointSerialNumber = Some("123456"),
@@ -130,16 +130,16 @@ object JsonClientTestApp extends App {
       meterType = None,
       meterSerialNumber = None))
 
-    _ <- connection.send(HeartbeatReq)
+    _ <- ocppJsonClient.send(HeartbeatReq)
 
-    _ <- connection.send(StatusNotificationReq(
+    _ <- ocppJsonClient.send(StatusNotificationReq(
       scope = ChargePointScope,
       status = ChargePointStatus.Unavailable(info = None),
       timestamp = None,
       vendorId = None
     ))
 
-    _ <- connection.send(AuthorizeReq(idTag = "12345678")).map { res =>
+    _ <- ocppJsonClient.send(AuthorizeReq(idTag = "12345678")).map { res =>
       if (res.idTag.status == AuthorizationStatus.Accepted)
         System.out.println("12345678 is authorized.")
       else
@@ -154,7 +154,7 @@ object JsonClientTestApp extends App {
   Thread.sleep(7000)
 
   /* Bye, we're done. */
-  connection.close()
+  ocppJsonClient.close()
 
   System.exit(0)
 }
