@@ -177,11 +177,6 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
         }
       }
     }
-
-    "translate OCPP versions to WebSocket subprotocol identifiers" in new TestScope {
-      chargePointConnectionV15.requestedSubProtocols mustEqual List("ocpp1.5")
-      chargePointConnectionV16.requestedSubProtocols mustEqual List("ocpp1.6")
-    }
   }
 
   private trait TestScope extends Scope {
@@ -249,8 +244,6 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
         ): Future[RES] = Future { TestScope.this.onRequest(request).asInstanceOf[RES] }
 
         def onOcppError(err: OcppError) = TestScope.this.onError(err)
-
-        def requestedVersions: List[Version] = List(version)
       }
 
     val chargePointConnectionV15 = chargePointConnection(Version.V15, FillingFuture)
@@ -279,8 +272,6 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
       ): Future[RES] = Future { TestScope.this.onRequest(request).asInstanceOf[RES] }
 
       def onOcppError(err: OcppError) = TestScope.this.onError(err)
-
-      def requestedVersions: List[Version] = List(Version.V15)
     }
   }
 }

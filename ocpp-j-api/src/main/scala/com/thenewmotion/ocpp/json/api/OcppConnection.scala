@@ -54,15 +54,8 @@ trait OcppConnectionComponent[
   def ocppConnection: OcppConnection
 
   def onRequest[REQ <: INREQBOUND, RES <: OUTRESBOUND](req: REQ)(implicit reqRes: INREQRES[REQ, RES]): Future[RES]
+
   def onOcppError(error: OcppError)
-
-  /** OCPP versions that we support, for use during connection handshake */
-  def requestedVersions: List[Version]
-
-  protected final val wsSubProtocolForOcppVersion = Map[Version, String](
-    Version.V15 -> "ocpp1.5",
-    Version.V16 -> "ocpp1.6"
-  )
 }
 
 // for now, we don't support the 'details' field of OCPP-J error messages
@@ -217,14 +210,11 @@ trait DefaultOcppConnectionComponent[
 
   def ocppConnection: DefaultOcppConnection
 
-
   def onRequest[REQ <: INREQBOUND, RES <: OUTRESBOUND](req: REQ)(implicit reqRes: INREQRES[REQ, RES]): Future[RES]
+
   def onOcppError(error: OcppError): Unit
 
   def onSrpcMessage(msg: TransportMessage) = ocppConnection.onSrpcMessage(msg)
-
-  def requestedSubProtocols: List[String] =
-    requestedVersions.map(wsSubProtocolForOcppVersion)
 }
 
 trait ChargePointOcppConnectionComponent
@@ -264,6 +254,7 @@ trait ChargePointOcppConnectionComponent
   def defaultChargePointOcppConnection = ocppVersion match {
     case Version.V15 => new ChargePointOcppConnection[Version.V15.type]
     case Version.V16 => new ChargePointOcppConnection[Version.V16.type]
+    case _ => throw new RuntimeException(s"OCPP JSON not supported for $ocppVersion")
   }
 }
 
@@ -313,5 +304,6 @@ trait CentralSystemOcppConnectionComponent
   def defaultCentralSystemOcppConnection = ocppVersion match {
     case Version.V15 => new CentralSystemOcppConnection[Version.V15.type]
     case Version.V16 => new CentralSystemOcppConnection[Version.V16.type]
+    case _ => throw new RuntimeException(s"OCPP JSON not supported for $ocppVersion")
   }
 }

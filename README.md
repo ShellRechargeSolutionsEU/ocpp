@@ -377,8 +377,6 @@ when porting older code:
 
 ## TODO
 
- - OCPP 1.5/1.6 version handshaking in the OCPP JSON client
-
  - Building for Scala 2.12. May require dropping the SOAP and/or switching JSON
    libraries.
 

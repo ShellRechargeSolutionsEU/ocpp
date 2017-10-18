@@ -85,7 +85,7 @@ val ocppJApi =
     .dependsOn(messages, json)
     .settings(
       libraryDependencies ++= Seq(
-        javaWebSocket, slf4jApi, commonsCodec, specs2Mock)
+        javaWebSocket, slf4jApi, slf4jSimpleLogger, commonsCodec, specs2Mock)
     )
 
 val exampleJsonClient =

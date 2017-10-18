@@ -2,7 +2,7 @@ package com.thenewmotion.ocpp
 
 import enums.EnumUtils.{Enumerable, Nameable}
 
-trait Version extends Nameable
+sealed trait Version extends Nameable
 
 object Version extends Enumerable[Version] {
   case object V12 extends Version { override def name = "1.2" }
