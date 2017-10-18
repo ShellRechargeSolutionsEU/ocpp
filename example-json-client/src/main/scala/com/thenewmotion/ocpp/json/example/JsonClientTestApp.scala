@@ -20,10 +20,11 @@ object JsonClientTestApp extends App {
   private val centralSystemUri = if (args.length >= 2) args(1) else "ws://localhost:8080/ocppws"
   private val versions =
     if (args.length >= 3)
-      List(Version.withName(args(2))
-        .getOrElse(sys.error(s"Unrecognized version ${args(3)}")))
+      args(2).split(",").map { version =>
+        Version.withName(version).getOrElse(sys.error(s"Unrecognized version(s): ${args(2)}"))
+      }.toSeq
     else
-      List(Version.V16, Version.V15)
+      Seq(Version.V16)
 
   /*
    * Then, we create an OcppJsonClient with those settings. And in there, we

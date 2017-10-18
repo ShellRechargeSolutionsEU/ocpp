@@ -2,12 +2,7 @@ package com.thenewmotion.ocpp
 package json.api
 
 import java.net.URI
-import javax.net.ssl.SSLContext
 
-import org.java_websocket.client.DefaultSSLWebSocketClientFactory
-import org.java_websocket.client.WebSocketClient
-import org.java_websocket.drafts.Draft_17
-import org.java_websocket.handshake.ServerHandshake
 import org.json4s._
 import org.json4s.native.Serialization
 import org.slf4j.LoggerFactory
@@ -68,7 +63,7 @@ class DummyWebSocketComponent extends WebSocketComponent {
 
   def onError(e: Throwable) = logger.info(s"DummyWebSocketComponent received error {}", e)
 
-  def onMessage(jval: JValue) = logger.info("DummyWebSocketComponent received message {}", jval)
+  def onMessage(jVal: JValue) = logger.info("DummyWebSocketComponent received message {}", jVal)
 
   def onDisconnect(): Unit = {}
 }
@@ -77,11 +72,15 @@ class SimpleWebSocketClient(
   chargerId: String,
   uri: URI,
   authPassword: Option[String],
-  requestedSubProtocols: List[String]
-)(implicit sslContext: SSLContext = SSLContext.getDefault) {
+  requestedSubProtocols: Seq[String]
+)(implicit sslContext: javax.net.ssl.SSLContext = javax.net.ssl.SSLContext.getDefault) {
   private val logger = LoggerFactory.getLogger(SimpleWebSocketClient.this.getClass)
 
   import SimpleWebSocketClient._
+  import org.java_websocket.client.DefaultSSLWebSocketClientFactory
+  import org.java_websocket.client.WebSocketClient
+  import org.java_websocket.drafts.Draft_17
+  import org.java_websocket.handshake.ServerHandshake
 
   private val actualUri = uriWithChargerId(uri, chargerId)
 
@@ -99,8 +98,8 @@ class SimpleWebSocketClient(
     def onClose(code: Int, reason: String, remote: Boolean) = onWebSocketClose(code, reason, remote)
     def onMessage(message: String) = onWebSocketMessage(message)
     def onOpen(handshakeData: ServerHandshake) = {
-      val subProtocol = Option(handshakeData.getFieldValue(SubProtoHeader))
-      onWebSocketOpen(actualUri, subProtocol)
+      val subProtocol = handshakeData.getFieldValue(SubProtoHeader)
+      onWebSocketOpen(actualUri, noneIfEmpty(subProtocol).map(_.mkString))
     }
     def onError(ex: Exception) = onWebSocketError(ex)
   }
@@ -128,8 +127,8 @@ object SimpleWebSocketClient {
 
   import org.apache.commons.codec.binary.Base64.encodeBase64String
 
-  private def noneIfEmpty[T](list: List[T]): Option[List[T]] =
-    if (list.isEmpty) None else Some(list)
+  private def noneIfEmpty[T](seq: Seq[T]): Option[Seq[T]] =
+    if (seq.isEmpty) None else Some(seq)
 
   private def toBase64String(chargerId: String, password: String) = {
     def toBytes = s"$chargerId:".toCharArray.map(_.toByte) ++
@@ -158,8 +157,9 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
   import scala.concurrent.duration.DurationInt
   import scala.concurrent.duration.FiniteDuration
 
-  class SimpleClientWebSocketConnection(client: SimpleWebSocketClient)(
-    implicit wsOpenTimeout: FiniteDuration = 10.seconds
+  class SimpleClientWebSocketConnection(
+    client: SimpleWebSocketClient,
+    wsOpenTimeout: FiniteDuration = 10.seconds
   ) extends WebSocketConnection {
     private val logger = LoggerFactory.getLogger(SimpleClientWebSocketConnection.this.getClass)
 
@@ -198,7 +198,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
     def close() = client.closeBlocking()
 
     var connected = client.connect() // connect only after setting up the socket event handlers
-    logger.info(s"Created SimpleClientWebSocketConnection, connected = $connected")
+    logger.debug(s"Created SimpleClientWebSocketConnection, connected = $connected")
 
     val subProtocol = if (connected) Await.result(subProtocolPromise.future, wsOpenTimeout) else None
   }

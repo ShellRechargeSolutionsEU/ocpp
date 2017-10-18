@@ -77,12 +77,12 @@ and add this to your dependencies:
 
 An example OCPP-J client application included. You can run it like this:
 
-    sbt "project example-json-client" "run 01234567 ws://localhost:8017/ocppws 1.5"
+    sbt "project example-json-client" "run 01234567 ws://localhost:8017/ocppws 1.5,1.6"
 
 This means: connect to the Central System running at
 `ws://localhost:8017/ocppws`, as a charge point with ID 01234567, using OCPP
-version 1.5. Leave out the "1.5", or type "1.6", to use OCPP version 1.6
-instead.
+version 1.5 and if that is not supported try 1.6 instead. If you don't specify
+a version, 1.6 is used by default.
 
 If you look at the code of the example by clicking [here](example-json-client/src/main/scala/com/thenewmotion/ocpp/json/example/JsonClientTestApp.scala),
 you can see how the client API is used:

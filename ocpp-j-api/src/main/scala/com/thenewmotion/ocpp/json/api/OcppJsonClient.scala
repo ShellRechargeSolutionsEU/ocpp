@@ -22,25 +22,44 @@ import javax.net.ssl.SSLContext
  *                  want to set up a connection
  * @param centralSystemUri The endpoint URI of the Central System to connect to.
  * @param versions A list of requested OCPP versions in order of preference e.g:
- * List(Version.V16, Version.V15)
+ * Seq(Version.V16, Version.V15)
  * @param authPassword The Basic Auth password to use, hex-encoded
  */
+
+object OcppJsonClient {
+  sealed abstract class VersionException(msg: String, versions: Iterable[Version])
+    extends RuntimeException(msg + versions.mkString(","))
+  case class VersionMismatch(msg: String, requestedVersions: Iterable[Version])
+    extends VersionException(msg, requestedVersions)
+  case class VersionNotSupported(msg: String, supportedVersions: Iterable[Version])
+    extends VersionException(msg, supportedVersions)
+}
+
 abstract class OcppJsonClient(
   chargerId: String,
   centralSystemUri: URI,
-  versions: List[Version],
+  versions: Seq[Version],
   authPassword: Option[String] = None
 )(implicit val ec: ExecutionContext,
   sslContext: SSLContext = SSLContext.getDefault
 ) extends CakeBasedChargePointEndpoint {
 
+  import OcppJsonClient._
   import SimpleWebSocketClient._
 
   val simpleWebSocketClient = new SimpleWebSocketClient(
     chargerId,
     centralSystemUri,
     authPassword,
-    versions.map(wsSubProtocolForOcppVersion)
+    requestedSubProtocols = versions.map { version =>
+      wsSubProtocolForOcppVersion.getOrElse(
+        version,
+        throw VersionNotSupported(
+          "JSON client only supports versions: ",
+          supportedVersions = ocppVersionForWsSubProtocol.values
+        )
+      )
+    }
   )
 
   val connection: ConnectionCake = new ConnectionCake
@@ -51,12 +70,15 @@ abstract class OcppJsonClient(
     lazy val webSocketConnection = new SimpleClientWebSocketConnection(simpleWebSocketClient)
 
     val subProtocol = webSocketConnection.subProtocol.getOrElse(
-      throw new RuntimeException(s"Server does not support requested versions: ${versions.mkString(",")}")
+      throw VersionMismatch(
+        "Could not negotiate a common version for: ",
+        requestedVersions = versions
+      )
     )
 
     lazy val ocppVersion = ocppVersionForWsSubProtocol.getOrElse(
       subProtocol,
-      throw new RuntimeException(s"Client does not support requested versions: ${versions.mkString(",")}")
+      throw new RuntimeException(s"Unknown protocol $subProtocol returned by the server")
     )
 
     lazy val ocppConnection = defaultChargePointOcppConnection

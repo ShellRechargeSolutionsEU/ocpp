@@ -84,7 +84,7 @@ object JsonSchemaValidationSpec extends Specification with ScalaCheck {
 
     val className = classTag[T].runtimeClass.getSimpleName
 
-    s"result in succesfull validation of $className" in {
+    s"result in successful validation of $className" in {
       forAll(messageGen) { msg =>
         val json:JsonNode = asJsonNode(ser.serialize(ser.from(msg.asInstanceOf[ser.VersionSpecific])))
         val validationReport = validator.validate(jsonSchema, json)
