@@ -10,14 +10,14 @@ import scala.concurrent.{Future, ExecutionContext}
  * @tparam REQ
  * @tparam RES
  */
-trait ReqRes[REQ <: Req, RES <: Res]
+sealed trait ReqRes[REQ <: Req, RES <: Res]
 
-trait ChargePointReqRes[REQ <: ChargePointReq, RES <: ChargePointRes] extends ReqRes[REQ, RES] {
+sealed trait ChargePointReqRes[REQ <: ChargePointReq, RES <: ChargePointRes] extends ReqRes[REQ, RES] {
   def apply(req: REQ)(implicit service: SyncChargePoint): RES
   def applyAsync(req: REQ)(implicit service: ChargePoint, ec: ExecutionContext): Future[RES]
 }
 
-trait CentralSystemReqRes[REQ <: CentralSystemReq, RES <: CentralSystemRes] extends ReqRes[REQ, RES] {
+sealed trait CentralSystemReqRes[REQ <: CentralSystemReq, RES <: CentralSystemRes] extends ReqRes[REQ, RES] {
   def apply(req: REQ)(implicit service: SyncCentralSystem): RES
   def applyAsync(req: REQ)(implicit service: CentralSystem, ec: ExecutionContext): Future[RES]
 }
