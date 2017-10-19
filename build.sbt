@@ -17,7 +17,6 @@ val specs2 = "org.specs2" %% "specs2-core" % specs2V % "test"
 val specs2Mock = "org.specs2" %% "specs2-mock" % specs2V % "test"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.0.4"
 val scalaParser = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4"
-val commonsCodec = "commons-codec" % "commons-codec" % "1.10"
 val enumUtils = "com.thenewmotion" %% "enum-utils" % "0.2.1"
 val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
 val specs2ScalaCheck = "org.specs2" %% "specs2-scalacheck" % specs2V % "test"
@@ -85,7 +84,7 @@ val ocppJApi =
     .dependsOn(messages, json)
     .settings(
       libraryDependencies ++= Seq(
-        javaWebSocket, slf4jApi, commonsCodec, specs2Mock, mockServer, mockServerNetty)
+        javaWebSocket, slf4jApi, specs2Mock, mockServer, mockServerNetty)
     )
 
 val exampleJsonClient =

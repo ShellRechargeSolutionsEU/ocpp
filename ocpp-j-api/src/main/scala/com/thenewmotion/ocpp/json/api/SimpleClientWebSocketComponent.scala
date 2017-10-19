@@ -99,17 +99,16 @@ object SimpleClientWebSocketComponent {
     Map(Version.V15 -> "ocpp1.5", Version.V16 -> "ocpp1.6")
   final val ocppVersionForWsSubProtocol = wsSubProtocolForOcppVersion.map(_.swap)
 
-  import org.apache.commons.codec.binary.Base64.encodeBase64String
-
   private def noneIfEmpty[T](seq: Seq[T]): Option[Seq[T]] =
     if (seq.isEmpty) None else Some(seq)
 
-  private def toBase64String(chargerId: String, password: String) = {
+  private[api] def toBase64String(chargerId: String, password: String) = {
     def toBytes = s"$chargerId:".toCharArray.map(_.toByte) ++
-      password.sliding(2, 2).map { byteAsHex =>
+      password.grouped(2).map { byteAsHex =>
         Integer.parseInt(byteAsHex, 16).toByte
       }
-    encodeBase64String(toBytes)
+
+    java.util.Base64.getEncoder.encodeToString(toBytes)
   }
 
   private def uriWithChargerId(base: URI, chargerId: String): URI =
