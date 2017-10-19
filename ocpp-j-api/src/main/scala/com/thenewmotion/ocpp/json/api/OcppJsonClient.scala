@@ -25,16 +25,6 @@ import javax.net.ssl.SSLContext
  * Seq(Version.V16, Version.V15)
  * @param authPassword The Basic Auth password to use, hex-encoded
  */
-
-object OcppJsonClient {
-  sealed abstract class VersionException(msg: String, versions: Iterable[Version])
-    extends RuntimeException(msg + versions.mkString(","))
-  case class VersionMismatch(msg: String, requestedVersions: Iterable[Version])
-    extends VersionException(msg, requestedVersions)
-  case class VersionNotSupported(msg: String, supportedVersions: Iterable[Version])
-    extends VersionException(msg, supportedVersions)
-}
-
 abstract class OcppJsonClient(
   chargerId: String,
   centralSystemUri: URI,
@@ -44,30 +34,28 @@ abstract class OcppJsonClient(
   sslContext: SSLContext = SSLContext.getDefault
 ) extends CakeBasedChargePointEndpoint {
 
-  import OcppJsonClient._
-  import SimpleWebSocketClient._
-
-  val simpleWebSocketClient = new SimpleWebSocketClient(
-    chargerId,
-    centralSystemUri,
-    authPassword,
-    requestedSubProtocols = versions.map { version =>
-      wsSubProtocolForOcppVersion.getOrElse(
-        version,
-        throw VersionNotSupported(
-          "JSON client only supports versions: ",
-          supportedVersions = ocppVersionForWsSubProtocol.values
-        )
-      )
-    }
-  )
-
   val connection: ConnectionCake = new ConnectionCake
     with ChargePointOcppConnectionComponent
     with DefaultSrpcComponent
     with SimpleClientWebSocketComponent {
 
-    lazy val webSocketConnection = new SimpleClientWebSocketConnection(simpleWebSocketClient)
+    import OcppJsonClient._
+    import SimpleClientWebSocketComponent._
+
+    lazy val webSocketConnection = new SimpleClientWebSocketConnection(
+      chargerId,
+      centralSystemUri,
+      authPassword,
+      requestedSubProtocols = versions.map { version =>
+        wsSubProtocolForOcppVersion.getOrElse(
+          version,
+          throw VersionNotSupported(
+            "JSON client only supports versions: ",
+            supportedVersions = ocppVersionForWsSubProtocol.values
+          )
+        )
+      }
+    )
 
     val subProtocol = webSocketConnection.subProtocol.getOrElse(
       throw VersionMismatch(
@@ -84,4 +72,13 @@ abstract class OcppJsonClient(
     lazy val ocppConnection = defaultChargePointOcppConnection
     lazy val srpcConnection = new DefaultSrpcConnection
   }
+}
+
+object OcppJsonClient {
+  sealed abstract class VersionException(msg: String, versions: Iterable[Version])
+    extends RuntimeException(msg + versions.mkString(","))
+  case class VersionMismatch(msg: String, requestedVersions: Iterable[Version])
+    extends VersionException(msg, requestedVersions)
+  case class VersionNotSupported(msg: String, supportedVersions: Iterable[Version])
+    extends VersionException(msg, supportedVersions)
 }

@@ -106,7 +106,7 @@ class UpgradeRequestCallBackV15V16 extends UpgradeRequestCallBack {
 }
 trait UpgradeRequestCallBack extends ExpectationCallback {
   def ocppVersions: Seq[Version]
-  lazy val subProtocols = ocppVersions.map(SimpleWebSocketClient.wsSubProtocolForOcppVersion)
+  lazy val subProtocols = ocppVersions.map(SimpleClientWebSocketComponent.wsSubProtocolForOcppVersion)
   private val magicGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
   private val rfc2616Separators = "[()<>@,;:\\\\\"/\\[\\]?={} \t]+"
   private val mDigest: MessageDigest = MessageDigest.getInstance("SHA1")
@@ -121,10 +121,10 @@ trait UpgradeRequestCallBack extends ExpectationCallback {
         new Header("Sec-WebSocket-Accept", webSocketAccept)
       )
     } ++ {
-      val requestedProtocols = httpRequest.getFirstHeader(SimpleWebSocketClient.SubProtoHeader)
+      val requestedProtocols = httpRequest.getFirstHeader(SimpleClientWebSocketComponent.SubProtoHeader)
       val subProtocol = requestedProtocols.split(rfc2616Separators).intersect(subProtocols).headOption
       subProtocol.fold(Seq.empty[Header]) { protocol =>
-        Seq(new Header(SimpleWebSocketClient.SubProtoHeader, protocol))
+        Seq(new Header(SimpleClientWebSocketComponent.SubProtoHeader, protocol))
       }
     }
     response().withStatusCode(SWITCHING_PROTOCOLS_101.code()).withHeaders(headers: _*)
