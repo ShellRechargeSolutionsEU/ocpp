@@ -5,7 +5,7 @@ val specs2V = "3.9.1"
 val slf4jV = "1.7.25"
 
 val json4sNative = "org.json4s" %% "json4s-native" % json4sV
-val javaWebSocket = "org.java-websocket" % "Java-WebSocket" % "1.3.0"
+val javaWebSocket = "org.java-websocket" % "Java-WebSocket" % "1.3.5"
 val slf4jApi = "org.slf4j" % "slf4j-api" % slf4jV
 val slf4jSimple = "org.slf4j" % "slf4j-simple" % slf4jV
 val dispatch = "net.databinder.dispatch" %% "dispatch-core" % dispatchV
