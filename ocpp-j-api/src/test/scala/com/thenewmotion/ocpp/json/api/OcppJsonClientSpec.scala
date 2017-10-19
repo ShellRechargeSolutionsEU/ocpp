@@ -49,7 +49,6 @@ class OcppJsonClientSpec extends Specification {
   }
 
   private class TestScope extends Scope with BeforeAfter {
-
     import org.mockserver.integration.ClientAndServer
 
     var server: ClientAndServer = _
@@ -93,6 +92,7 @@ import java.security.MessageDigest
 import java.util.Base64
 
 import org.mockserver.mock.action.ExpectationCallback
+import org.mockserver.model.ConnectionOptions
 import org.mockserver.model.Header
 import org.mockserver.model.HttpRequest
 import org.mockserver.model.HttpResponse.response
@@ -127,6 +127,13 @@ trait UpgradeRequestCallBack extends ExpectationCallback {
         Seq(new Header(SimpleClientWebSocketComponent.SubProtoHeader, protocol))
       }
     }
-    response().withStatusCode(SWITCHING_PROTOCOLS_101.code()).withHeaders(headers: _*)
+    response()
+      .withStatusCode(SWITCHING_PROTOCOLS_101.code())
+      .withHeaders(headers: _*)
+      .withConnectionOptions(
+        new ConnectionOptions()
+          .withSuppressConnectionHeader(true)
+          .withSuppressContentLengthHeader(true)
+      )
   }
 }

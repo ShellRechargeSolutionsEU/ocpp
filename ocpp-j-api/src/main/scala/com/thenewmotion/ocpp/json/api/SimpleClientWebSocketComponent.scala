@@ -34,19 +34,17 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
       noneIfEmpty(requestedSubProtocols).map(protocols => SubProtoHeader -> protocols.mkString(","))
     ).flatten.toMap.asJava
 
-    import org.java_websocket.client.DefaultSSLWebSocketClientFactory
     import org.java_websocket.client.WebSocketClient
-    import org.java_websocket.drafts.Draft_17
+    import org.java_websocket.drafts.Draft_6455
     import org.java_websocket.handshake.ServerHandshake
 
     private val subProtocolPromise = Promise[Option[String]]()
 
-    protected val client = new WebSocketClient(actualUri, new Draft_17(), headers, 0) {
+    protected val client = new WebSocketClient(actualUri, new Draft_6455(), headers, 0) {
       def onOpen(handshakeData: ServerHandshake) = {
         val subProtocol = noneIfEmpty(handshakeData.getFieldValue(SubProtoHeader)).map(_.mkString)
         subProtocolPromise.success(subProtocol)
         logger.debug(s"WebSocket connection opened to $actualUri, sub protocol: $subProtocol")
-
       }
 
       def onMessage(message: String) = {
@@ -80,7 +78,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
       logger.debug(s"Connecting using uri: $actualUri")
       if (uri.getScheme == "wss") {
         logger.debug(s"Using SSLContext protocol: ${sslContext.getProtocol}")
-        client.setWebSocketFactory(new DefaultSSLWebSocketClientFactory(sslContext))
+        client.setSocket(sslContext.getSocketFactory.createSocket)
       }
       client.connectBlocking()
     }
