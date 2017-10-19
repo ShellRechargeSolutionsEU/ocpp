@@ -7,7 +7,7 @@ val slf4jV = "1.7.25"
 val json4sNative = "org.json4s" %% "json4s-native" % json4sV
 val javaWebSocket = "org.java-websocket" % "Java-WebSocket" % "1.3.0"
 val slf4jApi = "org.slf4j" % "slf4j-api" % slf4jV
-val logback = "ch.qos.logback" % "logback-classic" % "1.2.3"
+val slf4jSimple = "org.slf4j" % "slf4j-simple" % slf4jV
 val dispatch = "net.databinder.dispatch" %% "dispatch-core" % dispatchV
 val scalax = "com.github.t3hnar" %% "scalax" % "3.0"
 val sprayHttp = "io.spray" %% "spray-http" % sprayV
@@ -85,13 +85,14 @@ val ocppJApi =
     .dependsOn(messages, json)
     .settings(
       libraryDependencies ++= Seq(
-        javaWebSocket, slf4jApi, logback, commonsCodec, specs2Mock, mockServer, mockServerNetty)
+        javaWebSocket, slf4jApi, commonsCodec, specs2Mock, mockServer, mockServerNetty)
     )
 
 val exampleJsonClient =
   module("example-json-client")
   .dependsOn(json, ocppJApi)
   .settings(
+    libraryDependencies += slf4jSimple,
     outputStrategy in run := Some(StdoutOutput),
     coverageExcludedPackages := ".*",
     publish := {}
