@@ -451,6 +451,8 @@ object SerializationV15 extends SerializationCommon {
         val errorCodeString =
           if (errorCode == defaultErrorCode)
             None
+          else if (errorCode == "Mode3Error") // this got renamed in ocpp 1.6 and as we match on the protocol agnostic messages a translation needs to be made
+            Some(enumerableFromJsonString(messages.ChargePointErrorCode, "EVCommunicationError"))
           else
             Some(enumerableFromJsonString(messages.ChargePointErrorCode, errorCode))
         ChargePointStatus.Faulted(errorCodeString, info, vendorErrorCode)
