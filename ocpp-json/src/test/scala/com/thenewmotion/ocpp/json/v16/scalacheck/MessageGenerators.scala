@@ -189,7 +189,7 @@ object MessageGenerators {
     } yield GetDiagnosticsReq(location, startTime, stopTime, retries, retryInterval)
 
   def getDiagnosticsRes: Gen[GetDiagnosticsRes] =
-    option(alphaNumStr).map(GetDiagnosticsRes)
+    option(Gen.resize(255, alphaNumStr)).map(GetDiagnosticsRes)
 
   def diagnosticsStatusNotificationReq: Gen[DiagnosticsStatusNotificationReq] =
     enumerableNameGen(messages.DiagnosticsStatus).map(DiagnosticsStatusNotificationReq)
