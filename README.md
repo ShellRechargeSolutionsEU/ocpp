@@ -381,7 +381,7 @@ when porting older code:
    libraries.
 
  - Explaining how to build a server endpoint interface under "roll your own
-   ednpoint" above
+   endpoint" above
 
 ## Acknowledgements
 
