@@ -6,48 +6,61 @@ import scala.concurrent.{Future, ExecutionContext}
 import messages._
 
 /**
- * Generic interface of an OCPP connection endpoint as it appears to the
+ * Generic interface of an outgoing OCPP connection endpoint as it appears to the
  * library user:
  *
  *  * The send method should be called to send outgoing requests
  *  * The close method should be called to close the connection
- *  * onRequest should be overridden to handle incoming requests
- *  * onDisconnect should be overridden to handle a disconnection
- *  * onError should be overridden to handle OCPP errors sent by the other
- *    party
  *
  * @tparam OUTREQ The type of outgoing requests (either ChargePointReq or CentralSystemReq)
  * @tparam INRES The type of incoming responses (either ChargePointRes or CentralSystemRes)
  * @tparam OUTREQRES Typeclass relating outgoing request types to incoming response types
- * @tparam INREQ The type of incoming requests (either CentralSystemReq or ChargePointReq)
- * @tparam OUTRES The type of outgoing responses (either CentralSystemRes or ChargePointRes)
- * @tparam INREQRES Typeclass relating incoming request types to outgoing response types
  */
-trait OcppEndpoint[
+trait OutgoingOcppEndpoint[
   OUTREQ <: Req,
   INRES <: Res,
-  OUTREQRES[_ <: OUTREQ, _ <: INRES] <: ReqRes[_, _],
+  OUTREQRES[_ <: OUTREQ, _ <: INRES] <: ReqRes[_, _]
+] {
+
+  /**
+    * Send a request to the party at the other side of this connection
+    *
+    * @param req    The request to send
+    * @param reqRes Evidence of the request-response relationship of the REQ and RES types
+    * @tparam REQ The type of request (e.g. BootNotificationReq, ResetReq, ...)
+    * @tparam RES The type of response (e.g. BootNotificationRes, ResetRes, ...)
+    * @return A future that will be completed with the response from the other
+    *         side. If the other side fails to respond, the future will be failed.
+    */
+  def send[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES]
+
+  /**
+    * Close the connection
+    *
+    * This method is synchronous: when it returns, the connection has been closed.
+    */
+  def close(): Unit
+}
+
+/**
+ * Generic interface of an incoming OCPP connection endpoint that can be
+ * implemented by the library user to handle incoming OCPP requests.
+ *
+ *  * onRequest should be overridden to handle incoming requests
+ *  * onDisconnect should be overridden to handle a disconnection
+ *  * onError should be overridden to handle OCPP errors sent by the other
+ *    party that do not reference a request we sent before
+ *
+ * @tparam INREQ The type of incoming requests (either ChargePointReq or CentralSystemReq)
+ * @tparam OUTRES The type of outgoing responses (either ChargePointReq or CentralSystemReq)
+ * @tparam INREQRES Typeclass relating incoming request types to incoming response types
+ */
+trait IncomingOcppEndpoint[
   INREQ <: Req,
   OUTRES <: Res,
   INREQRES[_ <: INREQ, _ <: OUTRES] <: ReqRes[_, _]
 ] {
 
-  /**
-   * Send a request to the party at the other side of this connection
-   *
-   * @param req The request to send
-   * @param reqRes Evidence of the request-response relationship of the REQ and RES types
-   * @tparam REQ The type of request (e.g. BootNotificationReq, ResetReq, ...)
-   * @tparam RES The type of response (e.g. BootNotificationRes, ResetRes, ...)
-   * @return A future that will be completed with the response from the other
-   *         side. If the other side fails to respond, the future will be failed.
-   */
-  def send[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES]
-
-  /**
-   * Close the connection
-   */
-  def close(): Unit
 
   /**
    * A handler for incoming requests.
@@ -76,55 +89,66 @@ trait OcppEndpoint[
   def onError(error: OcppError): Unit
 }
 
-trait CakeBasedOcppEndpoint[
-  OUTREQ <: Req,
-  INRES <: Res,
-  OUTREQRES[_ <: OUTREQ, _ <: INRES] <: ReqRes[_, _],
-  INREQ <: Req,
-  OUTRES <: Res,
-  INREQRES[_ <: INREQ, _ <: OUTRES] <: ReqRes[_, _]
-] extends OcppEndpoint[
-  OUTREQ,
-  INRES,
-  OUTREQRES,
-  INREQ,
-  OUTRES,
-  INREQRES
-]  {
-  def send[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES] =
+/**
+  * Library interface for the client (Charge Point) side.
+  *
+  * The library user has to provide:
+  *   * A [[RequestHandler]], probably an instance of
+  *     [[com.thenewmotion.ocpp.messages.ChargePoint]], which will handle
+  *     incoming requests
+  *   * Implementations of onError and onDisconnect to handle these events
+  *
+  * The trait provides the library user with:
+  *   * A send method to send requests to the Central System
+  *   * A close method to close the connection
+  */
+trait CakeBasedOcppClientEndpoint
+  extends OutgoingOcppEndpoint[CentralSystemReq, CentralSystemRes, CentralSystemReqRes]
+  with IncomingOcppEndpoint[ChargePointReq, ChargePointRes, ChargePointReqRes] {
+
+  def send[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(
+    implicit reqRes: CentralSystemReqRes[REQ, RES]
+  ): Future[RES] =
     connection.sendRequest(req)
 
   def close(): Unit = connection.close()
 
-  def requestHandler: RequestHandler[INREQ, OUTRES, INREQRES]
+  def requestHandler: RequestHandler[ChargePointReq, ChargePointRes, ChargePointReqRes]
 
   protected val connection: ConnectionCake
 
   protected trait ConnectionCake {
-    self: OcppConnectionComponent[OUTREQ, INRES, OUTREQRES, INREQ, OUTRES, INREQRES]
-      with SrpcComponent
-      with WebSocketComponent =>
+    self: OcppConnectionComponent[
+      CentralSystemReq,
+      CentralSystemRes,
+      CentralSystemReqRes,
+      ChargePointReq,
+      ChargePointRes,
+      ChargePointReqRes
+    ] with SrpcComponent with WebSocketComponent =>
 
     def ocppVersion: Version
 
-    final def sendRequest[REQ <: OUTREQ, RES <: INRES](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES] =
+    final def sendRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(
+      implicit reqRes: CentralSystemReqRes[REQ, RES]
+    ): Future[RES] =
       ocppConnection.sendRequest(req)
 
     final def close(): Unit = webSocketConnection.close()
 
-    final def onRequest[REQ <: INREQ, RES <: OUTRES](req: REQ)(
-      implicit reqRes: INREQRES[REQ, RES]
+    final def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(
+      implicit reqRes: ChargePointReqRes[REQ, RES]
     ): Future[RES] =
       requestHandler.apply(req)
 
     final def onOcppError(error: OcppError): Unit =
-      CakeBasedOcppEndpoint.this.onError(error)
+      CakeBasedOcppClientEndpoint.this.onError(error)
 
     final def onDisconnect(): Unit =
-      CakeBasedOcppEndpoint.this.onDisconnect()
+      CakeBasedOcppClientEndpoint.this.onDisconnect()
 
     final implicit val executionContext: ExecutionContext =
-      CakeBasedOcppEndpoint.this.ec
+      CakeBasedOcppClientEndpoint.this.ec
   }
 
   protected val ec: ExecutionContext
@@ -134,50 +158,3 @@ trait CakeBasedOcppEndpoint[
   def onError(error: OcppError): Unit
 }
 
-
-/**
- * Library interface for the Charge Point side.
- *
- * The library user has to provide:
- *   * A [[RequestHandler]], probably an instance of
- *     [[com.thenewmotion.ocpp.messages.ChargePoint]], which will handle
- *     incoming requests
- *   * Implementations of onError and onDisconnect to handle these events
- *
- * The trait provides the library user with:
- *   * A send method to send requests to the Central System
- *   * A close method to close the connection
- */
-trait CakeBasedChargePointEndpoint extends CakeBasedOcppEndpoint[
-  CentralSystemReq,
-  CentralSystemRes,
-  CentralSystemReqRes,
-  ChargePointReq,
-  ChargePointRes,
-  ChargePointReqRes
-]
-
-/**
- * Library interface for the Central System side.
- *
- * There will be one instance of CakeBasedCentralSystemEndpoint for each charge
- * point connected to the Central System.
- *
- * The library user has to provide:
- *   * A [[RequestHandler]], probably an instance of
- *     [[com.thenewmotion.ocpp.messages.CentralSystem]], which will
- *     handle incoming requests
- *   * Implementations of onError and onDisconnect to handle these events
- *
- * The trait provides the library user with:
- *   * A send method to send requests to the Charge Point
- *   * A close method to close the connection
- */
-trait CakeBasedCentralSystemEndpoint extends CakeBasedOcppEndpoint[
-  ChargePointReq,
-  ChargePointRes,
-  ChargePointReqRes,
-  CentralSystemReq,
-  CentralSystemRes,
-  CentralSystemReqRes
-]

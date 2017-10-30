@@ -16,7 +16,7 @@ import javax.net.ssl.SSLContext
  *
  * This class is to be used by instantiating your own subclass of it, which
  * should provide a handler for incoming requests, a handler for errors, and a
- * disconnection handler as explained at [[OcppEndpoint]].
+ * disconnection handler as explained at [[IncomingOcppEndpoint]].
  *
  * @param chargerId The charge point identity of the charge point for which you
  *                  want to set up a connection
@@ -32,7 +32,7 @@ abstract class OcppJsonClient(
   authPassword: Option[String] = None
 )(implicit val ec: ExecutionContext,
   sslContext: SSLContext = SSLContext.getDefault
-) extends CakeBasedChargePointEndpoint {
+) extends CakeBasedOcppClientEndpoint {
 
   val connection: ConnectionCake = new ConnectionCake
     with ChargePointOcppConnectionComponent
