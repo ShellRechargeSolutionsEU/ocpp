@@ -1,4 +1,4 @@
-package com.thenewmotion.ocpp.json.api
+package com.thenewmotion.ocpp.json.api.client
 
 import org.specs2.mutable.Specification
 

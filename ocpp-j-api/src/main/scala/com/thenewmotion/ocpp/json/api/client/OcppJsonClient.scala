@@ -1,11 +1,10 @@
 package com.thenewmotion.ocpp
-package json
-package api
+package json.api
+package client
 
 import java.net.URI
-
-import scala.concurrent.ExecutionContext
 import javax.net.ssl.SSLContext
+import scala.concurrent.ExecutionContext
 
 /**
  * An OCPP-J client implemented using Java-WebSocket.

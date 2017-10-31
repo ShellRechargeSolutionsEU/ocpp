@@ -1,19 +1,17 @@
 package com.thenewmotion.ocpp
 package json.api
+package client
 
 import java.net.URI
+import scala.collection.JavaConverters._
 
 import org.json4s._
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConverters._
-
 trait SimpleClientWebSocketComponent extends WebSocketComponent {
 
-  import scala.concurrent.Await
-  import scala.concurrent.Promise
-  import scala.concurrent.duration.DurationInt
-  import scala.concurrent.duration.FiniteDuration
+  import scala.concurrent.{Await, Promise}
+  import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
   class SimpleClientWebSocketConnection(
     chargerId: String,

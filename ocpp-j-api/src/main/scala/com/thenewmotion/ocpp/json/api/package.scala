@@ -11,4 +11,7 @@ package object api {
   type CentralSystemRequestHandler =
     RequestHandler[CentralSystemReq, CentralSystemRes, CentralSystemReqRes]
 
+  type OcppJsonClient = client.OcppJsonClient
+  val OcppJsonClient: client.OcppJsonClient.type = client.OcppJsonClient
+
 }
