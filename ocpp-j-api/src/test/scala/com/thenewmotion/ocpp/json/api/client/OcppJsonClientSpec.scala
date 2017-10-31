@@ -1,10 +1,10 @@
 package com.thenewmotion.ocpp
 package json.api
+package client
 
 import java.net.URI
 
-import org.specs2.mutable.BeforeAfter
-import org.specs2.mutable.Specification
+import org.specs2.mutable.{BeforeAfter, Specification}
 import org.specs2.specification.Scope
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -79,11 +79,11 @@ class OcppJsonClientSpec extends Specification {
     import org.mockserver.model.HttpCallback
 
     val V15 = new HttpCallback().withCallbackClass(
-      "com.thenewmotion.ocpp.json.api.UpgradeRequestCallBackV15"
+      "com.thenewmotion.ocpp.json.api.client.UpgradeRequestCallBackV15"
     )
 
     val V15V16 = new HttpCallback().withCallbackClass(
-      "com.thenewmotion.ocpp.json.api.UpgradeRequestCallBackV15V16"
+      "com.thenewmotion.ocpp.json.api.client.UpgradeRequestCallBackV15V16"
     )
   }
 }
@@ -92,11 +92,9 @@ import java.security.MessageDigest
 import java.util.Base64
 
 import org.mockserver.mock.action.ExpectationCallback
-import org.mockserver.model.ConnectionOptions
-import org.mockserver.model.Header
-import org.mockserver.model.HttpRequest
 import org.mockserver.model.HttpResponse.response
 import org.mockserver.model.HttpStatusCode.SWITCHING_PROTOCOLS_101
+import org.mockserver.model.{ConnectionOptions, Header, HttpRequest}
 
 class UpgradeRequestCallBackV15 extends UpgradeRequestCallBack {
   val ocppVersions = Seq(Version.V15)
