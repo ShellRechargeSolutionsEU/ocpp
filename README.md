@@ -249,8 +249,8 @@ may be intimidating at first. Let's make a version of the above diagram that
 shows the methods defined by each layer:
 
 ```
-      OcppConnectionComponent.ocppConnection.sendRequest (call)      OcppConnectionComponent.onRequest (override)
-      OcppConnectionComponent.requestedVersions (override)           OcppConnectionComponent.onOcppError (override)
+                                                                     OcppConnectionComponent.onRequest (override)
+       OcppConnectionComponent.ocppConnection.sendRequest (call)     OcppConnectionComponent.onOcppError (override)
     +------------------V-----------------------------------------------^--------------------------------------------------+
     |                                                                                                                     |
     |                                    OcppConnectionComponent layer                                                    |
@@ -261,9 +261,9 @@ shows the methods defined by each layer:
     |                                                                                                                     |
     |                                          SrpcComponent layer                                                        |
     |                                                                                                                     |
-    | WebSocketConnectionComponent.webSocketConnection.send (call)   WebSocketConnectionComponent.onMessage (override)    |
-    | WebSocketConnectionComponent.webSocketConnection.close (call)  WebSocketConnectionComponent.onDisconnect (override) |
-    | WebSocketConnectionComponent.requestedSubProtocols (override)  WebSocketConnectionComponent.onError (override)      |
+    |                                                                WebSocketConnectionComponent.onMessage (override)    |
+    | WebSocketConnectionComponent.webSocketConnection.send (call)   WebSocketConnectionComponent.onDisconnect (override) |
+    | WebSocketConnectionComponent.webSocketConnection.close (call)  WebSocketConnectionComponent.onError (override)      |
     +------------------V-----------------------------------------------^--------------------------------------------------+
     |                                                                                                                     |
     |                                       WebSocketComponent layer                                                      |
@@ -279,10 +279,10 @@ from it.
 
 For instance, on top you see that the user of the whole cake can give
 information to the OCPP layer by calling the `ocppConnection.sendRequest`
-method or by overriding the `OcppConnectionComponent.requestedVersions` method.
-And on the lower middle right you see that the SRPC cake layer can get
-information from the WebSocket layer by overriding the `onMessage`,
-`onDisconnect` and `onError` methods of the `WebSocketComponent`.
+method. And on the lower middle right you see that the SRPC cake layer
+can get information from the WebSocket layer by overriding the
+`onMessage`, `onDisconnect` and `onError` methods of the
+`WebSocketComponent`.
 
 There has to be one instance of the whole cake for every open WebSocket
 connection in the system. A server would typically maintain a mapping of
@@ -302,13 +302,176 @@ So now with this background information, the steps to constructing your cake wou
 
       * Do either `new CentralSystemOcppConnectionComponent with DefaultSrpcComponent with MyWebSocketComponent { ... }` or `new ChargePointCentralSystemOcppConnectionComponent with DefaultSrpcComponent with MyWebSocketComponent { ... }`
 
-      * Define in it a `val webSocketConnection`, `val srpcConnection` and `val ocppConnection`. For `ocppConnection`, use one of the `defaultChargePointOcppConnection(version)` and `defaultCentralSystemOcppConnection(version)` methods defined by the DefaultOcppConnectionComponent traits. For `val srpcConnection`, use `new DefaultSrpcConnection`.
+      * Define in it a `val webSocketConnection`, `val srpcConnection` and `val ocppConnection`. For `ocppConnection`, use one of the `defaultChargePointOcppConnection` and `defaultCentralSystemOcppConnection` methods defined by the DefaultOcppConnectionComponent traits. For `val srpcConnection`, use `new DefaultSrpcConnection`.
 
  * Define all the "(override)" methods shown at the top of the cake to connect your app's request and response processing to the OCPP cake
 
  * Make the WebSocket layer call your WebSocket library to send messages over the socket, and make your WebSocket library call the cake for it to receive messages
 
-TODO: create a small server example to show how all this abstract hand-waving looks in practice
+#### Putting this together for a server
+
+Because that bit about the cake pattern is still quite abstract, let's
+look at how we can implement an OCPP server using the cake pattern.
+
+According to the list of steps above, we first have to determine the
+interface that we want or OCPP server component to have.
+
+The interface I am thinking of here is something like this:
+
+```
+abstract class OcppJsonServer(listenPort: Int, ocppVersion: Version) {
+
+ type OutgoingEndpoint = OutgoingOcppEndpoint[ChargePointReq, ChargePointRes, ChargePointReqRes]
+
+ type IncomingEndpoint = IncomingOcppEndpoint[CentralSystemReq, CentralSystemRes, CentralSystemReqRes]
+
+ def connectionHandler: OutgoingEndpoint => IncomingEndpoint
+}
+```
+
+So if someone writes a back-office system using this server component,
+she has to provide three things:
+
+ * the TCP port to listen on, as a constructor argument
+
+ * The OCPP version to use, as a constructor argument (I'm too lazy to worry about version negotiation right now)
+
+ * Her own logic for how to handle and send OCPP messages over the
+   connections to this server. She should specify this as a method
+   `connectionHandler` that gets an endpoint for sending outgoing
+   requests as an argument, and returns to the server component an
+   endpoint for handling incoming requests and close or error events.
+
+So now we have decided on an interface and we move to step two: create
+a trait extending `WebSocketComponent` that uses our WebSocket
+implementation of choice. Here we are using java-websocket, so we'll
+end up using WebSocketServer.
+
+If we look at the WebSocketServer API, we see that it is based on
+instantiating a `WebSocketServer` object with overridden methods to
+handle incoming messages. The interface looks like this:
+
+```java
+public abstract class WebSocketServer extends AbstractWebSocket implements Runnable {
+
+  // These methods are provided by the implementation...
+
+  public WebSocketServer(InetSocketAddress address) { ... }
+
+  public void start() { ... }
+
+  public void stop() { ... }
+
+  // ...and these are to be overridden by the user
+  public abstract void onOpen( WebSocket conn, ClientHandshake handshake );
+
+  public abstract void onClose( WebSocket conn, int code, String reason, boolean remote );
+
+  public abstract void onMessage( WebSocket conn, String message );
+
+  public abstract void onError( WebSocket conn, Exception ex );
+}
+```
+
+So for each connection, `WebSocketServer` creates a `WebSocket` object,
+and then passes that into the callback. We will create our
+`WebSocketComponent` instance so that it calls the `send` method on such
+a `WebSocket` to send outgoing messages. That means a first stab at our
+`WebSocketComponent` looks like this:
+
+```scala
+import org.java_websocket.WebSocket
+import org.json4s.JValue
+import org.json4s.native.JsonMethods.{compact, render}
+
+trait SimpleServerWebSocketComponent extends WebSocketComponent {
+
+  trait SimpleServerWebSocketConnection extends WebSocketConnection {
+
+    def webSocket: WebSocket
+
+    def send(msg: JValue): Unit = webSocket.send(compact(render(msg)))
+
+    def close(): Unit = webSocket.close()
+  }
+}
+```
+
+That brings us to step 3: creating the cake. Now we want to create a
+cake for every incoming WebSocket connection to the server, so that
+means we also have to create a WebSocket server that will create a cake
+in its `onOpen` method:
+
+```scala
+import java.net.InetSocketAddress
+import scala.concurrent.ExecutionContext
+import org.java_websocket.WebSocket
+import org.java_websocket.handshake.ClientHandshake
+import org.java_websocket.server.WebSocketServer
+import messages._
+
+abstract class OcppJsonServer(listenPort: Int, ocppVersion: Version)
+  extends WebSocketServer(new InetSocketAddress(listenPort)) {
+
+  type OutgoingEndpoint = OutgoingOcppEndpoint[ChargePointReq, ChargePointRes, ChargePointReqRes]
+
+  type IncomingEndpoint = IncomingOcppEndpoint[CentralSystemReq, CentralSystemRes, CentralSystemReqRes]
+
+  def connectionHandler: OutgoingEndpoint => IncomingEndpoint
+
+  override def onOpen(conn: WebSocket, hndshk: ClientHandshake): Unit = {
+
+    val ocppConnection = new CentralSystemOcppConnectionComponent  with DefaultSrpcComponent with SimpleServerWebSocketComponent {
+      override val ocppConnection: DefaultOcppConnection = defaultCentralSystemOcppConnection
+
+      override val srpcConnection: DefaultSrpcConnection = new DefaultSrpcConnection()
+
+      override val webSocketConnection: SimpleServerWebSocketConnection = new SimpleServerWebSocketConnection {
+        val webSocket: WebSocket = conn
+      }
+
+      def onRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: CentralSystemReqRes[REQ, RES]) = ???
+
+      def onOcppError(error: OcppError): Unit = ???
+
+      def onDisconnect() = ???
+
+      implicit val executionContext: ExecutionContext = ???
+
+      def ocppVersion: Version = ???
+    }
+  }
+
+  override def onClose(
+                        conn: WebSocket,
+                        code: Int,
+                        reason: IdTag,
+                        remote: Boolean
+                      ): Unit = ???
+
+  override def onMessage(conn: WebSocket, message: IdTag): Unit = ???
+
+  override def onError(conn: WebSocket, ex: Exception): Unit = ???
+}
+```
+
+Ouch, that's a big load of code there. Still, it came about after a few
+simple steps:
+
+  1. Take the interface template for OcppJsonServer that we started this
+     example with
+  2. Make it extend WebSocketServer, and add `???` implementations of
+     its abstract methods
+  3. In the `onOpen` method from the `WebSocketServer` abstract class,
+     create a cake with the three layers: `CentralSystemOcppConnectionComponent with DefaultSrpcComponent with SimpleServerWebSOcketComponent`
+  4. Add `???` implementations of all the abstract methods in the cake
+  5. Add actual definitions of the `ocppConnection`, `srpcConnection` and `webSocketConnection` members of the three cake layers.
+
+Note that at step 5, we have passed the `WebSocket` argument to the `onOpen` method on into the
+`SimpleServerWebSocketConnection` so that the cake can later use this `WebSocket` to send OCPP messages over.
+
+
+
 
 ### Just serializing
 
