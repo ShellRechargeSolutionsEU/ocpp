@@ -4,9 +4,11 @@ package server
 
 import org.java_websocket.WebSocket
 import org.json4s.JValue
-import org.json4s.native.JsonMethods.{compact, render}
+import org.json4s.native.JsonMethods.{compact, render, parse}
 
 trait SimpleServerWebSocketComponent extends WebSocketComponent {
+
+  self: SrpcComponent =>
 
   trait SimpleServerWebSocketConnection extends WebSocketConnection {
 
@@ -16,6 +18,12 @@ trait SimpleServerWebSocketComponent extends WebSocketComponent {
 
     def close(): Unit = webSocket.close()
   }
+
+  def feedIncomingMessage(msg: String): Unit = self.onMessage(parse(msg))
+
+  def feedIncomingDisconnect(): Unit = self.onDisconnect()
+
+  def feedIncomingError(err: Exception): Unit = self.onError(err)
 }
 
 
