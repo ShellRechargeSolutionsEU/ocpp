@@ -97,6 +97,17 @@ val exampleJsonClient =
     publish := {}
   )
 
+val exampleJsonServer =
+  module("example-json-server")
+    .dependsOn(json, ocppJApi)
+    .settings(
+      libraryDependencies += slf4jSimple,
+      outputStrategy in run := Some(StdoutOutput),
+      connectInput in run := true,
+      coverageExcludedPackages := ".*",
+      publish := {}
+    )
+
 enablePlugins(OssLibPlugin)
 
 crossScalaVersions := Seq(tnm.ScalaVersion.prev)

@@ -14,4 +14,7 @@ package object api {
   type OcppJsonClient = client.OcppJsonClient
   val OcppJsonClient: client.OcppJsonClient.type = client.OcppJsonClient
 
+  type OcppJsonServer = server.OcppJsonServer
+  val OcppJsonServer: server.OcppJsonServer.type = server.OcppJsonServer
+
 }

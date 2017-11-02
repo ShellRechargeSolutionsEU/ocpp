@@ -51,7 +51,7 @@ object RequestHandler {
       def apply[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(
         implicit reqRes: ChargePointReqRes[REQ, RES],
         ec: ExecutionContext
-      ): Future[RES] = Future.successful(f(req).asInstanceOf[RES])
+      ): Future[RES] = Future(f(req).asInstanceOf[RES])
     }
 
   implicit def syncFunctionAsCentralSystemRequestHandler(
@@ -61,7 +61,7 @@ object RequestHandler {
       def apply[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(
         implicit reqRes: CentralSystemReqRes[REQ, RES],
         ec: ExecutionContext
-      ): Future[RES] = Future.successful(f(req).asInstanceOf[RES])
+      ): Future[RES] = Future(f(req).asInstanceOf[RES])
     }
 
   implicit def chargePointAsChargePointRequestHandler(
