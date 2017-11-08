@@ -296,17 +296,26 @@ So now with this background information, the steps to constructing your cake wou
 
  * Determine the kind of interface you want to the logic in the rest of your app
 
- * Create a trait extending `WebSocketComponent` that uses your WebSocket implementation of choice
+ * Create a trait extending `WebSocketComponent` that uses your WebSocket
+   implementation of choice
 
  * Create the cake:
 
-      * Do either `new CentralSystemOcppConnectionComponent with DefaultSrpcComponent with MyWebSocketComponent { ... }` or `new ChargePointCentralSystemOcppConnectionComponent with DefaultSrpcComponent with MyWebSocketComponent { ... }`
+      * Do either `new CentralSystemOcppConnectionComponent with DefaultSrpcComponent with MyWebSocketComponent { ... }`
+        or `new ChargePointCentralSystemOcppConnectionComponent with DefaultSrpcComponent with MyWebSocketComponent { ... }`
 
-      * Define in it a `val webSocketConnection`, `val srpcConnection` and `val ocppConnection`. For `ocppConnection`, use one of the `defaultChargePointOcppConnection` and `defaultCentralSystemOcppConnection` methods defined by the DefaultOcppConnectionComponent traits. For `val srpcConnection`, use `new DefaultSrpcConnection`.
+      * Define in it a `val webSocketConnection`, `val srpcConnection` and
+        `val ocppConnection`. For `ocppConnection`, use one of the
+        `defaultChargePointOcppConnection` and
+        `defaultCentralSystemOcppConnection` methods defined by the
+        DefaultOcppConnectionComponent traits. For `val srpcConnection`, use
+        `new DefaultSrpcConnection`.
 
- * Define all the "(override)" methods shown at the top of the cake to connect your app's request and response processing to the OCPP cake
+ * Define all the "(override)" methods shown at the top of the cake to connect
+   your app's request and response processing to the OCPP cake
 
- * Make the WebSocket layer call your WebSocket library to send messages over the socket, and make your WebSocket library call the cake for it to receive messages
+ * Make the WebSocket layer call your WebSocket library to send messages over
+   the socket, and make your WebSocket library call the cake for it to receive messages
 
 #### Putting this together for a server
 
@@ -321,11 +330,11 @@ The interface I am thinking of here is something like this:
 ```
 abstract class OcppJsonServer(listenPort: Int, ocppVersion: Version) {
 
- type OutgoingEndpoint = OutgoingOcppEndpoint[ChargePointReq, ChargePointRes, ChargePointReqRes]
+  type OutgoingEndpoint = OutgoingOcppEndpoint[ChargePointReq, ChargePointRes, ChargePointReqRes]
 
- type IncomingEndpoint = IncomingOcppEndpoint[CentralSystemReq, CentralSystemRes, CentralSystemReqRes]
+  type IncomingEndpoint = IncomingOcppEndpoint[CentralSystemReq, CentralSystemRes, CentralSystemReqRes]
 
- def connectionHandler: OutgoingEndpoint => IncomingEndpoint
+  def handleConnection: OutgoingEndpoint => IncomingEndpoint
 }
 ```
 
@@ -334,11 +343,12 @@ she has to provide three things:
 
  * the TCP port to listen on, as a constructor argument
 
- * The OCPP version to use, as a constructor argument (I'm too lazy to worry about version negotiation right now)
+ * The OCPP version to use, as a constructor argument (I'm too lazy to worry
+   about version negotiation right now)
 
  * Her own logic for how to handle and send OCPP messages over the
    connections to this server. She should specify this as a method
-   `connectionHandler` that gets an endpoint for sending outgoing
+   `handleConnection` that gets an endpoint for sending outgoing
    requests as an argument, and returns to the server component an
    endpoint for handling incoming requests and close or error events.
 
@@ -419,7 +429,7 @@ abstract class OcppJsonServer(listenPort: Int, ocppVersion: Version)
 
   type IncomingEndpoint = IncomingOcppEndpoint[CentralSystemReq, CentralSystemRes, CentralSystemReqRes]
 
-  def connectionHandler: OutgoingEndpoint => IncomingEndpoint
+  def handleConnection: OutgoingEndpoint => IncomingEndpoint
 
   override def onStart(): Unit = {}
 
@@ -469,13 +479,19 @@ simple steps:
   3. In the `onOpen` method from the `WebSocketServer` abstract class,
      create a cake with the three layers: `CentralSystemOcppConnectionComponent with DefaultSrpcComponent with SimpleServerWebSOcketComponent`
   4. Add `???` implementations of all the abstract methods in the cake
-  5. Add actual definitions of the `ocppConnection`, `srpcConnection` and `webSocketConnection` members of the three cake layers.
+  5. Add actual definitions of the `ocppConnection`, `srpcConnection`
+     and `webSocketConnection` members of the three cake layers.
 
-Note that at step 5, we have passed the `WebSocket` argument to the `onOpen` method on into the
-`SimpleServerWebSocketConnection` so that the cake can later use this `WebSocket` to send OCPP messages over.
+Note that at step 5, we have passed the `WebSocket` argument to the
+`onOpen` method on into the `SimpleServerWebSocketConnection` so that
+the cake can later use this `WebSocket` to send OCPP messages over.
 
-So by now we're at the fourth point of the five-step cake plan: connect our app's logic to the OCPP cake. The app's logic, in our case, is the `connectionHandler` that the library user specifies.
-And then, _inside_ the OCPP cake definition in `onOpen`, we create the incoming endpoint, and call the user-defined `connectionHandler` on it so an endpoint for the incoming messages is created:
+So by now we're at the fourth point of the five-step cake plan: connect our
+app's logic to the OCPP cake. The app's logic, in our case, is the
+`handleConnection` that the library user specifies. And then, _inside_
+the OCPP cake definition in `onOpen`, we create the incoming endpoint,
+and call the user-defined `handleConnection` on it so an endpoint for
+the incoming messages is created:
 
 ```scala
 private val outgoingEndpoint = new OutgoingEndpoint {
@@ -485,10 +501,11 @@ private val outgoingEndpoint = new OutgoingEndpoint {
   def close(): Unit = webSocketConnection.close()
 }
 
-private val incomingEndpoint = connectionHandler(outgoingEndpoint)
+private val incomingEndpoint = handleConnection(outgoingEndpoint)
 ```
 
-Now that we have the incoming endpoint, we can also fill in definitions for the `onRequest`, `onError` and `onDisconnect` handlers in the OCPP cake:
+Now that we have the incoming endpoint, we can also fill in definitions for the
+`onRequest`, `onError` and `onDisconnect` handlers in the OCPP cake:
 
 ```scala
 def onRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: CentralSystemReqRes[REQ, RES]) =
@@ -501,11 +518,18 @@ def onDisconnect() =
   incomingEndpoint.onDisconnect()
 ```
 
-By now, the OCPP cake definition body is free of any reference to "???". The cake is fully linked to the app's business logic.
+By now, the OCPP cake definition body is free of any reference to "???". The
+cake is fully linked to the app's business logic.
 
-That means we're at the fifth and last step of the five-step plan: We have to make sure that when a new connection is opened, we will call this function to create an `IncomingEndpoint`, and that we later call this `IncomingEndpoint` whenever a message comes in on the connection. To make this happen, we will need a map from `WebSocket` instances that the server gets in its `onMessage` method, to the OCPP cake instance that will process messages for that connection.
+That means we're at the fifth and last step of the five-step plan: We have to
+make sure that when a new connection is opened, we will call this function to
+create an `IncomingEndpoint`, and that we later call this `IncomingEndpoint`
+whenever a message comes in on the connection. To make this happen, we will need
+a map from `WebSocket` instances that the server gets in its `onMessage` method,
+to the OCPP cake instance that will process messages for that connection.
 
-So let's add this to the `OcppJsonServer` class: link the WebSocket library we're using to our OCPP cake.
+So let's add this to the `OcppJsonServer` class: link the WebSocket library
+we're using to our OCPP cake.
 
 ```scala
   private type OcppCake = CentralSystemOcppConnectionComponent with DefaultSrpcComponent with SimpleServerWebSocketComponent
@@ -513,13 +537,15 @@ So let's add this to the `OcppJsonServer` class: link the WebSocket library we'r
   private val ocppConnections: mutable.Map[WebSocket, OcppCake] = mutable.HashMap()
 ```
 
-and to fill the map, we add this line at the bottom of `onOpen` in our `OcppJsonServer`:
+and to fill the map, we add this line at the bottom of `onOpen` in our
+`OcppJsonServer`:
 
 ```scala
 ocppConnections.put(conn, ocppConnection)
 ```
 
-and as responsible professionals, let's also remove the entry from the map again when a connection is closed, by changing the definition of `onClose` to this:
+and as responsible professionals, let's also remove the entry from the map again
+when a connection is closed, by changing the definition of `onClose` to this:
 
 ```scala
 override def onClose(
@@ -530,7 +556,11 @@ override def onClose(
 ): Unit = ocppConnections.remove(conn)
 ```
 
-Now the last thing to be done on the way to a working server, is making the `onMessage`, `onDisconnect` and `onError` callbacks of `WebSocketServer` actually call into the connection's OCPP cake to let it process the message. It turns out that to do this, we have to add two methods to the SimpleWebSocketServerComponent:
+Now the last thing to be done on the way to a working server, is making the
+`onMessage`, `onDisconnect` and `onError` callbacks of `WebSocketServer`
+actually call into the connection's OCPP cake to let it process the message. It
+turns out that to do this, we have to add two methods to the
+`SimpleWebSocketServerComponent`:
 
 ```scala
 def feedIncomingMessage(msg: String) = self.onMessage(org.json4s.native.JsonMethods.parse(msg))
@@ -540,7 +570,9 @@ def feedIncomingDisconnect(): Unit = self.onDisconnect()
 def feedIncomingError(err: Exception) = self.onError(err)
 ```
 
-to make that work, we also have to make SimpleServerWebSocketComponent aware that it is to be mixed into something that is also an SrpcComponent, by adding a self-type:
+to make that work, we also have to make SimpleServerWebSocketComponent aware
+that it is to be mixed into something that is also an SrpcComponent, by adding
+a self-type:
 
 ```scala
 trait SimpleServerWebSocketComponent extends WebSocketComponent {
@@ -550,7 +582,9 @@ trait SimpleServerWebSocketComponent extends WebSocketComponent {
   ...
 ```
 
-and back in `OcppJsonServer`, we change the implementation of `onMessage`, `onClose` and `onError` to feed those events into the cake for the right connection:
+and back in `OcppJsonServer`, we change the implementation of `onMessage`,
+`onClose` and `onError` to feed those events into the cake for the right
+connection:
 
 ```scala
 override def onClose(
@@ -577,11 +611,14 @@ override def onError(conn: WebSocket, ex: Exception): Unit =
 
 That's it, it should work now!
 
-In fact, upon testing it, I realize that with this interface, the server-side code doesn't know the ChargePointIdentity of the client. That's not very helpful; an OCPP
-back-office system will probably want to know which charge points are connected to it. So let's change the definition of `connectionHandler` in `OcppJsonServer` to this:
+In fact, upon testing it, I realize that with this interface, the server-side
+code doesn't know the ChargePointIdentity of the client. That's not very
+helpful; an OCPP back-office system will probably want to know which charge
+points are connected to it. So let's change the definition of `handleConnection`
+in `OcppJsonServer` to this:
 
 ```scala
-def connectionHandler(clientChargePointIdentity: String, remote: OutgoingEndpoint): IncomingEndpoint
+def handleConnection(clientChargePointIdentity: String, remote: OutgoingEndpoint): IncomingEndpoint
 ```
 
 and let's pass the ChargePointIdentity into it by changing `onOpen` to this:
@@ -605,12 +642,20 @@ and let's pass the ChargePointIdentity into it by changing `onOpen` to this:
     ... // continues as in earlier definition of onOpen
  ```
 
-So there we check if the URL includes the charge point identity. If it doesn't, we immediately close the WebSocket connection with an error message. If we do have a ChargePointIdentity, we proceed to handle the open as we did before. And now it should really be done.
+So there we check if the URL includes the charge point identity. If it doesn't,
+we immediately close the WebSocket connection with an error message. If we do
+have a ChargePointIdentity, we proceed to handle the open as we did before. And
+now it should really be done.
 
 In order to save you the typing and bugfixing, an actual tested version
 of the server developed while writing this [is included](ocpp-j-api/src/main/scala/com/thenewmotion/ocpp/json/api/server/OcppJsonServer.scala).
 
-And there is also a small [example app](example-json-server/src/main/scala/com/thenewmotion/ocpp/json/example/ExampleServerTestApp.scala) that shows how to use the `OcppJsonServer` interface. It will listen on port 2345, and return `NotImplemented` to any request except BootNotification. In response to a BootNotification, it will send a response and also send a GetConfiguration request back to the client. To run it, you do:
+And there is also a small
+[example app](example-json-server/src/main/scala/com/thenewmotion/ocpp/json/example/ExampleServerTestApp.scala)
+that shows how to use the `OcppJsonServer` interface. It will listen on port
+2345, and return `NotImplemented` to any request except BootNotification. In
+response to a BootNotification, it will send a response and also send a
+GetConfiguration request back to the client. To run it, you do:
 
 ```
 $ sbt "project example-json-server" run
@@ -686,10 +731,11 @@ when porting older code:
  - Building for Scala 2.12. May require dropping the SOAP and/or switching JSON
    libraries.
 
- - Explaining how to build a server endpoint interface under "roll your own
-   endpoint" above
-
 ## Acknowledgements
 
 Most of the example messages in the ocpp-json unit tests were taken from
 [GIR ocppjs](http://www.gir.fr/ocppjs/).
+
+The `Draft_OCPP` class for doing subprotocol header exchange with
+java-websocket was translated to Scala from the
+[Java example in the java-websocket wiki](https://github.com/TooTallNate/Java-WebSocket/wiki/Implementing-your-own-Sec-WebSocket-Protocol).
