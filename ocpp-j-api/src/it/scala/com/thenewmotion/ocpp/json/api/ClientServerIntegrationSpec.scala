@@ -25,7 +25,7 @@ class ClientServerIntegrationSpec extends Specification {
       val serverStarted = Promise[Unit]()
 
       val server = new OcppJsonServer(testPort, Version.V16) {
-        def connectionHandler(cpSerial: String, remote: OutgoingEndpoint): IncomingEndpoint =
+        def handleConnection(cpSerial: String, remote: OutgoingEndpoint): IncomingEndpoint =
           new IncomingEndpoint {
             val requestHandler: CentralSystemRequestHandler = { (req: CentralSystemReq) =>
               req match {
@@ -80,7 +80,7 @@ class ClientServerIntegrationSpec extends Specification {
       val clientResponsePromise = Promise[GetLocalListVersionRes]()
 
       val server = new OcppJsonServer(testPort, Version.V16) {
-        def connectionHandler(cpSerial: String, remote: OutgoingEndpoint): IncomingEndpoint = {
+        def handleConnection(cpSerial: String, remote: OutgoingEndpoint): IncomingEndpoint = {
           new IncomingEndpoint {
             val requestHandler: CentralSystemRequestHandler = (req: CentralSystemReq) =>
               req match {
