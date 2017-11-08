@@ -13,7 +13,7 @@ val scalax = "com.github.t3hnar" %% "scalax" % "3.0"
 val sprayHttp = "io.spray" %% "spray-http" % sprayV
 val sprayHttpX = "io.spray" %% "spray-httpx" % sprayV
 val akka = "com.typesafe.akka" %% "akka-actor" % "2.3.11" % "provided"
-val specs2 = "org.specs2" %% "specs2-core" % specs2V % "test"
+val specs2 = "org.specs2" %% "specs2-core" % specs2V % "it,test"
 val specs2Mock = "org.specs2" %% "specs2-mock" % specs2V % "test"
 val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.0.4"
 val scalaParser = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4"
@@ -27,11 +27,14 @@ val mockServerNetty = "org.mock-server" % "mockserver-netty" % "3.10.4"  % "test
 
 def module(name: String) = Project(name, file(name))
   .enablePlugins(OssLibPlugin)
+  .configs(IntegrationTest)
   .settings(
     crossScalaVersions := Seq(tnm.ScalaVersion.prev),
     scalaVersion := tnm.ScalaVersion.prev,
     organization := "com.thenewmotion.ocpp",
-    libraryDependencies += specs2)
+    libraryDependencies += specs2,
+    Defaults.itSettings
+  )
 
 def scalaxbModule(name: String, packageNameForGeneratedCode: String) =
   module(name)
@@ -84,7 +87,8 @@ val ocppJApi =
     .dependsOn(messages, json)
     .settings(
       libraryDependencies ++= Seq(
-        javaWebSocket, slf4jApi, specs2Mock, mockServer, mockServerNetty)
+        javaWebSocket, slf4jApi, specs2Mock, mockServer, mockServerNetty),
+      (fork in IntegrationTest) := true
     )
 
 val exampleJsonClient =
