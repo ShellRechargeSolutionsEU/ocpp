@@ -37,7 +37,7 @@ abstract class OcppJsonServer(listenPort: Int, _ocppVersion: Version)
    *
    * @return The handler for incoming requests from the Charge Point and other connection events
    */
-  def connectionHandler(clientChargePointIdentity: String, remote: OutgoingEndpoint): IncomingEndpoint
+  def handleConnection(clientChargePointIdentity: String, remote: OutgoingEndpoint): IncomingEndpoint
 
   override def onStart(): Unit = {}
 
@@ -71,7 +71,7 @@ abstract class OcppJsonServer(listenPort: Int, _ocppVersion: Version)
         def close(): Unit = webSocketConnection.close()
       }
 
-      private val incomingEndpoint = connectionHandler(chargePointIdentity, outgoingEndpoint)
+      private val incomingEndpoint = handleConnection(chargePointIdentity, outgoingEndpoint)
 
       def onRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: CentralSystemReqRes[REQ, RES]) =
         incomingEndpoint.requestHandler(req)

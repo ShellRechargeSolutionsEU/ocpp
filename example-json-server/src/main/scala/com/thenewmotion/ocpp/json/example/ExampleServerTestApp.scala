@@ -16,7 +16,7 @@ object ExampleServerTestApp extends App {
 
   val server = new OcppJsonServer(2345, Version.V15) {
 
-    override def connectionHandler(chargePointIdentity: String, conn: OutgoingEndpoint): IncomingEndpoint = {
+    override def handleConnection(chargePointIdentity: String, conn: OutgoingEndpoint): IncomingEndpoint = {
 
       println(s"Received incoming connection from $chargePointIdentity")
 
