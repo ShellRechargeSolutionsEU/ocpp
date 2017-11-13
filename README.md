@@ -518,6 +518,23 @@ def onDisconnect() =
   incomingEndpoint.onDisconnect()
 ```
 
+And then, there is the `ocppVersion` method in `OcppConnectionComponent`
+that will tell it which OCPP version to use to serialize and deserialize
+OCPP messages to JSON. We have to fill in the OCPP version that was
+passed in to the `OcppJsonServer` constructor. To avoid name clashes,
+we rename the argument to `OcppJsonServer`:
+
+```scala
+abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
+```
+
+and then fill in this `requestedOcppVersion` argument in the cake's
+`ocppVersion` method:
+
+```scala
+def ocppVersion: Version = requestedOcppVersion
+```
+
 By now, the OCPP cake definition body is free of any reference to "???". The
 cake is fully linked to the app's business logic.
 

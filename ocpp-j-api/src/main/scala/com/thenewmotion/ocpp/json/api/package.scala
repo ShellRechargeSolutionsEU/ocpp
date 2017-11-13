@@ -16,5 +16,4 @@ package object api {
 
   type OcppJsonServer = server.OcppJsonServer
   val OcppJsonServer: server.OcppJsonServer.type = server.OcppJsonServer
-
 }

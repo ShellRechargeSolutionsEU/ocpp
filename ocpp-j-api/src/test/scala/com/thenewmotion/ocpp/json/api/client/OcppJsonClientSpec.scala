@@ -3,16 +3,20 @@ package json.api
 package client
 
 import java.net.URI
-
+import java.security.MessageDigest
+import java.util.Base64
+import scala.concurrent.ExecutionContext.Implicits.global
 import org.specs2.mutable.{BeforeAfter, Specification}
 import org.specs2.specification.Scope
-
-import scala.concurrent.ExecutionContext.Implicits.global
+import org.mockserver.integration.ClientAndServer
+import org.mockserver.mock.action.ExpectationCallback
+import org.mockserver.model.HttpRequest.request
+import org.mockserver.model.HttpResponse.response
+import org.mockserver.model.HttpStatusCode.SWITCHING_PROTOCOLS_101
+import org.mockserver.model.{ConnectionOptions, Header, HttpRequest}
 
 class OcppJsonClientSpec extends Specification {
   sequential
-
-  import org.mockserver.model.HttpRequest.request
 
   "OcppJsonClient" should {
     "negotiate the correct ocpp version" in {
@@ -49,7 +53,6 @@ class OcppJsonClientSpec extends Specification {
   }
 
   private class TestScope extends Scope with BeforeAfter {
-    import org.mockserver.integration.ClientAndServer
 
     var server: ClientAndServer = _
 
@@ -87,14 +90,6 @@ class OcppJsonClientSpec extends Specification {
     )
   }
 }
-
-import java.security.MessageDigest
-import java.util.Base64
-
-import org.mockserver.mock.action.ExpectationCallback
-import org.mockserver.model.HttpResponse.response
-import org.mockserver.model.HttpStatusCode.SWITCHING_PROTOCOLS_101
-import org.mockserver.model.{ConnectionOptions, Header, HttpRequest}
 
 class UpgradeRequestCallBackV15 extends UpgradeRequestCallBack {
   val ocppVersions = Seq(Version.V15)

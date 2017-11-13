@@ -7,12 +7,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.io.Source
 
-import api._
 import messages._
+import api._
+import OcppJsonServer.{IncomingEndpoint, OutgoingEndpoint}
 
 object ExampleServerTestApp extends App {
-
-  import OcppJsonServer.{IncomingEndpoint, OutgoingEndpoint}
 
   val server = new OcppJsonServer(2345, Version.V15) {
 

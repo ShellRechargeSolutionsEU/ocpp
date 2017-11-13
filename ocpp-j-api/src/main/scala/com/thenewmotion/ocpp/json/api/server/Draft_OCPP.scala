@@ -24,30 +24,19 @@ class Draft_OCPP(version: Version) extends Draft_6455 {
   override def acceptHandshakeAsServer(handshakedata: ClientHandshake): HandshakeState = {
     if (super.acceptHandshakeAsServer(handshakedata) == HandshakeState.NOT_MATCHED)
       HandshakeState.NOT_MATCHED
-    else if (!handshakedata.hasFieldValue("Sec-WebSocket-Protocol"))
-      HandshakeState.NOT_MATCHED
-    else {
-
-      val requestedProto = handshakedata.getFieldValue("Sec-WebSocket-Protocol")
-
-      if (requestedProto.equalsIgnoreCase(protoHeader))
-        HandshakeState.MATCHED
-      else
-        HandshakeState.NOT_MATCHED
-    }
+    else clientHandshakeMatchesOurOcppVersion(handshakedata)
   }
 
   override def acceptHandshakeAsClient(request: ClientHandshake, response: ServerHandshake): HandshakeState = {
     if (super.acceptHandshakeAsClient(request, response) == HandshakeState.NOT_MATCHED)
       HandshakeState.NOT_MATCHED
-    else if (!request.hasFieldValue("Sec-WebSocket-Protocol"))
-      HandshakeState.NOT_MATCHED
-    else {
+    else clientHandshakeMatchesOurOcppVersion(request)
+  }
 
-      if (request.getFieldValue("Sec-WebSocket-Protocol").equalsIgnoreCase(protoHeader))
-        HandshakeState.MATCHED
-      else
-        HandshakeState.NOT_MATCHED
+  private def clientHandshakeMatchesOurOcppVersion(req: ClientHandshake): HandshakeState = {
+    Option(req.getFieldValue("Sec-WebSocket-Protocol")) match {
+      case Some(requestedProto) if requestedProto.equalsIgnoreCase(protoHeader) => HandshakeState.MATCHED
+      case _ => HandshakeState.NOT_MATCHED
     }
   }
 
