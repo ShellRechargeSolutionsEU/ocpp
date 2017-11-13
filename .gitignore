@@ -21,3 +21,6 @@ rebel.xml
 
 # ctags
 /tags
+
+# Visual Studio Code
+/.vscode/
