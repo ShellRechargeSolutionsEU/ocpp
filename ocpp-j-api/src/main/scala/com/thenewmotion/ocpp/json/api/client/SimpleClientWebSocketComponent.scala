@@ -4,14 +4,12 @@ package client
 
 import java.net.URI
 import scala.collection.JavaConverters._
-
+import scala.concurrent.{Await, Promise}
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import org.json4s._
 import org.slf4j.LoggerFactory
 
 trait SimpleClientWebSocketComponent extends WebSocketComponent {
-
-  import scala.concurrent.{Await, Promise}
-  import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
   class SimpleClientWebSocketConnection(
     chargerId: String,

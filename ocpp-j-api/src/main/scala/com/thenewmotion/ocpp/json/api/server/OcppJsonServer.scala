@@ -12,17 +12,16 @@ import org.java_websocket.drafts.Draft
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
 import messages._
+import OcppJsonServer._
 
 /**
  * A simple server implementation to show how this library can be used in servers.
  *
  * @param listenPort The port to listen on
- * @param _ocppVersion The OCPP version to serve (either 1.5 or 1.6; negotiation is not supported)
+ * @param requestedOcppVersion The OCPP version to serve (either 1.5 or 1.6; negotiation is not supported)
  */
-abstract class OcppJsonServer(listenPort: Int, _ocppVersion: Version)
-  extends WebSocketServer(new InetSocketAddress(listenPort), List[Draft](new Draft_OCPP(_ocppVersion)).asJava) {
-
-  import OcppJsonServer._
+abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
+  extends WebSocketServer(new InetSocketAddress(listenPort), List[Draft](new Draft_OCPP(requestedOcppVersion)).asJava) {
 
   private type OcppCake = CentralSystemOcppConnectionComponent with DefaultSrpcComponent with SimpleServerWebSocketComponent
 
@@ -84,7 +83,7 @@ abstract class OcppJsonServer(listenPort: Int, _ocppVersion: Version)
 
       implicit val executionContext: ExecutionContext = concurrent.ExecutionContext.Implicits.global
 
-      def ocppVersion: Version = _ocppVersion
+      def ocppVersion: Version = requestedOcppVersion
     }
 
     ocppConnections.put(conn, ocppConnection)

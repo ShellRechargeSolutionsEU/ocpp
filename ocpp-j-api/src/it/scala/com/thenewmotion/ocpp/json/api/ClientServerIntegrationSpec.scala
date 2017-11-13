@@ -8,12 +8,13 @@ import scala.concurrent.duration._
 import scala.util.Success
 import org.specs2.mutable.Specification
 import org.specs2.concurrent.ExecutionEnv
+
 import messages._
+import OcppJsonServer.{IncomingEndpoint, OutgoingEndpoint}
 
 class ClientServerIntegrationSpec extends Specification {
   sequential
 
-  import OcppJsonServer._
 
   "Client and server" should {
 
