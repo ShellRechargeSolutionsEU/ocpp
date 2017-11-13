@@ -51,7 +51,7 @@ resolvers += "TNM" at "http://nexus.thenewmotion.com/content/groups/public"
 and this to your `build.sbt`:
 
 ```
-libraryDependencies += "com.thenewmotion" %% "ocpp-j-api" % "6.0.0-beta3"
+libraryDependencies += "com.thenewmotion" %% "ocpp-j-api" % "6.0.0"
 ```
 
 With Maven, you'd set up the repository in your pom.xml:
@@ -69,7 +69,7 @@ and add this to your dependencies:
     <dependency>
         <groupId>com.thenewmotion.ocpp</groupId>
         <artifactId>ocpp-j-api_2.11</artifactId>
-        <version>6.0.0-beta3</version>
+        <version>6.0.0</version>
     </dependency>
 ```
 
@@ -719,13 +719,13 @@ OCPP-S is what this library started with, but by now it is undocumented legacy.
 It may be split off to enjoy retirement in its own little project on the next
 major version.
 
-### Changes compared to version 4.x
+### Changes in 6.0.0 compared to version 4.x
 
 This library had been stable for a few years between 2014 and 2017, with 4.x.x
 version numbers, supporting OCPP-S 1.2 and 1.5, and OCPP-J 1.5, but not 1.6. Now
-that 1.6 support has been added, many wildly incompatible changes to the library
-interface were made while we were at it. The most important ones to be aware of
-when porting older code:
+that 1.6 support has been added with version 6.0.0, many wildly incompatible
+changes to the library interface were made while we were at it. The most
+important ones to be aware of when porting older code:
 
  - The `CentralSystem` and `ChargePoint` traits were renamed to
    `SyncCentralSystem` and `SyncChargePoint`. The names `CentralSystem` and
