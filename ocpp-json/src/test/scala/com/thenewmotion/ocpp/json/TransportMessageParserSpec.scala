@@ -3,7 +3,7 @@ package com.thenewmotion.ocpp.json
 import org.specs2.mutable.Specification
 import scala.io.Source
 import org.json4s._
-import org.json4s.native.Serialization
+import org.json4s.jackson.Serialization
 import PayloadErrorCode._
 
 class TransportMessageParserSpec extends Specification {

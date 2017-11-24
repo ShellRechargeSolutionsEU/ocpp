@@ -9,7 +9,7 @@ import java.net.URI
 import org.specs2.mutable.Specification
 import org.specs2.matcher.MatchResult
 import org.json4s._
-import org.json4s.native.JsonParser
+import org.json4s.jackson.JsonMethods
 import messages._
 import messages.meter._
 
@@ -93,7 +93,7 @@ class OcppMessageSerializationSpec extends Specification {
       Source.fromURL(this.getClass.getResource(requestFileName)).mkString
     }
 
-    test(JsonParser.parse(loadRequestJSON))
+    test(JsonMethods.parse(loadRequestJSON))
   }
 
   private val testTime = utcDateTime(2013,2,1,15,9,18)

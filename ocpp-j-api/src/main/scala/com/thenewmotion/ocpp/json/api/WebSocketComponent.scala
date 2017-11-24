@@ -2,7 +2,7 @@ package com.thenewmotion.ocpp
 package json.api
 
 import org.json4s._
-import org.json4s.native.Serialization
+import org.json4s.jackson.Serialization
 import org.slf4j.LoggerFactory
 
 /**

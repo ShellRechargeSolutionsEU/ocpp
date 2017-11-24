@@ -2,8 +2,7 @@ package com.thenewmotion.ocpp
 package json
 
 import org.json4s._
-import org.json4s.native.JsonParser
-import org.json4s.native.JsonMethods._
+import org.json4s.jackson.JsonMethods
 import org.slf4j.LoggerFactory
 
 object TransportMessageParser {
@@ -11,13 +10,13 @@ object TransportMessageParser {
   private[this] val logger =
     LoggerFactory.getLogger(TransportMessageParser.this.getClass)
 
-  implicit val formats =
+  implicit val formats  =
     DefaultFormats ++ TransportMessageJsonSerializers()
 
   import TransportMessageType._
 
   def parse(input: String): TransportMessage = {
-    val parsedMsg = JsonParser.parse(input)
+    val parsedMsg = JsonMethods.parse(input)
     parse(parsedMsg)
   }
 
@@ -35,5 +34,5 @@ object TransportMessageParser {
   }
 
   def write(input: TransportMessage): String =
-    compact(render(writeJValue(input)))
+    JsonMethods.compact(JsonMethods.render(writeJValue(input)))
 }

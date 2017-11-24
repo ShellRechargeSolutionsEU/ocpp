@@ -44,7 +44,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
       }
 
       def onMessage(message: String) = {
-        native.parseJsonOpt(message) match {
+        jackson.parseJsonOpt(message) match {
           case None =>
             logger.debug("Received non-JSON message: {}", message)
           case Some(jVal) =>
@@ -65,7 +65,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
 
     def send(jVal: JValue) = {
       logger.debug("Sending with Java-WebSocket: {}", jVal)
-      client.send(native.compactJson(native.renderJValue(jVal)))
+      client.send(jackson.compactJson(jackson.renderJValue(jVal)))
     }
 
     def close() = client.closeBlocking()

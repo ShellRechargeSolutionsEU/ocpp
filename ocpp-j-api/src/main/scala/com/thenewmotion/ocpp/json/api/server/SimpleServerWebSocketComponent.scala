@@ -4,7 +4,7 @@ package server
 
 import org.java_websocket.WebSocket
 import org.json4s.JValue
-import org.json4s.native.JsonMethods.{compact, render, parse}
+import org.json4s.jackson.JsonMethods.{compact, render, parse}
 
 trait SimpleServerWebSocketComponent extends WebSocketComponent {
 

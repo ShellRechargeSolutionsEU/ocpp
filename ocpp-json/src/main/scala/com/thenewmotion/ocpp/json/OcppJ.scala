@@ -2,7 +2,7 @@ package com.thenewmotion.ocpp
 package json
 
 import org.json4s._
-import native.JsonMethods.{compact, render}
+import jackson.JsonMethods.{compact, render, parse}
 import messages.Message
 
 
@@ -21,5 +21,5 @@ object OcppJ {
     versionVariant.deserialize(json)
 
   def read[M <: Message, V <: Version](s: String)(implicit versionVariant: OcppMessageSerializer[M,  V]): M =
-    deserialize[M, V](native.JsonParser.parse(s))
+    deserialize[M, V](parse(s))
 }

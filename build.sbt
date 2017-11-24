@@ -4,7 +4,7 @@ val sprayV = "1.3.3"
 val specs2V = "3.9.1"
 val slf4jV = "1.7.25"
 
-val json4sNative = "org.json4s" %% "json4s-native" % json4sV
+val json4sjackson = "org.json4s" %% "json4s-jackson" % json4sV
 val javaWebSocket = "org.java-websocket" % "Java-WebSocket" % "1.3.5"
 val slf4jApi = "org.slf4j" % "slf4j-api" % slf4jV
 val slf4jSimple = "org.slf4j" % "slf4j-simple" % slf4jV
@@ -20,7 +20,6 @@ val scalaParser = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.
 val enumUtils = "com.thenewmotion" %% "enum-utils" % "0.2.1"
 val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.13.4" % "test"
 val specs2ScalaCheck = "org.specs2" %% "specs2-scalacheck" % specs2V % "test"
-val json4sjackson = "org.json4s" %% "json4s-jackson" % json4sV % "test"
 val jsonSchemaValidator = "com.github.java-json-tools" % "json-schema-validator" % "2.2.8" % "test"
 val mockServer = "org.mock-server" % "mockserver-client-java" % "3.10.4" % "test"
 val mockServerNetty = "org.mock-server" % "mockserver-netty" % "3.10.4"  % "test"
@@ -62,7 +61,7 @@ val json = module("ocpp-json")
   .dependsOn(messages)
   .settings(
     libraryDependencies ++= Seq(
-      json4sNative, slf4jApi, scalaCheck, specs2ScalaCheck, jsonSchemaValidator, json4sjackson
+      json4sjackson, slf4jApi, scalaCheck, specs2ScalaCheck, jsonSchemaValidator
     )
   )
 

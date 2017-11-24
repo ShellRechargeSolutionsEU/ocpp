@@ -6,7 +6,7 @@ import java.time.{ZoneId, ZonedDateTime}
 import scala.io.Source
 import org.specs2.mutable.Specification
 import org.json4s._
-import org.json4s.native.JsonParser
+import org.json4s.jackson.JsonMethods
 import v15.SerializationV15._
 import messages._
 import messages.meter._
@@ -45,7 +45,7 @@ class GirOcppMessageSerializationSpec extends Specification {
   case class TestMsg[M <: Message](versionVariant: OcppMessageSerializer[M, Version.V15.type], jsonFileBase: String, msg: Option[M] = None) {
     def serializedAfterDeserialized: JValue = OcppJ.serialize(deserialized)(versionVariant)
     def deserialized: M = OcppJ.deserialize(toJson)(versionVariant)
-    def toJson: JValue = JsonParser.parse(loadRequestJSON)
+    def toJson: JValue = JsonMethods.parse(loadRequestJSON)
     private def loadRequestJSON: String = {
       val requestFileName = s"ocpp15/gir_without_srpc/$jsonFileBase.json"
       Source.fromURL(this.getClass.getResource(requestFileName)).mkString

@@ -7,7 +7,7 @@ import org.specs2.specification.Scope
 import org.specs2.mock.Mockito
 import scala.concurrent.{Await, Future, Promise}
 import org.json4s.JsonDSL._
-import org.json4s.native.JsonMethods.{render, pretty}
+import org.json4s.jackson.JsonMethods.{render, pretty}
 import java.time.ZonedDateTime
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
