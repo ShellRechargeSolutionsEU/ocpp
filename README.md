@@ -748,11 +748,22 @@ important ones to be aware of when porting older code:
  - Building for Scala 2.12. May require dropping the SOAP and/or switching JSON
    libraries.
 
-## Acknowledgements
+## Licensing and acknowledgements
 
-Most of the example messages in the ocpp-json unit tests were taken from
-[GIR ocppjs](http://www.gir.fr/ocppjs/).
+The contents of this repository are © 2012 - 2017 The New Motion B.V., licensed under the [GPL version 3](LICENSE), except:
 
-The `Draft_OCPP` class for doing subprotocol header exchange with
-java-websocket was translated to Scala from the
-[Java example in the java-websocket wiki](https://github.com/TooTallNate/Java-WebSocket/wiki/Implementing-your-own-Sec-WebSocket-Protocol).
+ * [The example messages for OCPP 1.5](ocpp-json/src/test/resources/com/thenewmotion/ocpp/json/ocpp15/without_srpc) in the ocpp-json unit tests, which were taken from [GIR ocppjs](http://www.gir.fr/ocppjs/).
+
+ * The [`Draft_OCPP`](ocpp-j-api/src/main/scala/com/thenewmotion/ocpp/json/api/server/Draft_OCPP.scala)
+   class for doing subprotocol header exchange with java-websocket, which was
+   translated to Scala from the
+   [Java example in the java-websocket wiki](https://github.com/TooTallNate/Java-WebSocket/wiki/Implementing-your-own-Sec-WebSocket-Protocol).
+   This page has been removed after java-websocket changed the way they support
+   protocol handshaking.
+
+ * The [JSON schema files](ocpp-json/src/test/resources/schemas/) for OCPP 1.6 are part of the OCPP 1.6 Specification, distributed under the following conditions:
+
+      ```
+      Copyright © 2010 – 2015 Open Charge Alliance. All rights reserved.
+      This document is made available under the *Creative Commons Attribution- NoDerivatives 4.0 International Public License* (https://creativecommons.org/licenses/by-nd/4.0/legalcode).
+      ```
