@@ -114,10 +114,10 @@ trait UpgradeRequestCallBack extends ExpectationCallback {
         new Header("Sec-WebSocket-Accept", webSocketAccept)
       )
     } ++ {
-      val requestedProtocols = httpRequest.getFirstHeader(SimpleClientWebSocketComponent.SubProtoHeader)
+      val requestedProtocols = httpRequest.getFirstHeader(SimpleClientWebSocketComponent.subProtoHeader)
       val subProtocol = requestedProtocols.split(rfc2616Separators).intersect(subProtocols).headOption
       subProtocol.fold(Seq.empty[Header]) { protocol =>
-        Seq(new Header(SimpleClientWebSocketComponent.SubProtoHeader, protocol))
+        Seq(new Header(SimpleClientWebSocketComponent.subProtoHeader, protocol))
       }
     }
     response()

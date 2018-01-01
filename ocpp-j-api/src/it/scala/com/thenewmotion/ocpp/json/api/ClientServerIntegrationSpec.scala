@@ -87,8 +87,8 @@ class ClientServerIntegrationSpec extends Specification {
               req match {
                 case HeartbeatReq =>
                   clientResponsePromise.completeWith {
-                                                       remote.send(GetLocalListVersionReq)
-                                                     }
+                    remote.send(GetLocalListVersionReq)
+                  }
 
                   serverTestResponse
                 case _ =>

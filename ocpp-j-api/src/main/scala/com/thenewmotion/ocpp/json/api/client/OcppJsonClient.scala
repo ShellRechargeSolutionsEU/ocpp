@@ -56,7 +56,7 @@ abstract class OcppJsonClient(
       }
     )
 
-    val subProtocol = webSocketConnection.subProtocol.getOrElse(
+    private val subProtocol = webSocketConnection.subProtocol.getOrElse(
       throw VersionMismatch(
         "Could not negotiate a common version for: ",
         requestedVersions = versions

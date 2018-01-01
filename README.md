@@ -754,13 +754,6 @@ The contents of this repository are © 2012 - 2017 The New Motion B.V., licensed
 
  * [The example messages for OCPP 1.5](ocpp-json/src/test/resources/com/thenewmotion/ocpp/json/ocpp15/without_srpc) in the ocpp-json unit tests, which were taken from [GIR ocppjs](http://www.gir.fr/ocppjs/).
 
- * The [`Draft_OCPP`](ocpp-j-api/src/main/scala/com/thenewmotion/ocpp/json/api/server/Draft_OCPP.scala)
-   class for doing subprotocol header exchange with java-websocket, which was
-   translated to Scala from the
-   [Java example in the java-websocket wiki](https://github.com/TooTallNate/Java-WebSocket/wiki/Implementing-your-own-Sec-WebSocket-Protocol).
-   This page has been removed after java-websocket changed the way they support
-   protocol handshaking.
-
  * The [JSON schema files](ocpp-json/src/test/resources/schemas/) for OCPP 1.6 are part of the OCPP 1.6 Specification, distributed under the following conditions:
 
       ```
