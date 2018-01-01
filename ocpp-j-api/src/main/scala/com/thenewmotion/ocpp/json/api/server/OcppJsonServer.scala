@@ -3,16 +3,17 @@ package json.api
 package server
 
 import java.net.InetSocketAddress
+import java.util.Collections
 
 import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Future}
-import scala.collection.JavaConverters._
 import org.java_websocket.WebSocket
-import org.java_websocket.drafts.Draft
+import org.java_websocket.drafts.{Draft, Draft_6455}
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
 import messages._
 import OcppJsonServer._
+import org.java_websocket.protocols.{IProtocol, Protocol}
 
 /**
  * A simple server implementation to show how this library can be used in servers.
@@ -21,7 +22,13 @@ import OcppJsonServer._
  * @param requestedOcppVersion The OCPP version to serve (either 1.5 or 1.6; negotiation is not supported)
  */
 abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
-  extends WebSocketServer(new InetSocketAddress(listenPort), List[Draft](new Draft_OCPP(requestedOcppVersion)).asJava) {
+  extends WebSocketServer(
+    new InetSocketAddress(listenPort),
+    Collections.singletonList[Draft](new Draft_6455(
+      Collections.emptyList(),
+      Collections.singletonList[IProtocol](new Protocol(protosForVersions(requestedOcppVersion)))
+    ))
+  ){
 
   private type OcppCake = CentralSystemOcppConnectionComponent with DefaultSrpcComponent with SimpleServerWebSocketComponent
 
@@ -116,4 +123,9 @@ object OcppJsonServer {
   type OutgoingEndpoint = OutgoingOcppEndpoint[ChargePointReq, ChargePointRes, ChargePointReqRes]
 
   type IncomingEndpoint = IncomingOcppEndpoint[CentralSystemReq, CentralSystemRes, CentralSystemReqRes]
+
+  private val protosForVersions = Map[Version, String](
+    Version.V15 -> "ocpp1.5",
+    Version.V16 -> "ocpp1.6"
+  )
 }

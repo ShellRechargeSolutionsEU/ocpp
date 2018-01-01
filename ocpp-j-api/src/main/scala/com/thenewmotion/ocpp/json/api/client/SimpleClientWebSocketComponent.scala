@@ -6,6 +6,11 @@ import java.net.URI
 import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Promise}
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import org.java_websocket.WebSocket
+import org.java_websocket.exceptions.InvalidDataException
+import org.java_websocket.extensions.IExtension
+import org.java_websocket.handshake.ClientHandshake
+import org.java_websocket.protocols.{IProtocol, Protocol}
 import org.json4s._
 import org.slf4j.LoggerFactory
 
@@ -25,10 +30,9 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
 
     private val actualUri = uriWithChargerId(uri, chargerId)
 
-    private val headers: java.util.Map[String, String] = List(
-      authPassword.map(password => AuthHeader -> s"Basic: ${toBase64String(chargerId, password)}"),
-      noneIfEmpty(requestedSubProtocols).map(protocols => SubProtoHeader -> protocols.mkString(","))
-    ).flatten.toMap.asJava
+    private val headers: java.util.Map[String, String] =
+      authPassword.map(password => authHeader -> s"Basic: ${toBase64String(chargerId, password)}")
+       .toMap.asJava
 
     import org.java_websocket.client.WebSocketClient
     import org.java_websocket.drafts.Draft_6455
@@ -36,10 +40,31 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
 
     private val subProtocolPromise = Promise[Option[String]]()
 
-    protected val client = new WebSocketClient(actualUri, new Draft_6455(), headers, 0) {
+    val draftWithRightSubprotocols = new Draft_6455(
+      List.empty[IExtension].asJava,
+      requestedSubProtocols.map(new Protocol(_): IProtocol).asJava
+    )
+
+    protected val client = new WebSocketClient(actualUri, draftWithRightSubprotocols, headers, 0) {
+
+      override def onWebsocketHandshakeReceivedAsClient(
+        conn: WebSocket,
+        request: ClientHandshake,
+        response: ServerHandshake
+      ): Unit = {
+        val subProtocol = noneIfEmpty(response.getFieldValue(subProtoHeader)).map(_.mkString)
+        if (subProtocol.exists(proto => requestedSubProtocols.contains(proto))) {
+          subProtocolPromise.success(subProtocol)
+          ()
+        } else {
+          throw new InvalidDataException(
+            1007,
+            s"Server using unrequested subprotocol ${subProtocol.getOrElse("<none>")}"
+          )
+        }
+      }
+
       def onOpen(handshakeData: ServerHandshake) = {
-        val subProtocol = noneIfEmpty(handshakeData.getFieldValue(SubProtoHeader)).map(_.mkString)
-        subProtocolPromise.success(subProtocol)
         logger.debug(s"WebSocket connection opened to $actualUri, sub protocol: $subProtocol")
       }
 
@@ -87,10 +112,15 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
 }
 
 object SimpleClientWebSocketComponent {
-  final val AuthHeader = "Authorization"
-  final val SubProtoHeader = "Sec-WebSocket-Protocol"
-  final val wsSubProtocolForOcppVersion: Map[Version, String] =
-    Map(Version.V15 -> "ocpp1.5", Version.V16 -> "ocpp1.6")
+  final val authHeader = "Authorization"
+
+  final val subProtoHeader = "Sec-WebSocket-Protocol"
+
+  final val wsSubProtocolForOcppVersion: Map[Version, String] = Map(
+    Version.V15 -> "ocpp1.5",
+    Version.V16 -> "ocpp1.6"
+  )
+
   final val ocppVersionForWsSubProtocol = wsSubProtocolForOcppVersion.map(_.swap)
 
   private def noneIfEmpty[T](seq: Seq[T]): Option[Seq[T]] =
