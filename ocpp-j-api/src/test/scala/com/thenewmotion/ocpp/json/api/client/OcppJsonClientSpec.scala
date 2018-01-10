@@ -43,11 +43,16 @@ class OcppJsonClientSpec extends Specification {
       "when requesting ocpp1.6 and server supports 1.5 only" in new TestScope {
         val requesting = List(Version.V16)
         server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).callback(V15)
-        createOcppJsonClient(requesting) must throwA[SimpleClientWebSocketComponent.WebSocketDisconnectException]
+        createOcppJsonClient(requesting) must throwA[SimpleClientWebSocketComponent.WebSocketErrorWhenOpeningException]
       }
       "when requesting a version the JSON client doesn't support" in new TestScope {
         val requesting = List(Version.V12)
         createOcppJsonClient(requesting) must throwA[OcppJsonClient.VersionNotSupported]
+      }
+      "when requesting to a server that's not listening" in new TestScope {
+        val requesting = List(Version.V15)
+        server.stop()
+        createOcppJsonClient(requesting) must throwA[java.net.ConnectException]
       }
     }
   }
