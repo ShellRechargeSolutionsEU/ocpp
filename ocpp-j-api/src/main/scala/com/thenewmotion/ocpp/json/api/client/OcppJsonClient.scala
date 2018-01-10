@@ -41,7 +41,7 @@ abstract class OcppJsonClient(
     import OcppJsonClient._
     import SimpleClientWebSocketComponent._
 
-    lazy val webSocketConnection = new SimpleClientWebSocketConnection(
+    val webSocketConnection = new SimpleClientWebSocketConnection(
       chargerId,
       centralSystemUri,
       authPassword,
@@ -56,28 +56,17 @@ abstract class OcppJsonClient(
       }
     )
 
-    private val subProtocol = webSocketConnection.subProtocol.getOrElse(
-      throw VersionMismatch(
-        "Could not negotiate a common version for: ",
-        requestedVersions = versions
-      )
+    val ocppVersion = ocppVersionForWsSubProtocol.getOrElse(
+      webSocketConnection.subProtocol,
+      throw new RuntimeException(s"Unknown protocol ${webSocketConnection.subProtocol} in use for connection")
     )
 
-    lazy val ocppVersion = ocppVersionForWsSubProtocol.getOrElse(
-      subProtocol,
-      throw new RuntimeException(s"Unknown protocol $subProtocol returned by the server")
-    )
-
-    lazy val ocppConnection = defaultChargePointOcppConnection
-    lazy val srpcConnection = new DefaultSrpcConnection
+    val ocppConnection = defaultChargePointOcppConnection
+    val srpcConnection = new DefaultSrpcConnection
   }
 }
 
 object OcppJsonClient {
-  sealed abstract class VersionException(msg: String, versions: Iterable[Version])
-    extends RuntimeException(msg + versions.mkString(","))
-  case class VersionMismatch(msg: String, requestedVersions: Iterable[Version])
-    extends VersionException(msg, requestedVersions)
   case class VersionNotSupported(msg: String, supportedVersions: Iterable[Version])
-    extends VersionException(msg, supportedVersions)
+    extends RuntimeException(msg + supportedVersions.mkString(", "))
 }
