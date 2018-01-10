@@ -104,7 +104,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
         if (connectedPromise.isCompleted)
           SimpleClientWebSocketComponent.this.onDisconnect()
         else {
-          connectedPromise.complete(Failure(WebSocketDisconnectException(code, reason, remote)))
+          connectedPromise.complete(Failure(WebSocketErrorWhenOpeningException(code, reason, remote)))
           ()
         }
       }
@@ -170,8 +170,9 @@ object SimpleClientWebSocketComponent {
       base.getFragment
     )
 
-  case class WebSocketDisconnectException(code: Int, reason: String, remote: Boolean) extends
+  case class WebSocketErrorWhenOpeningException(code: Int, reason: String, remote: Boolean) extends
     RuntimeException(
-      "WebSocket disconnected unexpectedly: code = " + code + ", remote = " + remote + ", reason = \"" + reason + "\""
+      "WebSocket disconnected unexpectedly while handshaking: code = " + code +
+      ", remote = " + remote + ", reason = \"" + reason + "\""
     )
 }
