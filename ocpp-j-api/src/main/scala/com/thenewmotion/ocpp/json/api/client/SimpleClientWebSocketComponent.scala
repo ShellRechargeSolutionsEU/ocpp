@@ -6,6 +6,7 @@ import java.net.URI
 import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Promise}
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import scala.util.{Failure, Success}
 import org.java_websocket.WebSocket
 import org.java_websocket.exceptions.InvalidDataException
 import org.java_websocket.extensions.IExtension
@@ -38,7 +39,8 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
     import org.java_websocket.drafts.Draft_6455
     import org.java_websocket.handshake.ServerHandshake
 
-    private val subProtocolPromise = Promise[Option[String]]()
+    private val subProtocolPromise = Promise[String]()
+    private val connectedPromise= Promise[Unit]
 
     val draftWithRightSubprotocols = new Draft_6455(
       List.empty[IExtension].asJava,
@@ -53,22 +55,26 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
         response: ServerHandshake
       ): Unit = {
         val subProtocol = noneIfEmpty(response.getFieldValue(subProtoHeader)).map(_.mkString)
-        if (subProtocol.exists(proto => requestedSubProtocols.contains(proto))) {
-          subProtocolPromise.success(subProtocol)
-          ()
-        } else {
-          throw new InvalidDataException(
-            1007,
-            s"Server using unrequested subprotocol ${subProtocol.getOrElse("<none>")}"
-          )
+        logger.debug("Received subprotocol offer from server: {}", subProtocol)
+        subProtocol match {
+          case Some(proto) if requestedSubProtocols.contains(proto) =>
+            subProtocolPromise.success(proto)
+            ()
+          case _ =>
+            throw new InvalidDataException(
+              1007,
+              s"Server using unrequested subprotocol ${subProtocol.getOrElse("<none>")}"
+            )
         }
       }
 
-      def onOpen(handshakeData: ServerHandshake) = {
+      def onOpen(handshakeData: ServerHandshake): Unit = {
         logger.debug(s"WebSocket connection opened to $actualUri, sub protocol: $subProtocol")
+        connectedPromise.complete(Success(()))
+        ()
       }
 
-      def onMessage(message: String) = {
+      def onMessage(message: String): Unit = {
         native.parseJsonOpt(message) match {
           case None =>
             logger.debug("Received non-JSON message: {}", message)
@@ -78,36 +84,54 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
         }
       }
 
-      def onError(ex: Exception) = {
-        logger.debug("Received error {}", ex)
-        SimpleClientWebSocketComponent.this.onError(ex)
+      def onError(ex: Exception): Unit = {
+        logger.debug("Received WebSocket error {}", ex)
+        if (connectedPromise.isCompleted)
+          SimpleClientWebSocketComponent.this.onError(ex)
+        else {
+          connectedPromise.complete(Failure(ex))
+          ()
+        }
       }
 
-      def onClose(code: Int, reason: String, remote: Boolean) = {
-        SimpleClientWebSocketComponent.this.onDisconnect()
+      def onClose(code: Int, reason: String, remote: Boolean): Unit = {
+        logger.debug(
+          "WebSocket connection closed: code {}, remote {}, reason \"{}\"",
+          code.asInstanceOf[Object],
+          remote.asInstanceOf[Object],
+          reason
+        )
+        if (connectedPromise.isCompleted)
+          SimpleClientWebSocketComponent.this.onDisconnect()
+        else {
+          connectedPromise.complete(Failure(WebSocketDisconnectException(code, reason, remote)))
+          ()
+        }
       }
     }
 
-    def send(jVal: JValue) = {
+    def send(jVal: JValue): Unit = {
       logger.debug("Sending with Java-WebSocket: {}", jVal)
       client.send(native.compactJson(native.renderJValue(jVal)))
     }
 
-    def close() = client.closeBlocking()
+    def close(): Unit = client.closeBlocking()
 
-    def connect(): Boolean = {
+    private def connect(): Unit = {
       logger.debug(s"Connecting using uri: $actualUri")
       if (uri.getScheme == "wss") {
         logger.debug(s"Using SSLContext protocol: ${sslContext.getProtocol}")
         client.setSocket(sslContext.getSocketFactory.createSocket)
       }
-      client.connectBlocking()
+      client.connect()
     }
 
-    private val connected = connect() // connect only after setting up the socket event handlers
-    logger.debug(s"Created SimpleClientWebSocketConnection, connected = $connected")
+    connect() // connect only after setting up the socket event handlers
+    Await.result(connectedPromise.future, wsOpenTimeout)
 
-    val subProtocol = if (connected) Await.result(subProtocolPromise.future, wsOpenTimeout) else None
+    logger.debug("Connected to {}", actualUri)
+
+    val subProtocol: String = Await.result(subProtocolPromise.future, wsOpenTimeout)
   }
 }
 
@@ -144,5 +168,10 @@ object SimpleClientWebSocketComponent {
       base.getPath + s"/$chargerId",
       base.getQuery,
       base.getFragment
+    )
+
+  case class WebSocketDisconnectException(code: Int, reason: String, remote: Boolean) extends
+    RuntimeException(
+      "WebSocket disconnected unexpectedly: code = " + code + ", remote = " + remote + ", reason = \"" + reason + "\""
     )
 }
