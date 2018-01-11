@@ -6,7 +6,6 @@ import java.net.URI
 import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Promise}
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
-import scala.util.{Failure, Success}
 import org.java_websocket.WebSocket
 import org.java_websocket.exceptions.InvalidDataException
 import org.java_websocket.extensions.IExtension
@@ -70,7 +69,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
 
       def onOpen(handshakeData: ServerHandshake): Unit = {
         logger.debug(s"WebSocket connection opened to $actualUri, sub protocol: $subProtocol")
-        connectedPromise.complete(Success(()))
+        connectedPromise.success(())
         ()
       }
 
@@ -86,12 +85,9 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
 
       def onError(ex: Exception): Unit = {
         logger.debug("Received WebSocket error {}", ex)
-        if (connectedPromise.isCompleted)
+
+        if (!connectedPromise.tryFailure(ex))
           SimpleClientWebSocketComponent.this.onError(ex)
-        else {
-          connectedPromise.complete(Failure(ex))
-          ()
-        }
       }
 
       def onClose(code: Int, reason: String, remote: Boolean): Unit = {
@@ -101,12 +97,10 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
           remote.asInstanceOf[Object],
           reason
         )
-        if (connectedPromise.isCompleted)
+        lazy val openingException = WebSocketErrorWhenOpeningException(code, reason, remote)
+
+        if (!connectedPromise.tryFailure(openingException))
           SimpleClientWebSocketComponent.this.onDisconnect()
-        else {
-          connectedPromise.complete(Failure(WebSocketErrorWhenOpeningException(code, reason, remote)))
-          ()
-        }
       }
     }
 
