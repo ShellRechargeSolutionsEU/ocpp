@@ -719,6 +719,12 @@ OCPP-S is what this library started with, but by now it is undocumented legacy.
 It may be split off to enjoy retirement in its own little project on the next
 major version.
 
+## Changelog
+
+### Changes in 6.0.1
+
+ - Throw more meaningful exceptions instead of always `VersionMismatch` when an `OcppJsonClient` fails to connect
+
 ### Changes in 6.0.0 compared to version 4.x
 
 This library had been stable for a few years between 2014 and 2017, with 4.x.x
