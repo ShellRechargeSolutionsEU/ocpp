@@ -187,6 +187,7 @@ object JsonOperations {
     val authorizeJsonOp = jsonOp[AuthorizeReq, AuthorizeRes](Authorize)
     val bootNotificationJsonOp = jsonOp[BootNotificationReq, BootNotificationRes](BootNotification)
     val diagnosticsStatusNotificationJsonOp = jsonOp[DiagnosticsStatusNotificationReq, DiagnosticsStatusNotificationRes.type](DiagnosticsStatusNotification)
+    val dataTransferJsonOp = jsonOp[CentralSystemDataTransferReq, CentralSystemDataTransferRes](DataTransfer)
     val firmwareStatusNotificationJsonOp = jsonOp[FirmwareStatusNotificationReq, FirmwareStatusNotificationRes.type](FirmwareStatusNotification)
     val heartbeatJsonOp = jsonOp[HeartbeatReq.type, HeartbeatRes](Heartbeat)
     val meterValuesJsonOp = jsonOp[MeterValuesReq, MeterValuesRes.type](MeterValues)
@@ -198,6 +199,7 @@ object JsonOperations {
       authorizeJsonOp,
       bootNotificationJsonOp,
       diagnosticsStatusNotificationJsonOp,
+      dataTransferJsonOp,
       firmwareStatusNotificationJsonOp,
       heartbeatJsonOp,
       meterValuesJsonOp,
@@ -215,6 +217,7 @@ object JsonOperations {
         case AuthorizeReqRes => authorizeJsonOp
         case BootNotificationReqRes => bootNotificationJsonOp
         case DiagnosticsStatusNotificationReqRes => diagnosticsStatusNotificationJsonOp
+        case CentralSystemDataTransferReqRes => dataTransferJsonOp
         case FirmwareStatusNotificationReqRes => firmwareStatusNotificationJsonOp
         case HeartbeatReqRes => heartbeatJsonOp
         case MeterValuesReqRes => meterValuesJsonOp

@@ -3,7 +3,7 @@ package json.v16
 package scalacheck
 
 import org.scalacheck.Gen
-import Gen._
+import Gen.{alphaNumStr, _}
 import com.thenewmotion.ocpp.json.v16.scalacheck.Helpers.idTagInfoGen
 
 object MessageGenerators {
@@ -45,6 +45,19 @@ object MessageGenerators {
 
   def authorizeRes: Gen[AuthorizeRes] =
     idTagInfoGen.map(AuthorizeRes)
+
+  def dataTransferReq:Gen[DataTransferReq] =
+    for {
+      vendorId <- Gen.resize(255, alphaNumStr)
+      messageId <- option(Gen.resize(50, alphaNumStr))
+      data <- option(alphaNumStr)
+    } yield DataTransferReq(vendorId, messageId, data)
+
+  def dataTransferRes: Gen[DataTransferRes] =
+    for {
+      status <- enumerableNameGen(messages.DataTransferStatus)
+      data <- option(alphaNumStr)
+    } yield DataTransferRes(status, data)
 
   def startTransactionReq: Gen[StartTransactionReq] =
     for {

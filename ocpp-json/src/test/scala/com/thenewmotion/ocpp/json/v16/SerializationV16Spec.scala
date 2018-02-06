@@ -20,6 +20,8 @@ object SerializationV16Spec extends Specification with ScalaCheck {
     testMessageClass(bootNotificationRes)(BootNotificationResV16Variant)
     testMessageClass(authorizeReq)(AuthorizeReqV16Variant)
     testMessageClass(authorizeRes)(AuthorizeResV16Variant)
+    testMessageClass(dataTransferReq)(DataTransferReqV16Variant)
+    testMessageClass(dataTransferRes)(DataTransferResV16Variant)
     testMessageClass(startTransactionReq)(StartTransactionReqV16Variant)
     testMessageClass(startTransactionRes)(StartTransactionResV16Variant)
     testMessageClass(stopTransactionReq)(StopTransactionReqV16Variant)
