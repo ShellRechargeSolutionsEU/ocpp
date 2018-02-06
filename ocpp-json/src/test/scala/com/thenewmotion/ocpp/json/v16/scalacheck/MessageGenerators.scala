@@ -3,8 +3,7 @@ package json.v16
 package scalacheck
 
 import org.scalacheck.Gen
-import Gen.{alphaNumStr, _}
-import com.thenewmotion.ocpp.json.v16.scalacheck.Helpers.idTagInfoGen
+import Gen._
 
 object MessageGenerators {
 
