@@ -18,6 +18,16 @@ object SerializationV16 extends SerializationCommon {
     (msg: AuthorizeRes) => messages.AuthorizeRes(msg.idTagInfo.fromV16)
   )
 
+  implicit val DataTransferReqV16Variant = OcppMessageSerializer.variantFor[messages.CentralSystemDataTransferReq, Version.V16.type, v16.DataTransferReq](
+    (msg: messages.CentralSystemDataTransferReq) => DataTransferReq(msg.vendorId, msg.messageId, msg.data),
+    (msg: DataTransferReq) => messages.CentralSystemDataTransferReq(msg.vendorId, msg.messageId, msg.data)
+  )
+
+  implicit val DataTransferResV16Variant = OcppMessageSerializer.variantFor[messages.CentralSystemDataTransferRes, Version.V16.type, v16.DataTransferRes](
+    (msg: messages.CentralSystemDataTransferRes) => DataTransferRes(msg.status.toV16, msg.data),
+    (msg: DataTransferRes) => messages.CentralSystemDataTransferRes(msg.status.fromV16, msg.data)
+  )
+
   implicit val StartTransactionReqV16Variant = OcppMessageSerializer.variantFor[messages.StartTransactionReq, Version.V16.type, v16.StartTransactionReq](
     (msg: messages.StartTransactionReq) => StartTransactionReq(
       connectorId = msg.connector.toOcpp,
@@ -477,6 +487,15 @@ object SerializationV16 extends SerializationCommon {
       parentIdTag = self.parentIdTag
     )
   }
+
+  private implicit class RichDataTransferStatus(dataTransferStatus: messages.DataTransferStatus) {
+    def toV16: String = dataTransferStatus.name
+  }
+
+  private implicit class RichV16DataTransferStatus(self: String) {
+    def fromV16: messages.DataTransferStatus = messages.DataTransferStatus.withName(self).get
+  }
+
 
   private object RichChargePointStatus {
     val defaultErrorCode = "NoError"
