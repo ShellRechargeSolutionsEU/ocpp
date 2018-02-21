@@ -278,7 +278,7 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
           MeterValuesReq(messages.Scope.fromOcpp(req.connectorId), req.transactionId, req.values.map(toMeter).toList)
       }  (_ => MeterValuesResponse())
 
-      case DataTransfer => ?[DataTransferRequest, DataTransferResponse] {
+      case DataTransfer => ?[DataTransferRequestType, DataTransferResponseType] {
         req =>
           CentralSystemDataTransferReq(
             req.vendorId,
@@ -286,16 +286,16 @@ object CentralSystemDispatcherV15 extends AbstractDispatcher[CentralSystemReq, C
             stringOption(req.data))
       } {
         case res: CentralSystemDataTransferRes =>
-          val status: DataTransferStatus = {
+          val status: DataTransferStatusType = {
             import messages.{DataTransferStatus => ocpp}
             res.status match {
-              case ocpp.Accepted => AcceptedValue
-              case ocpp.Rejected => RejectedValue
-              case ocpp.UnknownMessageId => UnknownMessageId
-              case ocpp.UnknownVendorId => UnknownVendorId
+              case ocpp.Accepted => AcceptedValue13
+              case ocpp.Rejected => RejectedValue10
+              case ocpp.UnknownMessageId => UnknownMessageIdValue
+              case ocpp.UnknownVendorId => UnknownVendorIdValue
             }
           }
-          DataTransferResponse(status, res.data)
+          DataTransferResponseType(status, res.data)
       }
     }
   }
