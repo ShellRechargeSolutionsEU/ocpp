@@ -721,6 +721,14 @@ major version.
 
 ## Changelog
 
+### Changes in 6.0.3
+
+ - Support DataTransfer messages from Charge Point to Central System also over SOAP
+
+### Changes in 6.0.2
+
+ - Support DataTransfer messages from Charge Point to Central System
+
 ### Changes in 6.0.1
 
  - Throw more meaningful exceptions instead of always `VersionMismatch` when an `OcppJsonClient` fails to connect
