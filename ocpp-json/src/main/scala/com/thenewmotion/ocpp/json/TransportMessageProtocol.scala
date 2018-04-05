@@ -42,27 +42,23 @@ object PayloadErrorCode extends Enumerable[PayloadErrorCode] {
   )
 }
 
-import TransportMessageType._
+case class SrpcEnvelope(
+  callId: String,
+  payload: SrpcMessage
+)
 
-sealed trait TransportMessage {
-  def MsgType: TransportMessageType
-}
-// generic message structure (used to transform from and to json)
-case class RequestMessage(callId: String, procedureName: String, payload: JValue) extends TransportMessage {
-  def MsgType: TransportMessageType = CALL
-}
+sealed trait SrpcMessage
 
-case class ResponseMessage(callId: String, payload: JValue) extends TransportMessage {
-  def MsgType: TransportMessageType = CALLRESULT
-}
+case class RequestMessage(procedureName: String, payload: JValue) extends SrpcMessage
 
-//
-case class ErrorResponseMessage(callId: String, code: PayloadErrorCode, description: String, details: JValue) extends TransportMessage {
-  def MsgType: TransportMessageType = CALLERROR
-}
+// TODO swap result and response
+sealed trait ResultMessage extends SrpcMessage
 
-object ErrorResponseMessage {
-  def apply(callId: String, code: PayloadErrorCode, description: String): ErrorResponseMessage =
-    ErrorResponseMessage(callId, code, description, JObject(List()))
-}
+case class ResponseMessage(payload: JValue) extends ResultMessage
+
+case class ErrorResponseMessage(
+  code: PayloadErrorCode,
+  description: String,
+  details: JValue = JObject(List())
+) extends ResultMessage
 
