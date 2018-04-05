@@ -12,28 +12,19 @@ object TransportMessageParser {
     LoggerFactory.getLogger(TransportMessageParser.this.getClass)
 
   implicit val formats =
-    DefaultFormats ++ TransportMessageJsonSerializers()
+    DefaultFormats + TransportMessageJsonSerializer()
 
-  import TransportMessageType._
+  def parse(input: String): SrpcEnvelope =
+    parse(JsonParser.parse(input))
 
-  def parse(input: String): TransportMessage = {
-    val parsedMsg = JsonParser.parse(input)
-    parse(parsedMsg)
+  def parse(input: JValue): SrpcEnvelope = {
+    input.extract[SrpcEnvelope]
   }
 
-  def parse(input: JValue): TransportMessage = {
-    input match {
-      case JArray(JInt(CALL.`id`)       :: rest) => input.extract[RequestMessage]
-      case JArray(JInt(CALLRESULT.`id`) :: rest) => input.extract[ResponseMessage]
-      case JArray(JInt(CALLERROR.`id`)  :: rest) => input.extract[ErrorResponseMessage]
-      case _                                     => sys.error(s"Unrecognized JSON command message $input")
-    }
-  }
-
-  def writeJValue(input: TransportMessage): JValue = {
+  def writeJValue(input: SrpcEnvelope): JValue = {
     Extraction.decompose(input)
   }
 
-  def write(input: TransportMessage): String =
+  def write(input: SrpcEnvelope): String =
     compact(render(writeJValue(input)))
 }
