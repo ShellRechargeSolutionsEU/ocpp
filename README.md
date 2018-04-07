@@ -256,7 +256,7 @@ shows the methods defined by each layer:
     |                                    OcppConnectionComponent layer                                                    |
     |                                                                                                                     |
     |                                                                                                                     |
-    | SrpcConnectionComponent.srpcConnection.send (call)             SrpcConnectionComponent.onSrpcMessage (override)     |
+    | SrpcConnectionComponent.srpcConnection.sendRequest (call)      SrpcConnectionComponent.onSrpcRequest (override)     |
     +------------------V-----------------------------------------------^--------------------------------------------------+
     |                                                                                                                     |
     |                                          SrpcComponent layer                                                        |
