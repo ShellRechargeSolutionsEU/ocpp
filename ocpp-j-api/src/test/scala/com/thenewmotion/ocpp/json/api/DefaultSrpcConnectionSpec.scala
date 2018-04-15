@@ -84,6 +84,25 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
         webSocketCloseFuture must beEqualTo(()).await
       }
     }
+
+    "refuse new incoming requests with GenericError when SRPC connection close is waiting" in { implicit ee: ExecutionEnv =>
+      new TestScope {
+
+        val outgoingResponsePromise = Promise[ResponseMessage]()
+
+        onRequest.apply(any[RequestMessage]()) returns outgoingResponsePromise.future
+
+        srpcComponent.onMessage(testRequestJson)
+
+        val srpcCloseFuture = srpcComponent.srpcConnection.close()
+
+        srpcComponent.onMessage(anotherTestRequestJson)
+
+        TransportMessageParser.parse(awaitFirstSentMessage) must beLike {
+          case SrpcEnvelope("callid2", ErrorResponseMessage(PayloadErrorCode.GenericError, _, _)) => ok
+        }
+      }
+    }
   }
 
   trait TestScope extends Scope {
@@ -122,6 +141,7 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
 
     val testRequest = RequestMessage("FireMissiles", JObject("aargh" -> JInt(42)))
     val testRequestJson = JsonParser.parse("""[2, "callid1", "FireMissiles", {"aargh": 42}]""")
+    val anotherTestRequestJson = JsonParser.parse("""[2, "callid2", "FireMissiles", {"aargh": 42}]""")
     val testResponse = ResponseMessage(JObject("urgh" -> JInt(2)))
     val testResponseJson = JArray(JInt(3) :: JString("callid1") :: testResponse.payload :: Nil)
   }
