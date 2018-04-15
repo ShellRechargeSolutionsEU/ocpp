@@ -262,7 +262,4 @@ object DefaultSrpcComponent {
   case object Open    extends ConnectionState
   case object Closing extends ConnectionState
   case object Closed  extends ConnectionState
-
-
-  type CallIdCache = Map[String, Promise[SrpcResponse]]
 }
