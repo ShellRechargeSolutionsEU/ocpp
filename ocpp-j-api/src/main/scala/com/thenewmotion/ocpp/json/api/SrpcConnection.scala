@@ -31,6 +31,24 @@ trait SrpcComponent {
       * @return The incoming response, asynchronously
       */
     def sendRequest(msg: RequestMessage): Future[ResultMessage]
+
+    /**
+      * Close the connection.
+      *
+      * This will allow all pending incoming requests to be responded to,
+      * and only then will close the underlying WebSocket.
+      *
+      * @return A future that completes when connection has indeed closed
+      */
+    def close(): Future[Unit]
+
+    /**
+      * Close the connection, without waiting for the request handler to handle
+      * requests that were already received.
+      *
+      * @return
+      */
+    def forceClose(): Unit
   }
 
   def srpcConnection: SrpcConnection
@@ -47,6 +65,8 @@ trait SrpcComponent {
 trait DefaultSrpcComponent extends SrpcComponent {
   this: WebSocketComponent =>
 
+  import DefaultSrpcComponent._
+
   private[this] val logger = LoggerFactory.getLogger(DefaultSrpcComponent.this.getClass)
 
   private[this] val callIdGenerator = CallIdGenerator()
@@ -55,28 +75,59 @@ trait DefaultSrpcComponent extends SrpcComponent {
 
   class DefaultSrpcConnection extends SrpcConnection {
 
-    private[this] val callIdCache: mutable.Map[String, Promise[ResultMessage]] = mutable.Map()
+    private var state: ConnectionState = Open
 
-    def sendRequest(msg: RequestMessage): Future[ResultMessage] = {
-      val callId = callIdGenerator.next()
-      val responsePromise = Promise[ResultMessage]()
+    private val callIdCache: mutable.Map[String, Promise[ResultMessage]] =
+        mutable.Map.empty[String, Promise[ResultMessage]]
 
-      callIdCache.synchronized {
-        callIdCache.put(callId, responsePromise)
-      }
+    /** The number of incoming requests received that we have not yet responded to */
+    private var numIncomingRequests: Int = 0
 
-      Try {
-        webSocketConnection.send(TransportMessageParser.writeJValue(SrpcEnvelope(callId, msg)))
-      } match {
-        case Success(()) => responsePromise.future
-        case Failure(e)  => Future.failed(e)
+    private var closePromise: Option[Promise[Unit]] = None
+
+    def close(): Future[Unit] = synchronized {
+      state match {
+        case Open =>
+          val p = Promise[Unit]()
+          closePromise = Some(p)
+          if (numIncomingRequests == 0) {
+            completeGracefulClose()
+            state = Closed
+          } else {
+            state = Closing
+          }
+          p.future
+        case _ =>
+          throw new IllegalStateException("Connection already closed")
       }
     }
 
-    private[DefaultSrpcComponent] def handleIncomingResult(callId: String, res: ResultMessage): Unit = {
-      val cachedResponsePromise = callIdCache.synchronized {
-        callIdCache.remove(callId)
+    def forceClose(): Unit = synchronized {
+      webSocketConnection.close()
+      state = Closed
+    }
+
+    def sendRequest(msg: RequestMessage): Future[ResultMessage] = synchronized {
+      val callId = callIdGenerator.next()
+      val responsePromise = Promise[ResultMessage]()
+
+      state match {
+        case Open =>
+          callIdCache.put(callId, responsePromise)
+          Try {
+                webSocketConnection.send(TransportMessageParser.writeJValue(SrpcEnvelope(callId, msg)))
+          } match {
+            case Success(()) => responsePromise.future
+            case Failure(e)  => Future.failed(e)
+          }
+        case _ =>
+          // TODO genericerror with message
+          throw new IllegalStateException("Connection already closed")
       }
+    }
+
+    private[DefaultSrpcComponent] def handleIncomingResult(callId: String, res: ResultMessage): Unit = synchronized {
+      val cachedResponsePromise = callIdCache.remove(callId)
 
       cachedResponsePromise match {
         case None =>
@@ -85,6 +136,42 @@ trait DefaultSrpcComponent extends SrpcComponent {
           resPromise.success(res)
           ()
       }
+    }
+
+    // TODO what if connection has closed by now due to remote close or RST or whatever?
+    private[DefaultSrpcComponent] def handleOutgoingResult(callId: String, msg: ResultMessage): Unit = synchronized {
+      val resEnvelope = SrpcEnvelope(callId, msg)
+      try {
+        webSocketConnection.send(TransportMessageParser.writeJValue(resEnvelope))
+      } finally {
+        srpcConnection.incomingCallEnded()
+      }
+    }
+
+    private[DefaultSrpcComponent] def incomingCallStarted(): Unit = synchronized {
+      numIncomingRequests += 1
+    }
+
+    /**
+      * Should be called whenever SrpcConnection has received the response to an
+      * incoming request from the request handler, or definitively failed to do
+      * so.
+      *
+      * @return Whether the WebSocket connection should now be closed
+      */
+    private def incomingCallEnded(): Unit = {
+      numIncomingRequests -= 1
+
+      if (numIncomingRequests == 0 && state == Closing) {
+        completeGracefulClose()
+      }
+    }
+
+    private def completeGracefulClose(): Unit = {
+      webSocketConnection.close()
+      // TODO or set Closed state in onClose handler?
+      state = Closed
+      closePromise.foreach(_.success(()))
     }
   }
 
@@ -96,14 +183,14 @@ trait DefaultSrpcComponent extends SrpcComponent {
     reqEnvelope.payload match {
       case req: RequestMessage =>
         logger.debug("Passing request to onSrpcRequest")
+        srpcConnection.incomingCallStarted()
         onSrpcRequest(req) recover {
           case NonFatal(e) => ErrorResponseMessage(
             PayloadErrorCode.InternalError,
             "error getting response in SRPC layer"
           )
         } foreach { msg: ResultMessage =>
-          val resEnvelope = SrpcEnvelope(reqEnvelope.callId, msg)
-          webSocketConnection.send(TransportMessageParser.writeJValue(resEnvelope))
+          srpcConnection.handleOutgoingResult(reqEnvelope.callId, msg)
         }
       case result: ResultMessage =>
         srpcConnection.handleIncomingResult(reqEnvelope.callId, result)
@@ -115,4 +202,36 @@ trait DefaultSrpcComponent extends SrpcComponent {
     logger.error("WebSocket error", ex)
 }
 
+object DefaultSrpcComponent {
 
+  /**
+    * Our SRPC connections can be in three states:
+    *
+    * * OPEN (requests and responses can be sent)
+    * * CLOSING (only responses can be sent, trying to send a request results in
+    * an error)
+    * * CLOSED (nothing can be sent and the underlying WebSocket is closed too)
+    *
+    * This is done so that when an application calls closes an OCPP connection, we
+    * give asynchronous request processors a chance to respond before shutting
+    * down the WebSocket connection which would lead to unexpected errors.
+    *
+    * Unfortunately OCPP has no mechanism to tell the remote side we're about to
+    * close, so they might still send new requests while we're CLOSING. In that
+    * case the SRPC layer will send them a CALLERROR with a GenericError error
+    * code.
+    * TODO: test for above statement
+    *
+    * Note that this state is about the SRPC level in the network stack. The
+    * WebSocket connection should be fully open when the SRPC layer is in Open
+    * or Closing state. When the WebSocket is closed remotely, we go immediately
+    * from Open to Closed.
+    */
+  sealed trait ConnectionState
+  case object Open    extends ConnectionState
+  case object Closing extends ConnectionState
+  case object Closed  extends ConnectionState
+
+
+  type CallIdCache = Map[String, Promise[ResultMessage]]
+}
