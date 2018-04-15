@@ -102,7 +102,7 @@ trait DefaultSrpcComponent extends SrpcComponent {
             state = Closing
           }
           p.future
-        case _ =>
+        case Closing | Closed =>
           throw new IllegalStateException("Connection already closed")
       }
     }
@@ -125,8 +125,7 @@ trait DefaultSrpcComponent extends SrpcComponent {
             case Success(()) => responsePromise.future
             case Failure(e)  => Future.failed(e)
           }
-        case _ =>
-          // TODO local/remote error system
+        case Closing | Closed =>
           throw new IllegalStateException("Connection already closed")
       }
     }
@@ -136,20 +135,25 @@ trait DefaultSrpcComponent extends SrpcComponent {
         case Open =>
           numIncomingCalls += 1
           onSrpcCall(req)
-        case _ =>
+        case Closing | Closed =>
           Future.successful(SrpcCallError(PayloadErrorCode.GenericError, "Connection is closing"))
       }
     }
 
     private[DefaultSrpcComponent] def handleIncomingResponse(callId: String, res: SrpcResponse): Unit = synchronized {
-      val cachedResponsePromise = callIdCache.remove(callId)
+      state match {
+        case Closed =>
+          logger.warn("Received response with call ID {} while already closed. Dropping.", callId)
+        case Open | Closing =>
+          val cachedResponsePromise = callIdCache.remove(callId)
 
-      cachedResponsePromise match {
-        case None =>
-          logger.info("Received response to no call: {}", res)
-        case Some(resPromise) =>
-          resPromise.success(res)
-          ()
+          cachedResponsePromise match {
+            case None =>
+              logger.info("Received response to no call: {}", res)
+            case Some(resPromise) =>
+              resPromise.success(res)
+              ()
+          }
       }
     }
 
@@ -158,7 +162,7 @@ trait DefaultSrpcComponent extends SrpcComponent {
         state match {
           case Closed =>
             logger.warn(s"WebSocket connection closed before we could respond to call; call ID $callId")
-          case _ =>
+          case Open | Closing =>
             val resEnvelope = SrpcEnvelope(callId, msg)
             webSocketConnection.send(TransportMessageParser.writeJValue(resEnvelope))
         }
