@@ -126,7 +126,7 @@ trait DefaultSrpcComponent extends SrpcComponent {
             case Failure(e)  => Future.failed(e)
           }
         case Closing | Closed =>
-          throw new IllegalStateException("Connection already closed")
+          Future.failed(new IllegalStateException("Connection already closed"))
       }
     }
 
@@ -149,7 +149,7 @@ trait DefaultSrpcComponent extends SrpcComponent {
 
           cachedResponsePromise match {
             case None =>
-              logger.info("Received response to no call: {}", res)
+              logger.warn("Received response to no call, the unknown call ID is {}", callId)
             case Some(resPromise) =>
               resPromise.success(res)
               ()
