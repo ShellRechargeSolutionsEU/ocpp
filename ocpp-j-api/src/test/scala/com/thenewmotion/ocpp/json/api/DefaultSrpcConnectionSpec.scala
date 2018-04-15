@@ -8,7 +8,6 @@ import org.json4s.JValue
 import org.json4s.JsonAST.{JArray, JInt, JObject, JString}
 import org.json4s.native.{JsonMethods, JsonParser}
 import JsonMethods.{compact, render}
-import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mock.Mockito
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
@@ -37,65 +36,54 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
       }
     }
 
-    "deliver the response to an outgoing request, matching it by call ID" in { implicit ee: ExecutionEnv =>
-      new TestScope {
+    "deliver the response to an outgoing request, matching it by call ID" in new TestScope {
 
-        val deliveredResponse = srpcComponent.srpcConnection.sendCall(testRequest)
+      val deliveredResponse = srpcComponent.srpcConnection.sendCall(testRequest)
 
-        val sentRequestJson = compact(render(awaitFirstSentMessage))
-        val CallIdRegex = "^\\[\\d+,\"([^\"]+)\".*$".r
-        val callId = sentRequestJson match {
-          case CallIdRegex(cId) => cId
-        }
-
-        srpcComponent.onMessage(JArray(JInt(3) :: JString(callId) :: JString("znal") :: Nil))
-
-        deliveredResponse must beEqualTo(SrpcCallResult(JString("znal"))).await
+      val sentRequestJson = compact(render(awaitFirstSentMessage))
+      val CallIdRegex = "^\\[\\d+,\"([^\"]+)\".*$".r
+      val callId = sentRequestJson match {
+        case CallIdRegex(cId) => cId
       }
+
+      srpcComponent.onMessage(JArray(JInt(3) :: JString(callId) :: JString("znal") :: Nil))
+
+      Await.result(deliveredResponse, 5.seconds) mustEqual SrpcCallResult(JString("znal"))
     }
 
-    "return errors when sending the WebSocket message as failed futures" in { implicit ee: ExecutionEnv =>
-      new TestScope {
-        sentWsMessagePromise.success(JInt(3))
+    "return errors when sending the WebSocket message as failed futures" in new TestScope {
+      sentWsMessagePromise.success(JInt(3))
 
-        // srpcComponent.webSocketConnection.send throws an exception now because promise already fulfilled
-        val deliveredResponse = srpcComponent.srpcConnection.sendCall(testRequest)
-
-        deliveredResponse must throwA[IllegalStateException].await
-      }
+      // srpcComponent.webSocketConnection.send throws an exception now because promise already fulfilled
+      Await.result(srpcComponent.srpcConnection.sendCall(testRequest), 1.second) must throwA[IllegalStateException]
     }
 
-    "close the WebSocket connection only when incoming requests have been responded to" in { implicit ee: ExecutionEnv =>
-      new TestScope {
-        val outgoingResponsePromise = Promise[SrpcCallResult]()
+    "close the WebSocket connection only when incoming requests have been responded to" in new TestScope {
+      val outgoingResponsePromise = Promise[SrpcCallResult]()
 
-        onRequest.apply(any[SrpcCall]()) returns outgoingResponsePromise.future
+      onRequest.apply(any[SrpcCall]()) returns outgoingResponsePromise.future
 
-        srpcComponent.onMessage(testRequestJson)
+      srpcComponent.onMessage(testRequestJson)
 
-        val srpcCloseFuture = srpcComponent.srpcConnection.close()
+      val srpcCloseFuture = srpcComponent.srpcConnection.close()
 
-        srpcCloseFuture.isCompleted must beFalse
-        webSocketCloseFuture.isCompleted must beFalse
+      srpcCloseFuture.isCompleted must beFalse
+      webSocketCloseFuture.isCompleted must beFalse
 
-        outgoingResponsePromise.success(testResponse)
+      outgoingResponsePromise.success(testResponse)
 
-        srpcCloseFuture must beEqualTo(()).await
-        webSocketCloseFuture must beEqualTo(()).await
-      }
+      Await.result(srpcCloseFuture, 1.second) mustEqual ()
+      Await.result(webSocketCloseFuture, 1.second) mustEqual ()
     }
 
-    "close the WebSocket connection immediately when there are no unanswered incoming requests" in { implicit ee: ExecutionEnv =>
-      new TestScope {
-        val srpcCloseFuture = srpcComponent.srpcConnection.close()
+    "close the WebSocket connection immediately when there are no unanswered incoming requests" in new TestScope {
+      val srpcCloseFuture = srpcComponent.srpcConnection.close()
 
-        srpcCloseFuture must beEqualTo(()).await
-        webSocketCloseFuture must beEqualTo(()).await
-      }
+      Await.result(srpcCloseFuture, 1.second) mustEqual ()
+      Await.result(webSocketCloseFuture, 1.second) mustEqual ()
     }
 
-    "close the WebSocket connection immediately when there are unanswered requests and forceClose is called" in { implicit ee: ExecutionEnv =>
-      new TestScope {
+    "close the WebSocket connection immediately when there are unanswered requests and forceClose is called" in new TestScope {
         val outgoingResponsePromise = Promise[SrpcCallResult]()
 
         onRequest.apply(any[SrpcCall]()) returns outgoingResponsePromise.future
@@ -104,78 +92,67 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
 
         srpcComponent.srpcConnection.forceClose()
 
-        webSocketCloseFuture must beEqualTo(()).await
+        Await.result(webSocketCloseFuture, 1.second) mustEqual ()
+      }
+
+    "refuse new incoming requests with GenericError when SRPC connection close is waiting" in new TestScope {
+
+      val outgoingResponsePromise = Promise[SrpcCallResult]()
+
+      onRequest.apply(any[SrpcCall]()) returns outgoingResponsePromise.future
+
+      srpcComponent.onMessage(testRequestJson)
+
+      srpcComponent.srpcConnection.close()
+
+      srpcComponent.onMessage(anotherTestRequestJson)
+
+      TransportMessageParser.parse(awaitFirstSentMessage) must beLike {
+        case SrpcEnvelope("callid2", SrpcCallError(PayloadErrorCode.GenericError, _, _)) => ok
       }
     }
 
-    "refuse new incoming requests with GenericError when SRPC connection close is waiting" in { implicit ee: ExecutionEnv =>
-      new TestScope {
+    "throw an exception when attempting to send a new request when SRPC connection close is waiting" in new TestScope {
 
-        val outgoingResponsePromise = Promise[SrpcCallResult]()
+      val outgoingResponsePromise = Promise[SrpcCallResult]()
 
-        onRequest.apply(any[SrpcCall]()) returns outgoingResponsePromise.future
+      onRequest.apply(any[SrpcCall]()) returns outgoingResponsePromise.future
 
-        srpcComponent.onMessage(testRequestJson)
+      srpcComponent.onMessage(testRequestJson)
 
-        srpcComponent.srpcConnection.close()
+      srpcComponent.srpcConnection.close()
 
-        srpcComponent.onMessage(anotherTestRequestJson)
-
-        TransportMessageParser.parse(awaitFirstSentMessage) must beLike {
-          case SrpcEnvelope("callid2", SrpcCallError(PayloadErrorCode.GenericError, _, _)) => ok
-        }
-      }
+      Await.result(srpcComponent.srpcConnection.sendCall(testRequest), 1.second) must throwA[IllegalStateException]
     }
 
-    "throw an exception when attempting to send a new request when SRPC connection close is waiting" in { implicit ee: ExecutionEnv =>
-      new TestScope {
+    "throw an exception when attempting to send a new request when the connection was closed by the other side" in new TestScope {
 
-        val outgoingResponsePromise = Promise[SrpcCallResult]()
+      srpcComponent.onWebSocketDisconnect()
 
-        onRequest.apply(any[SrpcCall]()) returns outgoingResponsePromise.future
-
-        srpcComponent.onMessage(testRequestJson)
-
-        srpcComponent.srpcConnection.close()
-
-        srpcComponent.srpcConnection.sendCall(testRequest) must throwA[IllegalStateException]
-      }
+      Await.result(srpcComponent.srpcConnection.sendCall(testRequest), 1.second) must throwA[IllegalStateException]
     }
 
-    "throw an exception when attempting to send a new request when the connection was closed by the other side" in { implicit ee: ExecutionEnv =>
-      new TestScope {
+    "complete the close future when the other side disconnects while we are waiting to close gracefully" in new TestScope {
 
-        srpcComponent.onWebSocketDisconnect()
+      val outgoingResponsePromise = Promise[SrpcCallResult]()
 
-        srpcComponent.srpcConnection.sendCall(testRequest) must throwA[IllegalStateException]
-      }
+      onRequest.apply(any[SrpcCall]()) returns outgoingResponsePromise.future
+
+      srpcComponent.onMessage(testRequestJson)
+
+      val srpcCloseFuture = srpcComponent.srpcConnection.close()
+
+      srpcComponent.onWebSocketDisconnect()
+
+      outgoingResponsePromise.success(testResponse)
+
+      Await.result(srpcCloseFuture, 1.second) mustEqual ()
     }
 
-    "complete the close future when the other side disconnects while we are waiting to close gracefully" in { implicit ee: ExecutionEnv =>
-      new TestScope {
+    "call onSrpcDisconnect() when the connection is closed" in new TestScope {
+      srpcComponent.onWebSocketDisconnect()
 
-        val outgoingResponsePromise = Promise[SrpcCallResult]()
-
-        onRequest.apply(any[SrpcCall]()) returns outgoingResponsePromise.future
-
-        srpcComponent.onMessage(testRequestJson)
-
-        val srpcCloseFuture = srpcComponent.srpcConnection.close()
-
-        srpcComponent.onWebSocketDisconnect()
-
-        outgoingResponsePromise.success(testResponse)
-
-        srpcCloseFuture must beEqualTo(()).await
-      }
-    }
-
-    "call onSrpcDisconnect() when the connection is closed" in { implicit ee: ExecutionEnv =>
-      new TestScope {
-        srpcComponent.onWebSocketDisconnect()
-
-        onSrpcDisconnectCalledFuture must beEqualTo(()).await
-      }
+      Await.result(onSrpcDisconnectCalledFuture, 1.second) mustEqual ()
     }
   }
 

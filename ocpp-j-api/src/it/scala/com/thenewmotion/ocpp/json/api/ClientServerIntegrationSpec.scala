@@ -4,10 +4,10 @@ package json.api
 import java.net.URI
 import java.time.{ZoneId, ZonedDateTime}
 import scala.concurrent.{Await, Promise}
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.Success
 import org.specs2.mutable.Specification
-import org.specs2.concurrent.ExecutionEnv
 
 import messages._
 import OcppJsonServer.{IncomingEndpoint, OutgoingEndpoint}
@@ -15,10 +15,9 @@ import OcppJsonServer.{IncomingEndpoint, OutgoingEndpoint}
 class ClientServerIntegrationSpec extends Specification {
   sequential
 
-
   "Client and server" should {
 
-    "exchange client-initiated request-response" in { implicit ee: ExecutionEnv =>
+    "exchange client-initiated request-response" in {
 
       val testPort = 34782
       val testSerial = "testserial"
@@ -67,11 +66,11 @@ class ClientServerIntegrationSpec extends Specification {
           def onError(err: OcppError): Unit = {}
         }
 
-        client.send(HeartbeatReq) must beEqualTo(testResponse).await
+        Await.result(client.send(HeartbeatReq), 1.second) mustEqual testResponse
       } finally server.stop()
     }
 
-    "exchange server-initiated request-response" in { implicit ee: ExecutionEnv =>
+    "exchange server-initiated request-response" in {
       val testPort = 34783
       val testSerial = "testserial"
       val serverTestResponse = HeartbeatRes(ZonedDateTime.of(2017, 7, 7, 12, 30, 6, 0, ZoneId.of("UTC")))
@@ -131,7 +130,7 @@ class ClientServerIntegrationSpec extends Specification {
 
         client.send(HeartbeatReq)
 
-        clientResponsePromise.future must beEqualTo(clientTestResponse).await
+        Await.result(clientResponsePromise.future, 1.second) mustEqual clientTestResponse
 
       } finally server.stop()
     }
