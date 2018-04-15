@@ -19,9 +19,6 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
 
     "respond with the same call ID to an incoming request" in new TestScope {
 
-      val testResponse = ResponseMessage(JObject("urgh" -> JInt(2)))
-      val testResponseJson = JArray(JInt(3) :: JString("callid1") :: testResponse.payload :: Nil)
-
       onRequest.apply(testRequest) returns Future.successful(testResponse)
 
       srpcComponent.onMessage(testRequestJson)
@@ -67,6 +64,26 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
         deliveredResponse must throwA[IllegalStateException].await
       }
     }
+
+    "close the WebSocket connection only when incoming requests have been responded to" in { implicit ee: ExecutionEnv =>
+      new TestScope {
+        val outgoingResponsePromise = Promise[ResponseMessage]()
+
+        onRequest.apply(any[RequestMessage]()) returns outgoingResponsePromise.future
+
+        srpcComponent.onMessage(testRequestJson)
+
+        val srpcCloseFuture = srpcComponent.srpcConnection.close()
+
+        srpcCloseFuture.isCompleted must beFalse
+        webSocketCloseFuture.isCompleted must beFalse
+
+        outgoingResponsePromise.success(testResponse)
+
+        srpcCloseFuture must beEqualTo(()).await
+        webSocketCloseFuture must beEqualTo(()).await
+      }
+    }
   }
 
   trait TestScope extends Scope {
@@ -74,6 +91,9 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
 
     val sentWsMessagePromise = Promise[JValue]()
     val sentWsMessage: Future[JValue] = sentWsMessagePromise.future
+
+    val webSocketClosePromise = Promise[Unit]()
+    val webSocketCloseFuture = webSocketClosePromise.future
 
     def awaitFirstSentMessage: JValue = Await.result(sentWsMessage, 1.second)
 
@@ -89,7 +109,10 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
           ()
         }
 
-        def close(): Unit = {}
+        def close(): Unit = {
+          webSocketClosePromise.success(())
+          ()
+        }
       }
 
       def onDisconnect() = {}
@@ -99,5 +122,7 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
 
     val testRequest = RequestMessage("FireMissiles", JObject("aargh" -> JInt(42)))
     val testRequestJson = JsonParser.parse("""[2, "callid1", "FireMissiles", {"aargh": 42}]""")
+    val testResponse = ResponseMessage(JObject("urgh" -> JInt(2)))
+    val testResponseJson = JArray(JInt(3) :: JString("callid1") :: testResponse.payload :: Nil)
   }
 }
