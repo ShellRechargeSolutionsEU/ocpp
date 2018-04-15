@@ -85,7 +85,7 @@ abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
       def onOcppError(error: OcppError): Unit =
         incomingEndpoint.onError(error)
 
-      def onDisconnect(): Unit =
+      def onWebSocketDisconnect(): Unit =
         incomingEndpoint.onDisconnect()
 
       implicit val executionContext: ExecutionContext = concurrent.ExecutionContext.Implicits.global

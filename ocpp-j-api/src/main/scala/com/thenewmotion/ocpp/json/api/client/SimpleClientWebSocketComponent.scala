@@ -100,7 +100,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
         lazy val openingException = WebSocketErrorWhenOpeningException(code, reason, remote)
 
         if (!connectedPromise.tryFailure(openingException))
-          SimpleClientWebSocketComponent.this.onDisconnect()
+          SimpleClientWebSocketComponent.this.onWebSocketDisconnect()
       }
     }
 

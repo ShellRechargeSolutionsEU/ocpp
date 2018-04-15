@@ -40,7 +40,7 @@ trait WebSocketComponent {
   /**
    * Called when the WebSocket connection is disconnected
    */
-  def onDisconnect(): Unit
+  def onWebSocketDisconnect(): Unit
 }
 
 class DummyWebSocketComponent extends WebSocketComponent {
@@ -61,5 +61,5 @@ class DummyWebSocketComponent extends WebSocketComponent {
 
   def onMessage(jVal: JValue) = logger.info("DummyWebSocketComponent received message {}", jVal)
 
-  def onDisconnect(): Unit = {}
+  def onWebSocketDisconnect(): Unit = {}
 }
