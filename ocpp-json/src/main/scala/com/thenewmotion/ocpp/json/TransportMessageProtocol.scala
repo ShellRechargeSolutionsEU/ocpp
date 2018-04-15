@@ -4,11 +4,11 @@ package json
 import enums.reflection.EnumUtils.{Nameable, Enumerable}
 import org.json4s._
 
-sealed trait TransportMessageType extends Nameable { def id: BigInt }
-object TransportMessageType extends Enumerable[TransportMessageType] {
-  object CALL       extends TransportMessageType { val id: BigInt = 2 }
-  object CALLRESULT extends TransportMessageType { val id: BigInt = 3 }
-  object CALLERROR  extends TransportMessageType { val id: BigInt = 4 }
+sealed trait SrpcMessageType extends Nameable { def id: BigInt }
+object SrpcMessageType extends Enumerable[SrpcMessageType] {
+  object CALL       extends SrpcMessageType { val id: BigInt = 2 }
+  object CALLRESULT extends SrpcMessageType { val id: BigInt = 3 }
+  object CALLERROR  extends SrpcMessageType { val id: BigInt = 4 }
 
   val values = Set(CALL, CALLRESULT, CALLERROR)
 }
@@ -49,16 +49,16 @@ case class SrpcEnvelope(
 
 sealed trait SrpcMessage
 
-case class RequestMessage(procedureName: String, payload: JValue) extends SrpcMessage
+case class SrpcCall(procedureName: String, payload: JValue) extends SrpcMessage
 
 // TODO swap result and response
-sealed trait ResultMessage extends SrpcMessage
+sealed trait SrpcResponse extends SrpcMessage
 
-case class ResponseMessage(payload: JValue) extends ResultMessage
+case class SrpcCallResult(payload: JValue) extends SrpcResponse
 
-case class ErrorResponseMessage(
+case class SrpcCallError(
   code: PayloadErrorCode,
   description: String,
   details: JValue = JObject(List())
-) extends ResultMessage
+) extends SrpcResponse
 

@@ -2,7 +2,7 @@ package com.thenewmotion.ocpp
 package json
 
 import org.json4s._
-import TransportMessageType._
+import SrpcMessageType._
 
 object TransportMessageJsonSerializer extends SerializationCommon {
 
@@ -29,11 +29,11 @@ object TransportMessageJsonSerializer extends SerializationCommon {
   private def toPayload(callType: BigInt, contents: List[JValue]): SrpcMessage =
     (callType, contents) match {
       case (CALL.`id`, JString(opName) :: payload :: Nil) =>
-        RequestMessage(opName, payload)
+        SrpcCall(opName, payload)
       case (CALLRESULT.`id`, payload :: Nil) =>
-        ResponseMessage(payload)
+        SrpcCallResult(payload)
       case (CALLERROR.`id`, JString(errorName) :: JString(errorDesc) :: errorDetails :: Nil) =>
-        ErrorResponseMessage(
+        SrpcCallError(
           enumerableFromJsonString(PayloadErrorCode, errorName),
           errorDesc,
           errorDetails
@@ -42,19 +42,19 @@ object TransportMessageJsonSerializer extends SerializationCommon {
 
   private def toCallType(payload: SrpcMessage): BigInt =
     payload match {
-      case _: RequestMessage => CALL.id
-      case _: ResponseMessage => CALLRESULT.id
-      case _: ErrorResponseMessage => CALLERROR.id
+      case _: SrpcCall => CALL.id
+      case _: SrpcCallResult => CALLRESULT.id
+      case _: SrpcCallError => CALLERROR.id
     }
 
   private def toContents(msg: SrpcMessage): List[JValue] =
     msg match {
-      case RequestMessage(procedureName, payload) =>
+      case SrpcCall(procedureName, payload) =>
         JString(procedureName) ::
         payload                :: Nil
-      case ResponseMessage(payload) =>
+      case SrpcCallResult(payload) =>
         payload :: Nil
-      case ErrorResponseMessage(code, desc, details) =>
+      case SrpcCallError(code, desc, details) =>
         JString(code.name) ::
         JString(desc)      ::
         details            :: Nil

@@ -22,7 +22,7 @@ class TransportMessageParserSpec extends Specification {
       val requestObject =
         SrpcEnvelope(
           "1234567",
-          RequestMessage("CallMessageAction", JObject(List(JField("payload", JString("something")))))
+          SrpcCall("CallMessageAction", JObject(List(JField("payload", JString("something")))))
         )
       result must_== requestObject
 
@@ -36,7 +36,7 @@ class TransportMessageParserSpec extends Specification {
       val requestObject =
         SrpcEnvelope(
           "1234567",
-          ResponseMessage(JObject(List(JField("payload", JString("something")))))
+          SrpcCallResult(JObject(List(JField("payload", JString("something")))))
         )
       result must_== requestObject
 
@@ -50,7 +50,7 @@ class TransportMessageParserSpec extends Specification {
       val requestObject =
         SrpcEnvelope(
           "1234567",
-          ErrorResponseMessage(InternalError, "description", JObject(List(JField("payload", JString("something")))))
+          SrpcCallError(InternalError, "description", JObject(List(JField("payload", JString("something")))))
         )
       result must_== requestObject
 
@@ -62,7 +62,7 @@ class TransportMessageParserSpec extends Specification {
       val errorMessageWithoutPayload =
         SrpcEnvelope(
           "1234567890abcdef",
-          ErrorResponseMessage(PayloadErrorCode.InternalError, "toedeledokie")
+          SrpcCallError(PayloadErrorCode.InternalError, "toedeledokie")
         )
 
       Serialization.write(errorMessageWithoutPayload) must not(beMatching(".*\\bnull\\b.*"))
