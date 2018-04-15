@@ -126,6 +126,16 @@ trait DefaultSrpcComponent extends SrpcComponent {
       }
     }
 
+    private[DefaultSrpcComponent] def handleIncomingCall(req: RequestMessage): Future[ResultMessage] = synchronized {
+      state match {
+        case Open =>
+          numIncomingRequests += 1
+          onSrpcRequest(req)
+        case _ =>
+          Future.successful(ErrorResponseMessage(PayloadErrorCode.GenericError, "Connection is closing"))
+      }
+    }
+
     private[DefaultSrpcComponent] def handleIncomingResult(callId: String, res: ResultMessage): Unit = synchronized {
       val cachedResponsePromise = callIdCache.remove(callId)
 
@@ -146,10 +156,6 @@ trait DefaultSrpcComponent extends SrpcComponent {
       } finally {
         srpcConnection.incomingCallEnded()
       }
-    }
-
-    private[DefaultSrpcComponent] def incomingCallStarted(): Unit = synchronized {
-      numIncomingRequests += 1
     }
 
     /**
@@ -183,8 +189,7 @@ trait DefaultSrpcComponent extends SrpcComponent {
     reqEnvelope.payload match {
       case req: RequestMessage =>
         logger.debug("Passing request to onSrpcRequest")
-        srpcConnection.incomingCallStarted()
-        onSrpcRequest(req) recover {
+        srpcConnection.handleIncomingCall(req) recover {
           case NonFatal(e) => ErrorResponseMessage(
             PayloadErrorCode.InternalError,
             "error getting response in SRPC layer"
@@ -220,7 +225,6 @@ object DefaultSrpcComponent {
     * close, so they might still send new requests while we're CLOSING. In that
     * case the SRPC layer will send them a CALLERROR with a GenericError error
     * code.
-    * TODO: test for above statement
     *
     * Note that this state is about the SRPC level in the network stack. The
     * WebSocket connection should be fully open when the SRPC layer is in Open
