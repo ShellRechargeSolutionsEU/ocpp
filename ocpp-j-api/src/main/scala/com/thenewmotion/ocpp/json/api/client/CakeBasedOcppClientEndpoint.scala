@@ -61,7 +61,7 @@ trait CakeBasedOcppClientEndpoint
     final def onOcppError(error: OcppError): Unit =
       CakeBasedOcppClientEndpoint.this.onError(error)
 
-    final def onWebSocketDisconnect(): Unit =
+    final def onSrpcDisconnect(): Unit =
       CakeBasedOcppClientEndpoint.this.onDisconnect()
 
     final implicit val executionContext: ExecutionContext =

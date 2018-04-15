@@ -24,25 +24,25 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
       "responding with a response message" in new TestScope {
         onRequest.apply(anyObject) returns RemoteStopTransactionRes(accepted = true)
 
-        val result = chargePointConnectionV16.onSrpcRequest(srpcRemoteStopTransactionReq)
+        val result = chargePointConnectionV16.onSrpcCall(srpcRemoteStopTransactionReq)
 
-        Await.result(result, 1.second) must beAnInstanceOf[ResponseMessage]
+        Await.result(result, 1.second) must beAnInstanceOf[SrpcCallResult]
       }
 
       "responding with the applicable error message if processing throws an OCPP error" in new TestScope {
         onRequest.apply(anyObject) throws new OcppException(OcppError(PayloadErrorCode.FormationViolation, "aargh!"))
 
-        val result = chargePointConnectionV16.onSrpcRequest(srpcRemoteStopTransactionReq)
+        val result = chargePointConnectionV16.onSrpcCall(srpcRemoteStopTransactionReq)
 
-        Await.result(result, 1.second) must beAnInstanceOf[ErrorResponseMessage]
+        Await.result(result, 1.second) must beAnInstanceOf[SrpcCallError]
       }
 
       "responding with an InternalError error message if processing throws an unexpected exception" in new TestScope {
         onRequest.apply(anyObject) throws new RuntimeException("bork")
 
-        val result = chargePointConnectionV16.onSrpcRequest(srpcRemoteStopTransactionReq)
+        val result = chargePointConnectionV16.onSrpcCall(srpcRemoteStopTransactionReq)
 
-        Await.result(result, 1.second) mustEqual ErrorResponseMessage(
+        Await.result(result, 1.second) mustEqual SrpcCallError(
           PayloadErrorCode.InternalError,
           "Unexpected error processing request",
           JObject(List())
@@ -50,26 +50,26 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
       }
 
       "responding with a NotImplemented error for unrecognized operations" in new TestScope {
-        val result = chargePointConnectionV16.onSrpcRequest(srpcNonexistentOperationReq)
+        val result = chargePointConnectionV16.onSrpcCall(srpcNonexistentOperationReq)
 
         Await.result(result, 1.second) must beLike {
-          case ErrorResponseMessage(errCode, _, _) => errCode mustEqual PayloadErrorCode.NotImplemented
+          case SrpcCallError(errCode, _, _) => errCode mustEqual PayloadErrorCode.NotImplemented
         }
       }
 
       "responding with a NotSupported error for recognized but unsupported operations" in new TestScope {
-        val result = chargePointConnectionV16.onSrpcRequest(srpcNotSupportedOperationReq)
+        val result = chargePointConnectionV16.onSrpcCall(srpcNotSupportedOperationReq)
 
         Await.result(result, 1.second) must beLike {
-          case ErrorResponseMessage(errCode, _, _) => errCode mustEqual PayloadErrorCode.NotSupported
+          case SrpcCallError(errCode, _, _) => errCode mustEqual PayloadErrorCode.NotSupported
         }
       }
 
       "responding with a NotSupported error for requests for the wrong version of OCPP" in new TestScope {
-        val result = chargePointConnectionV15.onSrpcRequest(srpcTriggerMessageReq)
+        val result = chargePointConnectionV15.onSrpcCall(srpcTriggerMessageReq)
 
         Await.result(result, 1.second) must beLike {
-          case e@ErrorResponseMessage(errCode, _, _) => errCode mustEqual PayloadErrorCode.NotSupported
+          case e@SrpcCallError(errCode, _, _) => errCode mustEqual PayloadErrorCode.NotSupported
         }
       }
     }
@@ -77,8 +77,8 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
     "handle outgoing requests" in {
 
       "giving incoming responses back to the caller" in new TestScope {
-        val srpcHeartbeatRes = ResponseMessage("currentTime" -> "2014-03-31T14:00:00Z")
-        chargePointConnectionV16.srpcConnection.sendRequest(srpcHeartbeatReq) returns Future.successful(
+        val srpcHeartbeatRes = SrpcCallResult("currentTime" -> "2014-03-31T14:00:00Z")
+        chargePointConnectionV16.srpcConnection.sendCall(srpcHeartbeatReq) returns Future.successful(
           srpcHeartbeatRes
         )
 
@@ -88,8 +88,8 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
       }
 
       "returning a failed future when a request is responded to with an error message" in new TestScope {
-        val errorRes = ErrorResponseMessage(PayloadErrorCode.SecurityError, "Hee! Da mag nie!", "allowed" -> "no")
-        chargePointConnectionV16.srpcConnection.sendRequest(srpcHeartbeatReq) returns Future.successful(errorRes)
+        val errorRes = SrpcCallError(PayloadErrorCode.SecurityError, "Hee! Da mag nie!", "allowed" -> "no")
+        chargePointConnectionV16.srpcConnection.sendCall(srpcHeartbeatReq) returns Future.successful(errorRes)
 
         val result = chargePointConnectionV16.ocppConnection.sendRequest(HeartbeatReq)
 
@@ -113,7 +113,7 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
       }
 
       "returning a failed future when the request cannot be sent" in new TestScope {
-          chargePointConnectionV16.srpcConnection.sendRequest(srpcHeartbeatReq) throws new RuntimeException("testfaal")
+          chargePointConnectionV16.srpcConnection.sendCall(srpcHeartbeatReq) throws new RuntimeException("testfaal")
 
           val result = chargePointConnectionV16.ocppConnection.sendRequest(HeartbeatReq)
 
@@ -131,17 +131,17 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
           vendorId = None
         )
 
-        chargePointConnectionV15.srpcConnection.sendRequest(any[RequestMessage]()) returns Future.failed(
+        chargePointConnectionV15.srpcConnection.sendCall(any[SrpcCall]()) returns Future.failed(
           new RuntimeException("no successful result needed")
         )
 
         chargePointConnectionV15.ocppConnection.sendRequest(statusReq)
 
-        val cap = capture[RequestMessage]
-        there was one(chargePointConnectionV15.srpcConnection).sendRequest(cap.capture)
+        val cap = capture[SrpcCall]
+        there was one(chargePointConnectionV15.srpcConnection).sendCall(cap.capture)
 
         cap.value must beLike {
-          case srpcRequest: RequestMessage =>
+          case srpcRequest: SrpcCall =>
             val payloadText = pretty(render(srpcRequest.payload))
             payloadText must contain("Occupied")
             payloadText must not contain "Charging"
@@ -159,17 +159,17 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
           vendorId = None
         )
 
-        chargePointConnectionV16.srpcConnection.sendRequest(any[RequestMessage]()) returns Future.failed(
+        chargePointConnectionV16.srpcConnection.sendCall(any[SrpcCall]()) returns Future.failed(
           new RuntimeException("no successful result needed")
         )
 
         chargePointConnectionV16.ocppConnection.sendRequest(statusReq)
 
-        val cap = capture[RequestMessage]
-        there was one(chargePointConnectionV16.srpcConnection).sendRequest(cap.capture)
+        val cap = capture[SrpcCall]
+        there was one(chargePointConnectionV16.srpcConnection).sendCall(cap.capture)
 
         cap.value must beLike {
-          case srpcRequest: RequestMessage =>
+          case srpcRequest: SrpcCall =>
             val payloadText = pretty(render(srpcRequest.payload))
             payloadText must not contain "Occupied"
             payloadText must contain("Charging")
@@ -180,22 +180,22 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
 
   trait TestScope extends Scope {
     val srpcHeartbeatReq =
-      RequestMessage("Heartbeat", JObject(Nil))
+      SrpcCall("Heartbeat", JObject(Nil))
 
     val srpcRemoteStopTransactionReq =
-      RequestMessage("RemoteStopTransaction", "transactionId" -> 3)
+      SrpcCall("RemoteStopTransaction", "transactionId" -> 3)
 
     val srpcNonexistentOperationReq =
-      RequestMessage("WorldDomination", "complete" -> 1)
+      SrpcCall("WorldDomination", "complete" -> 1)
 
     val srpcNotSupportedOperationReq =
-      RequestMessage(
+      SrpcCall(
         "DataTransfer",
         ("vendorId" -> "TheNewMotion") ~ ("messageId" -> "GaKoffieHalen") ~ ("data" -> "met suiker, zonder melk")
       )
 
     val srpcTriggerMessageReq =
-      RequestMessage("TriggerMessage", "requestMessage" -> "Heartbeat")
+      SrpcCall("TriggerMessage", "requestMessage" -> "Heartbeat")
 
     // workaround to prevent errors when making Mockito throw OcppException
     trait OcppRequestHandler extends (Req => Res) {
@@ -228,6 +228,8 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
         ): Future[RES] = Future { TestScope.this.onRequest(request).asInstanceOf[RES] }
 
         def onOcppError(err: OcppError) = TestScope.this.onError(err)
+
+        def onSrpcDisconnect(): Unit = {}
       }
 
     val chargePointConnectionV15 = chargePointConnection(Version.V15, FillingFuture)
@@ -251,6 +253,8 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
       ): Future[RES] = Future { TestScope.this.onRequest(request).asInstanceOf[RES] }
 
       def onOcppError(err: OcppError) = TestScope.this.onError(err)
+
+      def onSrpcDisconnect(): Unit = {}
     }
   }
 }

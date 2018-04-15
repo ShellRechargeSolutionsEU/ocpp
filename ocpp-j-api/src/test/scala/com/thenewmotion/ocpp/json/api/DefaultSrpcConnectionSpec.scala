@@ -33,14 +33,14 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
       srpcComponent.onMessage(testRequestJson)
 
       TransportMessageParser.parse(awaitFirstSentMessage) must beLike {
-        case SrpcEnvelope("callid1", ErrorResponseMessage(PayloadErrorCode.InternalError, _, _)) => ok
+        case SrpcEnvelope("callid1", SrpcCallError(PayloadErrorCode.InternalError, _, _)) => ok
       }
     }
 
     "deliver the response to an outgoing request, matching it by call ID" in { implicit ee: ExecutionEnv =>
       new TestScope {
 
-        val deliveredResponse = srpcComponent.srpcConnection.sendRequest(testRequest)
+        val deliveredResponse = srpcComponent.srpcConnection.sendCall(testRequest)
 
         val sentRequestJson = compact(render(awaitFirstSentMessage))
         val CallIdRegex = "^\\[\\d+,\"([^\"]+)\".*$".r
@@ -50,7 +50,7 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
 
         srpcComponent.onMessage(JArray(JInt(3) :: JString(callId) :: JString("znal") :: Nil))
 
-        deliveredResponse must beEqualTo(ResponseMessage(JString("znal"))).await
+        deliveredResponse must beEqualTo(SrpcCallResult(JString("znal"))).await
       }
     }
 
@@ -59,7 +59,7 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
         sentWsMessagePromise.success(JInt(3))
 
         // srpcComponent.webSocketConnection.send throws an exception now because promise already fulfilled
-        val deliveredResponse = srpcComponent.srpcConnection.sendRequest(testRequest)
+        val deliveredResponse = srpcComponent.srpcConnection.sendCall(testRequest)
 
         deliveredResponse must throwA[IllegalStateException].await
       }
@@ -67,9 +67,9 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
 
     "close the WebSocket connection only when incoming requests have been responded to" in { implicit ee: ExecutionEnv =>
       new TestScope {
-        val outgoingResponsePromise = Promise[ResponseMessage]()
+        val outgoingResponsePromise = Promise[SrpcCallResult]()
 
-        onRequest.apply(any[RequestMessage]()) returns outgoingResponsePromise.future
+        onRequest.apply(any[SrpcCall]()) returns outgoingResponsePromise.future
 
         srpcComponent.onMessage(testRequestJson)
 
@@ -96,9 +96,9 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
 
     "close the WebSocket connection immediately when there are unanswered requests and forceClose is called" in { implicit ee: ExecutionEnv =>
       new TestScope {
-        val outgoingResponsePromise = Promise[ResponseMessage]()
+        val outgoingResponsePromise = Promise[SrpcCallResult]()
 
-        onRequest.apply(any[RequestMessage]()) returns outgoingResponsePromise.future
+        onRequest.apply(any[SrpcCall]()) returns outgoingResponsePromise.future
 
         srpcComponent.onMessage(testRequestJson)
 
@@ -111,18 +111,18 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
     "refuse new incoming requests with GenericError when SRPC connection close is waiting" in { implicit ee: ExecutionEnv =>
       new TestScope {
 
-        val outgoingResponsePromise = Promise[ResponseMessage]()
+        val outgoingResponsePromise = Promise[SrpcCallResult]()
 
-        onRequest.apply(any[RequestMessage]()) returns outgoingResponsePromise.future
+        onRequest.apply(any[SrpcCall]()) returns outgoingResponsePromise.future
 
         srpcComponent.onMessage(testRequestJson)
 
-        val srpcCloseFuture = srpcComponent.srpcConnection.close()
+        srpcComponent.srpcConnection.close()
 
         srpcComponent.onMessage(anotherTestRequestJson)
 
         TransportMessageParser.parse(awaitFirstSentMessage) must beLike {
-          case SrpcEnvelope("callid2", ErrorResponseMessage(PayloadErrorCode.GenericError, _, _)) => ok
+          case SrpcEnvelope("callid2", SrpcCallError(PayloadErrorCode.GenericError, _, _)) => ok
         }
       }
     }
@@ -130,27 +130,66 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
     "throw an exception when attempting to send a new request when SRPC connection close is waiting" in { implicit ee: ExecutionEnv =>
       new TestScope {
 
-        val outgoingResponsePromise = Promise[ResponseMessage]()
+        val outgoingResponsePromise = Promise[SrpcCallResult]()
 
-        onRequest.apply(any[RequestMessage]()) returns outgoingResponsePromise.future
+        onRequest.apply(any[SrpcCall]()) returns outgoingResponsePromise.future
 
         srpcComponent.onMessage(testRequestJson)
 
         srpcComponent.srpcConnection.close()
 
-        srpcComponent.srpcConnection.sendRequest(testRequest) must throwA[IllegalStateException]
+        srpcComponent.srpcConnection.sendCall(testRequest) must throwA[IllegalStateException]
+      }
+    }
+
+    "throw an exception when attempting to send a new request when the connection was closed by the other side" in { implicit ee: ExecutionEnv =>
+      new TestScope {
+
+        srpcComponent.onWebSocketDisconnect()
+
+        srpcComponent.srpcConnection.sendCall(testRequest) must throwA[IllegalStateException]
+      }
+    }
+
+    "complete the close future when the other side disconnects while we are waiting to close gracefully" in { implicit ee: ExecutionEnv =>
+      new TestScope {
+
+        val outgoingResponsePromise = Promise[SrpcCallResult]()
+
+        onRequest.apply(any[SrpcCall]()) returns outgoingResponsePromise.future
+
+        srpcComponent.onMessage(testRequestJson)
+
+        val srpcCloseFuture = srpcComponent.srpcConnection.close()
+
+        srpcComponent.onWebSocketDisconnect()
+
+        outgoingResponsePromise.success(testResponse)
+
+        srpcCloseFuture must beEqualTo(()).await
+      }
+    }
+
+    "call onSrpcDisconnect() when the connection is closed" in { implicit ee: ExecutionEnv =>
+      new TestScope {
+        srpcComponent.onWebSocketDisconnect()
+
+        onSrpcDisconnectCalledFuture must beEqualTo(()).await
       }
     }
   }
 
   trait TestScope extends Scope {
-    val onRequest = mock[RequestMessage => Future[ResultMessage]]
+    val onRequest = mock[SrpcCall => Future[SrpcResponse]]
 
     val sentWsMessagePromise = Promise[JValue]()
     val sentWsMessage: Future[JValue] = sentWsMessagePromise.future
 
     val webSocketClosePromise = Promise[Unit]()
     val webSocketCloseFuture = webSocketClosePromise.future
+
+    val onSrpcDisconnectCalledPromise = Promise[Unit]()
+    val onSrpcDisconnectCalledFuture = onSrpcDisconnectCalledPromise.future
 
     def awaitFirstSentMessage: JValue = Await.result(sentWsMessage, 1.second)
 
@@ -172,15 +211,18 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
         }
       }
 
-      def onWebSocketDisconnect() = {}
+      def onSrpcDisconnect(): Unit = {
+        onSrpcDisconnectCalledPromise.success(())
+        ()
+      }
 
-      def onSrpcRequest(msg: RequestMessage) = onRequest.apply(msg)
+      def onSrpcCall(msg: SrpcCall) = onRequest.apply(msg)
     }
 
-    val testRequest = RequestMessage("FireMissiles", JObject("aargh" -> JInt(42)))
+    val testRequest = SrpcCall("FireMissiles", JObject("aargh" -> JInt(42)))
     val testRequestJson = JsonParser.parse("""[2, "callid1", "FireMissiles", {"aargh": 42}]""")
     val anotherTestRequestJson = JsonParser.parse("""[2, "callid2", "FireMissiles", {"aargh": 42}]""")
-    val testResponse = ResponseMessage(JObject("urgh" -> JInt(2)))
+    val testResponse = SrpcCallResult(JObject("urgh" -> JInt(2)))
     val testResponseJson = JArray(JInt(3) :: JString("callid1") :: testResponse.payload :: Nil)
   }
 }
