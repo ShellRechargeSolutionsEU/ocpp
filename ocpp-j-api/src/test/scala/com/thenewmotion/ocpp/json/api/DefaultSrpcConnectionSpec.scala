@@ -103,6 +103,21 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
         }
       }
     }
+
+    "throw an exception when attempting to send a new request when SRPC connection close is waiting" in { implicit ee: ExecutionEnv =>
+      new TestScope {
+
+        val outgoingResponsePromise = Promise[ResponseMessage]()
+
+        onRequest.apply(any[RequestMessage]()) returns outgoingResponsePromise.future
+
+        srpcComponent.onMessage(testRequestJson)
+
+        srpcComponent.srpcConnection.close()
+
+        srpcComponent.srpcConnection.sendRequest(testRequest) must throwA[IllegalStateException]
+      }
+    }
   }
 
   trait TestScope extends Scope {
@@ -134,7 +149,7 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
         }
       }
 
-      def onDisconnect() = {}
+      def onWebSocketDisconnect() = {}
 
       def onSrpcRequest(msg: RequestMessage) = onRequest.apply(msg)
     }
