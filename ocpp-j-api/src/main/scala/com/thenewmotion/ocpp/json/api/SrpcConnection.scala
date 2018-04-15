@@ -121,7 +121,7 @@ trait DefaultSrpcComponent extends SrpcComponent {
             case Failure(e)  => Future.failed(e)
           }
         case _ =>
-          // TODO genericerror with message
+          // TODO local/remote error system
           throw new IllegalStateException("Connection already closed")
       }
     }

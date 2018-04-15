@@ -21,7 +21,7 @@ trait SimpleServerWebSocketComponent extends WebSocketComponent {
 
   def feedIncomingMessage(msg: String): Unit = self.onMessage(parse(msg))
 
-  def feedIncomingDisconnect(): Unit = self.onDisconnect()
+  def feedIncomingDisconnect(): Unit = self.onWebSocketDisconnect()
 
   def feedIncomingError(err: Exception): Unit = self.onError(err)
 }
