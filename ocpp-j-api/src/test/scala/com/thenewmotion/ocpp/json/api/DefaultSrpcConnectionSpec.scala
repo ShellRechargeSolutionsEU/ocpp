@@ -94,6 +94,20 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
       }
     }
 
+    "close the WebSocket connection immediately when there are unanswered requests and forceClose is called" in { implicit ee: ExecutionEnv =>
+      new TestScope {
+        val outgoingResponsePromise = Promise[ResponseMessage]()
+
+        onRequest.apply(any[RequestMessage]()) returns outgoingResponsePromise.future
+
+        srpcComponent.onMessage(testRequestJson)
+
+        srpcComponent.srpcConnection.forceClose()
+
+        webSocketCloseFuture must beEqualTo(()).await
+      }
+    }
+
     "refuse new incoming requests with GenericError when SRPC connection close is waiting" in { implicit ee: ExecutionEnv =>
       new TestScope {
 
