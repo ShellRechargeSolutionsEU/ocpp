@@ -91,7 +91,7 @@ object RequestHandler {
       def apply[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(
         implicit reqRes: ChargePointReqRes[REQ, RES],
         ec: ExecutionContext
-      ): Future[RES] = Future.successful(cp.apply(req))
+      ): Future[RES] = Future(cp.apply(req))
     }
 
   implicit def syncCentralSystemAsCentralSystemRequestHandler(
@@ -101,6 +101,6 @@ object RequestHandler {
       def apply[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(
         implicit reqRes: CentralSystemReqRes[REQ, RES],
         ec: ExecutionContext
-      ): Future[RES] = Future.successful(cs.apply(req))
+      ): Future[RES] = Future(cs.apply(req))
     }
 }

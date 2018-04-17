@@ -195,6 +195,18 @@ enforce the OCPP requirement that you wait for the response before sending the
 next request. A simple way to obey it is chaining the send operations in a `for`
 comprehension, as shown in the example app.
 
+#### Error handling
+
+If the remote side responds to your OCPP requests with a `CALLERROR` message
+indicating a failure to process your request, the future returned from `.send`
+will be failed. The exception in there will be an `OcppException` object, which
+contains an `OcppError` object, which contains the error code and description
+sent from the other side.
+
+It works the same way in your own request handlers. You can return a failed
+future with an `OcppException`, and the library will turn this into a
+`CALLERROR` message and sends it back to the remote side.
+
 ### Using the cake pattern directly
 
 If you want to build an OCPP-J client using a different WebSocket
