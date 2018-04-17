@@ -28,7 +28,7 @@ trait CakeBasedOcppClientEndpoint
   ): Future[RES] =
     connection.sendRequest(req)
 
-  def close(): Unit = connection.close()
+  def close(): Future[Unit] = connection.close()
 
   def requestHandler: RequestHandler[ChargePointReq, ChargePointRes, ChargePointReqRes]
 
@@ -51,7 +51,7 @@ trait CakeBasedOcppClientEndpoint
     ): Future[RES] =
       ocppConnection.sendRequest(req)
 
-    final def close(): Unit = webSocketConnection.close()
+    final def close(): Future[Unit] = srpcConnection.close()
 
     final def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(
       implicit reqRes: ChargePointReqRes[REQ, RES]
