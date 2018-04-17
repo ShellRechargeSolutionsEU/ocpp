@@ -225,6 +225,11 @@ trait DefaultSrpcComponent extends SrpcComponent {
   }
 
   def onWebSocketDisconnect(): Unit = {
+    // TODO this may already be called into from another thread during cake initialization, when the WebSocket open
+    // fails. Then the srpcConnection is not initialized yet and we get an NPE. How to fix?
+    // null check is seriously ugly.
+    // separating cake initialization and connection opening into two separate
+    // steps is better, but do we really need it?
     srpcConnection.handleWebSocketDisconnect()
     onSrpcDisconnect()
   }

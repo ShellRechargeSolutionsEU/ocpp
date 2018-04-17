@@ -217,7 +217,7 @@ trait ChargePointOcppConnectionComponent
     type V = Ver
   }
 
-  def defaultChargePointOcppConnection = ocppVersion match {
+  def defaultChargePointOcppConnection: ChargePointOcppConnection[_ <: Version] = ocppVersion match {
     case Version.V15 => new ChargePointOcppConnection[Version.V15.type]
     case Version.V16 => new ChargePointOcppConnection[Version.V16.type]
     case _ => throw new RuntimeException(s"OCPP JSON not supported for $ocppVersion")
@@ -267,7 +267,7 @@ trait CentralSystemOcppConnectionComponent
     type V = Ver
   }
 
-  def defaultCentralSystemOcppConnection = ocppVersion match {
+  def defaultCentralSystemOcppConnection: CentralSystemOcppConnection[_ <: Version] = ocppVersion match {
     case Version.V15 => new CentralSystemOcppConnection[Version.V15.type]
     case Version.V16 => new CentralSystemOcppConnection[Version.V16.type]
     case _ => throw new RuntimeException(s"OCPP JSON not supported for $ocppVersion")
