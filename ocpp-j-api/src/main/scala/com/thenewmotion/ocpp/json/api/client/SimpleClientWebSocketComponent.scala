@@ -5,7 +5,7 @@ package client
 import java.net.URI
 import scala.collection.JavaConverters._
 import scala.concurrent.{Await, Promise}
-import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import scala.concurrent.duration.{Duration, DurationInt, FiniteDuration}
 import org.java_websocket.WebSocket
 import org.java_websocket.exceptions.InvalidDataException
 import org.java_websocket.extensions.IExtension
@@ -39,7 +39,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
     import org.java_websocket.handshake.ServerHandshake
 
     private val subProtocolPromise = Promise[String]()
-    private val connectedPromise= Promise[Unit]
+    private val connectedPromise = Promise[Either[Exception, Unit]]()
 
     val draftWithRightSubprotocols = new Draft_6455(
       List.empty[IExtension].asJava,
@@ -69,7 +69,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
 
       def onOpen(handshakeData: ServerHandshake): Unit = {
         logger.debug(s"WebSocket connection opened to $actualUri, sub protocol: $subProtocol")
-        connectedPromise.success(())
+        connectedPromise.success(Right(()))
         ()
       }
 
@@ -86,7 +86,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
       def onError(ex: Exception): Unit = {
         logger.debug("Received WebSocket error {}", ex)
 
-        if (!connectedPromise.tryFailure(ex))
+        if (!failToConnect(ex) && connectedSuccessfully)
           SimpleClientWebSocketComponent.this.onError(ex)
       }
 
@@ -99,9 +99,15 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
         )
         lazy val openingException = WebSocketErrorWhenOpeningException(code, reason, remote)
 
-        if (!connectedPromise.tryFailure(openingException))
+        if (!failToConnect(openingException) && connectedSuccessfully)
           SimpleClientWebSocketComponent.this.onWebSocketDisconnect()
       }
+
+      private def failToConnect(ex: Exception): Boolean =
+        connectedPromise.trySuccess(Left(ex))
+
+      private def connectedSuccessfully: Boolean =
+        Await.result(connectedPromise.future, Duration.Inf).isRight
     }
 
     def send(jVal: JValue): Unit = {
@@ -121,7 +127,10 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
     }
 
     connect() // connect only after setting up the socket event handlers
-    Await.result(connectedPromise.future, wsOpenTimeout)
+    Await.result(connectedPromise.future, wsOpenTimeout) match {
+      case Left(ex)  => throw ex
+      case Right(()) =>
+    }
 
     logger.debug("Connected to {}", actualUri)
 
