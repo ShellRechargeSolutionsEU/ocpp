@@ -17,6 +17,11 @@ trait WebSocketComponent {
 
     /**
      * Hang up the connection to the other party
+     *
+     * DefaultSrpcComponent#DefaultSrpcConnection calls this method with the
+     * monitor lock held, so this method should not block until the connection
+     * is fully closed. If it does, that will deadlock the SRPC layer because
+     * the onWebSocketDisconnect handler can't complete.
      */
     def close(): Unit
   }

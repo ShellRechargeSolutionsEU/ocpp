@@ -115,7 +115,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
       client.send(native.compactJson(native.renderJValue(jVal)))
     }
 
-    def close(): Unit = client.closeBlocking()
+    def close(): Unit = client.close()
 
     private def connect(): Unit = {
       logger.debug(s"Connecting using uri: $actualUri")
