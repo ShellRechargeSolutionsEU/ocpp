@@ -74,7 +74,7 @@ abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
         def send[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ChargePointReqRes[REQ, RES]): Future[RES] =
           ocppConnection.sendRequest(req)
 
-        def close(): Unit = webSocketConnection.close()
+        def close(): Future[Unit] = srpcConnection.close()
       }
 
       private val incomingEndpoint = handleConnection(chargePointIdentity, outgoingEndpoint)

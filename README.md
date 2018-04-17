@@ -516,7 +516,7 @@ private val outgoingEndpoint = new OutgoingEndpoint {
   def send[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ChargePointReqRes[REQ, RES]): Future[RES] =
     ocppConnection.sendRequest(req)
 
-  def close(): Unit = webSocketConnection.close()
+  def close(): Future[Unit] = srpcConnection.close()
 }
 
 private val incomingEndpoint = handleConnection(outgoingEndpoint)
@@ -742,7 +742,10 @@ major version.
 ### Changes in 7.0.0
 
  - Wait for pending incoming requests to be answered before closing a WebSocket connection
- - This involved changing some method names in the `SrpcConnectionComponent` and `WebSocketComponent`:
+
+ - `OcppJsonClient.close` is now asynchronous; it returns a future that is completed once the connection is closed.
+
+ - The more robust closing involved changing some method names in the `SrpcConnectionComponent` and `WebSocketComponent`:
 
      * `SrpcComponent#SrpcConnection.send` is now `SrpcComponent#SrpcConnection.sendCall`
      * `SrpcComponent#SrpcConnection.close` now works asynchronously and returns a `Future[Unit]`
@@ -750,6 +753,7 @@ major version.
      * `SrpcComponent.onSrpcRequest` is now `SrpcComponent.onSrpcCall`
      * `SrpcComponent.onSrpcDisconnect` was added to allow the OCPP layer to handle an SRPC-level disconnect
      * `WebSocketComponent.onDisconnect` was renamed to `WebSocketComponent.onWebSocketDisconnect`
+
  - The case classes for SRPC messages were renamed to reflect the names used in the specification
 
 ### Changes in 6.0.3
