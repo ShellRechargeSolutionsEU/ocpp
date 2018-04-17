@@ -61,8 +61,8 @@ abstract class OcppJsonClient(
       throw new RuntimeException(s"Unknown protocol ${webSocketConnection.subProtocol} in use for connection")
     )
 
-    val ocppConnection = defaultChargePointOcppConnection
     val srpcConnection = new DefaultSrpcConnection
+    val ocppConnection = defaultChargePointOcppConnection
   }
 }
 

@@ -8,13 +8,15 @@ developed by the Open Charge Alliance (OCA). You can find more details on the
 This library is the implementation of OCPP developed and used by NewMotion, one
 of Europe's largest Electric Vehicle Charge Point Operators.
 
-The library is designed with versatility in mind. OCPP comes in 3 versions (1.2,
-1.5 and 1.6), two transport variants (SOAP/XML aka OCPP-S and WebSocket/JSON aka
+The library is designed with versatility in mind. OCPP comes in 4 versions (1.2,
+1.5, 1.6 and 2.0), two transport variants (SOAP/XML aka OCPP-S and WebSocket/JSON aka
 OCPP-J), and two roles ("Charge Point" and "Central System"). This library will
-help you with almost any combination of those. Only version 1.2 with
-WebSocket/JSON and version 1.6 with SOAP/XML are not possible.
+help you with 1.2 and 1.5 over SOAP, and with 1.5 and 1.6 over JSON.
 
-Also, you will probably want to use different WebSocket libraries for
+Version 1.2 with WebSocket/JSON and version 1.6 with SOAP/XML are not possible.
+Also there is no support for OCPP 2.0 yet.
+
+Users of this library probably want to use different WebSocket libraries for
 different scenarios: a production back-office server with tens of thousands of
 concurrent connections, a client in a load testing tool, or a simple one-off
 script to test a certain behavior. This library uses the
@@ -202,8 +204,8 @@ layers directly.
 
 The OCPP cake has three layers:
 
- * [`OcppConnectionComponent`](ocpp-j-api/src/main/scala/com/thenewmotion/ocpp/json/api/OcppConnection.scala): matches requests to responses, and handles serialization and deserialization between OCPP request/response objects and SRPC messages
- * [`SrpcComponent`](ocpp-j-api/src/main/scala/com/thenewmotion/ocpp/json/api/SrpcConnection.scala): serializes and deserializes SRPC messages to JSON
+ * [`OcppConnectionComponent`](ocpp-j-api/src/main/scala/com/thenewmotion/ocpp/json/api/OcppConnection.scala): handles serialization and deserialization between OCPP request/response objects and SRPC messages
+ * [`SrpcComponent`](ocpp-j-api/src/main/scala/com/thenewmotion/ocpp/json/api/SrpcConnection.scala): matches requests to responses, and serializes and deserializes SRPC messages to JSON
  * [`WebSocketComponent`](ocpp-j-api/src/main/scala/com/thenewmotion/ocpp/json/api/WebSocketConnection.scala): reads and writes JSON messages from and to a WebSocket connection
 
 There are default implementations for the `OcppConnectionComponent` and
@@ -213,6 +215,8 @@ integrate with your WebSocket implementation of choice.
 To put it in a diagram:
 
 ```
+                  (your application logic)
+
     +--------------V--------------------^--------------+
     |     com.thenewmotion.ocpp.messages.{Req, Res}    |
     |                                                  |
@@ -229,6 +233,7 @@ To put it in a diagram:
     |           WebSocketComponent layer               |
     |                                                  |
     +--------------V--------------------^--------------+
+
                (WebSocket lib specific types)
 ```
 
@@ -251,25 +256,26 @@ shows the methods defined by each layer:
 ```
                                                                      OcppConnectionComponent.onRequest (override)
        OcppConnectionComponent.ocppConnection.sendRequest (call)     OcppConnectionComponent.onOcppError (override)
-    +------------------V-----------------------------------------------^--------------------------------------------------+
-    |                                                                                                                     |
-    |                                    OcppConnectionComponent layer                                                    |
-    |                                                                                                                     |
-    |                                                                                                                     |
-    | SrpcConnectionComponent.srpcConnection.sendRequest (call)      SrpcConnectionComponent.onSrpcRequest (override)     |
-    +------------------V-----------------------------------------------^--------------------------------------------------+
-    |                                                                                                                     |
-    |                                          SrpcComponent layer                                                        |
-    |                                                                                                                     |
-    |                                                                WebSocketConnectionComponent.onMessage (override)    |
-    | WebSocketConnectionComponent.webSocketConnection.send (call)   WebSocketConnectionComponent.onDisconnect (override) |
-    | WebSocketConnectionComponent.webSocketConnection.close (call)  WebSocketConnectionComponent.onError (override)      |
-    +------------------V-----------------------------------------------^--------------------------------------------------+
-    |                                                                                                                     |
-    |                                       WebSocketComponent layer                                                      |
-    |                                                                                                                     |
-    | (WebSocket library dependent)                                  (WebSocket library dependent)                        |
-    +------------------V-----------------------------------------------^--------------------------------------------------+
+    +------------------V-----------------------------------------------^-----------------------------------------------------------+
+    |                                                                                                                              |
+    |                                    OcppConnectionComponent layer                                                             |
+    |                                                                                                                              |
+    | SrpcConnectionComponent.srpcConnection.sendCall (call)                                                                       |
+    | SrpcConnectionComponent.srpcConnection.close (call)            SrpcConnectionComponent.onSrpcCall (override)                 |
+    | SrpcConnectionComponent.srpcConnection.forceClose (call)       SrpcConnectionComponent.onSrpcDisconnect (override)           |
+    +------------------V-----------------------------------------------^-----------------------------------------------------------+
+    |                                                                                                                              |
+    |                                          SrpcComponent layer                                                                 |
+    |                                                                                                                              |
+    |                                                                WebSocketConnectionComponent.onMessage (override)             |
+    | WebSocketConnectionComponent.webSocketConnection.send (call)   WebSocketConnectionComponent.onWebSocketDisconnect (override) |
+    | WebSocketConnectionComponent.webSocketConnection.close (call)  WebSocketConnectionComponent.onError (override)               |
+    +------------------V-----------------------------------------------^-----------------------------------------------------------+
+    |                                                                                                                              |
+    |                                       WebSocketComponent layer                                                               |
+    |                                                                                                                              |
+    | (WebSocket library dependent)                                  (WebSocket library dependent)                                 |
+    +------------------V-----------------------------------------------^-----------------------------------------------------------+
 ```
 
 So each layer defines the interface that the higher layers can use to
@@ -448,7 +454,7 @@ abstract class OcppJsonServer(listenPort: Int, ocppVersion: Version)
 
       def onOcppError(error: OcppError): Unit = ???
 
-      def onDisconnect() = ???
+      def onSrpcDisconnect() = ???
 
       implicit val executionContext: ExecutionContext = ???
 
@@ -463,7 +469,7 @@ abstract class OcppJsonServer(listenPort: Int, ocppVersion: Version)
                         remote: Boolean
                       ): Unit = ???
 
-  override def onMessage(conn: WebSocket, message: IdTag): Unit = ???
+  override def onMessage(conn: WebSocket, message: String): Unit = ???
 
   override def onError(conn: WebSocket, ex: Exception): Unit = ???
 }
@@ -505,7 +511,7 @@ private val incomingEndpoint = handleConnection(outgoingEndpoint)
 ```
 
 Now that we have the incoming endpoint, we can also fill in definitions for the
-`onRequest`, `onError` and `onDisconnect` handlers in the OCPP cake:
+`onRequest`, `onError` and `onSrpcDisconnect` handlers in the OCPP cake:
 
 ```scala
 def onRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: CentralSystemReqRes[REQ, RES]) =
@@ -514,7 +520,7 @@ def onRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implic
 def onOcppError(error: OcppError): Unit =
   incomingEndpoint.onError(error)
 
-def onDisconnect() =
+def onSrpcDisconnect() =
   incomingEndpoint.onDisconnect()
 ```
 
@@ -576,13 +582,13 @@ override def onClose(
 Now the last thing to be done on the way to a working server, is making the
 `onMessage`, `onDisconnect` and `onError` callbacks of `WebSocketServer`
 actually call into the connection's OCPP cake to let it process the message. It
-turns out that to do this, we have to add two methods to the
+turns out that to do this, we have to add three methods to the
 `SimpleWebSocketServerComponent`:
 
 ```scala
 def feedIncomingMessage(msg: String) = self.onMessage(org.json4s.native.JsonMethods.parse(msg))
 
-def feedIncomingDisconnect(): Unit = self.onDisconnect()
+def feedIncomingDisconnect(): Unit = self.onWebSocketDisconnect()
 
 def feedIncomingError(err: Exception) = self.onError(err)
 ```
@@ -720,6 +726,19 @@ It may be split off to enjoy retirement in its own little project on the next
 major version.
 
 ## Changelog
+
+### Changes in 7.0.0
+
+ - Wait for pending incoming requests to be answered before closing a WebSocket connection
+ - This involved changing some method names in the `SrpcConnectionComponent` and `WebSocketComponent`:
+
+     * `SrpcComponent#SrpcConnection.send` is now `SrpcComponent#SrpcConnection.sendCall`
+     * `SrpcComponent#SrpcConnection.close` now works asynchronously and returns a `Future[Unit]`
+     * `SrpcComponent#SrpcConnection.forceClose` was added and works like the old `.close`, immediately closing the underlying WebSocket without waiting for processing to complete
+     * `SrpcComponent.onSrpcRequest` is now `SrpcComponent.onSrpcCall`
+     * `SrpcComponent.onSrpcDisconnect` was added to allow the OCPP layer to handle an SRPC-level disconnect
+     * `WebSocketComponent.onDisconnect` was renamed to `WebSocketComponent.onWebSocketDisconnect`
+ - The case classes for SRPC messages were renamed to reflect the names used in the specification
 
 ### Changes in 6.0.3
 
