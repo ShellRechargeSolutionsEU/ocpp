@@ -90,21 +90,32 @@ trait DefaultSrpcComponent extends SrpcComponent {
 
     private var closePromise: Option[Promise[Unit]] = None
 
-    def close(): Future[Unit] = synchronized {
-      state match {
-        case Open =>
-          val p = Promise[Unit]()
-          closePromise = Some(p)
-          if (numIncomingCalls == 0) {
-            executeGracefulClose()
-            state = Closed
-          } else {
-            state = Closing
-          }
-          p.future
-        case Closing | Closed =>
-          throw new IllegalStateException("Connection already closed")
+    def close(): Future[Unit] = {
+      val (shouldClose, future) = synchronized {
+        state match {
+          case Open =>
+            val p = Promise[Unit]()
+            closePromise = Some(p)
+            val shouldClose = if (numIncomingCalls == 0) {
+              executeGracefulClose()
+              state = Closed
+              true
+            } else {
+              state = Closing
+              false
+            }
+            (shouldClose, p.future)
+          case Closing | Closed =>
+            throw new IllegalStateException("Connection already closed")
+        }
       }
+
+      // Let's call close() without the monitor lock held, because
+      // implementations may be synchronous and trigger a call to
+      // onWebSocketDisconnect from another thread before this call returns
+      if (shouldClose) webSocketConnection.close()
+
+      future
     }
 
     def forceClose(): Unit = synchronized {
@@ -157,18 +168,24 @@ trait DefaultSrpcComponent extends SrpcComponent {
       }
     }
 
-    private[DefaultSrpcComponent] def handleOutgoingResponse(callId: String, msg: SrpcResponse): Unit = synchronized {
-      try {
-        state match {
-          case Closed =>
-            logger.warn(s"WebSocket connection closed before we could respond to call; call ID $callId")
-          case Open | Closing =>
-            val resEnvelope = SrpcEnvelope(callId, msg)
-            webSocketConnection.send(TransportMessageParser.writeJValue(resEnvelope))
+    private[DefaultSrpcComponent] def handleOutgoingResponse(callId: String, msg: SrpcResponse): Unit = {
+      val shouldClose = synchronized {
+        Try {
+          state match {
+            case Closed =>
+              logger.warn(s"WebSocket connection closed before we could respond to call; call ID $callId")
+            case Open | Closing =>
+              val resEnvelope = SrpcEnvelope(callId, msg)
+              webSocketConnection.send(TransportMessageParser.writeJValue(resEnvelope))
+          }
+        } match {
+          case e => logger.warn("Could not write response to WebSocket", e)
         }
-      } finally {
-        srpcConnection.incomingCallEnded()
+
+        incomingCallEnded()
       }
+
+      if (shouldClose) webSocketConnection.close()
     }
 
     private[DefaultSrpcComponent] def handleWebSocketDisconnect(): Unit = synchronized {
@@ -178,23 +195,28 @@ trait DefaultSrpcComponent extends SrpcComponent {
     /**
       * Should be called whenever SrpcConnection has received the response to an
       * incoming call from the call handler, or definitively failed to do
-      * so.
+      * so. In those cases we may have to finish a graceful close in progress.
       *
       * @return Whether the WebSocket connection should now be closed
       */
-    private def incomingCallEnded(): Unit = {
+    private def incomingCallEnded(): Boolean = {
       numIncomingCalls -= 1
 
       if (numIncomingCalls == 0) {
-        if (state == Closing)
-          executeGracefulClose()
-        else if (state == Closed)
-          completeGracefulCloseFuture()
-      }
+        state match {
+          case Closing =>
+            executeGracefulClose()
+            true
+          case Closed =>
+            completeGracefulCloseFuture()
+            false
+          case Open =>
+            false
+        }
+      } else false
     }
 
     private def executeGracefulClose(): Unit = {
-      webSocketConnection.close()
       state = Closed
       completeGracefulCloseFuture()
     }
