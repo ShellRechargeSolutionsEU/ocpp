@@ -26,26 +26,44 @@ class RequestHandlerSpec extends Specification {
   "syncChargePointAsChargePointRequestHandler" should {
     "turn OcppException's into failed futures" in {
       val syncReqH: ChargePointRequestHandler = new SyncChargePoint {
-        def remoteStartTransaction(req: RemoteStartTransactionReq): RemoteStartTransactionRes = ???
-        def remoteStopTransaction(req: RemoteStopTransactionReq): RemoteStopTransactionRes = ???
-        def unlockConnector(req: UnlockConnectorReq): UnlockConnectorRes = ???
-        def getDiagnostics(req: GetDiagnosticsReq): GetDiagnosticsRes = ???
-        def changeConfiguration(req: ChangeConfigurationReq): ChangeConfigurationRes = ???
-        def getConfiguration(req: GetConfigurationReq): GetConfigurationRes = ???
-        def changeAvailability(req: ChangeAvailabilityReq): ChangeAvailabilityRes = ???
+        def remoteStartTransaction(req: RemoteStartTransactionReq): RemoteStartTransactionRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def remoteStopTransaction(req: RemoteStopTransactionReq): RemoteStopTransactionRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def unlockConnector(req: UnlockConnectorReq): UnlockConnectorRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def getDiagnostics(req: GetDiagnosticsReq): GetDiagnosticsRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def changeConfiguration(req: ChangeConfigurationReq): ChangeConfigurationRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def getConfiguration(req: GetConfigurationReq): GetConfigurationRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def changeAvailability(req: ChangeAvailabilityReq): ChangeAvailabilityRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
         def clearCache: ClearCacheRes =
-          throw OcppException(PayloadErrorCode.GenericError, "Incompetent Operator error")
-        def reset(req: ResetReq): ResetRes = ???
-        def updateFirmware(req: UpdateFirmwareReq): Unit = ???
-        def sendLocalList(req: SendLocalListReq): SendLocalListRes = ???
-        def getLocalListVersion: GetLocalListVersionRes = ???
-        def dataTransfer(req: ChargePointDataTransferReq): ChargePointDataTransferRes = ???
-        def reserveNow(req: ReserveNowReq): ReserveNowRes = ???
-        def cancelReservation(req: CancelReservationReq): CancelReservationRes = ???
-        def clearChargingProfile(req: ClearChargingProfileReq): ClearChargingProfileRes = ???
-        def getCompositeSchedule(req: GetCompositeScheduleReq): GetCompositeScheduleRes = ???
-        def setChargingProfile(req: SetChargingProfileReq): SetChargingProfileRes = ???
-        def triggerMessage(req: TriggerMessageReq): TriggerMessageRes = ???
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def reset(req: ResetReq): ResetRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def updateFirmware(req: UpdateFirmwareReq): Unit =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def sendLocalList(req: SendLocalListReq): SendLocalListRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def getLocalListVersion: GetLocalListVersionRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def dataTransfer(req: ChargePointDataTransferReq): ChargePointDataTransferRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def reserveNow(req: ReserveNowReq): ReserveNowRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def cancelReservation(req: CancelReservationReq): CancelReservationRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def clearChargingProfile(req: ClearChargingProfileReq): ClearChargingProfileRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def getCompositeSchedule(req: GetCompositeScheduleReq): GetCompositeScheduleRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def setChargingProfile(req: SetChargingProfileReq): SetChargingProfileRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
+        def triggerMessage(req: TriggerMessageReq): TriggerMessageRes =
+          throw OcppException(PayloadErrorCode.GenericError, "")
       }
 
       val futureResult = syncReqH.apply(ClearCacheReq)

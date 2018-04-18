@@ -6,7 +6,7 @@ import java.net.URI
 import java.security.MessageDigest
 import java.util.Base64
 import scala.concurrent.ExecutionContext.Implicits.global
-import org.specs2.mutable.{BeforeAfter, Specification}
+import org.specs2.mutable.{After, Specification}
 import org.specs2.specification.Scope
 import org.mockserver.integration.ClientAndServer
 import org.mockserver.mock.action.ExpectationCallback
@@ -57,13 +57,11 @@ class OcppJsonClientSpec extends Specification {
     }
   }
 
-  private class TestScope extends Scope with BeforeAfter {
+  private trait TestScope extends Scope with After {
 
-    var server: ClientAndServer = _
+    lazy val port = 1080
+    lazy val server: ClientAndServer = ClientAndServer.startClientAndServer(port)
 
-    val port = 1080
-    override def before =
-      server = ClientAndServer.startClientAndServer(port)
     override def after = server.stop
 
     val path = "/ocppws"
