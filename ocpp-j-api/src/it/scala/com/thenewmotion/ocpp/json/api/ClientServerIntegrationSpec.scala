@@ -37,8 +37,6 @@ class ClientServerIntegrationSpec extends Specification {
             }
 
             def onDisconnect(): Unit = {}
-
-            def onError(err: OcppError): Unit = {}
           }
 
         override def onStart(): Unit = {
@@ -62,8 +60,6 @@ class ClientServerIntegrationSpec extends Specification {
           }
 
           def onDisconnect(): Unit = {}
-
-          def onError(err: OcppError): Unit = {}
         }
 
         Await.result(client.send(HeartbeatReq), 1.second) mustEqual testResponse
@@ -95,8 +91,6 @@ class ClientServerIntegrationSpec extends Specification {
               }
 
             def onDisconnect(): Unit = {}
-
-            def onError(err: OcppError): Unit = {}
           }
         }
 
@@ -124,8 +118,6 @@ class ClientServerIntegrationSpec extends Specification {
           }
 
           def onDisconnect(): Unit = {}
-
-          def onError(err: OcppError): Unit = {}
         }
 
         client.send(HeartbeatReq)

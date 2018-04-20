@@ -13,7 +13,7 @@ import scala.concurrent.{ExecutionContext, Future}
   *   * A [[RequestHandler]], probably an instance of
   *     [[com.thenewmotion.ocpp.messages.ChargePoint]], which will handle
   *     incoming requests
-  *   * Implementations of onError and onDisconnect to handle these events
+  *   * An implementations of onDisconnect to handle connection closed events
   *
   * The trait provides the library user with:
   *   * A send method to send requests to the Central System
@@ -58,9 +58,6 @@ trait CakeBasedOcppClientEndpoint
     ): Future[RES] =
       requestHandler.apply(req)
 
-    final def onOcppError(error: OcppError): Unit =
-      CakeBasedOcppClientEndpoint.this.onError(error)
-
     final def onSrpcDisconnect(): Unit =
       CakeBasedOcppClientEndpoint.this.onDisconnect()
 
@@ -71,6 +68,4 @@ trait CakeBasedOcppClientEndpoint
   protected val ec: ExecutionContext
 
   def onDisconnect(): Unit
-
-  def onError(error: OcppError): Unit
 }

@@ -106,12 +106,7 @@ object JsonClientTestApp extends App {
         ))
     }
 
-    /*
-     * Also define how we handle connection errors and disconnections.
-     */
-    def onError(err: OcppError) = println(s"OCPP error: ${err.error} ${err.description}")
-
-    def onDisconnect() = println("WebSocket disconnect")
+    def onDisconnect() = println("OCPP connection closed")
   }
 
   println(s"Connected using OCPP version ${ocppJsonClient.connection.ocppVersion}")
