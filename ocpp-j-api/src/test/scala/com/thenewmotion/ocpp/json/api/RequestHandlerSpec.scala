@@ -12,7 +12,7 @@ import scala.concurrent.Await
 
 class RequestHandlerSpec extends Specification {
 
-  "syncFunctionAsChargePointRequestHandler" should {
+  "RequestHandler.fromChargePointSyncFunction" should {
     "turn OcppException's into failed futures" in {
       val syncReqH: ChargePointRequestHandler = {
         _ => throw OcppException(PayloadErrorCode.GenericError, "haai")
@@ -23,7 +23,7 @@ class RequestHandlerSpec extends Specification {
     }
   }
 
-  "syncChargePointAsChargePointRequestHandler" should {
+  "RequestHandler.fromSyncChargePoint" should {
     "turn OcppException's into failed futures" in {
       val syncReqH: ChargePointRequestHandler = new SyncChargePoint {
         def remoteStartTransaction(req: RemoteStartTransactionReq): RemoteStartTransactionRes =

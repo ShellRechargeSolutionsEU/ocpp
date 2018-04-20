@@ -24,7 +24,7 @@ trait RequestHandler[REQBOUND <: Req, RESBOUND <: Res, REQRES[_ <: REQBOUND, _ <
 
 object RequestHandler {
 
-  implicit def asyncFunctionAsChargePointRequestHandler(
+  implicit def fromChargePointAsyncFunction(
     f: ChargePointReq => Future[ChargePointRes]
   ): RequestHandler[ChargePointReq, ChargePointRes, ChargePointReqRes] =
     new RequestHandler[ChargePointReq, ChargePointRes, ChargePointReqRes] {
@@ -34,7 +34,7 @@ object RequestHandler {
       ): Future[RES] = f(req).map(_.asInstanceOf[RES])
     }
 
-  implicit def asyncFunctionAsCentralSystemRequestHandler(
+  implicit def fromCentralSystemAsyncFunction(
     f: CentralSystemReq => Future[CentralSystemRes]
   ): RequestHandler[CentralSystemReq, CentralSystemRes, CentralSystemReqRes] =
     new RequestHandler[CentralSystemReq, CentralSystemRes, CentralSystemReqRes] {
@@ -44,7 +44,7 @@ object RequestHandler {
       ): Future[RES] = f(req).map(_.asInstanceOf[RES])
     }
 
-  implicit def syncFunctionAsChargePointRequestHandler(
+  implicit def fromChargePointSyncFunction(
     f: ChargePointReq => ChargePointRes
   ): RequestHandler[ChargePointReq, ChargePointRes, ChargePointReqRes] =
     new RequestHandler[ChargePointReq, ChargePointRes, ChargePointReqRes] {
@@ -54,7 +54,7 @@ object RequestHandler {
       ): Future[RES] = Future(f(req).asInstanceOf[RES])
     }
 
-  implicit def syncFunctionAsCentralSystemRequestHandler(
+  implicit def fromCentralSystemSyncFunction(
     f: CentralSystemReq => CentralSystemRes
   ): RequestHandler[CentralSystemReq, CentralSystemRes, CentralSystemReqRes] =
     new RequestHandler[CentralSystemReq, CentralSystemRes, CentralSystemReqRes] {
@@ -64,7 +64,7 @@ object RequestHandler {
       ): Future[RES] = Future(f(req).asInstanceOf[RES])
     }
 
-  implicit def chargePointAsChargePointRequestHandler(
+  implicit def fromChargePoint(
     cp: ChargePoint
   ): RequestHandler[ChargePointReq, ChargePointRes, ChargePointReqRes] =
     new RequestHandler[ChargePointReq, ChargePointRes, ChargePointReqRes] {
@@ -74,7 +74,7 @@ object RequestHandler {
       ): Future[RES] = cp.apply(req)
     }
 
-  implicit def centralSystemAsCentralSystemRequestHandler(
+  implicit def fromCentralSystem(
     cp: CentralSystem
   ): RequestHandler[CentralSystemReq, CentralSystemRes, CentralSystemReqRes] =
     new RequestHandler[CentralSystemReq, CentralSystemRes, CentralSystemReqRes] {
@@ -84,7 +84,7 @@ object RequestHandler {
       ): Future[RES] = cp.apply(req)
     }
 
-  implicit def syncChargePointAsChargePointRequestHandler(
+  implicit def fromSyncChargePoint(
     cp: SyncChargePoint
   ): RequestHandler[ChargePointReq, ChargePointRes, ChargePointReqRes] =
     new RequestHandler[ChargePointReq, ChargePointRes, ChargePointReqRes] {
@@ -94,7 +94,7 @@ object RequestHandler {
       ): Future[RES] = Future(cp.apply(req))
     }
 
-  implicit def syncCentralSystemAsCentralSystemRequestHandler(
+  implicit def fromSyncCentralSystem(
     cs: SyncCentralSystem
   ): RequestHandler[CentralSystemReq, CentralSystemRes, CentralSystemReqRes] =
     new RequestHandler[CentralSystemReq, CentralSystemRes, CentralSystemReqRes] {
