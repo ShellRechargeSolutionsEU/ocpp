@@ -3,9 +3,8 @@ package json
 package api
 
 import java.time.ZonedDateTime
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods.{pretty, render}
