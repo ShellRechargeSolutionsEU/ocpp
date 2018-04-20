@@ -106,8 +106,9 @@ object JsonClientTestApp extends App {
         ))
     }
 
-    def onDisconnect() = println("OCPP connection closed")
   }
+
+  ocppJsonClient.onClose.foreach(_ => println("OCPP connection closed"))
 
   println(s"Connected using OCPP version ${ocppJsonClient.connection.ocppVersion}")
 

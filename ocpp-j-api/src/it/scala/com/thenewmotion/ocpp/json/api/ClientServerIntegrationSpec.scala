@@ -10,7 +10,7 @@ import scala.util.Success
 import org.specs2.mutable.Specification
 
 import messages._
-import OcppJsonServer.{IncomingEndpoint, OutgoingEndpoint}
+import OcppJsonServer.OutgoingEndpoint
 
 class ClientServerIntegrationSpec extends Specification {
   sequential
@@ -25,19 +25,15 @@ class ClientServerIntegrationSpec extends Specification {
       val serverStarted = Promise[Unit]()
 
       val server = new OcppJsonServer(testPort, Version.V16) {
-        def handleConnection(cpSerial: String, remote: OutgoingEndpoint): IncomingEndpoint =
-          new IncomingEndpoint {
-            val requestHandler: CentralSystemRequestHandler = { (req: CentralSystemReq) =>
-              req match {
-                case HeartbeatReq =>
-                  testResponse
-                case _ =>
-                  sys.error(s"Unexpected request in test server: $req")
-              }
+        def handleConnection(cpSerial: String, remote: OutgoingEndpoint): CentralSystemRequestHandler = {
+          (req: CentralSystemReq) =>
+            req match {
+              case HeartbeatReq =>
+                testResponse
+              case _ =>
+                sys.error(s"Unexpected request in test server: $req")
             }
-
-            def onDisconnect(): Unit = {}
-          }
+        }
 
         override def onStart(): Unit = {
           serverStarted.complete(Success(()))
@@ -58,8 +54,6 @@ class ClientServerIntegrationSpec extends Specification {
           val requestHandler: ChargePointRequestHandler = { (req: ChargePointReq) =>
             sys.error("No incoming charge point request expected in this test"): ChargePointRes
           }
-
-          def onDisconnect(): Unit = {}
         }
 
         Await.result(client.send(HeartbeatReq), 1.second) mustEqual testResponse
@@ -76,22 +70,19 @@ class ClientServerIntegrationSpec extends Specification {
       val clientResponsePromise = Promise[GetLocalListVersionRes]()
 
       val server = new OcppJsonServer(testPort, Version.V16) {
-        def handleConnection(cpSerial: String, remote: OutgoingEndpoint): IncomingEndpoint = {
-          new IncomingEndpoint {
-            val requestHandler: CentralSystemRequestHandler = (req: CentralSystemReq) =>
-              req match {
-                case HeartbeatReq =>
-                  clientResponsePromise.completeWith {
-                    remote.send(GetLocalListVersionReq)
-                  }
 
-                  serverTestResponse
-                case _ =>
-                  sys.error(s"Unexpected request to server in test: $req")
-              }
+        def handleConnection(cpSerial: String, remote: OutgoingEndpoint): CentralSystemRequestHandler = {
+          (req: CentralSystemReq) =>
+            req match {
+              case HeartbeatReq =>
+                clientResponsePromise.completeWith {
+                                                     remote.send(GetLocalListVersionReq)
+                                                   }
 
-            def onDisconnect(): Unit = {}
-          }
+                serverTestResponse
+              case _ =>
+                sys.error(s"Unexpected request to server in test: $req")
+            }
         }
 
         override def onStart(): Unit = {
@@ -116,8 +107,6 @@ class ClientServerIntegrationSpec extends Specification {
               case _ => sys.error(s"Unexpected request to client in test: $req")
             }
           }
-
-          def onDisconnect(): Unit = {}
         }
 
         client.send(HeartbeatReq)

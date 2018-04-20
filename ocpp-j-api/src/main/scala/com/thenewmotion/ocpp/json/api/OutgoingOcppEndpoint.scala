@@ -40,5 +40,10 @@ trait OutgoingOcppEndpoint[
     * This method is asynchronous: once the connection has been closed, the future is completed.
     */
   def close(): Future[Unit]
+
+  /**
+    * @return A future that is completed once the connection is closed
+    */
+  def onClose: Future[Unit]
 }
 

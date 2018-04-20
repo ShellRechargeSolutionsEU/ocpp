@@ -38,7 +38,7 @@ trait SrpcComponent {
       * This will allow all pending incoming calls to be responded to,
       * and only then will close the underlying WebSocket.
       *
-      * @return A future that completes when connection has indeed closed
+      * @return A future that is completed when connection has indeed closed
       */
     def close(): Future[Unit]
 
@@ -49,6 +49,11 @@ trait SrpcComponent {
       * @return
       */
     def forceClose(): Unit
+
+    /**
+      * A future that is completed once the SRPC connection is closed
+      */
+    def onClose: Future[Unit]
   }
 
   def srpcConnection: SrpcConnection
@@ -60,13 +65,6 @@ trait SrpcComponent {
     * @return The outgoing message, asynchronously
     */
   def onSrpcCall(msg: SrpcCall): Future[SrpcResponse]
-
-  /**
-    * Called when the SRPC connection closes.
-    */
-  def onSrpcDisconnect(): Unit
-  // TODO replace this by the future returned from close(), which we can also
-  // make accessible indepedently from the close method?
 }
 
 trait DefaultSrpcComponent extends SrpcComponent {
@@ -91,6 +89,24 @@ trait DefaultSrpcComponent extends SrpcComponent {
     private var numIncomingCalls: Int = 0
 
     private val closePromise: Promise[Unit] = Promise[Unit]()
+
+    def sendCall(msg: SrpcCall): Future[SrpcResponse] = synchronized {
+      val callId = callIdGenerator.next()
+      val responsePromise = Promise[SrpcResponse]()
+
+      state match {
+        case Open =>
+          callIdCache.put(callId, responsePromise)
+          Try {
+                webSocketConnection.send(TransportMessageParser.writeJValue(SrpcEnvelope(callId, msg)))
+              } match {
+            case Success(()) => responsePromise.future
+            case Failure(e)  => Future.failed(e)
+          }
+        case Closing | Closed =>
+          Future.failed(new IllegalStateException("Connection already closed"))
+      }
+    }
 
     def close(): Future[Unit] = {
       val shouldClose = synchronized {
@@ -123,23 +139,7 @@ trait DefaultSrpcComponent extends SrpcComponent {
       state = Closed
     }
 
-    def sendCall(msg: SrpcCall): Future[SrpcResponse] = synchronized {
-      val callId = callIdGenerator.next()
-      val responsePromise = Promise[SrpcResponse]()
-
-      state match {
-        case Open =>
-          callIdCache.put(callId, responsePromise)
-          Try {
-                webSocketConnection.send(TransportMessageParser.writeJValue(SrpcEnvelope(callId, msg)))
-          } match {
-            case Success(()) => responsePromise.future
-            case Failure(e)  => Future.failed(e)
-          }
-        case Closing | Closed =>
-          Future.failed(new IllegalStateException("Connection already closed"))
-      }
-    }
+    def onClose: Future[Unit] = closePromise.future
 
     private[DefaultSrpcComponent] def handleIncomingCall(req: SrpcCall): Future[SrpcResponse] = synchronized {
       state match {
@@ -189,7 +189,7 @@ trait DefaultSrpcComponent extends SrpcComponent {
     }
 
     private[DefaultSrpcComponent] def handleWebSocketDisconnect(): Unit = synchronized {
-      state = Closed
+      executeGracefulClose()
     }
 
     /**
@@ -208,7 +208,7 @@ trait DefaultSrpcComponent extends SrpcComponent {
             executeGracefulClose()
             true
           case Closed =>
-            completeGracefulCloseFuture()
+            executeGracefulClose()
             false
           case Open =>
             false
@@ -218,10 +218,6 @@ trait DefaultSrpcComponent extends SrpcComponent {
 
     private def executeGracefulClose(): Unit = {
       state = Closed
-      completeGracefulCloseFuture()
-    }
-
-    private def completeGracefulCloseFuture(): Unit = {
       closePromise.trySuccess(())
       ()
     }
@@ -250,7 +246,6 @@ trait DefaultSrpcComponent extends SrpcComponent {
 
   def onWebSocketDisconnect(): Unit = {
     srpcConnection.handleWebSocketDisconnect()
-    onSrpcDisconnect()
   }
 
   // TODO don't throw these away!

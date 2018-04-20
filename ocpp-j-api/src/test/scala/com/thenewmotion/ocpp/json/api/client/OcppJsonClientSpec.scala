@@ -78,8 +78,6 @@ class OcppJsonClientSpec extends Specification {
 
         val requestHandler: ChargePointRequestHandler = (_: ChargePointReq) =>
           Future.failed(OcppException(PayloadErrorCode.NotSupported, "OcppJsonClientSpec"))
-
-        def onDisconnect() = {}
       }
 
     import org.mockserver.model.HttpCallback
