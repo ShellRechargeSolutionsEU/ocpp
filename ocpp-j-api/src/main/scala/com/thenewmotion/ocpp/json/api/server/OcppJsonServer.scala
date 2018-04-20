@@ -41,9 +41,9 @@ abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
    * @param clientChargePointIdentity The charge point identity of the client
    * @param remote An OutgoingEndpoint to send messages to the Charge Point or close the connection
    *
-   * @return The handler for incoming requests from the Charge Point and other connection events
+   * @return The handler for incoming requests from the Charge Point
    */
-  def handleConnection(clientChargePointIdentity: String, remote: OutgoingEndpoint): IncomingEndpoint
+  def handleConnection(clientChargePointIdentity: String, remote: OutgoingEndpoint): CentralSystemRequestHandler
 
   override def onStart(): Unit = {}
 
@@ -75,15 +75,14 @@ abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
           ocppConnection.sendRequest(req)
 
         def close(): Future[Unit] = srpcConnection.close()
+
+        val onClose: Future[Unit] = srpcConnection.onClose
       }
 
-      private val incomingEndpoint = handleConnection(chargePointIdentity, outgoingEndpoint)
+      private val requestHandler = handleConnection(chargePointIdentity, outgoingEndpoint)
 
       def onRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: CentralSystemReqRes[REQ, RES]) =
-        incomingEndpoint.requestHandler(req)
-
-      def onSrpcDisconnect(): Unit =
-        incomingEndpoint.onDisconnect()
+        requestHandler.apply(req)
 
       implicit val executionContext: ExecutionContext = concurrent.ExecutionContext.Implicits.global
 
@@ -118,8 +117,6 @@ abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
 
 object OcppJsonServer {
   type OutgoingEndpoint = OutgoingOcppEndpoint[ChargePointReq, ChargePointRes, ChargePointReqRes]
-
-  type IncomingEndpoint = IncomingOcppEndpoint[CentralSystemReq, CentralSystemRes, CentralSystemReqRes]
 
   private val protosForVersions = Map[Version, String](
     Version.V15 -> "ocpp1.5",

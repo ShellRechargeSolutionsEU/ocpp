@@ -149,10 +149,14 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
       Await.result(srpcCloseFuture, 1.second) mustEqual ()
     }
 
-    "call onSrpcDisconnect() when the connection is closed" in new TestScope {
+    "leave onClose uncompleted while the connection is open" in new TestScope {
+      srpcComponent.srpcConnection.onClose.isCompleted must beFalse
+    }
+
+    "complete the onClose future once the WebSocket connection is closed" in new TestScope {
       srpcComponent.onWebSocketDisconnect()
 
-      Await.result(onSrpcDisconnectCalledFuture, 1.second) mustEqual ()
+      Await.result(srpcComponent.srpcConnection.onClose, 1.second) mustEqual ()
     }
   }
 
