@@ -13,10 +13,6 @@ import scala.concurrent.ExecutionContext
  * intended for use in charge point simulators (or charge point firmwares, if
  * there is someone writing those in Scala :-)).
  *
- * This class is to be used by instantiating your own subclass of it, which
- * should provide a handler for incoming requests, a handler for errors, and a
- * disconnection handler as explained at [[IncomingOcppEndpoint]].
- *
  * @param chargerId The charge point identity of the charge point for which you
  *                  want to set up a connection
  * @param centralSystemUri The endpoint URI of the Central System to connect to.
@@ -67,6 +63,33 @@ abstract class OcppJsonClient(
 }
 
 object OcppJsonClient {
+  /**
+    * A convenience factory method to let you create an OcppJsonClient, passing
+    * the handler for incoming requests as an argument instead of defining it as
+    * a member.
+    *
+    * @param chargerId
+    * @param centralSystemUri
+    * @param versions
+    * @param authPassword
+    * @param incomingRequestHandler
+    * @param ec
+    * @param sslContext
+    * @return
+    */
+  def apply(
+    chargerId: String,
+    centralSystemUri: URI,
+    versions: Seq[Version],
+    authPassword: Option[String] = None
+  )(
+    incomingRequestHandler: ChargePointRequestHandler
+  )(implicit ec: ExecutionContext,
+    sslContext: SSLContext = SSLContext.getDefault
+  ) = new OcppJsonClient(chargerId, centralSystemUri, versions, authPassword)(ec, sslContext) {
+    override val requestHandler: ChargePointRequestHandler = incomingRequestHandler
+  }
+
   case class VersionNotSupported(msg: String, supportedVersions: Iterable[Version])
     extends RuntimeException(msg + supportedVersions.mkString(", "))
 }

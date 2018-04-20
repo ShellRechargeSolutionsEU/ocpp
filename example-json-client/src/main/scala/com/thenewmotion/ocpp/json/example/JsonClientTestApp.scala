@@ -30,7 +30,7 @@ object JsonClientTestApp extends App {
    * Then, we create an OcppJsonClient with those settings. And in there, we
    * also override some methods to handle events about the connection.
    */
-  val ocppJsonClient = new OcppJsonClient(chargerId, new URI(centralSystemUri), versions) {
+  val ocppJsonClient = OcppJsonClient(chargerId, new URI(centralSystemUri), versions) {
 
     /*
      * Here we define how we handle OCPP requests from the Central System to us.
@@ -38,7 +38,7 @@ object JsonClientTestApp extends App {
      * any configuration. To other requests it just answers that that message
      * type is not supported.
      */
-    val requestHandler: ChargePointRequestHandler = new ChargePoint {
+    new ChargePoint {
       def getConfiguration(req: GetConfigurationReq): Future[GetConfigurationRes] =
         Future.successful(GetConfigurationRes(
           values = List(),
@@ -105,7 +105,6 @@ object JsonClientTestApp extends App {
           s"Demo app doesn't support $opName"
         ))
     }
-
   }
 
   ocppJsonClient.onClose.foreach(_ => println("OCPP connection closed"))
