@@ -12,8 +12,6 @@ import messages._
   *
   *  * onRequest should be overridden to handle incoming requests
   *  * onDisconnect should be overridden to handle a disconnection
-  *  * onError should be overridden to handle OCPP errors sent by the other
-  *    party that do not reference a request we sent before
   *
   * @tparam INREQ The type of incoming requests (either ChargePointReq or CentralSystemReq)
   * @tparam OUTRES The type of outgoing responses (either ChargePointReq or CentralSystemReq)
@@ -41,16 +39,6 @@ INREQRES[_ <: INREQ, _ <: OUTRES] <: ReqRes[_, _]
     * A callback that is called when the connection has been closed
     */
   def onDisconnect(): Unit
-
-  /**
-    * A callback that is called when an OCPP error is received which does not
-    * relate to a request that was sent to the send method. If an error is
-    * received about a specific request, it will be reported by failing the
-    * result Future for that request instead.
-    *
-    * @param error
-    */
-  def onError(error: OcppError): Unit
 }
 
 

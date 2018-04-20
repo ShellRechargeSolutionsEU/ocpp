@@ -204,7 +204,6 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
     }
 
     val onRequest = mock[OcppRequestHandler]
-    val onError = mock[OcppError => Unit]
 
     sealed trait SrpcMockType
     case object Failing extends SrpcMockType
@@ -226,8 +225,6 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
         )(
           implicit reqRes: ChargePointReqRes[REQ, RES]
         ): Future[RES] = Future { TestScope.this.onRequest(request).asInstanceOf[RES] }
-
-        def onOcppError(err: OcppError) = TestScope.this.onError(err)
 
         def onSrpcDisconnect(): Unit = {}
       }
@@ -251,8 +248,6 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
       )(
         implicit reqRes: CentralSystemReqRes[REQ, RES]
       ): Future[RES] = Future { TestScope.this.onRequest(request).asInstanceOf[RES] }
-
-      def onOcppError(err: OcppError) = TestScope.this.onError(err)
 
       def onSrpcDisconnect(): Unit = {}
     }

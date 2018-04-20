@@ -266,8 +266,7 @@ may be intimidating at first. Let's make a version of the above diagram that
 shows the methods defined by each layer:
 
 ```
-                                                                     OcppConnectionComponent.onRequest (override)
-       OcppConnectionComponent.ocppConnection.sendRequest (call)     OcppConnectionComponent.onOcppError (override)
+       OcppConnectionComponent.ocppConnection.sendRequest (call)     OcppConnectionComponent.onRequest (override)
     +------------------V-----------------------------------------------^-----------------------------------------------------------+
     |                                                                                                                              |
     |                                    OcppConnectionComponent layer                                                             |
@@ -464,8 +463,6 @@ abstract class OcppJsonServer(listenPort: Int, ocppVersion: Version)
 
       def onRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: CentralSystemReqRes[REQ, RES]) = ???
 
-      def onOcppError(error: OcppError): Unit = ???
-
       def onSrpcDisconnect() = ???
 
       implicit val executionContext: ExecutionContext = ???
@@ -528,9 +525,6 @@ Now that we have the incoming endpoint, we can also fill in definitions for the
 ```scala
 def onRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: CentralSystemReqRes[REQ, RES]) =
   incomingEndpoint.requestHandler(req)
-
-def onOcppError(error: OcppError): Unit =
-  incomingEndpoint.onError(error)
 
 def onSrpcDisconnect() =
   incomingEndpoint.onDisconnect()
@@ -741,9 +735,18 @@ major version.
 
 ### Changes in 7.0.0
 
- - Wait for pending incoming requests to be answered before closing a WebSocket connection
+ - Wait for pending incoming requests to be answered before closing a WebSocket
+   connection
 
- - `OcppJsonClient.close` is now asynchronous; it returns a future that is completed once the connection is closed.
+ - `OcppJsonClient.close` is now asynchronous; it returns a future that is
+   completed once the connection is closed.
+
+ - The rudimentary `onError` method is removed from `OcppIncomingEndpoint` and
+   thus also from `OcppJsonClient`. All OCPP errors are reported as failed
+   futures returned from `OcppJsonClient.send`.
+
+ - As part of the same dead code removal, the `onOcppError` method in
+   `OcppComponent` is also gone
 
  - The more robust closing involved changing some method names in the `SrpcConnectionComponent` and `WebSocketComponent`:
 

@@ -54,8 +54,6 @@ trait OcppConnectionComponent[
   def ocppConnection: OcppConnection
 
   def onRequest[REQ <: INREQBOUND, RES <: OUTRESBOUND](req: REQ)(implicit reqRes: INREQRES[REQ, RES]): Future[RES]
-
-  def onOcppError(error: OcppError)
 }
 
 // for now, we don't support the 'details' field of OCPP-J error messages
@@ -177,8 +175,6 @@ trait DefaultOcppConnectionComponent[
   def ocppConnection: DefaultOcppConnection
 
   def onRequest[REQ <: INREQBOUND, RES <: OUTRESBOUND](req: REQ)(implicit reqRes: INREQRES[REQ, RES]): Future[RES]
-
-  def onOcppError(error: OcppError): Unit
 
   def onSrpcCall(msg: SrpcCall): Future[SrpcResponse] = ocppConnection.onSrpcCall(msg)
 }

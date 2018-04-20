@@ -45,9 +45,6 @@ object ExampleServerTestApp extends App {
 
         override def onDisconnect(): Unit =
           println(s"Disconnected client $chargePointIdentity")
-
-        override def onError(error: OcppError): Unit =
-          println(s"Error occurred for client $chargePointIdentity: $error")
       }
     }
   }

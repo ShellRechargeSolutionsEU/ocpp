@@ -82,9 +82,6 @@ abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
       def onRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: CentralSystemReqRes[REQ, RES]) =
         incomingEndpoint.requestHandler(req)
 
-      def onOcppError(error: OcppError): Unit =
-        incomingEndpoint.onError(error)
-
       def onSrpcDisconnect(): Unit =
         incomingEndpoint.onDisconnect()
 
