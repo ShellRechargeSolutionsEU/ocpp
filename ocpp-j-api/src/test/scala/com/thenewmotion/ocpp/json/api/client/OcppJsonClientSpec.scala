@@ -1,10 +1,12 @@
 package com.thenewmotion.ocpp
-package json.api
+package json
+package api
 package client
 
 import java.net.URI
 import java.security.MessageDigest
 import java.util.Base64
+import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.specs2.mutable.{After, Specification}
 import org.specs2.specification.Scope
@@ -14,6 +16,7 @@ import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.HttpResponse.response
 import org.mockserver.model.HttpStatusCode.SWITCHING_PROTOCOLS_101
 import org.mockserver.model.{ConnectionOptions, Header, HttpRequest}
+import messages.ChargePointReq
 
 class OcppJsonClientSpec extends Specification {
   sequential
@@ -69,14 +72,8 @@ class OcppJsonClientSpec extends Specification {
     val centralSystemUri = s"ws://localhost:$port$path"
 
     def createOcppJsonClient(versions: Seq[Version]) =
-      new OcppJsonClient(chargerId, new URI(centralSystemUri), versions) {
-
-        import json.PayloadErrorCode
-        import messages.ChargePointReq
-
-        import scala.concurrent.Future
-
-        val requestHandler: ChargePointRequestHandler = (_: ChargePointReq) =>
+      OcppJsonClient(chargerId, new URI(centralSystemUri), versions) {
+        (_: ChargePointReq) =>
           Future.failed(OcppException(PayloadErrorCode.NotSupported, "OcppJsonClientSpec"))
       }
 
