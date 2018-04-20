@@ -179,7 +179,8 @@ trait DefaultSrpcComponent extends SrpcComponent {
               webSocketConnection.send(TransportMessageParser.writeJValue(resEnvelope))
           }
         } match {
-          case e => logger.warn("Could not write response to WebSocket", e)
+          case Failure(e) => logger.warn("Could not write response to WebSocket", e)
+          case _          =>
         }
 
         incomingCallEnded()
