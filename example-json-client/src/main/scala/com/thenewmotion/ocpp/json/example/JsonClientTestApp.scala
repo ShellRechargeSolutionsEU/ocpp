@@ -27,8 +27,9 @@ object JsonClientTestApp extends App {
       Seq(Version.V16)
 
   /*
-   * Then, we create an OcppJsonClient with those settings. And in there, we
-   * also override some methods to handle events about the connection.
+   * Then, we create an OcppJsonClient with those settings. Also, we give as an
+   * argument in a second list a ChargePoint instance that specifies how we want
+   * to handle incoming requests.
    */
   val ocppJsonClient = OcppJsonClient(chargerId, new URI(centralSystemUri), versions) {
 
@@ -107,6 +108,10 @@ object JsonClientTestApp extends App {
     }
   }
 
+  /*
+   * Set up a callback that will print a message once the connection is
+   * closed
+   */
   ocppJsonClient.onClose.foreach(_ => println("OCPP connection closed"))
 
   println(s"Connected using OCPP version ${ocppJsonClient.connection.ocppVersion}")
