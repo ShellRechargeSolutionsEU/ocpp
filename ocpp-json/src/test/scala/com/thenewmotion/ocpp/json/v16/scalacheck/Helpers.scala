@@ -2,10 +2,11 @@ package com.thenewmotion.ocpp
 package json.v16
 package scalacheck
 
-import java.time.{ZonedDateTime, Instant, ZoneId}
-import org.scalacheck.Gen, Gen._
-import enums.reflection.EnumUtils.{Enumerable, Nameable}
+import java.time.{Instant, ZoneId, ZonedDateTime}
 import java.net.URI
+import org.scalacheck.Gen
+import Gen._
+import enums.reflection.EnumUtils.{Enumerable, Nameable}
 
 object Helpers {
 
@@ -112,6 +113,12 @@ object Helpers {
       readOnly <- oneOf(true, false)
       value <- option(Gen.resize(500, words))
     } yield ConfigurationEntry(key, readOnly, value)
+
+  def authorisationDataGen: Gen[AuthorisationData] =
+    for {
+      tag <- idTagGen
+      info <- option(idTagInfoGen)
+    } yield AuthorisationData(tag, info)
 
   def enumerableGen[T <: Nameable](e: Enumerable[T]): Gen[T]  =
     oneOf(e.values.toList)

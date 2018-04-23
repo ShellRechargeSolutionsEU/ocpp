@@ -61,6 +61,8 @@ object JsonSchemaValidationSpec extends Specification with ScalaCheck {
     validateJson(getConfigurationRes)(GetConfigurationResV16Variant, "GetConfigurationResponse.json")
     validateJson(getLocalListVersionReq)(GetLocalListVersionReqV16Variant, "GetLocalListVersion.json")
     validateJson(getLocalListVersionRes)(GetLocalListVersionResV16Variant, "GetLocalListVersionResponse.json")
+    validateJson(sendLocalListReq)(SendLocalListReqV16Variant, "SendLocalList.json")
+    validateJson(sendLocalListRes)(SendLocalListResV16Variant, "SendLocalListResponse.json")
     validateJson(reserveNowReq)(ReserveNowReqV16Variant, "ReserveNow.json")
     validateJson(reserveNowRes)(ReserveNowResV16Variant, "ReserveNowResponse.json")
     validateJson(cancelReservationReq)(CancelReservationReqV16Variant, "CancelReservation.json")

@@ -171,7 +171,7 @@ case class ResetRes(status: String) extends ChargePointRes
 case class SendLocalListReq(
   updateType: String,
   listVersion: Int,
-  localAuthorisationList: Option[List[AuthorisationData]]
+  localAuthorizationList: Option[List[AuthorisationData]]
 ) extends ChargePointReq
 case class SendLocalListRes(status: String) extends ChargePointRes
 
