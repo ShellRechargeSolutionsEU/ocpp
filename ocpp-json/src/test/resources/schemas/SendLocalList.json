@@ -17,15 +17,15 @@
                     },
                     "idTagInfo": {
                         "type": "object",
-						"expiryDate": {
-							"type": "string",
-							"format": "date-time"
-						},
-						"parentIdTag": {
-							"type": "string",
-							"maxLength": 20
-						},
                         "properties": {
+                            "expiryDate": {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            "parentIdTag": {
+                                "type": "string",
+                                "maxLength": 20
+                            },
                             "status": {
                                 "type": "string",
                                 "enum": [
