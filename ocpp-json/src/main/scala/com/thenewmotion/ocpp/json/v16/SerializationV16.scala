@@ -346,7 +346,7 @@ object SerializationV16 extends SerializationCommon {
     (msg: v16.SendLocalListReq) => messages.SendLocalListReq(
       enumerableFromJsonString(messages.UpdateType, msg.updateType),
       messages.AuthListSupported(msg.listVersion),
-      emptyIfNone(msg.localAuthorisationList).map(_.fromV16),
+      emptyIfNone(msg.localAuthorizationList).map(_.fromV16),
       hash = None
     )
   )

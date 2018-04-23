@@ -248,6 +248,17 @@ object MessageGenerators {
   def getLocalListVersionRes: Gen[GetLocalListVersionRes] =
     chooseNum(1, 500).map(GetLocalListVersionRes)
 
+  def sendLocalListReq: Gen[SendLocalListReq] =
+    for {
+      updateType <- enumerableNameGen[messages.UpdateType](messages.UpdateType)
+      listVersion <- chooseNum(0, 10000)
+      authData <- optionalNonEmptyList(authorisationDataGen)
+    } yield SendLocalListReq(updateType, listVersion, authData)
+
+  def sendLocalListRes: Gen[SendLocalListRes] =
+    oneOf("Failed", "NotSupported", "VersionMismatch", "Accepted")
+      .map(SendLocalListRes)
+
   def reserveNowReq: Gen[ReserveNowReq] =
     for {
       connectorId <- connectorIdIncludingChargePointGen
