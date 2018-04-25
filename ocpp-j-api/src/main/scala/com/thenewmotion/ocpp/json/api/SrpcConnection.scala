@@ -113,7 +113,6 @@ trait DefaultSrpcComponent extends SrpcComponent {
         state match {
           case Open =>
             val shouldClose = if (numIncomingCalls == 0) {
-              executeGracefulClose()
               state = Closed
               true
             } else {
@@ -192,7 +191,9 @@ trait DefaultSrpcComponent extends SrpcComponent {
     }
 
     private[DefaultSrpcComponent] def handleWebSocketDisconnect(): Unit = synchronized {
-      executeGracefulClose()
+      state = Closed
+      closePromise.trySuccess(())
+      ()
     }
 
     /**
@@ -206,16 +207,16 @@ trait DefaultSrpcComponent extends SrpcComponent {
       numIncomingCalls -= 1
 
       if (numIncomingCalls == 0) {
-        state match {
-          case Closing =>
-            executeGracefulClose()
-            true
-          case Closed =>
-            executeGracefulClose()
-            false
+        val oldState = state
+
+        state = state match {
+          case Closing | Closed =>
+            Closed
           case Open =>
-            false
+            Open
         }
+
+        oldState == Closing
       } else false
     }
 
