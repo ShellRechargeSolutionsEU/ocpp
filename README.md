@@ -53,7 +53,7 @@ resolvers += "TNM" at "http://nexus.thenewmotion.com/content/groups/public"
 and this to your `build.sbt`:
 
 ```
-libraryDependencies += "com.thenewmotion" %% "ocpp-j-api" % "6.0.0"
+libraryDependencies += "com.thenewmotion" %% "ocpp-j-api" % "7.0.0"
 ```
 
 With Maven, you'd set up the repository in your pom.xml:
@@ -71,7 +71,7 @@ and add this to your dependencies:
     <dependency>
         <groupId>com.thenewmotion.ocpp</groupId>
         <artifactId>ocpp-j-api_2.11</artifactId>
-        <version>6.0.0</version>
+        <version>7.0.0</version>
     </dependency>
 ```
 
@@ -91,17 +91,15 @@ you can see how the client API is used:
 
  * A connection is established by creating an instance of `OcppJsonClient`. The
    server endpoint URI, charge point ID and OCPP version to use are passed
-   to the constructor.
-
- * To specify how your application handles incoming messages, you override the
-   `requestHandler` and `onError` members.
+   to the apply method, followed by a handler for incoming OCPP
+   requests in a second parameter list.
 
  * To send OCPP messages to the Central System, you call the `send` method on
    the `OcppJsonClient` instance. You will get a `Future` back that will be
    completed with the Central System's response. If the Central System fails
    to respond to your request, the `Future` will fail.
 
- * `OcppJsonClient` is an instance of the [`OcppEndpoint`](ocpp-j-api/src/main/scala/com/thenewmotion/ocpp/json/api/OcppEndpoint.scala)
+ * `OcppJsonClient` is an instance of the [`OutgoingOcppEndpoint`](ocpp-j-api/src/main/scala/com/thenewmotion/ocpp/json/api/OutgoingOcppEndpoint.scala)
    trait. This trait defines this interface.
 
 #### Handling requests
@@ -114,22 +112,24 @@ instance in the example program. But you can also specify the request handler
 as a function from `ChargePointReq` to `Future[ChargePointRes]`:
 
 ```scala
-    val requestHandler: ChargePointRequestHandler = { (req: ChargePointReq) =>
-      req match {
-        case GetConfigurationReq(keys) =>
-          System.out.println(s"Received GetConfiguration for $keys")
-          Future.successful(GetConfigurationRes(
-            values = List(),
-            unknownKeys = keys
-          ))
-        case x =>
-          val opName = x.getClass.getSimpleName
-          Future.failed(OcppException(
-            PayloadErrorCode.NotSupported,
-            s"Demo app doesn't support $opName"
-          ))
-      }
-    }
+
+ val ocppJsonClient = OcppJsonClient(chargerId, new URI(centralSystemUri), versions) {
+   (req: ChargePointReq) =>
+     req match {
+       case GetConfigurationReq(keys) =>
+         System.out.println(s"Received GetConfiguration for $keys")
+         Future.successful(GetConfigurationRes(
+           values = List(),
+           unknownKeys = keys
+         ))
+       case x =>
+         val opName = x.getClass.getSimpleName
+         Future.failed(OcppException(
+           PayloadErrorCode.NotSupported,
+           s"Demo app doesn't support $opName"
+         ))
+     }
+}
 ```
 
 This behavior of this request handler is more or less equivalent to that of the
@@ -272,8 +272,9 @@ shows the methods defined by each layer:
     |                                    OcppConnectionComponent layer                                                             |
     |                                                                                                                              |
     | SrpcConnectionComponent.srpcConnection.sendCall (call)                                                                       |
-    | SrpcConnectionComponent.srpcConnection.close (call)            SrpcConnectionComponent.onSrpcCall (override)                 |
-    | SrpcConnectionComponent.srpcConnection.forceClose (call)       SrpcConnectionComponent.onSrpcDisconnect (override)           |
+    | SrpcConnectionComponent.srpcConnection.close (call)                                                                          |
+    | SrpcConnectionComponent.srpcConnection.forceClose (call)                                                                     |
+    | SrpcConnectionComponent.srpcConnection.onClose (call)          SrpcConnectionComponent.onSrpcCall (override)                 |
     +------------------V-----------------------------------------------^-----------------------------------------------------------+
     |                                                                                                                              |
     |                                          SrpcComponent layer                                                                 |
@@ -349,9 +350,7 @@ abstract class OcppJsonServer(listenPort: Int, ocppVersion: Version) {
 
   type OutgoingEndpoint = OutgoingOcppEndpoint[ChargePointReq, ChargePointRes, ChargePointReqRes]
 
-  type IncomingEndpoint = IncomingOcppEndpoint[CentralSystemReq, CentralSystemRes, CentralSystemReqRes]
-
-  def handleConnection: OutgoingEndpoint => IncomingEndpoint
+  def handleConnection: OutgoingEndpoint => CentralSystemRequestHandler
 }
 ```
 
@@ -366,8 +365,8 @@ she has to provide three things:
  * Her own logic for how to handle and send OCPP messages over the
    connections to this server. She should specify this as a method
    `handleConnection` that gets an endpoint for sending outgoing
-   requests as an argument, and returns to the server component an
-   endpoint for handling incoming requests and close or error events.
+   requests as an argument, and returns to the server component a
+   request handler for handling incoming requests
 
 So now we have decided on an interface and we move to step two: create
 a trait extending `WebSocketComponent` that uses our WebSocket
@@ -444,9 +443,7 @@ abstract class OcppJsonServer(listenPort: Int, ocppVersion: Version)
 
   type OutgoingEndpoint = OutgoingOcppEndpoint[ChargePointReq, ChargePointRes, ChargePointReqRes]
 
-  type IncomingEndpoint = IncomingOcppEndpoint[CentralSystemReq, CentralSystemRes, CentralSystemReqRes]
-
-  def handleConnection: OutgoingEndpoint => IncomingEndpoint
+  def handleConnection: OutgoingEndpoint => CentralSystemRequestHandler
 
   override def onStart(): Unit = {}
 
@@ -462,8 +459,6 @@ abstract class OcppJsonServer(listenPort: Int, ocppVersion: Version)
       }
 
       def onRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: CentralSystemReqRes[REQ, RES]) = ???
-
-      def onSrpcDisconnect() = ???
 
       implicit val executionContext: ExecutionContext = ???
 
@@ -504,9 +499,9 @@ the cake can later use this `WebSocket` to send OCPP messages over.
 So by now we're at the fourth point of the five-step cake plan: connect our
 app's logic to the OCPP cake. The app's logic, in our case, is the
 `handleConnection` that the library user specifies. And then, _inside_
-the OCPP cake definition in `onOpen`, we create the incoming endpoint,
-and call the user-defined `handleConnection` on it so an endpoint for
-the incoming messages is created:
+the OCPP cake definition in `onOpen`, we create the outgoing endpoint,
+and call the user-defined `handleConnection` on it so a request handler
+for incoming messages is created:
 
 ```scala
 private val outgoingEndpoint = new OutgoingEndpoint {
@@ -516,18 +511,15 @@ private val outgoingEndpoint = new OutgoingEndpoint {
   def close(): Future[Unit] = srpcConnection.close()
 }
 
-private val incomingEndpoint = handleConnection(outgoingEndpoint)
+private val requestHandler = handleConnection(outgoingEndpoint)
 ```
 
-Now that we have the incoming endpoint, we can also fill in definitions for the
-`onRequest`, `onError` and `onSrpcDisconnect` handlers in the OCPP cake:
+Now that we have the incoming request handler, we can also fill
+in definitions for the `onRequest` handler in the OCPP cake:
 
 ```scala
 def onRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: CentralSystemReqRes[REQ, RES]) =
-  incomingEndpoint.requestHandler(req)
-
-def onSrpcDisconnect() =
-  incomingEndpoint.onDisconnect()
+  requestHandler(req)
 ```
 
 And then, there is the `ocppVersion` method in `OcppConnectionComponent`
@@ -552,7 +544,7 @@ cake is fully linked to the app's business logic.
 
 That means we're at the fifth and last step of the five-step plan: We have to
 make sure that when a new connection is opened, we will call this function to
-create an `IncomingEndpoint`, and that we later call this `IncomingEndpoint`
+create a `CentralSystemRequestHandler`, and that we later call this `CentralSystemRequestHandler`
 whenever a message comes in on the connection. To make this happen, we will need
 a map from `WebSocket` instances that the server gets in its `onMessage` method,
 to the OCPP cake instance that will process messages for that connection.
@@ -586,7 +578,7 @@ override def onClose(
 ```
 
 Now the last thing to be done on the way to a working server, is making the
-`onMessage`, `onDisconnect` and `onError` callbacks of `WebSocketServer`
+`onMessage`, `onClose` and `onError` callbacks of `WebSocketServer`
 actually call into the connection's OCPP cake to let it process the message. It
 turns out that to do this, we have to add three methods to the
 `SimpleWebSocketServerComponent`:
@@ -647,7 +639,7 @@ points are connected to it. So let's change the definition of `handleConnection`
 in `OcppJsonServer` to this:
 
 ```scala
-def handleConnection(clientChargePointIdentity: String, remote: OutgoingEndpoint): IncomingEndpoint
+def handleConnection(clientChargePointIdentity: String, remote: OutgoingEndpoint): CentralSystemRequestHandler
 ```
 
 and let's pass the ChargePointIdentity into it by changing `onOpen` to this:
@@ -741,12 +733,29 @@ major version.
  - `OcppJsonClient.close` is now asynchronous; it returns a future that is
    completed once the connection is closed.
 
- - The rudimentary `onError` method is removed from `OcppIncomingEndpoint` and
-   thus also from `OcppJsonClient`. All OCPP errors are reported as failed
-   futures returned from `OcppJsonClient.send`.
+ - `OcppJsonClient` now has an apply method to construct
+   `OcppJsonClient` instances without overriding any members
+
+ - The `IncomingOcppEndpoint` trait is gone because the `onError` and
+   `onDisconnect` methods were removed, so that only the
+   `requestHandler` member was left and can simply take a
+    `RequestHandler` in every place where the library previously
+   expected an `IncomingOcppEndpoint`.
+
+ - The rudimentary `onError` method is removed from `OcppJsonClient`.
+   All OCPP errors are reported as failed futures returned from
+   `OcppJsonClient.send`.
 
  - As part of the same dead code removal, the `onOcppError` method in
    `OcppComponent` is also gone
+
+ - The `onDisconnect` method is removed from `OcppJsonClient` because
+   closes are now signaled via an `onClose` member which returns a
+   future which is completed once the connection is closed.
+
+ - Because it is no longer needed to implement
+   `IncomingOcppEndpoint.onDisconnect`, the
+   `SrpcComponent.onSrpcDisconnect` method is removed.
 
  - The more robust closing involved changing some method names in the `SrpcConnectionComponent` and `WebSocketComponent`:
 
@@ -754,7 +763,6 @@ major version.
      * `SrpcComponent#SrpcConnection.close` now works asynchronously and returns a `Future[Unit]`
      * `SrpcComponent#SrpcConnection.forceClose` was added and works like the old `.close`, immediately closing the underlying WebSocket without waiting for processing to complete
      * `SrpcComponent.onSrpcRequest` is now `SrpcComponent.onSrpcCall`
-     * `SrpcComponent.onSrpcDisconnect` was added to allow the OCPP layer to handle an SRPC-level disconnect
      * `WebSocketComponent.onDisconnect` was renamed to `WebSocketComponent.onWebSocketDisconnect`
 
  - The case classes for SRPC messages were renamed to reflect the names used in the specification
