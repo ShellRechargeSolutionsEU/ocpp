@@ -134,9 +134,11 @@ trait DefaultSrpcComponent extends SrpcComponent {
       closePromise.future
     }
 
-    def forceClose(): Unit = synchronized {
+    def forceClose(): Unit = {
+      synchronized {
+        state = Closed
+      }
       webSocketConnection.close()
-      state = Closed
     }
 
     def onClose: Future[Unit] = closePromise.future
