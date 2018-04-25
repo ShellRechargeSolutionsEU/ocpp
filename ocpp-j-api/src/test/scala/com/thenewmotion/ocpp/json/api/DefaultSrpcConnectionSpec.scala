@@ -72,15 +72,13 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
 
       outgoingResponsePromise.success(testResponse)
 
-      Await.result(srpcCloseFuture, 1.second) mustEqual ()
-      Await.result(webSocketCloseFuture, 1.second) mustEqual ()
+      Await.result(webSocketCloseFuture, 1.second) mustEqual (())
     }
 
     "close the WebSocket connection immediately when there are no unanswered incoming requests" in new TestScope {
-      val srpcCloseFuture = srpcComponent.srpcConnection.close()
+      srpcComponent.srpcConnection.close()
 
-      Await.result(srpcCloseFuture, 1.second) mustEqual ()
-      Await.result(webSocketCloseFuture, 1.second) mustEqual ()
+      Await.result(webSocketCloseFuture, 1.second) mustEqual (())
     }
 
     "close the WebSocket connection immediately when there are unanswered requests and forceClose is called" in new TestScope {
@@ -92,7 +90,7 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
 
         srpcComponent.srpcConnection.forceClose()
 
-        Await.result(webSocketCloseFuture, 1.second) mustEqual ()
+        Await.result(webSocketCloseFuture, 1.second) mustEqual (())
       }
 
     "refuse new incoming requests with GenericError when SRPC connection close is waiting" in new TestScope {
@@ -146,7 +144,7 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
 
       outgoingResponsePromise.success(testResponse)
 
-      Await.result(srpcCloseFuture, 1.second) mustEqual ()
+      Await.result(srpcCloseFuture, 1.second) mustEqual (())
     }
 
     "leave onClose uncompleted while the connection is open" in new TestScope {
@@ -156,7 +154,22 @@ class DefaultSrpcConnectionSpec extends Specification with Mockito {
     "complete the onClose future once the WebSocket connection is closed" in new TestScope {
       srpcComponent.onWebSocketDisconnect()
 
-      Await.result(srpcComponent.srpcConnection.onClose, 1.second) mustEqual ()
+      Await.result(srpcComponent.srpcConnection.onClose, 1.second) mustEqual (())
+    }
+
+    "complete the onClose future only once the WebSocket has been closed" in new TestScope {
+      val outgoingResponsePromise = Promise[SrpcCallResult]()
+
+      val srpcCloseFuture = srpcComponent.srpcConnection.close()
+
+      Await.result(webSocketCloseFuture, 1.second) mustEqual (())
+      srpcComponent.srpcConnection.onClose.isCompleted must beFalse
+      srpcCloseFuture.isCompleted must beFalse
+
+      srpcComponent.onWebSocketDisconnect()
+
+      Await.result(srpcComponent.srpcConnection.onClose, 1.second) mustEqual (())
+      Await.result(srpcCloseFuture, 1.second) mustEqual (())
     }
   }
 
