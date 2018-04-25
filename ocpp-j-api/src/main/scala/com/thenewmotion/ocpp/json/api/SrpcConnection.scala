@@ -219,12 +219,6 @@ trait DefaultSrpcComponent extends SrpcComponent {
         oldState == Closing
       } else false
     }
-
-    private def executeGracefulClose(): Unit = {
-      state = Closed
-      closePromise.trySuccess(())
-      ()
-    }
   }
 
   def srpcConnection: DefaultSrpcConnection
