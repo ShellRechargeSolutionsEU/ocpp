@@ -767,6 +767,9 @@ major version.
 
  - The case classes for SRPC messages were renamed to reflect the names used in the specification
 
+ - Fixed a bug in the serialization of SendLocalListReq, where a member was
+   called "localAuthorisationList" instead of "localAuthorizationList"
+
 ### Changes in 6.0.3
 
  - Support DataTransfer messages from Charge Point to Central System also over SOAP
