@@ -38,6 +38,8 @@ object TransportMessageJsonSerializer extends SerializationCommon {
           errorDesc,
           errorDetails
         )
+      case _ =>
+        throw new MappingException("Malformed content in SRPC array")
     }
 
   private def toCallType(payload: SrpcMessage): BigInt =
@@ -58,6 +60,5 @@ object TransportMessageJsonSerializer extends SerializationCommon {
         JString(code.name) ::
         JString(desc)      ::
         details            :: Nil
-
     }
 }
