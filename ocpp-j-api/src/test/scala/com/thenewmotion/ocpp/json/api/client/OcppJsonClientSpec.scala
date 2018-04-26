@@ -6,6 +6,7 @@ package client
 import java.net.URI
 import java.security.MessageDigest
 import java.util.Base64
+import java.util.concurrent.atomic.AtomicInteger
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.specs2.mutable.{After, Specification}
@@ -62,7 +63,7 @@ class OcppJsonClientSpec extends Specification {
 
   private trait TestScope extends Scope with After {
 
-    lazy val port = 1080
+    lazy val port = TestScope.nextPortNumber.getAndIncrement()
     lazy val server: ClientAndServer = ClientAndServer.startClientAndServer(port)
 
     override def after = server.stop
@@ -86,6 +87,10 @@ class OcppJsonClientSpec extends Specification {
     val V15V16 = new HttpCallback().withCallbackClass(
       "com.thenewmotion.ocpp.json.api.client.UpgradeRequestCallBackV15V16"
     )
+  }
+
+  object TestScope {
+    val nextPortNumber = new AtomicInteger(1080)
   }
 }
 
