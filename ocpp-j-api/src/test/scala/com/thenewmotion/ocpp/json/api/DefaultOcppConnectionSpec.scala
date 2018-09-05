@@ -5,7 +5,6 @@ package api
 import java.time.ZonedDateTime
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
-import ExecutionContext.Implicits.global
 import org.json4s.JsonDSL._
 import org.json4s.native.JsonMethods.{pretty, render}
 import org.json4s.JsonAST.JObject
@@ -93,6 +92,8 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
         val result = chargePointConnectionV16.ocppConnection.sendRequest(HeartbeatReq)
 
         val expectedError = OcppError(PayloadErrorCode.SecurityError, "Hee! Da mag nie!")
+
+        implicit val executionContext = ExecutionContext.Implicits.global
 
         Await.result(
           result.failed.map(_.asInstanceOf[OcppException].ocppError),
@@ -211,7 +212,7 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
     def chargePointConnection(version: Version, srpcConn: SrpcMockType) =
       new ChargePointOcppConnectionComponent with SrpcComponent {
 
-        implicit val executionContext: ExecutionContext = global
+        implicit val executionContext: ExecutionContext = ExecutionContext.Implicits.global
 
         val srpcConnection = mock[SrpcConnection]
 
@@ -234,7 +235,7 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
 
     val centralSystemConnectionV15 = new CentralSystemOcppConnectionComponent with SrpcComponent {
 
-      implicit val executionContext: ExecutionContext = global
+      implicit val executionContext: ExecutionContext = ExecutionContext.Implicits.global
 
       val srpcConnection = mock[SrpcConnection]
 

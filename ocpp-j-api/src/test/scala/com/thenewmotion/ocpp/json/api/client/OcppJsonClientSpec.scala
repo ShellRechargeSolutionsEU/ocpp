@@ -12,11 +12,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import org.specs2.mutable.{After, Specification}
 import org.specs2.specification.Scope
 import org.mockserver.integration.ClientAndServer
-import org.mockserver.mock.action.ExpectationCallback
 import org.mockserver.model.HttpRequest.request
 import org.mockserver.model.HttpResponse.response
 import org.mockserver.model.HttpStatusCode.SWITCHING_PROTOCOLS_101
 import org.mockserver.model.{ConnectionOptions, Header, HttpRequest}
+import org.mockserver.mock.action.ExpectationResponseCallback
 import messages.ChargePointReq
 
 class OcppJsonClientSpec extends Specification {
@@ -26,27 +26,27 @@ class OcppJsonClientSpec extends Specification {
     "negotiate the correct ocpp version" in {
       "when requesting ocpp1.6" in new TestScope {
         val requesting = List(Version.V16)
-        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).callback(V15V16)
+        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).respond(V15V16)
         createOcppJsonClient(requesting).connection.ocppVersion must beEqualTo(Version.V16)
       }
       "when requesting ocpp1.5, ocpp1.6" in new TestScope {
         val requesting = List(Version.V15, Version.V16)
-        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).callback(V15V16)
+        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).respond(V15V16)
         createOcppJsonClient(requesting).connection.ocppVersion must beEqualTo(Version.V15)
       }
       "when requesting ocpp1.6, ocpp1.5" in new TestScope {
         val requesting = List(Version.V16, Version.V15)
-        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).callback(V15V16)
+        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).respond(V15V16)
         createOcppJsonClient(requesting).connection.ocppVersion must beEqualTo(Version.V16)
       }
       "when requesting ocpp1.6, ocpp1.5 and server supports 1.5 only" in new TestScope {
         val requesting = List(Version.V16, Version.V15)
-        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).callback(V15)
+        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).respond(V15)
         createOcppJsonClient(requesting).connection.ocppVersion must beEqualTo(Version.V15)
       }
       "when requesting ocpp1.6 and server supports 1.5 only" in new TestScope {
         val requesting = List(Version.V16)
-        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).callback(V15)
+        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).respond(V15)
         createOcppJsonClient(requesting) must throwA[SimpleClientWebSocketComponent.WebSocketErrorWhenOpeningException]
       }
       "when requesting a version the JSON client doesn't support" in new TestScope {
@@ -78,15 +78,9 @@ class OcppJsonClientSpec extends Specification {
           Future.failed(OcppException(PayloadErrorCode.NotSupported, "OcppJsonClientSpec"))
       }
 
-    import org.mockserver.model.HttpCallback
+    val V15 = new UpgradeRequestCallbackV15()
 
-    val V15 = new HttpCallback().withCallbackClass(
-      "com.thenewmotion.ocpp.json.api.client.UpgradeRequestCallBackV15"
-    )
-
-    val V15V16 = new HttpCallback().withCallbackClass(
-      "com.thenewmotion.ocpp.json.api.client.UpgradeRequestCallBackV15V16"
-    )
+    val V15V16 = new UpgradeRequestCallbackV15V16()
   }
 
   object TestScope {
@@ -94,13 +88,13 @@ class OcppJsonClientSpec extends Specification {
   }
 }
 
-class UpgradeRequestCallBackV15 extends UpgradeRequestCallBack {
+class UpgradeRequestCallbackV15 extends UpgradeRequestCallback {
   val ocppVersions = Seq(Version.V15)
 }
-class UpgradeRequestCallBackV15V16 extends UpgradeRequestCallBack {
+class UpgradeRequestCallbackV15V16 extends UpgradeRequestCallback {
   val ocppVersions = Seq(Version.V15, Version.V16)
 }
-trait UpgradeRequestCallBack extends ExpectationCallback {
+trait UpgradeRequestCallback extends ExpectationResponseCallback {
   def ocppVersions: Seq[Version]
   lazy val subProtocols = ocppVersions.map(SimpleClientWebSocketComponent.wsSubProtocolForOcppVersion)
   private val magicGuid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
