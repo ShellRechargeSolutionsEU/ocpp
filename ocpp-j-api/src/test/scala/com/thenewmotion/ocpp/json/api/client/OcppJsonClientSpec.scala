@@ -26,27 +26,27 @@ class OcppJsonClientSpec extends Specification {
     "negotiate the correct ocpp version" in {
       "when requesting ocpp1.6" in new TestScope {
         val requesting = List(Version.V16)
-        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).respond(V15V16)
+        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).respond(version15And16Responder)
         createOcppJsonClient(requesting).connection.ocppVersion must beEqualTo(Version.V16)
       }
       "when requesting ocpp1.5, ocpp1.6" in new TestScope {
         val requesting = List(Version.V15, Version.V16)
-        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).respond(V15V16)
+        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).respond(version15And16Responder)
         createOcppJsonClient(requesting).connection.ocppVersion must beEqualTo(Version.V15)
       }
       "when requesting ocpp1.6, ocpp1.5" in new TestScope {
         val requesting = List(Version.V16, Version.V15)
-        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).respond(V15V16)
+        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).respond(version15And16Responder)
         createOcppJsonClient(requesting).connection.ocppVersion must beEqualTo(Version.V16)
       }
       "when requesting ocpp1.6, ocpp1.5 and server supports 1.5 only" in new TestScope {
         val requesting = List(Version.V16, Version.V15)
-        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).respond(V15)
+        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).respond(version15Responder)
         createOcppJsonClient(requesting).connection.ocppVersion must beEqualTo(Version.V15)
       }
       "when requesting ocpp1.6 and server supports 1.5 only" in new TestScope {
         val requesting = List(Version.V16)
-        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).respond(V15)
+        server.when(request().withMethod("GET").withPath(s"$path/$chargerId")).respond(version15Responder)
         createOcppJsonClient(requesting) must throwA[SimpleClientWebSocketComponent.WebSocketErrorWhenOpeningException]
       }
       "when requesting a version the JSON client doesn't support" in new TestScope {
@@ -78,9 +78,9 @@ class OcppJsonClientSpec extends Specification {
           Future.failed(OcppException(PayloadErrorCode.NotSupported, "OcppJsonClientSpec"))
       }
 
-    val V15 = new UpgradeRequestCallbackV15()
+    val version15Responder = new UpgradeRequestCallbackV15()
 
-    val V15V16 = new UpgradeRequestCallbackV15V16()
+    val version15And16Responder = new UpgradeRequestCallbackV15V16()
   }
 
   object TestScope {
