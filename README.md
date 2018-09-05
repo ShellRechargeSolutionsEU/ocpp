@@ -11,7 +11,9 @@ of Europe's largest Electric Vehicle Charge Point Operators.
 The library is designed with versatility in mind. OCPP comes in 4 versions (1.2,
 1.5, 1.6 and 2.0), two transport variants (SOAP/XML aka OCPP-S and WebSocket/JSON aka
 OCPP-J), and two roles ("Charge Point" and "Central System"). This library will
-help you with 1.2 and 1.5 over SOAP, and with 1.5 and 1.6 over JSON.
+help you with 1.5 and 1.6 over JSON. For 1.2 and 1.5 over SOAP, there is [a
+separate library by NewMotion](https://github.com/NewMotion/ocpp-soap) that
+depends on this one.
 
 Version 1.2 with WebSocket/JSON and version 1.6 with SOAP/XML are not possible.
 Also there is no support for OCPP 2.0 yet.
@@ -28,19 +30,13 @@ using the same concise high-level API.
 
 ### Setup
 
-The library is divided into a bunch of separate modules so applications using it
+The library is divided into three separate modules so applications using it
 won't get too many dependencies dragged in. Those are:
 
   * `ocpp-j-api`: high-level interface to OCPP-J connections
   * `ocpp-json`: serialization of OCPP messages to/from JSON
   * `ocpp-messages`: A model of OCPP messaging that is independent of protocol
                      version and transport variant
-
-  * `ocpp-soap`: A version-independent interface to OCPP-SOAP
-  * `ocpp-spray`: A library to help handling OCPP SOAP messages with Akka and
-                  the Spray HTTP library
-  * `ocpp-12` and `ocpp-15`: WSDL files and generated code for the OCPP 1.2 and
-                             1.5 SOAP services
 
 So if you want to use the high-level OCPP-J connection interface, and you're
 using SBT, you can declare the dependency by adding this to your `plugins.sbt`:
@@ -717,13 +713,13 @@ messages that are sent over the WebSocket. See [TransportMessage](ocpp-json/src/
 and [TransportMessageJsonSerializers](ocpp-json/src/main/scala/com/thenewmotion/ocpp/json/TransportMessageJsonSerializers.scala)
 for how to work with those.
 
-### SOAP
-
-OCPP-S is what this library started with, but by now it is undocumented legacy.
-It may be split off to enjoy retirement in its own little project on the next
-major version.
-
 ## Changelog
+
+### Changes in 8.0.0
+
+ - Move the code for handling OCPP over SOAP to another project
+
+ - Add a Scala 2.12 build
 
 ### Changes in 7.0.0
 
@@ -805,11 +801,6 @@ important ones to be aware of when porting older code:
  - `JsonDeserializable` was renamed to `JsonOperation` and now handles not only
    deserialization but also serialization of OCPP messages for OCPP-J.
  - `OcppJsonClient` now takes a version parameter
-
-## TODO
-
- - Building for Scala 2.12. May require dropping the SOAP and/or switching JSON
-   libraries.
 
 ## Licensing and acknowledgements
 
