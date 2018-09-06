@@ -134,6 +134,7 @@ object JsonOperations {
 
     val authorizeJsonOp = jsonOp[AuthorizeReq, AuthorizeRes](Authorize)
     val bootNotificationJsonOp = jsonOp[BootNotificationReq, BootNotificationRes](BootNotification)
+    val dataTransferJsonOp = jsonOp[CentralSystemDataTransferReq, CentralSystemDataTransferRes](DataTransfer)
     val diagnosticsStatusNotificationJsonOp = jsonOp[DiagnosticsStatusNotificationReq, DiagnosticsStatusNotificationRes.type](DiagnosticsStatusNotification)
     val firmwareStatusNotificationJsonOp = jsonOp[FirmwareStatusNotificationReq, FirmwareStatusNotificationRes.type](FirmwareStatusNotification)
     val heartbeatJsonOp = jsonOp[HeartbeatReq.type, HeartbeatRes](Heartbeat)
@@ -145,6 +146,7 @@ object JsonOperations {
     val operations: Traversable[MyJsonOperation[_ <: CentralSystemReq, _ <: CentralSystemRes]] = List(
       authorizeJsonOp,
       bootNotificationJsonOp,
+      dataTransferJsonOp,
       diagnosticsStatusNotificationJsonOp,
       firmwareStatusNotificationJsonOp,
       heartbeatJsonOp,
@@ -160,6 +162,7 @@ object JsonOperations {
       {
         case AuthorizeReqRes => authorizeJsonOp
         case BootNotificationReqRes => bootNotificationJsonOp
+        case CentralSystemDataTransferReqRes => dataTransferJsonOp
         case DiagnosticsStatusNotificationReqRes => diagnosticsStatusNotificationJsonOp
         case FirmwareStatusNotificationReqRes => firmwareStatusNotificationJsonOp
         case HeartbeatReqRes => heartbeatJsonOp

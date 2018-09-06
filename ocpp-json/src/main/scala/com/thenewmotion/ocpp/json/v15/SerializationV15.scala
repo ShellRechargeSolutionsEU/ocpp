@@ -18,6 +18,19 @@ object SerializationV15 extends SerializationCommon {
     (msg: AuthorizeRes) => messages.AuthorizeRes(msg.idTagInfo.fromV15)
   )
 
+  implicit val DataTransferReqV15Variant = OcppMessageSerializer.variantFor[messages.CentralSystemDataTransferReq, Version.V15.type, v15.DataTransferReq](
+    (msg: messages.CentralSystemDataTransferReq) => DataTransferReq(msg.vendorId, msg.messageId, msg.data),
+    (msg: DataTransferReq) => messages.CentralSystemDataTransferReq(msg.vendorId, msg.messageId, msg.data)
+  )
+
+  implicit val DataTransferResV15Variant = OcppMessageSerializer.variantFor[messages.CentralSystemDataTransferRes, Version.V15.type, v15.DataTransferRes](
+    (msg: messages.CentralSystemDataTransferRes) => DataTransferRes(msg.status.name, msg.data),
+    (msg: DataTransferRes) => messages.CentralSystemDataTransferRes(
+      enumerableFromJsonString(messages.DataTransferStatus, msg.status),
+      msg.data
+    )
+  )
+
   implicit val StartTransactionReqV15Variant = OcppMessageSerializer.variantFor[messages.StartTransactionReq, Version.V15.type, v15.StartTransactionReq](
     (msg: messages.StartTransactionReq) => StartTransactionReq(
       connectorId = msg.connector.toOcpp,
