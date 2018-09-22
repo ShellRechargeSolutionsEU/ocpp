@@ -62,8 +62,8 @@ object UnlockStatus extends Enumerable[UnlockStatus] {
 }
 
 sealed trait Message
-sealed trait Req extends Message
-sealed trait Res extends Message
+sealed trait Req extends Message with RequestV1orV2
+sealed trait Res extends Message with ResponseV1orV2
 
 @SerialVersionUID(0)
 sealed trait CentralSystemMessage extends Message

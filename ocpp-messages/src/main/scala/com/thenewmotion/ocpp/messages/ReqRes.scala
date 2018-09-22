@@ -10,7 +10,7 @@ import scala.concurrent.{Future, ExecutionContext}
  * @tparam REQ
  * @tparam RES
  */
-sealed trait ReqRes[REQ <: Req, RES <: Res]
+trait ReqRes[REQ <: RequestV1orV2, RES <: ResponseV1orV2]
 
 sealed trait ChargePointReqRes[REQ <: ChargePointReq, RES <: ChargePointRes] extends ReqRes[REQ, RES] {
   def apply(req: REQ)(implicit service: SyncChargePoint): RES

@@ -2,12 +2,14 @@ package com.thenewmotion.ocpp
 package messages2
 
 import java.time.Instant
+
+import com.thenewmotion.ocpp.messages.{MessageV1orV2, RequestV1orV2, ResponseV1orV2}
 import enums.reflection.EnumUtils.{Enumerable, Nameable}
 
-trait Message
+trait Message extends MessageV1orV2
 
-trait Request extends Message
-trait Response extends Message
+trait Request extends Message with RequestV1orV2
+trait Response extends Message with ResponseV1orV2
 
 trait CsRequest extends Request
 trait CsResponse extends Response

@@ -24,11 +24,11 @@ import org.slf4j.LoggerFactory
  * @tparam INREQRES Typeclass relating the types of outgoing requests and incoming responses
  */
 trait OcppConnectionComponent[
-  OUTREQBOUND <: Req,
-  INRESBOUND <: Res,
+  OUTREQBOUND <: RequestV1orV2,
+  INRESBOUND <: ResponseV1orV2,
   OUTREQRES[_ <: OUTREQBOUND, _ <: INRESBOUND],
-  INREQBOUND <: Req,
-  OUTRESBOUND <: Res,
+  INREQBOUND <: RequestV1orV2,
+  OUTRESBOUND <: ResponseV1orV2,
   INREQRES[_ <: INREQBOUND, _  <: OUTRESBOUND]
 ] {
 
