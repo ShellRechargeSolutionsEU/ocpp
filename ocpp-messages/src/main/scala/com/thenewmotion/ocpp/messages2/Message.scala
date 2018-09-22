@@ -56,7 +56,7 @@ case class BootNotificationResponse(
   currentTime: Instant,
   interval: Int,
   status: BootNotificationStatus
-)
+) extends CsmsResponse
 
 sealed trait BootNotificationStatus extends Nameable
 case object BootNotificationStatus extends Enumerable[BootNotificationStatus] {

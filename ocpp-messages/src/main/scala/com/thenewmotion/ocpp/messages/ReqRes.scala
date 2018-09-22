@@ -1,6 +1,7 @@
 package com.thenewmotion.ocpp.messages
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{ExecutionContext, Future}
+import scala.reflect.ClassTag
 
 /**
  * ReqRes works as a multi-parameter typeclass for associating response types to request types. That is, if an implicit
