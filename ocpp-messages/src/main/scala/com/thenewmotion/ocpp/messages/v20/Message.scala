@@ -1,4 +1,5 @@
 package com.thenewmotion.ocpp
+package messages
 package v20
 
 import java.time.Instant

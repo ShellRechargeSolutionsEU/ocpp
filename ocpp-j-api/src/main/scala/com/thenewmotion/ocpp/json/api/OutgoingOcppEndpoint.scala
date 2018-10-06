@@ -4,7 +4,7 @@ package json.api
 import scala.language.higherKinds
 import scala.concurrent.Future
 import messages.ReqRes
-import messages.v1x._
+import messages._
 
 /**
  * Generic interface of an outgoing OCPP connection endpoint as it appears to the
@@ -18,8 +18,8 @@ import messages.v1x._
  * @tparam OUTREQRES Typeclass relating outgoing request types to incoming response types
  */
 trait OutgoingOcppEndpoint[
-  OUTREQ <: Req,
-  INRES <: Res,
+  OUTREQ <: Request,
+  INRES <: Response,
   OUTREQRES[_ <: OUTREQ, _ <: INRES] <: ReqRes[_, _]
 ] {
 

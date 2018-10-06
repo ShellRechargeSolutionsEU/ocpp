@@ -89,7 +89,7 @@ case class StopTransactionReq(transactionId: Int,
                               timestamp: ZonedDateTime,
                               meterStop: Int,
                               reason: StopReason, // ocpp 1.6
-                              meters: List[com.thenewmotion.ocpp.messages.v1x.meter.Meter]) extends CentralSystemReq
+                              meters: List[meter.Meter]) extends CentralSystemReq
 case class StopTransactionRes(idTag: Option[IdTagInfo]) extends CentralSystemRes
 
 
@@ -97,7 +97,7 @@ case object HeartbeatReq extends CentralSystemReq
 case class HeartbeatRes(currentTime: ZonedDateTime) extends CentralSystemRes
 
 
-case class MeterValuesReq(scope: Scope, transactionId: Option[Int], meters: List[com.thenewmotion.ocpp.messages.v1x.meter.Meter]) extends CentralSystemReq
+case class MeterValuesReq(scope: Scope, transactionId: Option[Int], meters: List[meter.Meter]) extends CentralSystemReq
 case object MeterValuesRes extends CentralSystemRes
 
 

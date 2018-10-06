@@ -1,7 +1,9 @@
-package com.thenewmotion.ocpp.json.api
+package com.thenewmotion.ocpp
+package json
+package api
 
-import com.thenewmotion.ocpp.messages.ReqRes
-import com.thenewmotion.ocpp.messages.v1x._
+import messages.{ReqRes, Request, Response}
+import messages.v1x._
 
 import scala.language.{higherKinds, implicitConversions}
 import scala.concurrent.{ExecutionContext, Future}
@@ -15,7 +17,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * @tparam RESBOUND The supertype of all responses that the handler can produce (either ChargePointRes or CentralSystemRes)
  * @tparam REQRES The typeclass linking request and response types for the same operation (either ChargePointReqRes or CentralSystemReqRes)
  */
-trait RequestHandler[REQBOUND <: Req, RESBOUND <: Res, REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqRes[_, _]] {
+trait RequestHandler[REQBOUND <: Request, RESBOUND <: Response, REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqRes[_, _]] {
 
   def apply[REQ <: REQBOUND, RES <: RESBOUND](req: REQ)(
     implicit reqRes: REQRES[REQ, RES],

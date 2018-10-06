@@ -2,6 +2,7 @@ package com.thenewmotion.ocpp
 package json
 
 import messages.v1x._
+import messages.v20._
 
 package object api {
 
@@ -11,7 +12,12 @@ package object api {
   type CentralSystemRequestHandler =
     RequestHandler[CentralSystemReq, CentralSystemRes, CentralSystemReqRes]
 
-  type OcppJsonClient = client.OcppJsonClient
+  type CsRequestHandler =
+    RequestHandler[CsRequest, CsResponse, CsReqRes]
+
+  type CsmsRequestHandler =
+    RequestHandler[CsmsRequest, CsmsResponse, CsmsReqRes]
+
   val OcppJsonClient: client.OcppJsonClient.type = client.OcppJsonClient
 
   type OcppJsonServer = server.OcppJsonServer

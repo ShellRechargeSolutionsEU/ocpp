@@ -6,19 +6,18 @@ import scala.util.control.NonFatal
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.language.higherKinds
-import v20._
+import messages.v20._
 import org.json4s.{DefaultFormats, Extraction, Formats, JValue}
 import org.slf4j.{Logger, LoggerFactory}
 
 /** One roles of the OCPP 2.0 communicatino protocol: Charging Station (CS) or
   * Charging Station Management System (CSMS)
   */
-// TODO use at a higher level
 sealed trait Side
 case object Cs extends Side
 case object Csms extends Side
 
-trait Ocpp2ConnectionComponent[
+trait Ocpp20ConnectionComponent[
   OUTREQBOUND <: Request,
   INRESBOUND <: Response,
   OUTREQRES[_ <: OUTREQBOUND,_ <: INRESBOUND] <: ReqResV2[_, _],
@@ -50,7 +49,7 @@ trait Ocpp2ConnectionComponent[
         case Some(procedure) =>
           // TODO scalafmt opzetten
           val jsonResponse: Future[JValue] = procedure.reqRes(call.payload) { (req, rr) =>
-            Ocpp2ConnectionComponent.this.onRequest(req)(rr)
+            Ocpp20ConnectionComponent.this.onRequest(req)(rr)
           }
           jsonResponse map { res =>
             SrpcCallResult(Extraction.decompose(res))
@@ -99,7 +98,7 @@ trait Ocpp2ConnectionComponent[
   override def onSrpcCall(msg: SrpcCall):  Future[SrpcResponse] = ocppConnection.onSrpcCall(msg)
 }
 
-trait CsOcpp2ConnectionComponent extends Ocpp2ConnectionComponent[
+trait CsOcpp20ConnectionComponent extends Ocpp20ConnectionComponent[
     CsmsRequest,
     CsmsResponse,
     CsmsReqRes,

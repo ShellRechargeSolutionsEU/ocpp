@@ -46,14 +46,13 @@ class ClientServerIntegrationSpec extends Specification {
       try {
         Await.result(serverStarted.future, 2.seconds)
 
-        val client = new OcppJsonClient(
+        val client = OcppJsonClient.forVersion1x(
           testSerial,
           new URI(s"http://127.0.0.1:$testPort/"),
           versions = List(Version.V16)
         ) {
-          val requestHandler: ChargePointRequestHandler = { (req: ChargePointReq) =>
+          (req: ChargePointReq) =>
             sys.error("No incoming charge point request expected in this test"): ChargePointRes
-          }
         }
 
         Await.result(client.send(HeartbeatReq), 1.second) mustEqual testResponse
@@ -96,16 +95,14 @@ class ClientServerIntegrationSpec extends Specification {
       try {
         Await.result(serverStarted.future, 2.seconds)
 
-        val client = new OcppJsonClient(
+        val client = OcppJsonClient.forVersion1x(
           testSerial,
           new URI(s"http://127.0.0.1:$testPort/"),
           versions = List(Version.V16)
-        ) {
-          val requestHandler: ChargePointRequestHandler = { (req: ChargePointReq) =>
-            req match {
-              case GetLocalListVersionReq => GetLocalListVersionRes(AuthListSupported(42))
-              case _ => sys.error(s"Unexpected request to client in test: $req")
-            }
+        ) { (req: ChargePointReq) =>
+          req match {
+            case GetLocalListVersionReq => GetLocalListVersionRes(AuthListSupported(42))
+            case _ => sys.error(s"Unexpected request to client in test: $req")
           }
         }
 

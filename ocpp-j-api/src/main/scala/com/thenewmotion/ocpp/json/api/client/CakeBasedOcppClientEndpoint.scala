@@ -3,8 +3,9 @@ package json
 package api
 package client
 
-import messages.v1x._
-
+import scala.language.higherKinds
+import VersionFamily.{CsMessageTypesForVersionFamily, CsmsMessageTypesForVersionFamily}
+import messages.{ReqRes, Request, Response}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -22,17 +23,28 @@ import scala.concurrent.{ExecutionContext, Future}
   *   * An onClose method to get a future to be notified when the connection
   *     closes
   */
-trait CakeBasedOcppClientEndpoint
-  extends OutgoingOcppEndpoint[CentralSystemReq, CentralSystemRes, CentralSystemReqRes] {
+abstract class CakeBasedOcppClientEndpoint[
+  VFam <: VersionFamily,
+  INREQBOUND <: Request,
+  OUTRESBOUND <: Response,
+  INREQRES[_ <: INREQBOUND, _ <: OUTRESBOUND] <: ReqRes[_, _],
+  OUTREQBOUND <: Request,
+  INRESBOUND <: Response,
+  OUTREQRES[_ <: OUTREQBOUND, _ <: INRESBOUND] <: ReqRes[_, _]](
+  implicit val csMessageTypeForVersionFamily: CsMessageTypesForVersionFamily[VFam, INREQBOUND, OUTRESBOUND, INREQRES],
+  implicit val csmsMessageTypeForVersionFamily: CsmsMessageTypesForVersionFamily[VFam, OUTREQBOUND, INRESBOUND, OUTREQRES]
+) extends OutgoingOcppEndpoint[OUTREQBOUND, INRESBOUND, OUTREQRES] {
 
-  def send[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(
-    implicit reqRes: CentralSystemReqRes[REQ, RES]
+  def send[
+    REQ <: OUTREQBOUND,
+    RES <: INRESBOUND](req: REQ)(
+    implicit reqRes: OUTREQRES[REQ, RES]
   ): Future[RES] =
     connection.sendRequest(req)
 
   def close(): Future[Unit] = connection.close()
 
-  def requestHandler: RequestHandler[ChargePointReq, ChargePointRes, ChargePointReqRes]
+  def requestHandler: RequestHandler[INREQBOUND, OUTRESBOUND, INREQRES]
 
   protected val connection: ConnectionCake
 
@@ -40,18 +52,18 @@ trait CakeBasedOcppClientEndpoint
 
   protected trait ConnectionCake {
     self: OcppConnectionComponent[
-      CentralSystemReq,
-      CentralSystemRes,
-      CentralSystemReqRes,
-      ChargePointReq,
-      ChargePointRes,
-      ChargePointReqRes
+      OUTREQBOUND,
+      INRESBOUND,
+      OUTREQRES,
+      INREQBOUND,
+      OUTRESBOUND,
+      INREQRES
     ] with SrpcComponent with WebSocketComponent =>
 
     def ocppVersion: Version
 
-    final def sendRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(
-      implicit reqRes: CentralSystemReqRes[REQ, RES]
+    final def sendRequest[REQ <: OUTREQBOUND, RES <: INRESBOUND](req: REQ)(
+      implicit reqRes: OUTREQRES[REQ, RES]
     ): Future[RES] =
       ocppConnection.sendRequest(req)
 
@@ -59,8 +71,8 @@ trait CakeBasedOcppClientEndpoint
 
     final def onClose: Future[Unit] = srpcConnection.onClose
 
-    final def onRequest[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(
-      implicit reqRes: ChargePointReqRes[REQ, RES]
+    final def onRequest[REQ <: INREQBOUND, RES <: OUTRESBOUND](req: REQ)(
+      implicit reqRes: INREQRES[REQ, RES]
     ): Future[RES] =
       requestHandler.apply(req)
 

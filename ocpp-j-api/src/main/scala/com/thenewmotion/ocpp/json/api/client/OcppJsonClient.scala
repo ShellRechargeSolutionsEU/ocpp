@@ -3,8 +3,15 @@ package json.api
 package client
 
 import java.net.URI
+
 import javax.net.ssl.SSLContext
+
+import scala.language.higherKinds
 import scala.concurrent.ExecutionContext
+import VersionFamily.{CsMessageTypesForVersionFamily, CsmsMessageTypesForVersionFamily}
+import messages.{ReqRes, Request, Response}
+import messages.v1x.{CentralSystemReq, CentralSystemReqRes, CentralSystemRes, ChargePointReq, ChargePointReqRes, ChargePointRes}
+import messages.v20._
 
 /**
  * An OCPP-J client implemented using Java-WebSocket.
@@ -20,14 +27,51 @@ import scala.concurrent.ExecutionContext
  * Seq(Version.V16, Version.V15)
  * @param authPassword The Basic Auth password to use, hex-encoded
  */
-abstract class OcppJsonClient(
+// TODO actually use this class and shre code, e.g. WebSocket init
+abstract class OcppJsonClient[
+  VFam <: VersionFamily,
+  INREQBOUND <: Request,
+  OUTRESBOUND <: Response,
+  INREQRES[_ <: INREQBOUND, _ <: OUTRESBOUND] <: ReqRes[_, _],
+  OUTREQBOUND <: Request,
+  INRESBOUND <: Response,
+  OUTREQRES[_ <: OUTREQBOUND, _ <: INRESBOUND] <: ReqRes[_, _]
+] private (
+  chargerId: String,
+  centralSystemUri: URI,
+  versions: Seq[Version],
+  authPassword: Option[String] = None
+)(implicit val ec: ExecutionContext,
+  val csMessages: CsMessageTypesForVersionFamily[VFam, INREQBOUND, OUTRESBOUND, INREQRES],
+  val csmsMessages: CsmsMessageTypesForVersionFamily[VFam, OUTREQBOUND, INRESBOUND, OUTREQRES],
+  sslContext: SSLContext = SSLContext.getDefault
+) extends CakeBasedOcppClientEndpoint[
+  VFam,
+  INREQBOUND,
+  OUTRESBOUND,
+  INREQRES,
+  OUTREQBOUND,
+  INRESBOUND,
+  OUTREQRES
+]
+
+abstract class Ocpp1XJsonClient private[client](
   chargerId: String,
   centralSystemUri: URI,
   versions: Seq[Version],
   authPassword: Option[String] = None
 )(implicit val ec: ExecutionContext,
   sslContext: SSLContext = SSLContext.getDefault
-) extends CakeBasedOcppClientEndpoint {
+) extends CakeBasedOcppClientEndpoint[
+  VersionFamily.V1X.type,
+  ChargePointReq,
+  ChargePointRes,
+  ChargePointReqRes,
+  CentralSystemReq,
+  CentralSystemRes,
+  CentralSystemReqRes
+  ]
+{
 
   val connection: ConnectionCake = new ConnectionCake
     with ChargePointOcppConnectionComponent
@@ -62,11 +106,53 @@ abstract class OcppJsonClient(
   }
 }
 
+abstract class Ocpp20JsonClient private[client] (
+  chargerId: String,
+  centralSystemUri: URI,
+  authPassword: Option[String] = None
+)(implicit val ec: ExecutionContext,
+  sslContext: SSLContext = SSLContext.getDefault
+) extends CakeBasedOcppClientEndpoint[
+  VersionFamily.V20.type,
+  CsRequest,
+  CsResponse,
+  CsReqRes,
+  CsmsRequest,
+  CsmsResponse,
+  CsmsReqRes
+  ]
+{
+
+  val connection: ConnectionCake = new ConnectionCake
+    with CsOcpp20ConnectionComponent
+    with DefaultSrpcComponent
+    with SimpleClientWebSocketComponent {
+
+    import SimpleClientWebSocketComponent._
+
+    val subprotocolToRequest = wsSubProtocolForOcppVersion(Version.V20)
+
+    val webSocketConnection = new SimpleClientWebSocketConnection(
+      chargerId,
+      centralSystemUri,
+      authPassword,
+      requestedSubProtocols = Seq(subprotocolToRequest)
+    )
+
+    if (webSocketConnection.subProtocol != subprotocolToRequest) {
+      throw new RuntimeException(
+        s"Server using protocol ${webSocketConnection.subProtocol} instead of $subprotocolToRequest"
+      )
+    }
+
+    val srpcConnection = new DefaultSrpcConnection
+  }
+}
+
 object OcppJsonClient {
   /**
-    * A convenience factory method to let you create an OcppJsonClient, passing
-    * the handler for incoming requests as an argument instead of defining it as
-    * a member.
+    * The factory method to create an OcppJsonClient for OCPP 1.2, 1.5 and/or
+    * 1.6.
     *
     * @param chargerId
     * @param centralSystemUri
@@ -77,17 +163,41 @@ object OcppJsonClient {
     * @param sslContext
     * @return
     */
-  def apply(
+  def forVersion1x(
     chargerId: String,
     centralSystemUri: URI,
-    versions: Seq[Version],
+    versions: Seq[Version1X],
     authPassword: Option[String] = None
   )(
     incomingRequestHandler: ChargePointRequestHandler
   )(implicit ec: ExecutionContext,
     sslContext: SSLContext = SSLContext.getDefault
-  ) = new OcppJsonClient(chargerId, centralSystemUri, versions, authPassword)(ec, sslContext) {
+  ): Ocpp1XJsonClient = new Ocpp1XJsonClient(chargerId, centralSystemUri, versions, authPassword)(ec, sslContext) {
     override val requestHandler: ChargePointRequestHandler = incomingRequestHandler
+  }
+
+  /**
+    * The factory method to create an OcppJsonClient for OCPP 2.0.
+    *
+    * @param chargerId
+    * @param centralSystemUri
+    * @param versions
+    * @param authPassword
+    * @param incomingRequestHandler
+    * @param ec
+    * @param sslContext
+    * @return
+    */
+  def forVersion20(
+    chargerId: String,
+    centralSystemUri: URI,
+    authPassword: Option[String] = None
+  )(
+    incomingRequestHandler: CsRequestHandler
+  )(implicit ec: ExecutionContext,
+    sslContext: SSLContext = SSLContext.getDefault
+  ): Ocpp20JsonClient = new Ocpp20JsonClient(chargerId, centralSystemUri, authPassword)(ec, sslContext) {
+    override val requestHandler: CsRequestHandler = incomingRequestHandler
   }
 
   case class VersionNotSupported(msg: String, supportedVersions: Iterable[Version])

@@ -22,7 +22,8 @@ import messages.v1x.ChargePointReq
 class OcppJsonClientSpec extends Specification {
   sequential
 
-  "OcppJsonClient" should {
+  "Ocpp1XJsonClient" should {
+
     "negotiate the correct ocpp version" in {
       "when requesting ocpp1.6" in new TestScope {
         val requesting = List(Version.V16)
@@ -72,8 +73,8 @@ class OcppJsonClientSpec extends Specification {
     val chargerId = "test-charger"
     val centralSystemUri = s"ws://localhost:$port$path"
 
-    def createOcppJsonClient(versions: Seq[Version]) =
-      OcppJsonClient(chargerId, new URI(centralSystemUri), versions) {
+    def createOcppJsonClient(versions: Seq[Version1X]) =
+      OcppJsonClient.forVersion1x(chargerId, new URI(centralSystemUri), versions) {
         (_: ChargePointReq) =>
           Future.failed(OcppException(PayloadErrorCode.NotSupported, "OcppJsonClientSpec"))
       }

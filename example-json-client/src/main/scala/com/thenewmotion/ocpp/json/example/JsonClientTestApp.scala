@@ -22,7 +22,7 @@ object JsonClientTestApp extends App {
     if (args.length >= 3)
       args(2).split(",").map { version =>
         Version.withName(version).getOrElse(sys.error(s"Unrecognized version(s): ${args(2)}"))
-      }.toSeq
+      }.toSeq.collect({ case v: Version1X => v })
     else
       Seq(Version.V16)
 
@@ -31,7 +31,7 @@ object JsonClientTestApp extends App {
    * argument in a second list a ChargePoint instance that specifies how we want
    * to handle incoming requests.
    */
-  val ocppJsonClient = OcppJsonClient(chargerId, new URI(centralSystemUri), versions) {
+  val ocppJsonClient = OcppJsonClient.forVersion1x(chargerId, new URI(centralSystemUri), versions) {
 
     /*
      * Here we define how we handle OCPP requests from the Central System to us.

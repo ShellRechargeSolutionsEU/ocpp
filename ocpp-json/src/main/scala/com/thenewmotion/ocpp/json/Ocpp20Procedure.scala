@@ -3,11 +3,11 @@ package json
 
 import scala.language.higherKinds
 import scala.concurrent.{ExecutionContext, Future}
-import v20._
+import messages.v20._
 import CsmsReqRes._
 import org.json4s.{DefaultFormats, Extraction, Formats, JValue}
 
-abstract class Ocpp2Procedure[
+abstract class Ocpp20Procedure[
 REQBOUND <: Request,
 RESBOUND <: Response,
 REQ <: REQBOUND : Manifest,
@@ -42,15 +42,15 @@ REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqResV2[_, _]
     f(deserializeReq(reqJson), reqRes).map(serializeRes)
 }
 
-object Ocpp2Procedure {
+object Ocpp20Procedure {
   def apply[
     REQBOUND <: Request,
     RESBOUND <: Response,
     REQ <: REQBOUND : Manifest,
     RES <: RESBOUND : Manifest,
     REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqResV2[_, _]
-  ](_reqRes: REQRES[REQ, RES]): Ocpp2Procedure[REQBOUND, RESBOUND, REQ, RES, REQRES] =
-    new Ocpp2Procedure[REQBOUND, RESBOUND, REQ, RES, REQRES] {
+  ](_reqRes: REQRES[REQ, RES]): Ocpp20Procedure[REQBOUND, RESBOUND, REQ, RES, REQRES] =
+    new Ocpp20Procedure[REQBOUND, RESBOUND, REQ, RES, REQRES] {
       val reqRes: REQRES[REQ, RES] = _reqRes
     }
 }
@@ -61,8 +61,8 @@ object CsOcpp2Procedure {
             REQRES[_ <: CsRequest, _ <: CsResponse] <: CsReqRes[_, _]](
     implicit reqRes: REQRES[REQ, RES]
   ):
-    Ocpp2Procedure[CsRequest, CsResponse, REQ, RES, REQRES] =
-      Ocpp2Procedure[CsRequest, CsResponse, REQ, RES, REQRES](reqRes)
+    Ocpp20Procedure[CsRequest, CsResponse, REQ, RES, REQRES] =
+      Ocpp20Procedure[CsRequest, CsResponse, REQ, RES, REQRES](reqRes)
 }
 
 object CsmsOcpp2Procedure {
@@ -71,13 +71,13 @@ object CsmsOcpp2Procedure {
   REQRES[_ <: CsmsRequest, _ <: CsmsResponse] <: CsmsReqRes[_, _]](
     implicit reqRes: REQRES[REQ, RES]
   ):
-  Ocpp2Procedure[CsmsRequest, CsmsResponse, REQ, RES, REQRES] =
-    Ocpp2Procedure[CsmsRequest, CsmsResponse, REQ, RES, REQRES](reqRes)
+  Ocpp20Procedure[CsmsRequest, CsmsResponse, REQ, RES, REQRES] =
+    Ocpp20Procedure[CsmsRequest, CsmsResponse, REQ, RES, REQRES](reqRes)
 }
 
 trait Ocpp2Procedures[REQBOUND <: Request, RESBOUND <: Response, REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqResV2[_, _]] {
 
-  type MyProcedure[REQ <: REQBOUND, RES <: RESBOUND] = Ocpp2Procedure[REQBOUND, RESBOUND, REQ, RES, REQRES]
+  type MyProcedure[REQ <: REQBOUND, RES <: RESBOUND] = Ocpp20Procedure[REQBOUND, RESBOUND, REQ, RES, REQRES]
 
   val procedures: List[MyProcedure[_ <: REQBOUND, _ <: RESBOUND]]
 

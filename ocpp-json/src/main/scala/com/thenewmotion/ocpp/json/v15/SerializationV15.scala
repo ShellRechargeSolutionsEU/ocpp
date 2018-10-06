@@ -2,7 +2,7 @@ package com.thenewmotion.ocpp
 package json
 package v15
 
-import com.thenewmotion.ocpp.messages.{v1x => messages}
+import messages.{v1x => messages}
 import messages.{ConnectorScope, Scope, ChargePointStatus}
 import org.json4s.MappingException
 

@@ -1,7 +1,6 @@
 package com.thenewmotion.ocpp
+package messages
 package v20
-
-import messages.ReqRes
 
 sealed trait ReqResV2[REQ <: Request, RES <: Response] extends ReqRes[REQ, RES]
 
