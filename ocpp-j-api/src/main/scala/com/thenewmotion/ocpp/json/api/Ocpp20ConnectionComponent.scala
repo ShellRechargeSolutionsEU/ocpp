@@ -2,16 +2,15 @@ package com.thenewmotion.ocpp
 package json
 package api
 
-import scala.util.control.NonFatal
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.language.higherKinds
 import messages.v20._
 import json.v20._
-import org.json4s.{JValue, MappingException}
+import org.json4s.JValue
 import org.slf4j.{Logger, LoggerFactory}
 
-/** One roles of the OCPP 2.0 communicatino protocol: Charging Station (CS) or
+/** One roles of the OCPP 2.0 communication protocol: Charging Station (CS) or
   * Charging Station Management System (CSMS)
   */
 sealed trait Side
@@ -25,15 +24,15 @@ trait Ocpp20ConnectionComponent[
   INREQBOUND <: Request,
   OUTRESBOUND <: Response,
   INREQRES[_ <: INREQBOUND, _ <: OUTRESBOUND] <: ReqResV2[_, _]
-] extends OcppConnectionComponent[OUTREQBOUND, INRESBOUND, OUTREQRES, INREQBOUND, OUTRESBOUND, INREQRES] {
+] extends BaseOcppConnectionComponent[OUTREQBOUND, INRESBOUND, OUTREQRES, INREQBOUND, OUTRESBOUND, INREQRES] {
 
   this: SrpcComponent =>
 
-  val logger: Logger = LoggerFactory.getLogger(this.getClass)
-
   implicit val executionContext: ExecutionContext
 
-  trait Ocpp20Connection extends OcppConnection {
+  private val logger: Logger = LoggerFactory.getLogger(this.getClass)
+
+  trait Ocpp20Connection extends BaseOcppConnection {
 
     def incomingProcedures: Ocpp20Procedures[INREQBOUND, OUTRESBOUND, INREQRES]
     val outgoingProcedures: Ocpp20Procedures[OUTREQBOUND, INRESBOUND, OUTREQRES]
@@ -52,25 +51,7 @@ trait Ocpp20ConnectionComponent[
           }
           jsonResponse
             .map(SrpcCallResult)
-            .recover[SrpcResponse] { case NonFatal(e) =>
-            // TODO this bit copied from DefaultOcppConnection, should be shared
-            logger.warn("Exception processing incoming OCPP request {}: {} {}",
-                        call.procedureName, e.getClass.getSimpleName, e.getMessage)
-
-            val ocppError = e match {
-              case OcppException(err) =>
-                err
-              case MappingException(msg, _) =>
-                OcppError(PayloadErrorCode.FormationViolation, msg)
-              case _ =>
-                OcppError(PayloadErrorCode.InternalError, "Unexpected error processing request")
-            }
-
-            SrpcCallError(
-              ocppError.error,
-              ocppError.description
-            )
-                                   }
+            .recover(logIncomingRequestHandlingError(call) andThen requestHandlerErrorToSrpcCallResult)
       }
     }
 

@@ -4,7 +4,6 @@ package api
 
 import scala.language.higherKinds
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.control.NonFatal
 import scala.util.{Try, Success, Failure}
 import messages.ReqRes
 import messages.v1x._
@@ -25,21 +24,21 @@ import org.slf4j.LoggerFactory
   * @tparam INREQRES Typeclass relating the types of outgoing requests and incoming responses
   */
 trait Ocpp1XConnectionComponent[
-OUTREQBOUND <: Req,
-INRESBOUND <: Res,
-OUTREQRES[_ <: OUTREQBOUND, _ <: INRESBOUND ] <: ReqRes[_, _],
-INREQBOUND <: Req,
-OUTRESBOUND <: Res,
-INREQRES [_ <: INREQBOUND,  _ <: OUTRESBOUND] <: ReqRes[_, _]
-] extends OcppConnectionComponent[OUTREQBOUND, INRESBOUND, OUTREQRES, INREQBOUND, OUTRESBOUND, INREQRES] {
+  OUTREQBOUND <: Req,
+  INRESBOUND <: Res,
+  OUTREQRES[_ <: OUTREQBOUND, _ <: INRESBOUND ] <: ReqRes[_, _],
+  INREQBOUND <: Req,
+  OUTRESBOUND <: Res,
+  INREQRES [_ <: INREQBOUND,  _ <: OUTRESBOUND] <: ReqRes[_, _]
+] extends BaseOcppConnectionComponent[OUTREQBOUND, INRESBOUND, OUTREQRES, INREQBOUND, OUTRESBOUND, INREQRES] {
 
   this: SrpcComponent =>
 
   implicit val executionContext: ExecutionContext
 
-  trait Ocpp1XConnection extends OcppConnection {
+  trait Ocpp1XConnection extends BaseOcppConnection {
     /** The version of the OCPP protocol used on this connection */
-    type V <: Version
+    type V <: Version1X
 
     /** The operations that the other side can request from us */
     protected[this] val ourOperations:   JsonOperations[INREQBOUND,  OUTRESBOUND, INREQRES, V]
@@ -65,20 +64,7 @@ INREQRES [_ <: INREQBOUND,  _ <: OUTRESBOUND] <: ReqRes[_, _]
         case Supported(operation) =>
           val responseSrpc = operation.reqRes(req.payload)((req, rr) => onRequest(req)(rr)) map SrpcCallResult
 
-          responseSrpc recover { case NonFatal(e) =>
-            logger.warn("Exception processing OCPP request {}: {} {}",
-                        req.procedureName, e.getClass.getSimpleName, e.getMessage)
-
-            val ocppError = e match {
-              case OcppException(err) => err
-              case _ => OcppError(PayloadErrorCode.InternalError, "Unexpected error processing request")
-            }
-
-            SrpcCallError(
-              ocppError.error,
-              ocppError.description
-            )
-          }
+          responseSrpc recover (logIncomingRequestHandlingError(req) andThen requestHandlerErrorToSrpcCallResult)
       }
     }
 
@@ -151,7 +137,7 @@ trait ChargePointOcpp1XConnectionComponent
 
   this: SrpcComponent =>
 
-  class ChargePointOcpp1XConnection[Ver <: Version](
+  class ChargePointOcpp1XConnection[Ver <: Version1X](
     implicit val ourOperations: JsonOperations[ChargePointReq, ChargePointRes, ChargePointReqRes, Ver],
     val theirOperations: JsonOperations[CentralSystemReq, CentralSystemRes, CentralSystemReqRes, Ver]
   ) extends Ocpp1XConnection {
@@ -192,7 +178,7 @@ trait CentralSystemOcpp1XConnectionComponent
 
   this: SrpcComponent =>
 
-  class CentralSystemOcpp1XConnection[Ver <: Version](
+  class CentralSystemOcpp1XConnection[Ver <: Version1X](
     implicit val ourOperations: JsonOperations[CentralSystemReq, CentralSystemRes, CentralSystemReqRes, Ver],
     val theirOperations: JsonOperations[ChargePointReq, ChargePointRes, ChargePointReqRes, Ver]
   ) extends Ocpp1XConnection {
