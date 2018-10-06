@@ -25,14 +25,15 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 abstract class CakeBasedOcppClientEndpoint[
   VFam <: VersionFamily,
-  INREQBOUND <: Request,
-  OUTRESBOUND <: Response,
-  INREQRES[_ <: INREQBOUND, _ <: OUTRESBOUND] <: ReqRes[_, _],
   OUTREQBOUND <: Request,
   INRESBOUND <: Response,
-  OUTREQRES[_ <: OUTREQBOUND, _ <: INRESBOUND] <: ReqRes[_, _]](
-  implicit val csMessageTypeForVersionFamily: CsMessageTypesForVersionFamily[VFam, INREQBOUND, OUTRESBOUND, INREQRES],
-  implicit val csmsMessageTypeForVersionFamily: CsmsMessageTypesForVersionFamily[VFam, OUTREQBOUND, INRESBOUND, OUTREQRES]
+  OUTREQRES[_ <: OUTREQBOUND, _ <: INRESBOUND] <: ReqRes[_, _],
+  INREQBOUND <: Request,
+  OUTRESBOUND <: Response,
+  INREQRES[_ <: INREQBOUND, _ <: OUTRESBOUND] <: ReqRes[_, _]
+](
+  implicit val csmsMessageTypeForVersionFamily: CsmsMessageTypesForVersionFamily[VFam, OUTREQBOUND, INRESBOUND, OUTREQRES],
+  val csMessageTypeForVersionFamily: CsMessageTypesForVersionFamily[VFam, INREQBOUND, OUTRESBOUND, INREQRES]
 ) extends OutgoingOcppEndpoint[OUTREQBOUND, INRESBOUND, OUTREQRES] {
 
   def send[

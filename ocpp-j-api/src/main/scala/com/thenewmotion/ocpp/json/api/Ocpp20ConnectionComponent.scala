@@ -8,7 +8,6 @@ import scala.language.higherKinds
 import messages.v20._
 import json.v20._
 import org.json4s.JValue
-import org.slf4j.{Logger, LoggerFactory}
 
 /** One roles of the OCPP 2.0 communication protocol: Charging Station (CS) or
   * Charging Station Management System (CSMS)
@@ -29,8 +28,6 @@ trait Ocpp20ConnectionComponent[
   this: SrpcComponent =>
 
   implicit val executionContext: ExecutionContext
-
-  private val logger: Logger = LoggerFactory.getLogger(this.getClass)
 
   trait Ocpp20Connection extends BaseOcppConnection {
 

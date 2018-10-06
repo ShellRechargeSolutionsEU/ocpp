@@ -8,7 +8,6 @@ import scala.util.{Try, Success, Failure}
 import messages.ReqRes
 import messages.v1x._
 import json.v1x.{JsonOperation, JsonOperations}
-import org.slf4j.LoggerFactory
 
 /**
   * The OCPP layer connection component for OCPP-J  1.X, i.e. OCPP 1.5 and 1.6
@@ -43,8 +42,6 @@ trait Ocpp1XConnectionComponent[
     /** The operations that the other side can request from us */
     protected[this] val ourOperations:   JsonOperations[INREQBOUND,  OUTRESBOUND, INREQRES, V]
     protected[this] val theirOperations: JsonOperations[OUTREQBOUND, INRESBOUND,  OUTREQRES, V]
-
-    private val logger = LoggerFactory.getLogger(Ocpp1XConnection.this.getClass)
 
     def onSrpcCall(req: SrpcCall): Future[SrpcResponse] = {
       import ourOperations._

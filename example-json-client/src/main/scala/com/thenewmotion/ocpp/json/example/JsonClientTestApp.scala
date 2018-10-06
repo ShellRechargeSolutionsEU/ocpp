@@ -114,7 +114,7 @@ object JsonClientTestApp extends App {
    */
   ocppJsonClient.onClose.foreach(_ => println("OCPP connection closed"))
 
-  println(s"Connected using OCPP version ${ocppJsonClient.connection.ocppVersion}")
+  println(s"Connected using OCPP version ${ocppJsonClient.ocppVersion}")
 
   /*
    * Now let's send some OCPP requests to that Central System! Just like a real
