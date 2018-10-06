@@ -10,14 +10,14 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
 
 abstract class Ocpp20Procedure[
-REQBOUND <: Request,
-RESBOUND <: Response,
-REQ <: REQBOUND : Manifest,
-RES <: RESBOUND : Manifest,
-REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqResV2[_, _]
+  REQBOUND <: Request,
+  RESBOUND <: Response,
+  REQ <: REQBOUND : Manifest,
+  RES <: RESBOUND : Manifest,
+  REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqResV2[_, _]
 ] {
 
-  implicit val formats: Formats = DefaultFormats
+  private val formats: Formats = DefaultFormats ++ serialization.ocppSerializers
 
   private val requestManifest: Manifest[REQ] = manifest[REQ]
 
@@ -29,13 +29,14 @@ REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqResV2[_, _]
   val reqRes: REQRES[REQ, RES]
 
   def serializeReq(req: REQ): JValue =
-    Extraction.decompose(req)
+    Extraction.decompose(req)(formats)
+
 
   def deserializeReq(reqJson: JValue): REQ =
     Extraction.extract[REQ](reqJson)(formats, requestManifest)
 
   def serializeRes(res: RES): JValue =
-    Extraction.decompose(res)
+    Extraction.decompose(res)(formats)
 
   def deserializeRes(resJson: JValue): RES =
     Extraction.extract[RES](resJson)(formats, responseManifest)
@@ -86,8 +87,8 @@ trait Ocpp20Procedures[REQBOUND <: Request, RESBOUND <: Response, REQRES[_ <: RE
   def procedureByName(name: String): Option[MyProcedure[_ <: REQBOUND, _ <: RESBOUND]] =
     procedures.find(_.name == name)
 
-  def procedureByReqRes[REQ <: REQBOUND, RES <: RESBOUND](reqRes: REQRES[REQ, RES]): Option[MyProcedure[_ <: REQBOUND, _ <: RESBOUND]] =
-    procedures.find(_.reqRes == reqRes)
+  def procedureByReqRes[REQ <: REQBOUND, RES <: RESBOUND](reqRes: REQRES[REQ, RES]): Option[MyProcedure[REQ, RES]] =
+    procedures.find(_.reqRes == reqRes).map(_.asInstanceOf[MyProcedure[REQ, RES]])
 }
 
 object CsOcpp20Procedures extends Ocpp20Procedures[

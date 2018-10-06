@@ -8,7 +8,7 @@ import scala.concurrent.Future
 import scala.language.higherKinds
 import messages.v20._
 import json.v20._
-import org.json4s.{DefaultFormats, Extraction, Formats, JValue}
+import org.json4s.JValue
 import org.slf4j.{Logger, LoggerFactory}
 
 /** One roles of the OCPP 2.0 communicatino protocol: Charging Station (CS) or
@@ -33,8 +33,6 @@ trait Ocpp20ConnectionComponent[
 
   implicit val executionContext: ExecutionContext
 
-  implicit val formats: Formats = DefaultFormats
-
   trait Ocpp20Connection extends OcppConnection {
 
     def incomingProcedures: Ocpp20Procedures[INREQBOUND, OUTRESBOUND, INREQRES]
@@ -52,9 +50,9 @@ trait Ocpp20ConnectionComponent[
           val jsonResponse: Future[JValue] = procedure.reqRes(call.payload) { (req, rr) =>
             Ocpp20ConnectionComponent.this.onRequest(req)(rr)
           }
-          jsonResponse map { res =>
-            SrpcCallResult(Extraction.decompose(res))
-          }  recover[SrpcResponse] { case NonFatal(e) =>
+          jsonResponse
+            .map(SrpcCallResult)
+            .recover[SrpcResponse] { case NonFatal(e) =>
             // TODO this bit copied from DefaultOcppConnection, should be shared
             logger.warn("Exception processing incoming OCPP request {}: {} {}",
                         call.procedureName, e.getClass.getSimpleName, e.getMessage)
@@ -69,7 +67,7 @@ trait Ocpp20ConnectionComponent[
               ocppError.error,
               ocppError.description
             )
-          }
+                                   }
       }
     }
 
@@ -79,7 +77,7 @@ trait Ocpp20ConnectionComponent[
         case None =>
           throw OcppException(PayloadErrorCode.NotSupported, "This OCPP procedure is not supported")
         case Some(proc) =>
-          val srpcCall = SrpcCall(proc.name, Extraction.decompose(req))
+          val srpcCall = SrpcCall(proc.name, proc.serializeReq(req))
           srpcConnection.sendCall(srpcCall) map {
             case SrpcCallResult(payload) =>
               // TODO why is this asInstanceOf needed? we know that procedure's RES is
