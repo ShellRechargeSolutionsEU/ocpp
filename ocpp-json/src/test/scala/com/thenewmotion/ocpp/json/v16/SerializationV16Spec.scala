@@ -72,7 +72,7 @@ object SerializationV16Spec extends Specification with ScalaCheck {
     testMessageClass(triggerMessageRes)(TriggerMessageResV16Variant)
   }
 
-  private def testMessageClass[T <: v16.Message : ClassTag, M <: messages.Message]
+  private def testMessageClass[T <: v16.Message : ClassTag, M <: messages.v1x.Message]
     (messageGen: Gen[T])
     (ser: OcppMessageSerializer[M, Version.V16.type]) = {
 

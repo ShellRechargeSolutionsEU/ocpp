@@ -1,9 +1,10 @@
 package com.thenewmotion.ocpp.json.api
 
-import com.thenewmotion.ocpp.messages._
+import com.thenewmotion.ocpp.messages.ReqRes
+import com.thenewmotion.ocpp.messages.v1x._
 
 import scala.language.{higherKinds, implicitConversions}
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * The "magnet type" to allow people to specify the handler of incoming request

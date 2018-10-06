@@ -3,10 +3,12 @@ package json
 package example
 
 import java.net.URI
+
 import scala.concurrent._
 import ExecutionContext.Implicits.global
-
-import messages._
+import messages.v1x._
+// TODO soll man nicht brauchen
+import ReqRes._
 import api._
 
 object JsonClientTestApp extends App {

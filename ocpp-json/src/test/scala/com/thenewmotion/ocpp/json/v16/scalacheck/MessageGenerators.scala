@@ -4,6 +4,8 @@ package scalacheck
 
 import org.scalacheck.Gen
 import Gen._
+import messages.{v1x => messages}
+import messages.{ChargingProfileStatus, ClearChargingProfileStatus}
 
 object MessageGenerators {
 
@@ -286,7 +288,7 @@ object MessageGenerators {
     } yield ClearChargingProfileReq(id, connectorId, chargingProfilePurpose, stackLevel)
 
   def clearChargingProfileRes: Gen[ClearChargingProfileRes] =
-    enumerableNameGen(messages.ClearChargingProfileStatus).map(ClearChargingProfileRes)
+    enumerableNameGen(ClearChargingProfileStatus).map(ClearChargingProfileRes)
 
   def getCompositeScheduleReq: Gen[GetCompositeScheduleReq] =
     for {
@@ -310,7 +312,7 @@ object MessageGenerators {
     } yield SetChargingProfileReq(connectorId, chargingProfile)
 
   def setChargingProfileRes: Gen[SetChargingProfileRes] =
-    enumerableNameGen(messages.ChargingProfileStatus).map(SetChargingProfileRes)
+    enumerableNameGen(ChargingProfileStatus).map(SetChargingProfileRes)
 
   def triggerMessageReq: Gen[TriggerMessageReq] =
     for {

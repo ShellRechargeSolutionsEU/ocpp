@@ -3,15 +3,15 @@ package json
 
 import scala.io.Source
 import scala.concurrent.duration._
-import java.time.{ZonedDateTime, ZoneId}
+import java.time.{ZoneId, ZonedDateTime}
 import java.net.URI
 
 import org.specs2.mutable.Specification
 import org.specs2.matcher.MatchResult
 import org.json4s._
 import org.json4s.native.JsonParser
-import messages._
-import messages.meter._
+import messages.v1x._
+import meter._
 
 class OcppMessageSerializationSpec extends Specification {
 

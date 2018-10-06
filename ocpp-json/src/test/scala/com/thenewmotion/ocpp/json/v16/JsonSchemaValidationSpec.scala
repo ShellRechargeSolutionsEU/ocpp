@@ -77,7 +77,7 @@ object JsonSchemaValidationSpec extends Specification with ScalaCheck {
     validateJson(triggerMessageRes)(TriggerMessageResV16Variant, "TriggerMessageResponse.json")
   }
   
-  private def validateJson[T <: v16.Message : ClassTag, M <: messages.Message]
+  private def validateJson[T <: v16.Message : ClassTag, M <: messages.v1x.Message]
   (messageGen: Gen[T])
   (ser: OcppMessageSerializer[M, Version.V16.type], schema:String) = {
 

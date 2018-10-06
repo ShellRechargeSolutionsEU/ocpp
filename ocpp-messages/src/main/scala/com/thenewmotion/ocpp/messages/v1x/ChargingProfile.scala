@@ -1,10 +1,10 @@
 package com.thenewmotion.ocpp
 package messages
+package v1x
 
 import java.time.ZonedDateTime
 
-import enums.reflection.EnumUtils.Enumerable
-import enums.reflection.EnumUtils.Nameable
+import enums.reflection.EnumUtils.{Enumerable, Nameable}
 
 sealed trait RecurrencyKind extends Nameable
 object RecurrencyKind extends Enumerable[RecurrencyKind] {

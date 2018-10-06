@@ -4,9 +4,12 @@ package scalacheck
 
 import java.time.{Instant, ZoneId, ZonedDateTime}
 import java.net.URI
+
 import org.scalacheck.Gen
 import Gen._
 import enums.reflection.EnumUtils.{Enumerable, Nameable}
+import messages.{v1x => messages}
+import messages.{ChargingProfilePurpose, UnitOfChargingRate}
 
 object Helpers {
 
@@ -72,11 +75,11 @@ object Helpers {
 
   def chargingProfileIdGen: Gen[Int] = choose(1, 32500)
 
-  def chargingProfilePurposeGen: Gen[String] = enumerableNameGen(messages.ChargingProfilePurpose)
+  def chargingProfilePurposeGen: Gen[String] = enumerableNameGen(ChargingProfilePurpose)
 
   def stackLevelGen: Gen[Int] = choose(1, 10)
 
-  def chargingRateUnitGen: Gen[String] = enumerableNameGen(messages.UnitOfChargingRate)
+  def chargingRateUnitGen: Gen[String] = enumerableNameGen(UnitOfChargingRate)
 
   def chargingSchedulePeriodGen: Gen[ChargingSchedulePeriod] =
     for {

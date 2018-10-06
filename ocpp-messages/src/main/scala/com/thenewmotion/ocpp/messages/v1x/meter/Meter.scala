@@ -1,11 +1,12 @@
 package com.thenewmotion.ocpp
 package messages
+package v1x
 package meter
 
 import java.time.ZonedDateTime
 import enums.reflection.EnumUtils.{Nameable, Enumerable}
 
-case class Meter(timestamp: ZonedDateTime, values: List[meter.Value] = Nil)
+case class Meter(timestamp: ZonedDateTime, values: List[Value] = Nil)
 
 case class Value(
   value: String,

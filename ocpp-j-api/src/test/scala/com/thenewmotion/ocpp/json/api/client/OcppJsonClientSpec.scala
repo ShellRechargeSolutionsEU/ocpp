@@ -17,7 +17,7 @@ import org.mockserver.model.HttpResponse.response
 import org.mockserver.model.HttpStatusCode.SWITCHING_PROTOCOLS_101
 import org.mockserver.model.{ConnectionOptions, Header, HttpRequest}
 import org.mockserver.mock.action.ExpectationResponseCallback
-import messages.ChargePointReq
+import messages.v1x.ChargePointReq
 
 class OcppJsonClientSpec extends Specification {
   sequential

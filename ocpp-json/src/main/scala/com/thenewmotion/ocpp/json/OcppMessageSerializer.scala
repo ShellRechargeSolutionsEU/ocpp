@@ -9,7 +9,7 @@ import org.json4s.{DefaultFormats, Extraction, JValue}
  * @tparam M The message type, for example com.thenewmotion.ocpp.messages.AuthorizeReq
  * @tparam V The version to/from which the message can be serialized
  */
-trait OcppMessageSerializer[M <: messages.Message, V <: Version] {
+trait OcppMessageSerializer[M <: messages.v1x.Message, V <: Version] {
 
   protected[json] type VersionSpecific
 
@@ -26,7 +26,7 @@ trait OcppMessageSerializer[M <: messages.Message, V <: Version] {
 }
 
 object OcppMessageSerializer {
-  def variantFor[M <: messages.Message, V <: Version, SpecM <: VersionSpecificMessage : Manifest](
+  def variantFor[M <: messages.v1x.Message, V <: Version, SpecM <: VersionSpecificMessage : Manifest](
     _to: M => SpecM,
     _from: SpecM => M): OcppMessageSerializer[M, V] =
     new OcppMessageSerializer[M, V] {

@@ -1,8 +1,6 @@
-package com.thenewmotion.ocpp
-package messages
+package com.thenewmotion.ocpp.messages.v1x
 
-import enums.reflection.EnumUtils.Enumerable
-import enums.reflection.EnumUtils.Nameable
+import enums.reflection.EnumUtils.{Enumerable, Nameable}
 
 sealed trait ChargePointStatus { def info: Option[String] }
 object ChargePointStatus {

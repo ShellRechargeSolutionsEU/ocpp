@@ -1,5 +1,4 @@
-package com.thenewmotion.ocpp
-package messages
+package com.thenewmotion.ocpp.messages.v1x
 
 /**
  * @author Yaroslav Klymko

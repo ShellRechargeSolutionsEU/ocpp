@@ -1,5 +1,4 @@
-package com.thenewmotion.ocpp
-package messages
+package com.thenewmotion.ocpp.messages.v1x
 
 import java.time.ZonedDateTime
 import enums.reflection.EnumUtils.{Nameable, Enumerable}

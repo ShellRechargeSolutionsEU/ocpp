@@ -3,7 +3,8 @@ package json.api
 
 import scala.language.higherKinds
 import scala.concurrent.Future
-import messages._
+import messages.ReqRes
+import messages.v1x._
 
 /**
  * Generic interface of an outgoing OCPP connection endpoint as it appears to the

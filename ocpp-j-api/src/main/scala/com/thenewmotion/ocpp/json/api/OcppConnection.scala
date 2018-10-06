@@ -6,7 +6,8 @@ import scala.language.higherKinds
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
-import com.thenewmotion.ocpp.messages._
+import com.thenewmotion.ocpp.messages._, v1x._
+import v1x.ReqRes._
 import org.slf4j.LoggerFactory
 
 /**

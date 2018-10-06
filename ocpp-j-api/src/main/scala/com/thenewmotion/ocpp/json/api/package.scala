@@ -1,7 +1,7 @@
 package com.thenewmotion.ocpp
 package json
 
-import messages._
+import messages.v1x._
 
 package object api {
 

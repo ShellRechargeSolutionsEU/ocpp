@@ -11,7 +11,7 @@ import org.java_websocket.WebSocket
 import org.java_websocket.drafts.{Draft, Draft_6455}
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
-import messages._
+import messages.v1x._
 import OcppJsonServer._
 import org.java_websocket.protocols.{IProtocol, Protocol}
 

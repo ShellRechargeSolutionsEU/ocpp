@@ -2,6 +2,8 @@ package com.thenewmotion.ocpp
 package json
 package v15
 
+import com.thenewmotion.ocpp.messages.{v1x => messages}
+import messages.{ConnectorScope, Scope, ChargePointStatus}
 import org.json4s.MappingException
 
 import scala.concurrent.duration._
@@ -40,7 +42,7 @@ object SerializationV15 extends SerializationCommon {
       reservationId = msg.reservationId
     ),
     (msg: v15.StartTransactionReq) => messages.StartTransactionReq(
-      messages.ConnectorScope.fromOcpp(msg.connectorId),
+      ConnectorScope.fromOcpp(msg.connectorId),
       msg.idTag,
       msg.timestamp,
       msg.meterStart,
@@ -97,7 +99,7 @@ object SerializationV15 extends SerializationCommon {
       noneIfEmpty(msg.meters.map(_.toV15))
     ),
     (msg: v15.MeterValuesReq) => messages.MeterValuesReq(
-      messages.Scope.fromOcpp(msg.connectorId),
+      Scope.fromOcpp(msg.connectorId),
       msg.transactionId,
       emptyIfNone(msg.values).map(meterFromV15)
     )
@@ -161,7 +163,7 @@ object SerializationV15 extends SerializationCommon {
       )
     },
     (msg: v15.StatusNotificationReq) => messages.StatusNotificationReq(
-      messages.Scope.fromOcpp(msg.connectorId),
+      Scope.fromOcpp(msg.connectorId),
       statusFieldsToOcppStatus(msg.status, msg.errorCode, msg.info, msg.vendorErrorCode),
       msg.timestamp,
       msg.vendorId
@@ -204,7 +206,7 @@ object SerializationV15 extends SerializationCommon {
     ),
     (msg: v15.RemoteStartTransactionReq) => messages.RemoteStartTransactionReq(
       msg.idTag,
-      msg.connectorId.map(messages.ConnectorScope.fromOcpp),
+      msg.connectorId.map(ConnectorScope.fromOcpp),
       chargingProfile = None
     )
   )
@@ -226,7 +228,7 @@ object SerializationV15 extends SerializationCommon {
 
   implicit val UnlockConnectorReqV15Variant = OcppMessageSerializer.variantFor[messages.UnlockConnectorReq, Version.V15.type, v15.UnlockConnectorReq](
     (msg: messages.UnlockConnectorReq) => UnlockConnectorReq(msg.connector.toOcpp),
-    (msg: v15.UnlockConnectorReq) => messages.UnlockConnectorReq(messages.ConnectorScope.fromOcpp(msg.connectorId))
+    (msg: v15.UnlockConnectorReq) => messages.UnlockConnectorReq(ConnectorScope.fromOcpp(msg.connectorId))
   )
 
   implicit val UnlockConnectorResV15Variant = OcppMessageSerializer.variantFor[messages.UnlockConnectorRes, Version.V15.type, v15.UnlockConnectorRes](
@@ -295,7 +297,7 @@ object SerializationV15 extends SerializationCommon {
       msg.availabilityType.name
     ),
     (msg: v15.ChangeAvailabilityReq) => messages.ChangeAvailabilityReq(
-      messages.Scope.fromOcpp(msg.connectorId),
+      Scope.fromOcpp(msg.connectorId),
       enumerableFromJsonString(messages.AvailabilityType, msg.`type`)
     )
   )
@@ -385,7 +387,7 @@ object SerializationV15 extends SerializationCommon {
       msg.reservationId
     ),
     (msg: v15.ReserveNowReq) => messages.ReserveNowReq(
-      messages.Scope.fromOcpp(msg.connectorId),
+      Scope.fromOcpp(msg.connectorId),
       msg.expiryDate,
       msg.idTag,
       msg.parentIdTag,
@@ -430,14 +432,13 @@ object SerializationV15 extends SerializationCommon {
     val defaultErrorCode = "NoError"
   }
 
-  private implicit class RichChargePointStatus(self: messages.ChargePointStatus) {
+  private implicit class RichChargePointStatus(self: ChargePointStatus) {
 
     import RichChargePointStatus.defaultErrorCode
 
     def toV15Fields: (String, String, Option[String], Option[String]) = {
       def simpleStatus(name: String) = (name, defaultErrorCode, self.info, None)
 
-      import messages.ChargePointStatus
       self match {
         case ChargePointStatus.Available(_) => simpleStatus("Available")
         case ChargePointStatus.Occupied(_, _) => simpleStatus("Occupied")
@@ -450,9 +451,7 @@ object SerializationV15 extends SerializationCommon {
   }
 
   private def statusFieldsToOcppStatus(status: String, errorCode: String, info: Option[String],
-    vendorErrorCode: Option[String]): messages.ChargePointStatus = {
-
-    import messages.ChargePointStatus
+    vendorErrorCode: Option[String]): ChargePointStatus = {
     import RichChargePointStatus.defaultErrorCode
 
     status match {

@@ -1,4 +1,6 @@
-package com.thenewmotion.ocpp.messages
+package com.thenewmotion.ocpp
+package messages
+package v1x
 
 trait SyncChargePoint {
   def remoteStartTransaction(req: RemoteStartTransactionReq): RemoteStartTransactionRes

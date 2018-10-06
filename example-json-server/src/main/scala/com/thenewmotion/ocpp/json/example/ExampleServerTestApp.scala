@@ -7,7 +7,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.io.Source
 
-import messages._
+import messages.v1x._
+import ReqRes._
 import api._
 import OcppJsonServer.OutgoingEndpoint
 

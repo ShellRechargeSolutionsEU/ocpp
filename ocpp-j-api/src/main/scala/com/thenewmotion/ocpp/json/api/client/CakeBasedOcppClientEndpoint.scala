@@ -1,8 +1,10 @@
-package com.thenewmotion.ocpp.json.api.client
+package com.thenewmotion.ocpp
+package json
+package api
+package client
 
-import com.thenewmotion.ocpp.Version
-import com.thenewmotion.ocpp.json.api._
-import com.thenewmotion.ocpp.messages._
+import messages.v1x._
+
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -11,7 +13,7 @@ import scala.concurrent.{ExecutionContext, Future}
   *
   * The library user has to provide:
   *   * A [[RequestHandler]], probably an instance of
-  *     [[com.thenewmotion.ocpp.messages.ChargePoint]], which will handle
+  *     [[com.thenewmotion.ocpp.messages.v1x.ChargePoint]], which will handle
   *     incoming requests
   *
   * The trait provides the library user with:

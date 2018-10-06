@@ -3,11 +3,13 @@ package json
 
 import scala.language.existentials
 import scala.language.higherKinds
-import enums.reflection.EnumUtils.{Nameable, Enumerable}
+import enums.reflection.EnumUtils.{Enumerable, Nameable}
 import org.json4s._
-import messages._
+import messages.ReqRes
+import messages.v1x._
+import messages.v1x.ReqRes._
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * A grouping of all the things you need to process JSON-encoded OCPP messages for a certain operation.

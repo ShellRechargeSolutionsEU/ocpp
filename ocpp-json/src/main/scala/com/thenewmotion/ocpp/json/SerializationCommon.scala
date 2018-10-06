@@ -21,10 +21,10 @@ private[json] trait SerializationCommon {
       case Some(v) => v
     }
 
-  def noneIfDefault[T <: Nameable](enumerable: messages.EnumerableWithDefault[T], actual: T): Option[String] =
+  def noneIfDefault[T <: Nameable](enumerable: messages.v1x.EnumerableWithDefault[T], actual: T): Option[String] =
     if (actual == enumerable.default) None else Some(actual.name)
 
-  def defaultIfNone[T <: Nameable](enumerable: messages.EnumerableWithDefault[T], str: Option[String]): T =
+  def defaultIfNone[T <: Nameable](enumerable: messages.v1x.EnumerableWithDefault[T], str: Option[String]): T =
     str.map(enumerableFromJsonString(enumerable, _)).getOrElse(enumerable.default)
 
   def noneIfEmpty[T](l: List[T]): Option[List[T]] =

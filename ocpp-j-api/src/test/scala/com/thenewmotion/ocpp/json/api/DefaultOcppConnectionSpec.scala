@@ -11,7 +11,8 @@ import org.json4s.JsonAST.JObject
 import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import org.specs2.mock.Mockito
-import messages._
+import messages.v1x._
+import ReqRes._
 
 class DefaultOcppConnectionSpec extends Specification with Mockito {
 

@@ -9,7 +9,8 @@ import scala.concurrent.duration._
 import scala.util.Success
 import org.specs2.mutable.Specification
 
-import messages._
+import messages.v1x._
+import ReqRes._
 import OcppJsonServer.OutgoingEndpoint
 
 class ClientServerIntegrationSpec extends Specification {

@@ -8,8 +8,8 @@ import org.specs2.mutable.Specification
 import org.json4s._
 import org.json4s.native.JsonParser
 import v15.SerializationV15._
-import messages._
-import messages.meter._
+import messages.v1x._
+import meter._
 
 class GirOcppMessageSerializationSpec extends Specification {
 

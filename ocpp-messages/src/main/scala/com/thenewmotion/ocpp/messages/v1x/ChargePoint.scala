@@ -1,6 +1,6 @@
-package com.thenewmotion.ocpp.messages
+package com.thenewmotion.ocpp.messages.v1x
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{ExecutionContext, Future}
 
 trait ChargePoint {
 

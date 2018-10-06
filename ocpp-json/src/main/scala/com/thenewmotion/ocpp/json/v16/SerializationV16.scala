@@ -2,6 +2,9 @@ package com.thenewmotion.ocpp
 package json
 package v16
 
+import messages.{v1x => messages}
+import messages.{Scope, ConnectorScope, ChargePointStatus, ChargingProfileKind}
+import messages.OccupancyKind._
 import org.json4s.MappingException
 
 import scala.concurrent.duration._
@@ -40,7 +43,7 @@ object SerializationV16 extends SerializationCommon {
       reservationId = msg.reservationId
     ),
     (msg: v16.StartTransactionReq) => messages.StartTransactionReq(
-      messages.ConnectorScope.fromOcpp(msg.connectorId),
+      ConnectorScope.fromOcpp(msg.connectorId),
       msg.idTag,
       msg.timestamp,
       msg.meterStart,
@@ -94,7 +97,7 @@ object SerializationV16 extends SerializationCommon {
       msg.meters.map(_.toV16)
     ),
     (msg: v16.MeterValuesReq) => messages.MeterValuesReq(
-      messages.Scope.fromOcpp(msg.connectorId),
+      Scope.fromOcpp(msg.connectorId),
       msg.transactionId,
       msg.meterValue.map(meterFromV16)
     )
@@ -158,7 +161,7 @@ object SerializationV16 extends SerializationCommon {
       )
     },
     (msg: v16.StatusNotificationReq) => messages.StatusNotificationReq(
-      messages.Scope.fromOcpp(msg.connectorId),
+      Scope.fromOcpp(msg.connectorId),
       statusFieldsToOcppStatus(msg.status, msg.errorCode, msg.info, msg.vendorErrorCode),
       msg.timestamp,
       msg.vendorId
@@ -202,7 +205,7 @@ object SerializationV16 extends SerializationCommon {
     ),
     (msg: v16.RemoteStartTransactionReq) => messages.RemoteStartTransactionReq(
       msg.idTag,
-      msg.connectorId.map(messages.ConnectorScope.fromOcpp),
+      msg.connectorId.map(ConnectorScope.fromOcpp),
       msg.chargingProfile.map(chargingProfileFromV16)
     )
   )
@@ -224,7 +227,7 @@ object SerializationV16 extends SerializationCommon {
 
   implicit val UnlockConnectorReqV16Variant = OcppMessageSerializer.variantFor[messages.UnlockConnectorReq, Version.V16.type, v16.UnlockConnectorReq](
     (msg: messages.UnlockConnectorReq) => UnlockConnectorReq(msg.connector.toOcpp),
-    (msg: v16.UnlockConnectorReq) => messages.UnlockConnectorReq(messages.ConnectorScope.fromOcpp(msg.connectorId))
+    (msg: v16.UnlockConnectorReq) => messages.UnlockConnectorReq(ConnectorScope.fromOcpp(msg.connectorId))
   )
 
   implicit val UnlockConnectorResV16Variant = OcppMessageSerializer.variantFor[messages.UnlockConnectorRes, Version.V16.type, v16.UnlockConnectorRes](
@@ -289,7 +292,7 @@ object SerializationV16 extends SerializationCommon {
       msg.availabilityType.name
     ),
     (msg: v16.ChangeAvailabilityReq) => messages.ChangeAvailabilityReq(
-      messages.Scope.fromOcpp(msg.connectorId),
+      Scope.fromOcpp(msg.connectorId),
       enumerableFromJsonString(messages.AvailabilityType, msg.`type`)
     )
   )
@@ -378,7 +381,7 @@ object SerializationV16 extends SerializationCommon {
       msg.reservationId
     ),
     (msg: v16.ReserveNowReq) => messages.ReserveNowReq(
-      messages.Scope.fromOcpp(msg.connectorId),
+      Scope.fromOcpp(msg.connectorId),
       msg.expiryDate,
       msg.idTag,
       msg.parentIdTag,
@@ -410,7 +413,7 @@ object SerializationV16 extends SerializationCommon {
     )
     ,
     (msg: v16.SetChargingProfileReq) => messages.SetChargingProfileReq(
-      messages.Scope.fromOcpp(msg.connectorId),
+      Scope.fromOcpp(msg.connectorId),
       chargingProfileFromV16(msg.csChargingProfiles)
     )
   )
@@ -431,7 +434,7 @@ object SerializationV16 extends SerializationCommon {
     ),
     (msg: v16.ClearChargingProfileReq) => messages.ClearChargingProfileReq(
       msg.id,
-      msg.connectorId.map(messages.Scope.fromOcpp),
+      msg.connectorId.map(Scope.fromOcpp),
       msg.chargingProfilePurpose.map(enumerableFromJsonString(messages.ChargingProfilePurpose, _)),
       msg.stackLevel
     )
@@ -451,7 +454,7 @@ object SerializationV16 extends SerializationCommon {
       msg.chargingRateUnit.map(_.name)
     ),
     (msg: v16.GetCompositeScheduleReq) => messages.GetCompositeScheduleReq(
-      messages.Scope.fromOcpp(msg.connectorId),
+      Scope.fromOcpp(msg.connectorId),
       msg.duration.seconds,
       msg.chargingRateUnit.map(enumerableFromJsonString(messages.UnitOfChargingRate, _))
     )
@@ -495,13 +498,13 @@ object SerializationV16 extends SerializationCommon {
     val defaultErrorCode = "NoError"
   }
 
-  private implicit class RichChargePointStatus(self: messages.ChargePointStatus) {
+  private implicit class RichChargePointStatus(self: ChargePointStatus) {
 
     import RichChargePointStatus.defaultErrorCode
 
     def toV16Fields: (String, String, Option[String], Option[String]) = {
-      def simpleStatus(name: String) = (name, defaultErrorCode, self.info, None)
       import messages.ChargePointStatus
+      def simpleStatus(name: String) = (name, defaultErrorCode, self.info, None)
       self match {
         case ChargePointStatus.Available(_) => simpleStatus("Available")
         case ChargePointStatus.Occupied(kind, _) => simpleStatus(
@@ -516,12 +519,10 @@ object SerializationV16 extends SerializationCommon {
   }
 
   private def statusFieldsToOcppStatus(status: String, errorCode: String, info: Option[String],
-    vendorErrorCode: Option[String]): messages.ChargePointStatus = {
+    vendorErrorCode: Option[String]): ChargePointStatus = {
 
-    import messages.ChargePointStatus
-    import messages.OccupancyKind
-    import OccupancyKind._
     import RichChargePointStatus.defaultErrorCode
+    import messages.ChargePointStatus
 
     status match {
       case "Available" => ChargePointStatus.Available(info)
@@ -663,7 +664,7 @@ object SerializationV16 extends SerializationCommon {
 
   private def triggerMessageReqFromV16(v16t: TriggerMessageReq): messages.TriggerMessageReq =
     messages.TriggerMessageReq {
-      import messages.ConnectorScope.fromOcpp
+      import ConnectorScope.fromOcpp
       v16t match {
         case TriggerMessageReq(requestedMessage, connectorId) =>
           messages.MessageTriggerWithoutScope.withName(requestedMessage) match {
@@ -708,7 +709,7 @@ object SerializationV16 extends SerializationCommon {
 
   private implicit class RichChargingProfile(cp: messages.ChargingProfile) {
 
-    import messages.ChargingProfileKind._
+    import ChargingProfileKind._
 
     def toV16: ChargingProfile = ChargingProfile(
       cp.id,
@@ -741,8 +742,8 @@ object SerializationV16 extends SerializationCommon {
       v16p.validTo
     )
 
-  private def stringToProfileKind(v16cpk: String, v16rk: Option[String]): messages.ChargingProfileKind = {
-    import messages.ChargingProfileKind._
+  private def stringToProfileKind(v16cpk: String, v16rk: Option[String]): ChargingProfileKind = {
+    import ChargingProfileKind._
     import messages.RecurrencyKind._
 
     (v16cpk, v16rk) match {
@@ -777,7 +778,7 @@ object SerializationV16 extends SerializationCommon {
     req.status match {
       case "Accepted" =>
         messages.CompositeScheduleStatus.Accepted(
-          messages.Scope.fromOcpp(req.connectorId.getOrElse {
+          Scope.fromOcpp(req.connectorId.getOrElse {
             throw new MappingException("Missing connector id")
           }),
           req.scheduleStart,
