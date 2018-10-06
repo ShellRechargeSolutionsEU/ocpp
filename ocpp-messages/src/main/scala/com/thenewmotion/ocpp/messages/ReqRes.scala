@@ -8,5 +8,5 @@ package com.thenewmotion.ocpp.messages
  * @tparam REQ
  * @tparam RES
  */
-trait ReqRes[REQ <: RequestV1orV2, RES <: ResponseV1orV2]
+trait ReqRes[REQ <: Request, RES <: Response]
 
