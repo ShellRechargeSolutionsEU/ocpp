@@ -6,7 +6,6 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.specs2.mutable.Specification
 import com.thenewmotion.ocpp.messages.v1x._
-import ReqRes._
 import RequestHandler._
 
 import scala.concurrent.Await

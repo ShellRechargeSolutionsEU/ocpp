@@ -12,7 +12,6 @@ import org.specs2.mutable.Specification
 import org.specs2.specification.Scope
 import org.specs2.mock.Mockito
 import messages.v1x._
-import ReqRes._
 
 class DefaultOcppConnectionSpec extends Specification with Mockito {
 

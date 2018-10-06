@@ -10,7 +10,6 @@ import scala.util.Success
 import org.specs2.mutable.Specification
 
 import messages.v1x._
-import ReqRes._
 import OcppJsonServer.OutgoingEndpoint
 
 class ClientServerIntegrationSpec extends Specification {

@@ -7,7 +7,6 @@ import enums.reflection.EnumUtils.{Enumerable, Nameable}
 import org.json4s._
 import messages.ReqRes
 import messages.v1x._
-import messages.v1x.ReqRes._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -159,20 +158,16 @@ object JsonOperations {
     )
 
     def jsonOpForReqResPF[REQ <: CentralSystemReq, RES <: CentralSystemRes]: PartialFunction[CentralSystemReqRes[REQ, RES], MyJsonOperation[REQ, RES]] = {
-      import ReqRes._
-
-      {
-        case AuthorizeReqRes => authorizeJsonOp
-        case BootNotificationReqRes => bootNotificationJsonOp
-        case CentralSystemDataTransferReqRes => dataTransferJsonOp
-        case DiagnosticsStatusNotificationReqRes => diagnosticsStatusNotificationJsonOp
-        case FirmwareStatusNotificationReqRes => firmwareStatusNotificationJsonOp
-        case HeartbeatReqRes => heartbeatJsonOp
-        case MeterValuesReqRes => meterValuesJsonOp
-        case StartTransactionReqRes => startTransactionJsonOp
-        case StatusNotificationReqRes => statusNotificationJsonOp
-        case StopTransactionReqRes => stopTransactionJsonOp
-      }
+      case AuthorizeReqRes => authorizeJsonOp
+      case BootNotificationReqRes => bootNotificationJsonOp
+      case CentralSystemDataTransferReqRes => dataTransferJsonOp
+      case DiagnosticsStatusNotificationReqRes => diagnosticsStatusNotificationJsonOp
+      case FirmwareStatusNotificationReqRes => firmwareStatusNotificationJsonOp
+      case HeartbeatReqRes => heartbeatJsonOp
+      case MeterValuesReqRes => meterValuesJsonOp
+      case StartTransactionReqRes => startTransactionJsonOp
+      case StatusNotificationReqRes => statusNotificationJsonOp
+      case StopTransactionReqRes => stopTransactionJsonOp
     }
   }
 
@@ -214,22 +209,17 @@ object JsonOperations {
     )
 
     def jsonOpForReqResPF[REQ <: CentralSystemReq, RES <: CentralSystemRes]:
-      PartialFunction[CentralSystemReqRes[REQ, RES], MyJsonOperation[REQ, RES]] = {
-
-      import ReqRes._
-
-      {
-        case AuthorizeReqRes => authorizeJsonOp
-        case BootNotificationReqRes => bootNotificationJsonOp
-        case DiagnosticsStatusNotificationReqRes => diagnosticsStatusNotificationJsonOp
-        case CentralSystemDataTransferReqRes => dataTransferJsonOp
-        case FirmwareStatusNotificationReqRes => firmwareStatusNotificationJsonOp
-        case HeartbeatReqRes => heartbeatJsonOp
-        case MeterValuesReqRes => meterValuesJsonOp
-        case StartTransactionReqRes => startTransactionJsonOp
-        case StatusNotificationReqRes => statusNotificationJsonOp
-        case StopTransactionReqRes => stopTransactionJsonOp
-      }
+    PartialFunction[CentralSystemReqRes[REQ, RES], MyJsonOperation[REQ, RES]] = {
+      case AuthorizeReqRes => authorizeJsonOp
+      case BootNotificationReqRes => bootNotificationJsonOp
+      case DiagnosticsStatusNotificationReqRes => diagnosticsStatusNotificationJsonOp
+      case CentralSystemDataTransferReqRes => dataTransferJsonOp
+      case FirmwareStatusNotificationReqRes => firmwareStatusNotificationJsonOp
+      case HeartbeatReqRes => heartbeatJsonOp
+      case MeterValuesReqRes => meterValuesJsonOp
+      case StartTransactionReqRes => startTransactionJsonOp
+      case StatusNotificationReqRes => statusNotificationJsonOp
+      case StopTransactionReqRes => stopTransactionJsonOp
     }
   }
 
@@ -279,24 +269,20 @@ object JsonOperations {
     )
 
     def jsonOpForReqResPF[REQ <: ChargePointReq, RES <: ChargePointRes] : PartialFunction[ChargePointReqRes[REQ, RES], MyJsonOperation[REQ, RES]] = {
-      import ReqRes._
-
-      {
-        case CancelReservationReqRes => cancelReservationJsonOp
-        case ChangeAvailabilityReqRes => changeAvailabilityJsonOp
-        case ChangeConfigurationReqRes => changeConfigurationJsonOp
-        case ClearCacheReqRes => clearCacheJsonOp
-        case GetConfigurationReqRes => getConfigurationJsonOp
-        case GetDiagnosticsReqRes => getDiagnosticsJsonOp
-        case GetLocalListVersionReqRes => getLocalListVersionJsonOp
-        case RemoteStartTransactionReqRes => remoteStartTransactionJsonOp
-        case RemoteStopTransactionReqRes => remoteStopTransactionJsonOp
-        case ReserveNowReqRes => reserveNowJsonOp
-        case ResetReqRes => resetJsonOp
-        case SendLocalListReqRes => sendLocalListJsonOp
-        case UnlockConnectorReqRes => unlockConnectorJsonOp
-        case UpdateFirmwareReqRes => updateFirmwareJsonOp
-      }
+      case CancelReservationReqRes => cancelReservationJsonOp
+      case ChangeAvailabilityReqRes => changeAvailabilityJsonOp
+      case ChangeConfigurationReqRes => changeConfigurationJsonOp
+      case ClearCacheReqRes => clearCacheJsonOp
+      case GetConfigurationReqRes => getConfigurationJsonOp
+      case GetDiagnosticsReqRes => getDiagnosticsJsonOp
+      case GetLocalListVersionReqRes => getLocalListVersionJsonOp
+      case RemoteStartTransactionReqRes => remoteStartTransactionJsonOp
+      case RemoteStopTransactionReqRes => remoteStopTransactionJsonOp
+      case ReserveNowReqRes => reserveNowJsonOp
+      case ResetReqRes => resetJsonOp
+      case SendLocalListReqRes => sendLocalListJsonOp
+      case UnlockConnectorReqRes => unlockConnectorJsonOp
+      case UpdateFirmwareReqRes => updateFirmwareJsonOp
     }
   }
 
@@ -354,28 +340,24 @@ object JsonOperations {
     )
 
     def jsonOpForReqResPF[REQ <: ChargePointReq, RES <: ChargePointRes]: PartialFunction[ChargePointReqRes[REQ, RES], MyJsonOperation[REQ, RES]] = {
-      import ReqRes._
-
-      {
-        case CancelReservationReqRes => cancelReservationJsonOp
-        case ChangeAvailabilityReqRes => changeAvailabilityJsonOp
-        case ChangeConfigurationReqRes => changeConfigurationJsonOp
-        case ClearCacheReqRes => clearCacheJsonOp
-        case GetConfigurationReqRes => getConfigurationJsonOp
-        case GetDiagnosticsReqRes => getDiagnosticsJsonOp
-        case GetLocalListVersionReqRes => getLocalListVersionJsonOp
-        case RemoteStartTransactionReqRes => remoteStartTransactionJsonOp
-        case RemoteStopTransactionReqRes => remoteStopTransactionJsonOp
-        case ReserveNowReqRes => reserveNowJsonOp
-        case ResetReqRes => resetJsonOp
-        case SendLocalListReqRes => sendLocalListJsonOp
-        case UnlockConnectorReqRes => unlockConnectorJsonOp
-        case UpdateFirmwareReqRes => updateFirmwareJsonOp
-        case SetChargingProfileReqRes => setChargingProfileJsonOp
-        case ClearChargingProfileReqRes => clearChargingProfileJsonOp
-        case GetCompositeScheduleReqRes => getCompositeScheduleJsonOp
-        case TriggerMessageReqRes => triggerMessageJsonOp
-      }
+      case CancelReservationReqRes => cancelReservationJsonOp
+      case ChangeAvailabilityReqRes => changeAvailabilityJsonOp
+      case ChangeConfigurationReqRes => changeConfigurationJsonOp
+      case ClearCacheReqRes => clearCacheJsonOp
+      case GetConfigurationReqRes => getConfigurationJsonOp
+      case GetDiagnosticsReqRes => getDiagnosticsJsonOp
+      case GetLocalListVersionReqRes => getLocalListVersionJsonOp
+      case RemoteStartTransactionReqRes => remoteStartTransactionJsonOp
+      case RemoteStopTransactionReqRes => remoteStopTransactionJsonOp
+      case ReserveNowReqRes => reserveNowJsonOp
+      case ResetReqRes => resetJsonOp
+      case SendLocalListReqRes => sendLocalListJsonOp
+      case UnlockConnectorReqRes => unlockConnectorJsonOp
+      case UpdateFirmwareReqRes => updateFirmwareJsonOp
+      case SetChargingProfileReqRes => setChargingProfileJsonOp
+      case ClearChargingProfileReqRes => clearChargingProfileJsonOp
+      case GetCompositeScheduleReqRes => getCompositeScheduleJsonOp
+      case TriggerMessageReqRes => triggerMessageJsonOp
     }
   }
 }
