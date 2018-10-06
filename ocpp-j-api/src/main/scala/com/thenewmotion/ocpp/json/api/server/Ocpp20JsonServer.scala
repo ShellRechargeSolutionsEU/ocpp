@@ -11,39 +11,39 @@ import org.java_websocket.WebSocket
 import org.java_websocket.drafts.{Draft, Draft_6455}
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
-import messages.v1x._
-import OcppJsonServer._
+import messages.v20._
+import Ocpp20JsonServer._
 import org.java_websocket.protocols.{IProtocol, Protocol}
 
 /**
- * A simple server implementation to show how this library can be used in servers.
- *
- * @param listenPort The port to listen on
- * @param requestedOcppVersion The OCPP version to serve (either 1.5 or 1.6; negotiation is not supported)
- */
-abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
+  * A simple server implementation to show how this library can be used in servers.
+  *
+  * @param listenPort The port to listen on
+  * @param requestedOcppVersion The OCPP version to serve (either 1.5 or 1.6; negotiation is not supported)
+  */
+abstract class Ocpp20JsonServer(listenPort: Int)
   extends WebSocketServer(
     new InetSocketAddress(listenPort),
     Collections.singletonList[Draft](new Draft_6455(
       Collections.emptyList(),
-      Collections.singletonList[IProtocol](new Protocol(protosForVersions(requestedOcppVersion)))
+      Collections.singletonList[IProtocol](new Protocol("ocpp2.0"))
     ))
   ){
 
-  private type OcppCake = CentralSystemOcppConnectionComponent with DefaultSrpcComponent with SimpleServerWebSocketComponent
+  private type OcppCake = CsmsOcpp20ConnectionComponent with DefaultSrpcComponent with SimpleServerWebSocketComponent
 
   private val ocppConnections: mutable.Map[WebSocket, OcppCake] = mutable.HashMap[WebSocket, OcppCake]()
 
   /**
-   * This method should be overridden by the user of this class to define the behavior of the Central System. It will
-   * be called once for each connection to this server that is established.
-   *
-   * @param clientChargePointIdentity The charge point identity of the client
-   * @param remote An OutgoingEndpoint to send messages to the Charge Point or close the connection
-   *
-   * @return The handler for incoming requests from the Charge Point
-   */
-  def handleConnection(clientChargePointIdentity: String, remote: OutgoingEndpoint): CentralSystemRequestHandler
+    * This method should be overridden by the user of this class to define the behavior of the Central System. It will
+    * be called once for each connection to this server that is established.
+    *
+    * @param clientChargePointIdentity The charge point identity of the client
+    * @param remote An OutgoingEndpoint to send messages to the Charge Point or close the connection
+    *
+    * @return The handler for incoming requests from the Charge Point
+    */
+  def handleConnection(clientChargePointIdentity: String, remote: OutgoingEndpoint): CsmsRequestHandler
 
   override def onStart(): Unit = {}
 
@@ -61,8 +61,7 @@ abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
   }
 
   private def onOpenWithCPIdentity(conn : WebSocket, chargePointIdentity: String): Unit = {
-    val ocppConnection = new CentralSystemOcppConnectionComponent  with DefaultSrpcComponent with SimpleServerWebSocketComponent {
-      override val ocppConnection: DefaultOcppConnection = defaultCentralSystemOcppConnection
+    val ocppConnection = new CsmsOcpp20ConnectionComponent with DefaultSrpcComponent with SimpleServerWebSocketComponent {
 
       override val srpcConnection: DefaultSrpcConnection = new DefaultSrpcConnection()
 
@@ -71,7 +70,7 @@ abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
       }
 
       private val outgoingEndpoint = new OutgoingEndpoint {
-        def send[REQ <: ChargePointReq, RES <: ChargePointRes](req: REQ)(implicit reqRes: ChargePointReqRes[REQ, RES]): Future[RES] =
+        def send[REQ <: CsRequest, RES <: CsResponse](req: REQ)(implicit reqRes: CsReqRes[REQ, RES]): Future[RES] =
           ocppConnection.sendRequest(req)
 
         def close(): Future[Unit] = srpcConnection.close()
@@ -81,12 +80,12 @@ abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
 
       private val requestHandler = handleConnection(chargePointIdentity, outgoingEndpoint)
 
-      def onRequest[REQ <: CentralSystemReq, RES <: CentralSystemRes](req: REQ)(implicit reqRes: CentralSystemReqRes[REQ, RES]) =
+      def onRequest[REQ <: CsmsRequest, RES <: CsmsResponse](req: REQ)(implicit reqRes: CsmsReqRes[REQ, RES]) =
         requestHandler.apply(req)
 
       implicit val executionContext: ExecutionContext = concurrent.ExecutionContext.Implicits.global
 
-      def ocppVersion: Version = requestedOcppVersion
+      override val ocppVersion: Version = Version.V20
     }
 
     ocppConnections.put(conn, ocppConnection)
@@ -96,7 +95,7 @@ abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
   override def onClose(
     conn: WebSocket,
     code: Int,
-    reason: IdTag,
+    reason: String,
     remote: Boolean
   ): Unit = {
     ocppConnections.remove(conn) foreach { c =>
@@ -115,11 +114,6 @@ abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
     }
 }
 
-object OcppJsonServer {
-  type OutgoingEndpoint = OutgoingOcppEndpoint[ChargePointReq, ChargePointRes, ChargePointReqRes]
-
-  private val protosForVersions = Map[Version, String](
-    Version.V15 -> "ocpp1.5",
-    Version.V16 -> "ocpp1.6"
-  )
+object Ocpp20JsonServer {
+  type OutgoingEndpoint = OutgoingOcppEndpoint[CsRequest, CsResponse, CsReqRes]
 }

@@ -34,10 +34,10 @@ trait Ocpp20ConnectionComponent[
 
   implicit val formats: Formats = DefaultFormats
 
-  trait Ocpp2Connection extends OcppConnection {
+  trait Ocpp20Connection extends OcppConnection {
 
-    def incomingProcedures: Ocpp2Procedures[INREQBOUND, OUTRESBOUND, INREQRES]
-    val outgoingProcedures: Ocpp2Procedures[OUTREQBOUND, INRESBOUND, OUTREQRES]
+    def incomingProcedures: Ocpp20Procedures[INREQBOUND, OUTRESBOUND, INREQRES]
+    val outgoingProcedures: Ocpp20Procedures[OUTREQBOUND, INRESBOUND, OUTREQRES]
 
     def onSrpcCall(call: SrpcCall): Future[SrpcResponse] = {
       val ocppProc = incomingProcedures.procedureByName(call.procedureName)
@@ -93,7 +93,7 @@ trait Ocpp20ConnectionComponent[
 
   def ocppVersion: Version = Version.V20
 
-  def ocppConnection: Ocpp2Connection
+  def ocppConnection: Ocpp20Connection
 
   override def onSrpcCall(msg: SrpcCall):  Future[SrpcResponse] = ocppConnection.onSrpcCall(msg)
 }
@@ -108,15 +108,40 @@ trait CsOcpp20ConnectionComponent extends Ocpp20ConnectionComponent[
   ] {
   self: SrpcComponent =>
 
-  val ocppConnection = new Ocpp2Connection {
+  val ocppConnection = new Ocpp20Connection {
 
-    val incomingProcedures: Ocpp2Procedures[CsRequest, CsResponse, CsReqRes] = CsOcpp2Procedures
+    val incomingProcedures: Ocpp20Procedures[CsRequest, CsResponse, CsReqRes] = CsOcpp20Procedures
 
-    val outgoingProcedures: Ocpp2Procedures[CsmsRequest, CsmsResponse, CsmsReqRes] = CsmsOcpp2Procedures
+    val outgoingProcedures: Ocpp20Procedures[CsmsRequest, CsmsResponse, CsmsReqRes] = CsmsOcpp20Procedures
 
     override def sendRequestUntyped(req: CsmsRequest): Future[CsmsResponse] = {
       req match {
         case r: BootNotificationRequest => sendRequest(r)
+      }
+    }
+  }
+}
+
+trait CsmsOcpp20ConnectionComponent extends Ocpp20ConnectionComponent[
+  CsRequest,
+  CsResponse,
+  CsReqRes,
+  CsmsRequest,
+  CsmsResponse,
+  CsmsReqRes
+  ] {
+  self: SrpcComponent =>
+
+  val ocppConnection = new Ocpp20Connection {
+
+    val incomingProcedures: Ocpp20Procedures[CsmsRequest, CsmsResponse, CsmsReqRes] = CsmsOcpp20Procedures
+
+    val outgoingProcedures: Ocpp20Procedures[CsRequest, CsResponse, CsReqRes] = CsOcpp20Procedures
+
+    override def sendRequestUntyped(req: CsRequest): Future[CsResponse] = {
+      req match {
+        // TODO zo een request definiëren
+        case _ => sys.error("Er zijn nog helemaal niet zulke requests :->")
       }
     }
   }

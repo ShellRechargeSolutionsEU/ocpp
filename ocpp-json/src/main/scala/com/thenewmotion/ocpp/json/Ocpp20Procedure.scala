@@ -75,7 +75,7 @@ object CsmsOcpp2Procedure {
     Ocpp20Procedure[CsmsRequest, CsmsResponse, REQ, RES, REQRES](reqRes)
 }
 
-trait Ocpp2Procedures[REQBOUND <: Request, RESBOUND <: Response, REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqResV2[_, _]] {
+trait Ocpp20Procedures[REQBOUND <: Request, RESBOUND <: Response, REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqResV2[_, _]] {
 
   type MyProcedure[REQ <: REQBOUND, RES <: RESBOUND] = Ocpp20Procedure[REQBOUND, RESBOUND, REQ, RES, REQRES]
 
@@ -88,7 +88,7 @@ trait Ocpp2Procedures[REQBOUND <: Request, RESBOUND <: Response, REQRES[_ <: REQ
     procedures.find(_.reqRes == reqRes)
 }
 
-object CsOcpp2Procedures extends Ocpp2Procedures[
+object CsOcpp20Procedures extends Ocpp20Procedures[
   CsRequest,
   CsResponse,
   CsReqRes
@@ -97,7 +97,7 @@ object CsOcpp2Procedures extends Ocpp2Procedures[
   )
 }
 
-object CsmsOcpp2Procedures extends Ocpp2Procedures[
+object CsmsOcpp20Procedures extends Ocpp20Procedures[
   CsmsRequest,
   CsmsResponse,
   CsmsReqRes
