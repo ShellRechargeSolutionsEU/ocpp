@@ -6,7 +6,7 @@ import scala.util.control.NonFatal
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.language.higherKinds
-import messages2._
+import v20._
 import org.json4s.{DefaultFormats, Extraction, Formats, JValue}
 import org.slf4j.LoggerFactory
 

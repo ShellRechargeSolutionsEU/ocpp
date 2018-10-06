@@ -1,4 +1,4 @@
-package com.thenewmotion.ocpp.messages2
+package com.thenewmotion.ocpp.v20
 
 import scala.language.higherKinds
 import com.thenewmotion.ocpp.messages.ReqRes
