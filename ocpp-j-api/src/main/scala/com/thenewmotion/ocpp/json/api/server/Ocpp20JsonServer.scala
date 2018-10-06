@@ -15,6 +15,7 @@ import messages.v20._
 import Ocpp20JsonServer._
 import org.java_websocket.protocols.{IProtocol, Protocol}
 
+// TODO drive down code duplicated from OCPP 1.x, make nice OcppJsonServer.forV1x / .forV20 iface
 /**
   * A simple server implementation to show how this library can be used in servers.
   *
