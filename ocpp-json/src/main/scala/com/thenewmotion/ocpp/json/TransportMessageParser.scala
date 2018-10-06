@@ -4,12 +4,8 @@ package json
 import org.json4s._
 import org.json4s.native.JsonParser
 import org.json4s.native.JsonMethods._
-import org.slf4j.LoggerFactory
 
 object TransportMessageParser {
-
-  private[this] val logger =
-    LoggerFactory.getLogger(TransportMessageParser.this.getClass)
 
   implicit val formats =
     DefaultFormats + TransportMessageJsonSerializer()

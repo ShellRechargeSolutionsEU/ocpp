@@ -1,7 +1,7 @@
-package com.thenewmotion.ocpp.v20
+package com.thenewmotion.ocpp
+package v20
 
-import scala.language.higherKinds
-import com.thenewmotion.ocpp.messages.ReqRes
+import messages.ReqRes
 
 sealed trait ReqResV2[REQ <: Request, RES <: Response] extends ReqRes[REQ, RES]
 

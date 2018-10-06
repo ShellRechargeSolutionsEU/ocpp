@@ -10,7 +10,7 @@ import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
 import org.json4s.jackson.JsonMethods._
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.reflect.{ClassTag, classTag}
 
 object JsonSchemaValidationSpec extends Specification with ScalaCheck {
@@ -93,7 +93,7 @@ object JsonSchemaValidationSpec extends Specification with ScalaCheck {
         if (validationReport.isSuccess) {
           success
         } else {
-          failure(validationReport.map(_.getMessage).mkString("\n"))
+          failure(validationReport.asScala.map(_.getMessage).mkString("\n"))
         }
       }
     }
