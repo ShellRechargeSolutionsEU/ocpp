@@ -1,21 +1,23 @@
 package com.thenewmotion.ocpp
 package json
+package v1x
 
-import scala.io.Source
-import scala.concurrent.duration._
-import java.time.{ZoneId, ZonedDateTime}
 import java.net.URI
+import java.time.{ZoneId, ZonedDateTime}
 
-import org.specs2.mutable.Specification
-import org.specs2.matcher.MatchResult
+import messages.v1x.meter._
+import messages.v1x._
 import org.json4s._
 import org.json4s.native.JsonParser
-import messages.v1x._
-import meter._
+import org.specs2.matcher.MatchResult
+import org.specs2.mutable.Specification
+
+import scala.concurrent.duration._
+import scala.io.Source
 
 class OcppMessageSerializationSpec extends Specification {
 
-  import v15.SerializationV15._
+  import com.thenewmotion.ocpp.json.v1x.v15.SerializationV15._
 
   "OCPP message deserialization" should {
 

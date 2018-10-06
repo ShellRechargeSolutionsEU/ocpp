@@ -1,14 +1,16 @@
 package com.thenewmotion.ocpp
 package json
+package v1x
 
-import scala.language.existentials
-import scala.language.higherKinds
-import enums.reflection.EnumUtils.{Enumerable, Nameable}
-import org.json4s._
 import messages.ReqRes
 import messages.v1x._
+import CentralSystemAction.{DataTransfer => CsDataTransfer, _}
+import ChargePointAction._
+import enums.reflection.EnumUtils.{Enumerable, Nameable}
+import org.json4s._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.{existentials, higherKinds}
 
 /**
  * A grouping of all the things you need to process JSON-encoded OCPP messages for a certain operation.
@@ -127,15 +129,14 @@ object JsonOperations {
     Version.V15.type
   ] {
 
-    import CentralSystemAction._
-    import v15.SerializationV15._
-
     type ActionType = CentralSystemAction
     val enum = CentralSystemAction
 
+    import v15.SerializationV15._
+
     val authorizeJsonOp = jsonOp[AuthorizeReq, AuthorizeRes](Authorize)
     val bootNotificationJsonOp = jsonOp[BootNotificationReq, BootNotificationRes](BootNotification)
-    val dataTransferJsonOp = jsonOp[CentralSystemDataTransferReq, CentralSystemDataTransferRes](DataTransfer)
+    val dataTransferJsonOp = jsonOp[CentralSystemDataTransferReq, CentralSystemDataTransferRes](CsDataTransfer)
     val diagnosticsStatusNotificationJsonOp = jsonOp[DiagnosticsStatusNotificationReq, DiagnosticsStatusNotificationRes.type](DiagnosticsStatusNotification)
     val firmwareStatusNotificationJsonOp = jsonOp[FirmwareStatusNotificationReq, FirmwareStatusNotificationRes.type](FirmwareStatusNotification)
     val heartbeatJsonOp = jsonOp[HeartbeatReq.type, HeartbeatRes](Heartbeat)
@@ -178,16 +179,15 @@ object JsonOperations {
     Version.V16.type
   ] {
 
-    import CentralSystemAction._
-    import v16.SerializationV16._
-
     type ActionType = CentralSystemAction
     val enum = CentralSystemAction
+
+    import v16.SerializationV16._
 
     val authorizeJsonOp = jsonOp[AuthorizeReq, AuthorizeRes](Authorize)
     val bootNotificationJsonOp = jsonOp[BootNotificationReq, BootNotificationRes](BootNotification)
     val diagnosticsStatusNotificationJsonOp = jsonOp[DiagnosticsStatusNotificationReq, DiagnosticsStatusNotificationRes.type](DiagnosticsStatusNotification)
-    val dataTransferJsonOp = jsonOp[CentralSystemDataTransferReq, CentralSystemDataTransferRes](DataTransfer)
+    val dataTransferJsonOp = jsonOp[CentralSystemDataTransferReq, CentralSystemDataTransferRes](CsDataTransfer)
     val firmwareStatusNotificationJsonOp = jsonOp[FirmwareStatusNotificationReq, FirmwareStatusNotificationRes.type](FirmwareStatusNotification)
     val heartbeatJsonOp = jsonOp[HeartbeatReq.type, HeartbeatRes](Heartbeat)
     val meterValuesJsonOp = jsonOp[MeterValuesReq, MeterValuesRes.type](MeterValues)
@@ -230,11 +230,10 @@ object JsonOperations {
     Version.V15.type
   ] {
 
-    import ChargePointAction._
-    import v15.SerializationV15._
-
     type ActionType = ChargePointAction
     val enum = ChargePointAction
+
+    import v15.SerializationV15._
 
     val cancelReservationJsonOp = jsonOp[CancelReservationReq, CancelReservationRes](CancelReservation)
     val changeAvailabilityJsonOp = jsonOp[ChangeAvailabilityReq, ChangeAvailabilityRes](ChangeAvailability)
@@ -293,11 +292,10 @@ object JsonOperations {
     Version.V16.type
   ] {
 
-    import ChargePointAction._
-    import v16.SerializationV16._
-
     type ActionType = ChargePointAction
     val enum = ChargePointAction
+
+    import v16.SerializationV16._
 
     val cancelReservationJsonOp = jsonOp[CancelReservationReq, CancelReservationRes](CancelReservation)
     val changeAvailabilityJsonOp = jsonOp[ChangeAvailabilityReq, ChangeAvailabilityRes](ChangeAvailability)

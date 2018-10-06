@@ -1,5 +1,6 @@
 package com.thenewmotion.ocpp
 package json
+package v1x
 package v16
 
 import messages.{v1x => messages}
@@ -11,22 +12,22 @@ import scala.concurrent.duration._
 
 object SerializationV16 extends SerializationCommon {
 
-  implicit val AuthorizeReqV16Variant = OcppMessageSerializer.variantFor[messages.AuthorizeReq, Version.V16.type, v16.AuthorizeReq](
+  implicit val AuthorizeReqV16Variant = OcppMessageSerializer.variantFor[messages.AuthorizeReq, Version.V16.type, AuthorizeReq](
     (msg: messages.AuthorizeReq) => AuthorizeReq(msg.idTag),
     (msg: AuthorizeReq) => messages.AuthorizeReq(msg.idTag)
   )
 
-  implicit val AuthorizeResV16Variant = OcppMessageSerializer.variantFor[messages.AuthorizeRes, Version.V16.type, v16.AuthorizeRes](
+  implicit val AuthorizeResV16Variant = OcppMessageSerializer.variantFor[messages.AuthorizeRes, Version.V16.type, AuthorizeRes](
     (msg: messages.AuthorizeRes) => AuthorizeRes(msg.idTag.toV16),
     (msg: AuthorizeRes) => messages.AuthorizeRes(msg.idTagInfo.fromV16)
   )
 
-  implicit val DataTransferReqV16Variant = OcppMessageSerializer.variantFor[messages.CentralSystemDataTransferReq, Version.V16.type, v16.DataTransferReq](
+  implicit val DataTransferReqV16Variant = OcppMessageSerializer.variantFor[messages.CentralSystemDataTransferReq, Version.V16.type, DataTransferReq](
     (msg: messages.CentralSystemDataTransferReq) => DataTransferReq(msg.vendorId, msg.messageId, msg.data),
     (msg: DataTransferReq) => messages.CentralSystemDataTransferReq(msg.vendorId, msg.messageId, msg.data)
   )
 
-  implicit val DataTransferResV16Variant = OcppMessageSerializer.variantFor[messages.CentralSystemDataTransferRes, Version.V16.type, v16.DataTransferRes](
+  implicit val DataTransferResV16Variant = OcppMessageSerializer.variantFor[messages.CentralSystemDataTransferRes, Version.V16.type, DataTransferRes](
     (msg: messages.CentralSystemDataTransferRes) => DataTransferRes(msg.status.name, msg.data),
     (msg: DataTransferRes) => messages.CentralSystemDataTransferRes(
       enumerableFromJsonString(messages.DataTransferStatus, msg.status),
@@ -34,7 +35,7 @@ object SerializationV16 extends SerializationCommon {
     )
   )
 
-  implicit val StartTransactionReqV16Variant = OcppMessageSerializer.variantFor[messages.StartTransactionReq, Version.V16.type, v16.StartTransactionReq](
+  implicit val StartTransactionReqV16Variant = OcppMessageSerializer.variantFor[messages.StartTransactionReq, Version.V16.type, StartTransactionReq](
     (msg: messages.StartTransactionReq) => StartTransactionReq(
       connectorId = msg.connector.toOcpp,
       idTag = msg.idTag,
@@ -42,7 +43,7 @@ object SerializationV16 extends SerializationCommon {
       meterStart = msg.meterStart,
       reservationId = msg.reservationId
     ),
-    (msg: v16.StartTransactionReq) => messages.StartTransactionReq(
+    (msg: StartTransactionReq) => messages.StartTransactionReq(
       ConnectorScope.fromOcpp(msg.connectorId),
       msg.idTag,
       msg.timestamp,
@@ -51,12 +52,12 @@ object SerializationV16 extends SerializationCommon {
     )
   )
 
-  implicit val StartTransactionResV16Variant = OcppMessageSerializer.variantFor[messages.StartTransactionRes, Version.V16.type, v16.StartTransactionRes](
+  implicit val StartTransactionResV16Variant = OcppMessageSerializer.variantFor[messages.StartTransactionRes, Version.V16.type, StartTransactionRes](
     (msg: messages.StartTransactionRes) => StartTransactionRes(msg.transactionId, msg.idTag.toV16),
-    (msg: v16.StartTransactionRes) => messages.StartTransactionRes(msg.transactionId, msg.idTagInfo.fromV16)
+    (msg: StartTransactionRes) => messages.StartTransactionRes(msg.transactionId, msg.idTagInfo.fromV16)
   )
 
-  implicit val StopTransactionReqV16Variant = OcppMessageSerializer.variantFor[messages.StopTransactionReq, Version.V16.type, v16.StopTransactionReq](
+  implicit val StopTransactionReqV16Variant = OcppMessageSerializer.variantFor[messages.StopTransactionReq, Version.V16.type, StopTransactionReq](
     (msg: messages.StopTransactionReq) => StopTransactionReq(
       transactionId = msg.transactionId,
       idTag = msg.idTag,
@@ -65,7 +66,7 @@ object SerializationV16 extends SerializationCommon {
       meterStop = msg.meterStop,
       transactionData = noneIfEmpty(msg.meters.map(_.toV16))
     ),
-    (msg: v16.StopTransactionReq) => messages.StopTransactionReq(
+    (msg: StopTransactionReq) => messages.StopTransactionReq(
       msg.transactionId,
       msg.idTag,
       msg.timestamp,
@@ -75,40 +76,40 @@ object SerializationV16 extends SerializationCommon {
     )
   )
 
-  implicit val StopTransactionResV16Variant = OcppMessageSerializer.variantFor[messages.StopTransactionRes, Version.V16.type, v16.StopTransactionRes](
+  implicit val StopTransactionResV16Variant = OcppMessageSerializer.variantFor[messages.StopTransactionRes, Version.V16.type, StopTransactionRes](
     (msg: messages.StopTransactionRes) => StopTransactionRes(msg.idTag.map(_.toV16)),
-    (msg: v16.StopTransactionRes) => messages.StopTransactionRes(msg.idTagInfo.map(_.fromV16))
+    (msg: StopTransactionRes) => messages.StopTransactionRes(msg.idTagInfo.map(_.fromV16))
   )
 
-  implicit val HeartbeatReqV16Variant = OcppMessageSerializer.variantFor[messages.HeartbeatReq.type, Version.V16.type, v16.HeartbeatReq](
+  implicit val HeartbeatReqV16Variant = OcppMessageSerializer.variantFor[messages.HeartbeatReq.type, Version.V16.type, HeartbeatReq](
     (_: messages.HeartbeatReq.type) => HeartbeatReq(),
-    (_: v16.HeartbeatReq) => messages.HeartbeatReq
+    (_: HeartbeatReq) => messages.HeartbeatReq
   )
 
-  implicit val HeartbeatResV16Variant = OcppMessageSerializer.variantFor[messages.HeartbeatRes, Version.V16.type, v16.HeartbeatRes](
+  implicit val HeartbeatResV16Variant = OcppMessageSerializer.variantFor[messages.HeartbeatRes, Version.V16.type, HeartbeatRes](
     (msg: messages.HeartbeatRes) => HeartbeatRes(msg.currentTime),
-    (msg: v16.HeartbeatRes) => messages.HeartbeatRes(msg.currentTime)
+    (msg: HeartbeatRes) => messages.HeartbeatRes(msg.currentTime)
   )
 
-  implicit val MeterValuesReqV16Variant = OcppMessageSerializer.variantFor[messages.MeterValuesReq, Version.V16.type, v16.MeterValuesReq](
+  implicit val MeterValuesReqV16Variant = OcppMessageSerializer.variantFor[messages.MeterValuesReq, Version.V16.type, MeterValuesReq](
     (msg: messages.MeterValuesReq) => MeterValuesReq(
       msg.scope.toOcpp,
       msg.transactionId,
       msg.meters.map(_.toV16)
     ),
-    (msg: v16.MeterValuesReq) => messages.MeterValuesReq(
+    (msg: MeterValuesReq) => messages.MeterValuesReq(
       Scope.fromOcpp(msg.connectorId),
       msg.transactionId,
       msg.meterValue.map(meterFromV16)
     )
   )
 
-  implicit val MeterValuesResV16Variant = OcppMessageSerializer.variantFor[messages.MeterValuesRes.type, Version.V16.type, v16.MeterValuesRes](
+  implicit val MeterValuesResV16Variant = OcppMessageSerializer.variantFor[messages.MeterValuesRes.type, Version.V16.type, MeterValuesRes](
     (_: messages.MeterValuesRes.type) => MeterValuesRes(),
-    (_: v16.MeterValuesRes) => messages.MeterValuesRes
+    (_: MeterValuesRes) => messages.MeterValuesRes
   )
 
-  implicit val BootNotificationReqV16Variant = OcppMessageSerializer.variantFor[messages.BootNotificationReq, Version.V16.type, v16.BootNotificationReq](
+  implicit val BootNotificationReqV16Variant = OcppMessageSerializer.variantFor[messages.BootNotificationReq, Version.V16.type, BootNotificationReq](
     (msg: messages.BootNotificationReq) =>
       BootNotificationReq(
         msg.chargePointVendor,
@@ -121,7 +122,7 @@ object SerializationV16 extends SerializationCommon {
         msg.meterType,
         msg.meterSerialNumber
       ),
-    (msg: v16.BootNotificationReq) =>
+    (msg: BootNotificationReq) =>
       messages.BootNotificationReq(
         msg.chargePointVendor,
         msg.chargePointModel,
@@ -135,11 +136,11 @@ object SerializationV16 extends SerializationCommon {
       )
   )
 
-  implicit val BootNotificationResV16Variant = OcppMessageSerializer.variantFor[messages.BootNotificationRes, Version.V16.type, v16.BootNotificationRes](
+  implicit val BootNotificationResV16Variant = OcppMessageSerializer.variantFor[messages.BootNotificationRes, Version.V16.type, BootNotificationRes](
     (msg: messages.BootNotificationRes) =>
       BootNotificationRes(msg.status.name, msg.currentTime, msg.interval.toSeconds.toInt),
 
-    (msg: v16.BootNotificationRes) =>
+    (msg: BootNotificationRes) =>
       messages.BootNotificationRes(
         status = enumerableFromJsonString(messages.RegistrationStatus, msg.status),
         currentTime = msg.currentTime,
@@ -147,7 +148,7 @@ object SerializationV16 extends SerializationCommon {
       )
   )
 
-  implicit val StatusNotificationReqV16Variant = OcppMessageSerializer.variantFor[messages.StatusNotificationReq, Version.V16.type, v16.StatusNotificationReq](
+  implicit val StatusNotificationReqV16Variant = OcppMessageSerializer.variantFor[messages.StatusNotificationReq, Version.V16.type, StatusNotificationReq](
     (msg: messages.StatusNotificationReq) => {
       val (ocppStatus, errorCode, info, vendorErrorCode) = msg.status.toV16Fields
       StatusNotificationReq(
@@ -160,7 +161,7 @@ object SerializationV16 extends SerializationCommon {
         vendorErrorCode
       )
     },
-    (msg: v16.StatusNotificationReq) => messages.StatusNotificationReq(
+    (msg: StatusNotificationReq) => messages.StatusNotificationReq(
       Scope.fromOcpp(msg.connectorId),
       statusFieldsToOcppStatus(msg.status, msg.errorCode, msg.info, msg.vendorErrorCode),
       msg.timestamp,
@@ -168,76 +169,76 @@ object SerializationV16 extends SerializationCommon {
     )
   )
 
-  implicit val StatusNotificationResV16Variant = OcppMessageSerializer.variantFor[messages.StatusNotificationRes.type, Version.V16.type, v16.StatusNotificationRes](
+  implicit val StatusNotificationResV16Variant = OcppMessageSerializer.variantFor[messages.StatusNotificationRes.type, Version.V16.type, StatusNotificationRes](
     (_: messages.StatusNotificationRes.type) => StatusNotificationRes(),
-    (_: v16.StatusNotificationRes) => messages.StatusNotificationRes
+    (_: StatusNotificationRes) => messages.StatusNotificationRes
   )
 
-  implicit val FirmwareStatusNotificationReqV16Variant = OcppMessageSerializer.variantFor[messages.FirmwareStatusNotificationReq, Version.V16.type, v16.FirmwareStatusNotificationReq](
+  implicit val FirmwareStatusNotificationReqV16Variant = OcppMessageSerializer.variantFor[messages.FirmwareStatusNotificationReq, Version.V16.type, FirmwareStatusNotificationReq](
     (msg: messages.FirmwareStatusNotificationReq) => FirmwareStatusNotificationReq(msg.status.name),
-    (msg: v16.FirmwareStatusNotificationReq) => messages.FirmwareStatusNotificationReq(
+    (msg: FirmwareStatusNotificationReq) => messages.FirmwareStatusNotificationReq(
       enumerableFromJsonString(messages.FirmwareStatus, msg.status)
     )
   )
 
-  implicit val FirmwareStatusNotificationResV16Variant = OcppMessageSerializer.variantFor[messages.FirmwareStatusNotificationRes.type, Version.V16.type, v16.FirmwareStatusNotificationRes](
+  implicit val FirmwareStatusNotificationResV16Variant = OcppMessageSerializer.variantFor[messages.FirmwareStatusNotificationRes.type, Version.V16.type, FirmwareStatusNotificationRes](
     (_: messages.FirmwareStatusNotificationRes.type) => FirmwareStatusNotificationRes(),
-    (_: v16.FirmwareStatusNotificationRes) => messages.FirmwareStatusNotificationRes
+    (_: FirmwareStatusNotificationRes) => messages.FirmwareStatusNotificationRes
   )
 
-  implicit val DiagnosticsStatusNotificationReqV16Variant = OcppMessageSerializer.variantFor[messages.DiagnosticsStatusNotificationReq, Version.V16.type, v16.DiagnosticsStatusNotificationReq](
+  implicit val DiagnosticsStatusNotificationReqV16Variant = OcppMessageSerializer.variantFor[messages.DiagnosticsStatusNotificationReq, Version.V16.type, DiagnosticsStatusNotificationReq](
     (msg: messages.DiagnosticsStatusNotificationReq) => DiagnosticsStatusNotificationReq(msg.status.name),
-    (msg: v16.DiagnosticsStatusNotificationReq) => messages.DiagnosticsStatusNotificationReq(
+    (msg: DiagnosticsStatusNotificationReq) => messages.DiagnosticsStatusNotificationReq(
       enumerableFromJsonString(messages.DiagnosticsStatus, msg.status)
     )
   )
 
-  implicit val DiagnosticsStatusNotificationResV16Variant = OcppMessageSerializer.variantFor[messages.DiagnosticsStatusNotificationRes.type, Version.V16.type, v16.DiagnosticsStatusNotificationRes](
+  implicit val DiagnosticsStatusNotificationResV16Variant = OcppMessageSerializer.variantFor[messages.DiagnosticsStatusNotificationRes.type, Version.V16.type, DiagnosticsStatusNotificationRes](
     (_: messages.DiagnosticsStatusNotificationRes.type) => DiagnosticsStatusNotificationRes(),
-    (_: v16.DiagnosticsStatusNotificationRes) => messages.DiagnosticsStatusNotificationRes
+    (_: DiagnosticsStatusNotificationRes) => messages.DiagnosticsStatusNotificationRes
   )
 
-  implicit val RemoteStartTransactionReqV16Variant = OcppMessageSerializer.variantFor[messages.RemoteStartTransactionReq, Version.V16.type, v16.RemoteStartTransactionReq](
+  implicit val RemoteStartTransactionReqV16Variant = OcppMessageSerializer.variantFor[messages.RemoteStartTransactionReq, Version.V16.type, RemoteStartTransactionReq](
     (msg: messages.RemoteStartTransactionReq) => RemoteStartTransactionReq(
       msg.idTag,
       msg.connector.map(_.toOcpp),
       msg.chargingProfile.map(_.toV16)
     ),
-    (msg: v16.RemoteStartTransactionReq) => messages.RemoteStartTransactionReq(
+    (msg: RemoteStartTransactionReq) => messages.RemoteStartTransactionReq(
       msg.idTag,
       msg.connectorId.map(ConnectorScope.fromOcpp),
       msg.chargingProfile.map(chargingProfileFromV16)
     )
   )
 
-  implicit val RemoteStartTransactionResV16Variant = OcppMessageSerializer.variantFor[messages.RemoteStartTransactionRes, Version.V16.type, v16.RemoteStartTransactionRes](
+  implicit val RemoteStartTransactionResV16Variant = OcppMessageSerializer.variantFor[messages.RemoteStartTransactionRes, Version.V16.type, RemoteStartTransactionRes](
     (msg: messages.RemoteStartTransactionRes) => RemoteStartTransactionRes(msg.accepted.toStatusString),
-    (msg: v16.RemoteStartTransactionRes) => messages.RemoteStartTransactionRes(statusStringToBoolean(msg.status))
+    (msg: RemoteStartTransactionRes) => messages.RemoteStartTransactionRes(statusStringToBoolean(msg.status))
   )
 
-  implicit val RemoteStopTransactionReqV16Variant = OcppMessageSerializer.variantFor[messages.RemoteStopTransactionReq, Version.V16.type, v16.RemoteStopTransactionReq](
+  implicit val RemoteStopTransactionReqV16Variant = OcppMessageSerializer.variantFor[messages.RemoteStopTransactionReq, Version.V16.type, RemoteStopTransactionReq](
     (msg: messages.RemoteStopTransactionReq) => RemoteStopTransactionReq(msg.transactionId),
-    (msg: v16.RemoteStopTransactionReq) => messages.RemoteStopTransactionReq(msg.transactionId)
+    (msg: RemoteStopTransactionReq) => messages.RemoteStopTransactionReq(msg.transactionId)
   )
 
-  implicit val RemoteStopTransactionResV16Variant = OcppMessageSerializer.variantFor[messages.RemoteStopTransactionRes, Version.V16.type, v16.RemoteStopTransactionRes](
+  implicit val RemoteStopTransactionResV16Variant = OcppMessageSerializer.variantFor[messages.RemoteStopTransactionRes, Version.V16.type, RemoteStopTransactionRes](
     (msg: messages.RemoteStopTransactionRes) => RemoteStopTransactionRes(msg.accepted.toStatusString),
-    (msg: v16.RemoteStopTransactionRes) => messages.RemoteStopTransactionRes(statusStringToBoolean(msg.status))
+    (msg: RemoteStopTransactionRes) => messages.RemoteStopTransactionRes(statusStringToBoolean(msg.status))
   )
 
-  implicit val UnlockConnectorReqV16Variant = OcppMessageSerializer.variantFor[messages.UnlockConnectorReq, Version.V16.type, v16.UnlockConnectorReq](
+  implicit val UnlockConnectorReqV16Variant = OcppMessageSerializer.variantFor[messages.UnlockConnectorReq, Version.V16.type, UnlockConnectorReq](
     (msg: messages.UnlockConnectorReq) => UnlockConnectorReq(msg.connector.toOcpp),
-    (msg: v16.UnlockConnectorReq) => messages.UnlockConnectorReq(ConnectorScope.fromOcpp(msg.connectorId))
+    (msg: UnlockConnectorReq) => messages.UnlockConnectorReq(ConnectorScope.fromOcpp(msg.connectorId))
   )
 
-  implicit val UnlockConnectorResV16Variant = OcppMessageSerializer.variantFor[messages.UnlockConnectorRes, Version.V16.type, v16.UnlockConnectorRes](
+  implicit val UnlockConnectorResV16Variant = OcppMessageSerializer.variantFor[messages.UnlockConnectorRes, Version.V16.type, UnlockConnectorRes](
     (msg: messages.UnlockConnectorRes) => UnlockConnectorRes(msg.status.name),
-    (msg: v16.UnlockConnectorRes) => messages.UnlockConnectorRes(
+    (msg: UnlockConnectorRes) => messages.UnlockConnectorRes(
       enumerableFromJsonString(messages.UnlockStatus, msg.status)
     )
   )
 
-  implicit val GetDiagnosticsReqV16Variant = OcppMessageSerializer.variantFor[messages.GetDiagnosticsReq, Version.V16.type, v16.GetDiagnosticsReq](
+  implicit val GetDiagnosticsReqV16Variant = OcppMessageSerializer.variantFor[messages.GetDiagnosticsReq, Version.V16.type, GetDiagnosticsReq](
     (msg: messages.GetDiagnosticsReq) => GetDiagnosticsReq(
       msg.location.toASCIIString,
       msg.startTime,
@@ -245,7 +246,7 @@ object SerializationV16 extends SerializationCommon {
       msg.retries.numberOfRetries,
       msg.retries.intervalInSeconds
     ),
-    (msg: v16.GetDiagnosticsReq) => messages.GetDiagnosticsReq(
+    (msg: GetDiagnosticsReq) => messages.GetDiagnosticsReq(
       parseURI(msg.location),
       msg.startTime,
       msg.stopTime,
@@ -253,103 +254,103 @@ object SerializationV16 extends SerializationCommon {
     )
   )
 
-  implicit val GetDiagnosticsResV16Variant = OcppMessageSerializer.variantFor[messages.GetDiagnosticsRes, Version.V16.type, v16.GetDiagnosticsRes](
+  implicit val GetDiagnosticsResV16Variant = OcppMessageSerializer.variantFor[messages.GetDiagnosticsRes, Version.V16.type, GetDiagnosticsRes](
     (msg: messages.GetDiagnosticsRes) => GetDiagnosticsRes(msg.fileName),
-    (msg: v16.GetDiagnosticsRes) => messages.GetDiagnosticsRes(msg.fileName)
+    (msg: GetDiagnosticsRes) => messages.GetDiagnosticsRes(msg.fileName)
   )
 
-  implicit val ChangeConfigurationReqV16Variant = OcppMessageSerializer.variantFor[messages.ChangeConfigurationReq, Version.V16.type, v16.ChangeConfigurationReq](
+  implicit val ChangeConfigurationReqV16Variant = OcppMessageSerializer.variantFor[messages.ChangeConfigurationReq, Version.V16.type, ChangeConfigurationReq](
     (msg: messages.ChangeConfigurationReq) => ChangeConfigurationReq(msg.key, msg.value),
-    (msg: v16.ChangeConfigurationReq) => messages.ChangeConfigurationReq(msg.key, msg.value)
+    (msg: ChangeConfigurationReq) => messages.ChangeConfigurationReq(msg.key, msg.value)
   )
 
-  implicit val ChangeConfigurationResV16Variant = OcppMessageSerializer.variantFor[messages.ChangeConfigurationRes, Version.V16.type, v16.ChangeConfigurationRes](
+  implicit val ChangeConfigurationResV16Variant = OcppMessageSerializer.variantFor[messages.ChangeConfigurationRes, Version.V16.type, ChangeConfigurationRes](
     (msg: messages.ChangeConfigurationRes) => ChangeConfigurationRes(msg.status.name),
-    (msg: v16.ChangeConfigurationRes) => messages.ChangeConfigurationRes(
+    (msg: ChangeConfigurationRes) => messages.ChangeConfigurationRes(
       enumerableFromJsonString(messages.ConfigurationStatus, msg.status)
     )
   )
 
-  implicit val GetConfigurationReqV16Variant = OcppMessageSerializer.variantFor[messages.GetConfigurationReq, Version.V16.type, v16.GetConfigurationReq](
+  implicit val GetConfigurationReqV16Variant = OcppMessageSerializer.variantFor[messages.GetConfigurationReq, Version.V16.type, GetConfigurationReq](
     (msg: messages.GetConfigurationReq) => GetConfigurationReq(noneIfEmpty(msg.keys)),
-    (msg: v16.GetConfigurationReq) => messages.GetConfigurationReq(emptyIfNone(msg.key))
+    (msg: GetConfigurationReq) => messages.GetConfigurationReq(emptyIfNone(msg.key))
   )
 
-  implicit val GetConfigurationResV16Variant = OcppMessageSerializer.variantFor[messages.GetConfigurationRes, Version.V16.type, v16.GetConfigurationRes](
+  implicit val GetConfigurationResV16Variant = OcppMessageSerializer.variantFor[messages.GetConfigurationRes, Version.V16.type, GetConfigurationRes](
     (msg: messages.GetConfigurationRes) => GetConfigurationRes(
       noneIfEmpty(msg.values.map(_.toV16)),
       noneIfEmpty(msg.unknownKeys)
     ),
-    (msg: v16.GetConfigurationRes) => messages.GetConfigurationRes(
+    (msg: GetConfigurationRes) => messages.GetConfigurationRes(
       emptyIfNone(msg.configurationKey).map(_.fromV16),
       emptyIfNone(msg.unknownKey)
     )
   )
 
-  implicit val ChangeAvailabilityReqV16Variant = OcppMessageSerializer.variantFor[messages.ChangeAvailabilityReq, Version.V16.type, v16.ChangeAvailabilityReq](
+  implicit val ChangeAvailabilityReqV16Variant = OcppMessageSerializer.variantFor[messages.ChangeAvailabilityReq, Version.V16.type, ChangeAvailabilityReq](
     (msg: messages.ChangeAvailabilityReq) => ChangeAvailabilityReq(
       msg.scope.toOcpp,
       msg.availabilityType.name
     ),
-    (msg: v16.ChangeAvailabilityReq) => messages.ChangeAvailabilityReq(
+    (msg: ChangeAvailabilityReq) => messages.ChangeAvailabilityReq(
       Scope.fromOcpp(msg.connectorId),
       enumerableFromJsonString(messages.AvailabilityType, msg.`type`)
     )
   )
 
-  implicit val ChangeAvailabilityResV16Variant = OcppMessageSerializer.variantFor[messages.ChangeAvailabilityRes, Version.V16.type, v16.ChangeAvailabilityRes](
+  implicit val ChangeAvailabilityResV16Variant = OcppMessageSerializer.variantFor[messages.ChangeAvailabilityRes, Version.V16.type, ChangeAvailabilityRes](
     (msg: messages.ChangeAvailabilityRes) => ChangeAvailabilityRes(msg.status.name),
-    (msg: v16.ChangeAvailabilityRes) => messages.ChangeAvailabilityRes(
+    (msg: ChangeAvailabilityRes) => messages.ChangeAvailabilityRes(
       enumerableFromJsonString(messages.AvailabilityStatus, msg.status)
     )
   )
 
-  implicit val ClearCacheReqV16Variant = OcppMessageSerializer.variantFor[messages.ClearCacheReq.type, Version.V16.type, v16.ClearCacheReq](
+  implicit val ClearCacheReqV16Variant = OcppMessageSerializer.variantFor[messages.ClearCacheReq.type, Version.V16.type, ClearCacheReq](
     (_: messages.ClearCacheReq.type) => ClearCacheReq(),
-    (_: v16.ClearCacheReq) => messages.ClearCacheReq
+    (_: ClearCacheReq) => messages.ClearCacheReq
   )
 
-  implicit val ClearCacheResV16Variant = OcppMessageSerializer.variantFor[messages.ClearCacheRes, Version.V16.type, v16.ClearCacheRes](
+  implicit val ClearCacheResV16Variant = OcppMessageSerializer.variantFor[messages.ClearCacheRes, Version.V16.type, ClearCacheRes](
     (msg: messages.ClearCacheRes) => ClearCacheRes(msg.accepted.toStatusString),
-    (msg: v16.ClearCacheRes) => messages.ClearCacheRes(statusStringToBoolean(msg.status))
+    (msg: ClearCacheRes) => messages.ClearCacheRes(statusStringToBoolean(msg.status))
   )
 
-  implicit val ResetReqV16Variant = OcppMessageSerializer.variantFor[messages.ResetReq, Version.V16.type, v16.ResetReq](
+  implicit val ResetReqV16Variant = OcppMessageSerializer.variantFor[messages.ResetReq, Version.V16.type, ResetReq](
     (msg: messages.ResetReq) => ResetReq(msg.resetType.name),
-    (msg: v16.ResetReq) => messages.ResetReq(enumerableFromJsonString(messages.ResetType, msg.`type`))
+    (msg: ResetReq) => messages.ResetReq(enumerableFromJsonString(messages.ResetType, msg.`type`))
   )
 
-  implicit val ResetResV16Variant = OcppMessageSerializer.variantFor[messages.ResetRes, Version.V16.type, v16.ResetRes](
+  implicit val ResetResV16Variant = OcppMessageSerializer.variantFor[messages.ResetRes, Version.V16.type, ResetRes](
     (msg: messages.ResetRes) => ResetRes(msg.accepted.toStatusString),
-    (msg: v16.ResetRes) => messages.ResetRes(statusStringToBoolean(msg.status))
+    (msg: ResetRes) => messages.ResetRes(statusStringToBoolean(msg.status))
   )
 
-  implicit val UpdateFirmwareReqV16Variant = OcppMessageSerializer.variantFor[messages.UpdateFirmwareReq, Version.V16.type, v16.UpdateFirmwareReq](
+  implicit val UpdateFirmwareReqV16Variant = OcppMessageSerializer.variantFor[messages.UpdateFirmwareReq, Version.V16.type, UpdateFirmwareReq](
     (msg: messages.UpdateFirmwareReq) => UpdateFirmwareReq(
       msg.retrieveDate,
       msg.location.toASCIIString,
       msg.retries.numberOfRetries,
       msg.retries.intervalInSeconds
     ),
-    (msg: v16.UpdateFirmwareReq) => messages.UpdateFirmwareReq(
+    (msg: UpdateFirmwareReq) => messages.UpdateFirmwareReq(
       msg.retrieveDate,
       parseURI(msg.location),
       messages.Retries.fromInts(msg.retries, msg.retryInterval)
     )
   )
 
-  implicit val UpdateFirmwareResV16Variant = OcppMessageSerializer.variantFor[messages.UpdateFirmwareRes.type, Version.V16.type, v16.UpdateFirmwareRes](
+  implicit val UpdateFirmwareResV16Variant = OcppMessageSerializer.variantFor[messages.UpdateFirmwareRes.type, Version.V16.type, UpdateFirmwareRes](
     (_: messages.UpdateFirmwareRes.type) => UpdateFirmwareRes(),
-    (_: v16.UpdateFirmwareRes) => messages.UpdateFirmwareRes
+    (_: UpdateFirmwareRes) => messages.UpdateFirmwareRes
   )
 
-  implicit val SendLocalListReqV16Variant = OcppMessageSerializer.variantFor[messages.SendLocalListReq, Version.V16.type, v16.SendLocalListReq](
+  implicit val SendLocalListReqV16Variant = OcppMessageSerializer.variantFor[messages.SendLocalListReq, Version.V16.type, SendLocalListReq](
     (msg: messages.SendLocalListReq) => SendLocalListReq(
       msg.updateType.name,
       msg.listVersion.toV16,
       Some(msg.localAuthorisationList.map(_.toV16))
     ),
-    (msg: v16.SendLocalListReq) => messages.SendLocalListReq(
+    (msg: SendLocalListReq) => messages.SendLocalListReq(
       enumerableFromJsonString(messages.UpdateType, msg.updateType),
       messages.AuthListSupported(msg.listVersion),
       emptyIfNone(msg.localAuthorizationList).map(_.fromV16),
@@ -357,22 +358,22 @@ object SerializationV16 extends SerializationCommon {
     )
   )
 
-  implicit val SendLocalListResV16Variant = OcppMessageSerializer.variantFor[messages.SendLocalListRes, Version.V16.type, v16.SendLocalListRes](
+  implicit val SendLocalListResV16Variant = OcppMessageSerializer.variantFor[messages.SendLocalListRes, Version.V16.type, SendLocalListRes](
     (msg: messages.SendLocalListRes) => SendLocalListRes(msg.status.toV16),
-    (msg: v16.SendLocalListRes) => messages.SendLocalListRes(updateStatusFromV16(msg.status))
+    (msg: SendLocalListRes) => messages.SendLocalListRes(updateStatusFromV16(msg.status))
   )
 
-  implicit val GetLocalListVersionReqV16Variant = OcppMessageSerializer.variantFor[messages.GetLocalListVersionReq.type, Version.V16.type, v16.GetLocalListVersionReq](
+  implicit val GetLocalListVersionReqV16Variant = OcppMessageSerializer.variantFor[messages.GetLocalListVersionReq.type, Version.V16.type, GetLocalListVersionReq](
     (_: messages.GetLocalListVersionReq.type) => GetLocalListVersionReq(),
-    (_: v16.GetLocalListVersionReq) => messages.GetLocalListVersionReq
+    (_: GetLocalListVersionReq) => messages.GetLocalListVersionReq
   )
 
-  implicit val GetLocalListVersionResV16Variant = OcppMessageSerializer.variantFor[messages.GetLocalListVersionRes, Version.V16.type, v16.GetLocalListVersionRes](
+  implicit val GetLocalListVersionResV16Variant = OcppMessageSerializer.variantFor[messages.GetLocalListVersionRes, Version.V16.type, GetLocalListVersionRes](
     (msg: messages.GetLocalListVersionRes) => GetLocalListVersionRes(msg.version.toV16),
-    (msg: v16.GetLocalListVersionRes) => messages.GetLocalListVersionRes(messages.AuthListVersion(msg.listVersion))
+    (msg: GetLocalListVersionRes) => messages.GetLocalListVersionRes(messages.AuthListVersion(msg.listVersion))
   )
 
-  implicit val ReserveNowReqV16Variant = OcppMessageSerializer.variantFor[messages.ReserveNowReq, Version.V16.type, v16.ReserveNowReq](
+  implicit val ReserveNowReqV16Variant = OcppMessageSerializer.variantFor[messages.ReserveNowReq, Version.V16.type, ReserveNowReq](
     (msg: messages.ReserveNowReq) => ReserveNowReq(
       msg.connector.toOcpp,
       msg.expiryDate,
@@ -380,7 +381,7 @@ object SerializationV16 extends SerializationCommon {
       msg.parentIdTag,
       msg.reservationId
     ),
-    (msg: v16.ReserveNowReq) => messages.ReserveNowReq(
+    (msg: ReserveNowReq) => messages.ReserveNowReq(
       Scope.fromOcpp(msg.connectorId),
       msg.expiryDate,
       msg.idTag,
@@ -389,50 +390,50 @@ object SerializationV16 extends SerializationCommon {
     )
   )
 
-  implicit val ReserveNowResV16Variant = OcppMessageSerializer.variantFor[messages.ReserveNowRes, Version.V16.type, v16.ReserveNowRes](
+  implicit val ReserveNowResV16Variant = OcppMessageSerializer.variantFor[messages.ReserveNowRes, Version.V16.type, ReserveNowRes](
     (msg: messages.ReserveNowRes) => ReserveNowRes(msg.status.name),
-    (msg: v16.ReserveNowRes) => messages.ReserveNowRes(
+    (msg: ReserveNowRes) => messages.ReserveNowRes(
       enumerableFromJsonString(messages.Reservation, msg.status)
     )
   )
 
-  implicit val CancelReservationReqV16Variant = OcppMessageSerializer.variantFor[messages.CancelReservationReq, Version.V16.type, v16.CancelReservationReq](
+  implicit val CancelReservationReqV16Variant = OcppMessageSerializer.variantFor[messages.CancelReservationReq, Version.V16.type, CancelReservationReq](
     (msg: messages.CancelReservationReq) => CancelReservationReq(msg.reservationId),
-    (msg: v16.CancelReservationReq) => messages.CancelReservationReq(msg.reservationId)
+    (msg: CancelReservationReq) => messages.CancelReservationReq(msg.reservationId)
   )
 
-  implicit val CancelReservationResV16Variant = OcppMessageSerializer.variantFor[messages.CancelReservationRes, Version.V16.type, v16.CancelReservationRes](
+  implicit val CancelReservationResV16Variant = OcppMessageSerializer.variantFor[messages.CancelReservationRes, Version.V16.type, CancelReservationRes](
     (msg: messages.CancelReservationRes) => CancelReservationRes(msg.accepted.toStatusString),
-    (msg: v16.CancelReservationRes) => messages.CancelReservationRes(statusStringToBoolean(msg.status))
+    (msg: CancelReservationRes) => messages.CancelReservationRes(statusStringToBoolean(msg.status))
   )
 
-  implicit val SetChargingProfileReqV16Variant = OcppMessageSerializer.variantFor[messages.SetChargingProfileReq, Version.V16.type, v16.SetChargingProfileReq](
+  implicit val SetChargingProfileReqV16Variant = OcppMessageSerializer.variantFor[messages.SetChargingProfileReq, Version.V16.type, SetChargingProfileReq](
     (msg: messages.SetChargingProfileReq) => SetChargingProfileReq(
       msg.connector.toOcpp,
       msg.chargingProfile.toV16
     )
     ,
-    (msg: v16.SetChargingProfileReq) => messages.SetChargingProfileReq(
+    (msg: SetChargingProfileReq) => messages.SetChargingProfileReq(
       Scope.fromOcpp(msg.connectorId),
       chargingProfileFromV16(msg.csChargingProfiles)
     )
   )
 
-  implicit val SetChargingProfileResV16Variant = OcppMessageSerializer.variantFor[messages.SetChargingProfileRes, Version.V16.type, v16.SetChargingProfileRes](
+  implicit val SetChargingProfileResV16Variant = OcppMessageSerializer.variantFor[messages.SetChargingProfileRes, Version.V16.type, SetChargingProfileRes](
     (msg: messages.SetChargingProfileRes) => SetChargingProfileRes(msg.status.name),
-    (msg: v16.SetChargingProfileRes) => messages.SetChargingProfileRes(
+    (msg: SetChargingProfileRes) => messages.SetChargingProfileRes(
       enumerableFromJsonString(messages.ChargingProfileStatus, msg.status)
     )
   )
 
-  implicit val ClearChargingProfileReqV16Variant = OcppMessageSerializer.variantFor[messages.ClearChargingProfileReq, Version.V16.type, v16.ClearChargingProfileReq](
+  implicit val ClearChargingProfileReqV16Variant = OcppMessageSerializer.variantFor[messages.ClearChargingProfileReq, Version.V16.type, ClearChargingProfileReq](
     (msg: messages.ClearChargingProfileReq) => ClearChargingProfileReq(
       msg.id,
       msg.connector.map(_.toOcpp),
       msg.chargingProfilePurpose.map(_.name),
       msg.stackLevel
     ),
-    (msg: v16.ClearChargingProfileReq) => messages.ClearChargingProfileReq(
+    (msg: ClearChargingProfileReq) => messages.ClearChargingProfileReq(
       msg.id,
       msg.connectorId.map(Scope.fromOcpp),
       msg.chargingProfilePurpose.map(enumerableFromJsonString(messages.ChargingProfilePurpose, _)),
@@ -440,40 +441,40 @@ object SerializationV16 extends SerializationCommon {
     )
   )
 
-  implicit val ClearChargingProfileResV16Variant = OcppMessageSerializer.variantFor[messages.ClearChargingProfileRes, Version.V16.type, v16.ClearChargingProfileRes](
+  implicit val ClearChargingProfileResV16Variant = OcppMessageSerializer.variantFor[messages.ClearChargingProfileRes, Version.V16.type, ClearChargingProfileRes](
     (msg: messages.ClearChargingProfileRes) => ClearChargingProfileRes(msg.status.name),
-    (msg: v16.ClearChargingProfileRes) => messages.ClearChargingProfileRes(
+    (msg: ClearChargingProfileRes) => messages.ClearChargingProfileRes(
       enumerableFromJsonString(messages.ClearChargingProfileStatus, msg.status)
     )
   )
 
-  implicit val GetCompositeScheduleReqV16Variant = OcppMessageSerializer.variantFor[messages.GetCompositeScheduleReq, Version.V16.type, v16.GetCompositeScheduleReq](
+  implicit val GetCompositeScheduleReqV16Variant = OcppMessageSerializer.variantFor[messages.GetCompositeScheduleReq, Version.V16.type, GetCompositeScheduleReq](
     (msg: messages.GetCompositeScheduleReq) => GetCompositeScheduleReq(
       msg.connector.toOcpp,
       msg.duration.toSeconds.toInt,
       msg.chargingRateUnit.map(_.name)
     ),
-    (msg: v16.GetCompositeScheduleReq) => messages.GetCompositeScheduleReq(
+    (msg: GetCompositeScheduleReq) => messages.GetCompositeScheduleReq(
       Scope.fromOcpp(msg.connectorId),
       msg.duration.seconds,
       msg.chargingRateUnit.map(enumerableFromJsonString(messages.UnitOfChargingRate, _))
     )
   )
 
-  implicit val GetCompositeScheduleResV16Variant = OcppMessageSerializer.variantFor[messages.GetCompositeScheduleRes, Version.V16.type, v16.GetCompositeScheduleRes](
+  implicit val GetCompositeScheduleResV16Variant = OcppMessageSerializer.variantFor[messages.GetCompositeScheduleRes, Version.V16.type, GetCompositeScheduleRes](
     (msg: messages.GetCompositeScheduleRes) => msg.toV16,
-    (msg: v16.GetCompositeScheduleRes) => messages.GetCompositeScheduleRes(compositeStatusFromV16(msg))
+    (msg: GetCompositeScheduleRes) => messages.GetCompositeScheduleRes(compositeStatusFromV16(msg))
   )
 
-  implicit val TriggerMessageReqV16Variant = OcppMessageSerializer.variantFor[messages.TriggerMessageReq, Version.V16.type, v16.TriggerMessageReq](
+  implicit val TriggerMessageReqV16Variant = OcppMessageSerializer.variantFor[messages.TriggerMessageReq, Version.V16.type, TriggerMessageReq](
     (msg: messages.TriggerMessageReq) => msg.toV16,
-    (msg: v16.TriggerMessageReq) => triggerMessageReqFromV16(msg)
+    (msg: TriggerMessageReq) => triggerMessageReqFromV16(msg)
 
   )
 
-  implicit val TriggerMessageResV16Variant = OcppMessageSerializer.variantFor[messages.TriggerMessageRes, Version.V16.type, v16.TriggerMessageRes](
+  implicit val TriggerMessageResV16Variant = OcppMessageSerializer.variantFor[messages.TriggerMessageRes, Version.V16.type, TriggerMessageRes](
     (msg: messages.TriggerMessageRes) => TriggerMessageRes(msg.status.name),
-    (msg: v16.TriggerMessageRes) => messages.TriggerMessageRes(
+    (msg: TriggerMessageRes) => messages.TriggerMessageRes(
       enumerableFromJsonString(messages.TriggerMessageStatus, msg.status)
     )
   )
@@ -650,7 +651,7 @@ object SerializationV16 extends SerializationCommon {
   }
 
   private implicit class RichTriggerMessageReq(self: messages.TriggerMessageReq) {
-    def toV16: v16.TriggerMessageReq = TriggerMessageReq.tupled {
+    def toV16: TriggerMessageReq = TriggerMessageReq.tupled {
       self.requestedMessage match {
         case messageTrigger: messages.MessageTriggerWithoutScope =>
           (messageTrigger.name, None)
@@ -765,7 +766,7 @@ object SerializationV16 extends SerializationCommon {
     )
 
   private implicit class RichGetCompositeScheduleRes(self: messages.GetCompositeScheduleRes) {
-    def toV16: v16.GetCompositeScheduleRes = GetCompositeScheduleRes.tupled {
+    def toV16: GetCompositeScheduleRes = GetCompositeScheduleRes.tupled {
       self.status match {
         case messages.CompositeScheduleStatus.Accepted(connector, scheduleStart, chargingSchedule) =>
           ("Accepted", Some(connector.toOcpp), scheduleStart, chargingSchedule.map(_.toV16))

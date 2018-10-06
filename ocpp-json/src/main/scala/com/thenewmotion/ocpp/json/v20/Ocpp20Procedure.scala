@@ -1,11 +1,13 @@
 package com.thenewmotion.ocpp
 package json
+package v20
 
-import scala.language.higherKinds
-import scala.concurrent.{ExecutionContext, Future}
+import messages.v20.CsmsReqRes.BootNotificationReqRes
 import messages.v20._
-import CsmsReqRes._
 import org.json4s.{DefaultFormats, Extraction, Formats, JValue}
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.language.higherKinds
 
 abstract class Ocpp20Procedure[
 REQBOUND <: Request,

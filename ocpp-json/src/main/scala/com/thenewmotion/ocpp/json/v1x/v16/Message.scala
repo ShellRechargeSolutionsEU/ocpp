@@ -1,8 +1,9 @@
-package com.thenewmotion.ocpp.json.v16
+package com.thenewmotion.ocpp
+package json
+package v1x
+package v16
 
 import java.time.ZonedDateTime
-
-import com.thenewmotion.ocpp.json.VersionSpecificMessage
 
 // we use fieldless case classes instead of case objects because that plays nicer with lift-json
 

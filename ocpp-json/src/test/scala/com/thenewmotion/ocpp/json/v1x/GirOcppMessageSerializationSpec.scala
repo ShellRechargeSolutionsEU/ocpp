@@ -1,15 +1,17 @@
 package com.thenewmotion.ocpp
 package json
+package v1x
 
 import java.time.{ZoneId, ZonedDateTime}
 
-import scala.io.Source
-import org.specs2.mutable.Specification
+import v15.SerializationV15._
+import messages.v1x.meter._
+import messages.v1x._
 import org.json4s._
 import org.json4s.native.JsonParser
-import v15.SerializationV15._
-import messages.v1x._
-import meter._
+import org.specs2.mutable.Specification
+
+import scala.io.Source
 
 class GirOcppMessageSerializationSpec extends Specification {
 

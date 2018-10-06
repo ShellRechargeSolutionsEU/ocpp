@@ -686,8 +686,8 @@ messages that you will send or receive using other libraries.
 
 To do so, call the methods in the [OcppJ](ocpp-json/src/main/scala/com/thenewmotion/ocpp/json/OcppJ.scala)
 object after importing either
-`com.thenewmotion.ocpp.json.v15.SerializationV15._`
-or `com.thenewmotion.ocpp.json.v16.SerializationV16._` to select which OCPP
+`com.thenewmotion.ocpp.json.v1x.v15.SerializationV15._`
+or `com.thenewmotion.ocpp.json.v1x.v16.SerializationV16._` to select which OCPP
 version to use:
 
 ```scala

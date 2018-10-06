@@ -7,6 +7,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.language.higherKinds
 import messages.v20._
+import json.v20._
 import org.json4s.{DefaultFormats, Extraction, Formats, JValue}
 import org.slf4j.{Logger, LoggerFactory}
 

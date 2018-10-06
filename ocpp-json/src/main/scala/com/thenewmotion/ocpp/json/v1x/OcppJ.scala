@@ -1,10 +1,10 @@
 package com.thenewmotion.ocpp
 package json
+package v1x
 
-import org.json4s._
-import native.JsonMethods.{compact, render}
 import messages.v1x.Message
-
+import org.json4s.native.JsonMethods.{compact, render}
+import org.json4s.{DefaultFormats, Formats, JValue, native}
 
 /** Reading and writing OCPP 1.x messages encoded with JSON */
 object OcppJ {

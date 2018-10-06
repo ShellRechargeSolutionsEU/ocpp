@@ -1,5 +1,7 @@
 package com.thenewmotion.ocpp
-package json.v16
+package json
+package v1x
+package v16
 package scalacheck
 
 import org.scalacheck.Gen

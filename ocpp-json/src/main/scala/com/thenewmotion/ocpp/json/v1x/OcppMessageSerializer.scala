@@ -1,5 +1,6 @@
 package com.thenewmotion.ocpp
 package json
+package v1x
 
 import org.json4s.{DefaultFormats, Extraction, JValue}
 

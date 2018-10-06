@@ -6,7 +6,9 @@ import scala.language.higherKinds
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success, Try}
-import messages._, v1x._
+import messages.{Request, Response, ReqRes}
+import messages.v1x._
+import json.v1x._
 import org.slf4j.LoggerFactory
 
 /**
