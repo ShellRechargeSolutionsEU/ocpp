@@ -13,7 +13,7 @@ import org.specs2.specification.Scope
 import org.specs2.mock.Mockito
 import messages.v1x._
 
-class DefaultOcppConnectionSpec extends Specification with Mockito {
+class Ocpp1XConnectionSpec extends Specification with Mockito {
 
   "DefaultOcppConnection" should {
 
@@ -210,7 +210,7 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
     case object FillingFuture extends SrpcMockType
 
     def chargePointConnection(version: Version, srpcConn: SrpcMockType) =
-      new ChargePointOcppConnectionComponent with SrpcComponent {
+      new ChargePointOcpp1XConnectionComponent with SrpcComponent {
 
         implicit val executionContext: ExecutionContext = ExecutionContext.Implicits.global
 
@@ -233,7 +233,7 @@ class DefaultOcppConnectionSpec extends Specification with Mockito {
     val chargePointConnectionV16 = chargePointConnection(Version.V16, FillingFuture)
     val failingChargePointConnection = chargePointConnection(Version.V16, Failing)
 
-    val centralSystemConnectionV15 = new CentralSystemOcppConnectionComponent with SrpcComponent {
+    val centralSystemConnectionV15 = new CentralSystemOcpp1XConnectionComponent with SrpcComponent {
 
       implicit val executionContext: ExecutionContext = ExecutionContext.Implicits.global
 

@@ -30,7 +30,7 @@ abstract class Ocpp1XJsonServer(listenPort: Int, requestedOcppVersion: Version)
     ))
   ){
 
-  private type OcppCake = CentralSystemOcppConnectionComponent with DefaultSrpcComponent with SimpleServerWebSocketComponent
+  private type OcppCake = CentralSystemOcpp1XConnectionComponent with DefaultSrpcComponent with SimpleServerWebSocketComponent
 
   private val ocppConnections: mutable.Map[WebSocket, OcppCake] = mutable.HashMap[WebSocket, OcppCake]()
 
@@ -61,8 +61,8 @@ abstract class Ocpp1XJsonServer(listenPort: Int, requestedOcppVersion: Version)
   }
 
   private def onOpenWithCPIdentity(conn : WebSocket, chargePointIdentity: String): Unit = {
-    val ocppConnection = new CentralSystemOcppConnectionComponent  with DefaultSrpcComponent with SimpleServerWebSocketComponent {
-      override val ocppConnection: DefaultOcppConnection = defaultCentralSystemOcppConnection
+    val ocppConnection = new CentralSystemOcpp1XConnectionComponent  with DefaultSrpcComponent with SimpleServerWebSocketComponent {
+      override val ocppConnection: Ocpp1XConnection = defaultCentralSystemOcppConnection
 
       override val srpcConnection: DefaultSrpcConnection = new DefaultSrpcConnection()
 

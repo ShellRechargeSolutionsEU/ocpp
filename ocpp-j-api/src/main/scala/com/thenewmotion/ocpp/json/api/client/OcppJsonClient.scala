@@ -74,7 +74,7 @@ abstract class Ocpp1XJsonClient private[client](
 {
 
   val connection: ConnectionCake = new ConnectionCake
-    with ChargePointOcppConnectionComponent
+    with ChargePointOcpp1XConnectionComponent
     with DefaultSrpcComponent
     with SimpleClientWebSocketComponent {
 

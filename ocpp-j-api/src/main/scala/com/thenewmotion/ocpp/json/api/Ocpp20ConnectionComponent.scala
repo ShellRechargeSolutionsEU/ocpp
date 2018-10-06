@@ -8,7 +8,7 @@ import scala.concurrent.Future
 import scala.language.higherKinds
 import messages.v20._
 import json.v20._
-import org.json4s.JValue
+import org.json4s.{JValue, MappingException}
 import org.slf4j.{Logger, LoggerFactory}
 
 /** One roles of the OCPP 2.0 communicatino protocol: Charging Station (CS) or
@@ -57,10 +57,13 @@ trait Ocpp20ConnectionComponent[
             logger.warn("Exception processing incoming OCPP request {}: {} {}",
                         call.procedureName, e.getClass.getSimpleName, e.getMessage)
 
-            // TODO how do we guarantee that extraction / decomposition errors are reported appropriately?
             val ocppError = e match {
-              case OcppException(err) => err
-              case _ => OcppError(PayloadErrorCode.InternalError, "Unexpected error processing request")
+              case OcppException(err) =>
+                err
+              case MappingException(msg, _) =>
+                OcppError(PayloadErrorCode.FormationViolation, msg)
+              case _ =>
+                OcppError(PayloadErrorCode.InternalError, "Unexpected error processing request")
             }
 
             SrpcCallError(
@@ -80,9 +83,7 @@ trait Ocpp20ConnectionComponent[
           val srpcCall = SrpcCall(proc.name, proc.serializeReq(req))
           srpcConnection.sendCall(srpcCall) map {
             case SrpcCallResult(payload) =>
-              // TODO why is this asInstanceOf needed? we know that procedure's RES is
-              // the same as this method's RES, don't we?
-              proc.deserializeRes(payload).asInstanceOf[RES]
+              proc.deserializeRes(payload)
             case SrpcCallError(code, description, details) =>
               throw OcppException(code, description)
           }
