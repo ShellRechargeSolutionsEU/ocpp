@@ -20,7 +20,7 @@ import OcppJsonClient.VersionNotSupported
  * there is someone writing those in Scala :-)).
  *
  * For a complete description of the interface of this object, see
- * [[com.thenewmotion.ocpp.json.api.client.CakeBasedOcppClientEndpoint]].
+ * [[com.thenewmotion.ocpp.json.api.OutgoingOcppEndpoint]].
  *
  * @param chargerId The charge point identity of the charge point for which you
  *                  want to set up a connection

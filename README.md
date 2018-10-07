@@ -13,10 +13,11 @@ The library is designed with versatility in mind. OCPP comes in 4 versions (1.2,
 OCPP-J), and two roles ("Charge Point" and "Central System"). This library will
 help you with 1.5 and 1.6 over JSON. For 1.2 and 1.5 over SOAP, there is [a
 separate library by NewMotion](https://github.com/NewMotion/ocpp-soap) that
-depends on this one.
+depends on this one. The groundwork for OCPP 2.0 support is present, but only
+the BootNotification message has been implemented so far.
 
 Version 1.2 with WebSocket/JSON and version 1.6 with SOAP/XML are not possible.
-Also there is no support for OCPP 2.0 yet.
+
 
 Users of this library probably want to use different WebSocket libraries for
 different scenarios: a production back-office server with tens of thousands of
@@ -35,8 +36,8 @@ won't get too many dependencies dragged in. Those are:
 
   * `ocpp-j-api`: high-level interface to OCPP-J connections
   * `ocpp-json`: serialization of OCPP messages to/from JSON
-  * `ocpp-messages`: A model of OCPP messaging that is independent of protocol
-                     version and transport variant
+  * `ocpp-messages`: The definitions of OCPP messages, independent from
+                     the transport variant used
 
 So if you want to use the high-level OCPP-J connection interface, and you're
 using SBT, you can declare the dependency by adding this to your `plugins.sbt`:
@@ -85,10 +86,12 @@ a version, 1.6 is used by default.
 If you look at the code of the example by clicking [here](example-json-client/src/main/scala/com/thenewmotion/ocpp/json/example/JsonClientTestApp.scala),
 you can see how the client API is used:
 
- * A connection is established by creating an instance of `OcppJsonClient`. The
-   server endpoint URI, charge point ID and OCPP version to use are passed
-   to the apply method, followed by a handler for incoming OCPP
-   requests in a second parameter list.
+ * A connection is established by creating an instance of `OcppJsonClient`
+   using the `OcppJsonClient.forVersion1x` or `OcppJsonClient.forVersion20`
+   factory methods.
+   The server endpoint URI, charge point ID and OCPP version to use are passed
+   to the  method, followed by a handler for incoming OCPP requests in a
+   second parameter list.
 
  * To send OCPP messages to the Central System, you call the `send` method on
    the `OcppJsonClient` instance. You will get a `Future` back that will be
@@ -109,7 +112,7 @@ as a function from `ChargePointReq` to `Future[ChargePointRes]`:
 
 ```scala
 
- val ocppJsonClient = OcppJsonClient(chargerId, new URI(centralSystemUri), versions) {
+ val ocppJsonClient = OcppJsonClient.forVersion1x(chargerId, new URI(centralSystemUri), versions) {
    (req: ChargePointReq) =>
      req match {
        case GetConfigurationReq(keys) =>
@@ -143,11 +146,14 @@ endpoint and off you go, like this:
     connection.send(HeartbeatReq)
 ```
 
-The set of messages you can send is defined in [ocpp-messages](ocpp-messages/src/main/scala/com/thenewmotion/ocpp/messages/Message.scala).
+##### OCPP 1.x (1.2, 1.5 and 1.6)
+The set of messages you can send with OCPP 1.x connections is defined in
+[ocpp-messages](ocpp-messages/src/main/scala/com/thenewmotion/ocpp/messages/v1x/Message.scala).
 For every request type, you represent requests as instances of a case class
 named `<Operation Name>Req`, e.g. `StatusNotificationReq`, `HeartbeatReq`.
 
-These case classes in `ocpp-messages` are designed according to two principles:
+For OCPP 1.x, these case classes in `ocpp-messages` are designed
+according to two principles:
  * They are independent of OCPP version, so you have one interface to charging
    stations that use different versions
  * They sometimes group and rearrange fields to make it impossible to specify
@@ -190,6 +196,24 @@ Note that the library does not by itself
 enforce the OCPP requirement that you wait for the response before sending the
 next request. A simple way to obey it is chaining the send operations in a `for`
 comprehension, as shown in the example app.
+
+##### OCPP 2.0
+
+For OCPP 2.0, the case classes for requests and responses directly
+reflect the message structures defined in the OCPP 2.0 specification.
+This is done to reduce the cognitive load when comparing message definitions
+in Scala code to the OCPP specification, and because OCPP 2.0 as of now
+has no protocol versions that are similar enough to write code that can
+transparently deal with multiple protocol versions.
+
+The price of giving up the version-independent message case classes is
+that some counterintuitive idiosyncracies of the OCPP specification, like
+starting to count at 1 instead of 0 and using 0 as a sentinel, are now
+inflicted upon unsuspecting Scala developers.
+
+For OCPP 2.0, the message case classes are named `<Operation Name>Request`
+and `<Operation Name>Response`, e.g. `BootNotificationRequest` and
+`BootNotificationResponse`.
 
 #### Error handling
 
@@ -715,6 +739,21 @@ for how to work with those.
 
 ## Changelog
 
+### Changes in 9.0.0
+
+ - The `connection` member of `OcppJsonClient` was made private. To
+   see the version of OCPP used by an `OcppJsonClient`, you can now use
+   the `ocppVersion` method on the `OcppJsonClient` class.
+
+ - The interfaces of the `ocpp-messages` and `ocpp-json` projects dealing
+   with OCPP 1.x messages have moved to the `com.thenewmotion.ocpp.messages.v1x`
+   and `com.thenewmotion.ocpp.json.v1x` packages, respectively.
+
+   So code that used `com.thenewmotion.ocpp.messages.AuthorizationReq`
+   must be changed to use `com.thenewmotion.ocpp.messages.v1x.AuthorizationReq`,
+   and code that used `com.thenewmotion.ocpp.json.OcppJ` must be changed
+   to use `com.thenewmotion.ocpp.json.v1x.OcppJ`.
+
 ### Changes in 8.0.0
 
  - Move the code for handling OCPP over SOAP to another project
@@ -804,7 +843,7 @@ important ones to be aware of when porting older code:
 
 ## Licensing and acknowledgements
 
-The contents of this repository are © 2012 - 2017 The New Motion B.V., licensed under the [GPL version 3](LICENSE), except:
+The contents of this repository are © 2012 - 2018 The New Motion B.V., licensed under the [GPL version 3](LICENSE), except:
 
  * [The example messages for OCPP 1.5](ocpp-json/src/test/resources/com/thenewmotion/ocpp/json/ocpp15/without_srpc) in the ocpp-json unit tests, which were taken from [GIR ocppjs](http://www.gir.fr/ocppjs/).
 
@@ -814,3 +853,20 @@ The contents of this repository are © 2012 - 2017 The New Motion B.V., licensed
       Copyright © 2010 – 2015 Open Charge Alliance. All rights reserved.
       This document is made available under the *Creative Commons Attribution- NoDerivatives 4.0 International Public License* (https://creativecommons.org/licenses/by-nd/4.0/legalcode).
       ```
+
+## TODOs
+
+ * For OCPP 2.0:
+
+   * Clean server interface
+
+   * Test harness
+
+   * Sharing code between 2.0 and 1.x servers
+
+   * Update all of the README
+
+   * Message case classes and serializers for all operations
+
+   * Factory method on OcppJsonClient to give caller a 1.x or 2.0 client
+     depending on negotiation with server
