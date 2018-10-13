@@ -45,8 +45,8 @@ class GirOcppMessageSerializationSpec extends Specification {
   }
 
   case class TestMsg[M <: Message](versionVariant: OcppMessageSerializer[M, Version.V15.type], jsonFileBase: String, msg: Option[M] = None) {
-    def serializedAfterDeserialized: JValue = OcppJ.serialize(deserialized)(versionVariant)
-    def deserialized: M = OcppJ.deserialize(toJson)(versionVariant)
+    def serializedAfterDeserialized: JValue = Serialization.serialize(deserialized)(versionVariant)
+    def deserialized: M = Serialization.deserialize(toJson)(versionVariant)
     def toJson: JValue = JsonParser.parse(loadRequestJSON)
     private def loadRequestJSON: String = {
       val requestFileName = s"ocpp15/gir_without_srpc/$jsonFileBase.json"

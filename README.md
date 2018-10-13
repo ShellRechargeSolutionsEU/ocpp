@@ -741,6 +741,17 @@ for how to work with those.
 
 ### Changes in 9.0.0
 
+ - Support for OCPP 2.0 has been added
+
+ - `OcppJsonServer` has now been split into two classes, depending on
+   whether you want to serve OCPP 2.0 or OCPP 1.5/1.6:
+   `Ocpp1XJsonServer` and `Ocpp20JsonServer`
+
+ - `OcppJsonClient` has similarly been split into `Ocpp1XJsonClient` and
+   `Ocpp20JsonClient`. Factory methods `OcppJsonClient.forVersion1x`
+   and `OcppJsonClient.forVersion20` are available for easier
+   instantiation of `OcppJsonClient` instances.
+
  - The `connection` member of `OcppJsonClient` was made private. To
    see the version of OCPP used by an `OcppJsonClient`, you can now use
    the `ocppVersion` method on the `OcppJsonClient` class.
@@ -751,8 +762,11 @@ for how to work with those.
 
    So code that used `com.thenewmotion.ocpp.messages.AuthorizationReq`
    must be changed to use `com.thenewmotion.ocpp.messages.v1x.AuthorizationReq`,
-   and code that used `com.thenewmotion.ocpp.json.OcppJ` must be changed
-   to use `com.thenewmotion.ocpp.json.v1x.OcppJ`.
+   and code that used `com.thenewmotion.ocpp.json.JsonOperation` must be changed
+   to use `com.thenewmotion.ocpp.json.v1x.JsonOperation`.
+
+  - `com.thenewmotion.ocpp.json.OcppJ` was renamed to
+    `com.thenemwotion.ocpp.json.v1x.Serialization`
 
 ### Changes in 8.0.0
 
@@ -845,13 +859,21 @@ important ones to be aware of when porting older code:
 
 The contents of this repository are © 2012 - 2018 The New Motion B.V., licensed under the [GPL version 3](LICENSE), except:
 
- * [The example messages for OCPP 1.5](ocpp-json/src/test/resources/com/thenewmotion/ocpp/json/ocpp15/without_srpc) in the ocpp-json unit tests, which were taken from [GIR ocppjs](http://www.gir.fr/ocppjs/).
+ * [The example messages for OCPP 1.5](ocpp-json/src/test/resources/com/thenewmotion/ocpp/json/v1x/ocpp15/without_srpc) in the ocpp-json unit tests, which were taken from [GIR ocppjs](http://www.gir.fr/ocppjs/).
 
- * The [JSON schema files](ocpp-json/src/test/resources/schemas/) for OCPP 1.6 are part of the OCPP 1.6 Specification, distributed under the following conditions:
+ * The [JSON schema files](ocpp-json/src/test/resources/com/thenewmotion/ocpp/json/v1x/v16/schemas/) for OCPP 1.6 are part of the OCPP 1.6 Specification, distributed under the following conditions:
 
       ```
       Copyright © 2010 – 2015 Open Charge Alliance. All rights reserved.
       This document is made available under the *Creative Commons Attribution- NoDerivatives 4.0 International Public License* (https://creativecommons.org/licenses/by-nd/4.0/legalcode).
+      ```
+
+ * The [JSON schema files](ocpp-json/src/test/resources/com/thenewmotion/ocpp/json/v20/schemas/) for OCPP 2.0 are part of the OCPP 2.0 Specification, distributed under the following conditions:
+
+      ```
+      Copyright © 2010 – 2018 Open Charge Alliance. All rights reserved.
+      This document is made available under the *Creative Commons Attribution-NoDerivatives 4.0 International Public License*
+      (https://creativecommons.org/licenses/by-nd/4.0/legalcode).
       ```
 
 ## TODOs
@@ -866,7 +888,13 @@ The contents of this repository are © 2012 - 2018 The New Motion B.V., licensed
 
    * Update all of the README
 
+   * First merge to master at this point?
+
+   * support new RPC-level error codes
+
    * Message case classes and serializers for all operations
+
+   * Support for JSON web signatures in the RPC-level encoding
 
    * Factory method on OcppJsonClient to give caller a 1.x or 2.0 client
      depending on negotiation with server

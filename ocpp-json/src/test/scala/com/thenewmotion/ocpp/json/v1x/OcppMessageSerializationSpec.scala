@@ -25,14 +25,14 @@ class OcppMessageSerializationSpec extends Specification {
 
       for (testMsg <- testMsgs) yield {
         withJsonFromFile(testMsg.jsonFileBase) { (messageAST: JValue) =>
-          OcppJ.deserialize(messageAST)(testMsg.versionVariant) mustEqual testMsg.msg
+          Serialization.deserialize(messageAST)(testMsg.versionVariant) mustEqual testMsg.msg
         }
       }
     }
 
     "read StartTransaction requests with a local time in them" in {
       withJsonFromFile("starttransaction.localtime.request") { (messageAST: JValue) =>
-        OcppJ.deserialize[StartTransactionReq, Version.V15.type](messageAST) mustEqual TestMsgs.startTransactionReqWithLocalTime
+        Serialization.deserialize[StartTransactionReq, Version.V15.type](messageAST) mustEqual TestMsgs.startTransactionReqWithLocalTime
       }
     }
   }
@@ -51,17 +51,17 @@ class OcppMessageSerializationSpec extends Specification {
   "OCPP message serialization error handling" should {
     "throw a MappingException in case a message contains an invalid URL" in
       withJsonFromFile("updatefirmware.invalidurl.request") { messageAST =>
-        OcppJ.deserialize[UpdateFirmwareReq, Version.V15.type](messageAST) must throwA[MappingException]
+        Serialization.deserialize[UpdateFirmwareReq, Version.V15.type](messageAST) must throwA[MappingException]
       }
 
     "throw a MappingException in case a MeterValues request mentions an invalid property name" in
       withJsonFromFile("metervalues.invalidproperty.request") { messageAST =>
-        OcppJ.deserialize[MeterValuesReq, Version.V15.type](messageAST) must throwA[MappingException]
+        Serialization.deserialize[MeterValuesReq, Version.V15.type](messageAST) must throwA[MappingException]
       }
 
     "throw a MappingException in case an invalid status enum is given" in
       withJsonFromFile("changeavailability.invalidstatus.response") { messageAST =>
-        OcppJ.deserialize[ChangeAvailabilityRes, Version.V15.type](messageAST) must throwA[MappingException]
+        Serialization.deserialize[ChangeAvailabilityRes, Version.V15.type](messageAST) must throwA[MappingException]
       }
   }
 
@@ -81,7 +81,7 @@ class OcppMessageSerializationSpec extends Specification {
   }
 
   case class TestableMsg[M <: Message](msg: M, jsonFileBase: String, versionVariant: OcppMessageSerializer[M, Version.V15.type]) {
-    def serialize: JValue = OcppJ.serialize(msg)(versionVariant)
+    def serialize: JValue = Serialization.serialize(msg)(versionVariant)
   }
   object TestableMsg {
     def forFile[M <: Message](msg: M, jsonFileBase: String)(implicit msgSer: OcppMessageSerializer[M, Version.V15.type]): TestableMsg[M] =

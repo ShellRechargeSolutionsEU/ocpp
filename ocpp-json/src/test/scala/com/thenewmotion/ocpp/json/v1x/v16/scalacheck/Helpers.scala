@@ -9,7 +9,8 @@ import java.net.URI
 
 import org.scalacheck.Gen
 import Gen._
-import enums.reflection.EnumUtils.{Enumerable, Nameable}
+import enums.reflection.EnumUtils.Nameable
+import CommonGenerators._
 import messages.{v1x => messages}
 import messages.{ChargingProfilePurpose, UnitOfChargingRate}
 
@@ -125,25 +126,22 @@ object Helpers {
       info <- option(idTagInfoGen)
     } yield AuthorisationData(tag, info)
 
-  def enumerableGen[T <: Nameable](e: Enumerable[T]): Gen[T]  =
-    oneOf(e.values.toList)
-
-  def enumerableNameGen[T <: Nameable](e: Enumerable[T]): Gen[String] = enumerableGen(e).map(_.name)
+  def words: Gen[String] = listOf(oneOf(const(' '), alphaNumChar)).map(_.mkString)
 
   /**
-   * Some fields in OCPP-J messages are optional strings, where the absence of
-   * the field means that the message should be processed as if the field was
-   * present with a default value. In those cases, we always want to encode
-   * the message with the field absent instead of with an unnecessary string
-   * value.
-   *
-   * So we have this generator that makes sure that whenever we generate either
-   * a non-default value, or None.
-   *
-   * @param e
-   * @tparam T
-   * @return
-   */
+    * Some fields in OCPP-J messages are optional strings, where the absence of
+    * the field means that the message should be processed as if the field was
+    * present with a default value. In those cases, we always want to encode
+    * the message with the field absent instead of with an unnecessary string
+    * value.
+    *
+    * So we have this generator that makes sure that whenever we generate either
+    * a non-default value, or None.
+    *
+    * @param e
+    * @tparam T
+    * @return
+    */
   def enumerableWithDefaultNameGen[T <: Nameable](e: messages.EnumerableWithDefault[T]): Gen[Option[String]] =
     enumerableGen(e) map { value =>
       if (value == e.default)
@@ -152,13 +150,11 @@ object Helpers {
         Some(value.name)
     }
 
-  def words: Gen[String] = listOf(oneOf(const(' '), alphaNumChar)).map(_.mkString)
-
   /**
    * Some fields in OCPP-J messages are optional lists of things, where absence of the field means the same as an empty
    * list. In those cases, we always want to encode the message with the field absent instead of with an empty list.
    *
-   * Deciding on one option keeps things sinmple, makes it testable, and even saves a few bytes of bandwidth.
+   * Deciding on one option keeps things simple, makes it testable, and even saves a few bytes of bandwidth.
    *
    * @param gen
    * @tparam A

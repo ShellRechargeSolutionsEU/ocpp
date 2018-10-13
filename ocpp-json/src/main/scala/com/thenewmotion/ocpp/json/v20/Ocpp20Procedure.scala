@@ -4,7 +4,7 @@ package v20
 
 import messages.v20.CsmsReqRes.BootNotificationReqRes
 import messages.v20._
-import org.json4s.{DefaultFormats, Extraction, Formats, JValue}
+import org.json4s.JValue
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
@@ -17,8 +17,6 @@ abstract class Ocpp20Procedure[
   REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqResV2[_, _]
 ] {
 
-  private val formats: Formats = DefaultFormats ++ serialization.ocppSerializers
-
   private val requestManifest: Manifest[REQ] = manifest[REQ]
 
   private val responseManifest: Manifest[RES] = manifest[RES]
@@ -29,17 +27,16 @@ abstract class Ocpp20Procedure[
   val reqRes: REQRES[REQ, RES]
 
   def serializeReq(req: REQ): JValue =
-    Extraction.decompose(req)(formats)
-
+    Serialization.serialize(req)
 
   def deserializeReq(reqJson: JValue): REQ =
-    Extraction.extract[REQ](reqJson)(formats, requestManifest)
+    Serialization.deserialize[REQ](reqJson)(requestManifest)
 
   def serializeRes(res: RES): JValue =
-    Extraction.decompose(res)(formats)
+    Serialization.serialize(res)
 
   def deserializeRes(resJson: JValue): RES =
-    Extraction.extract[RES](resJson)(formats, responseManifest)
+    Serialization.deserialize[RES](resJson)(responseManifest)
 
   def reqRes(reqJson: JValue)(f: (REQ, REQRES[REQ, RES]) => Future[RES])(implicit ec: ExecutionContext): Future[JValue] =
     f(deserializeReq(reqJson), reqRes).map(serializeRes)

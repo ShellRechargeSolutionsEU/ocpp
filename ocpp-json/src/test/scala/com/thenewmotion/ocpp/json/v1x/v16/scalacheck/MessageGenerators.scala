@@ -8,10 +8,11 @@ import org.scalacheck.Gen
 import Gen._
 import messages.{v1x => messages}
 import messages.{ChargingProfileStatus, ClearChargingProfileStatus}
+import CommonGenerators._
+import Helpers._
 
 object MessageGenerators {
 
-  import Helpers._
 
   def bootNotificationReq: Gen[BootNotificationReq] =
     for {

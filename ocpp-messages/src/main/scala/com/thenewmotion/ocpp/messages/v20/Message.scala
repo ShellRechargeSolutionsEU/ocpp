@@ -41,9 +41,9 @@ case object BootReason extends Enumerable[BootReason] {
 case class ChargingStation(
   serialNumber: Option[String],
   model: String,
-  modem: Option[Modem],
   vendorName: String,
-  firmwareVersion: Option[String]
+  firmwareVersion: Option[String],
+  modem: Option[Modem]
 )
 
 case class Modem(

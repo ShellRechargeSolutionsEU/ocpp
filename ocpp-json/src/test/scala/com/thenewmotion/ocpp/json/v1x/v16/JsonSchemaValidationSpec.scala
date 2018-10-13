@@ -82,7 +82,10 @@ object JsonSchemaValidationSpec extends Specification with ScalaCheck {
   (messageGen: Gen[T])
   (ser: OcppMessageSerializer[M, Version.V16.type], schema:String) = {
 
-    val schemaFile:String = scala.io.Source.fromInputStream(getClass.getResourceAsStream(s"/schemas/${schema}")).getLines.mkString("\n")
+    val schemaFile:String = scala.io.Source.fromInputStream({
+      getClass.getResourceAsStream(s"schemas/$schema")
+    }).getLines.mkString("\n")
+
     val jsonSchema: JsonNode = asJsonNode(parse(schemaFile))
 
     val className = classTag[T].runtimeClass.getSimpleName

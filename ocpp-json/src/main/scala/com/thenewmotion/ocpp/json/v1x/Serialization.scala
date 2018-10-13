@@ -7,7 +7,7 @@ import org.json4s.native.JsonMethods.{compact, render}
 import org.json4s.{DefaultFormats, Formats, JValue, native}
 
 /** Reading and writing OCPP 1.x messages encoded with JSON */
-object OcppJ {
+object Serialization {
 
   implicit val formats: Formats = DefaultFormats + new ZonedDateTimeJsonFormat
 
