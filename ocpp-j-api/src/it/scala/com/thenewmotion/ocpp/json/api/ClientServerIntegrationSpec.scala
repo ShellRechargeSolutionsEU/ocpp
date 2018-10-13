@@ -4,8 +4,7 @@ package api
 
 import java.net.URI
 import java.time.{Instant, ZoneId, ZonedDateTime}
-
-import scala.concurrent.{Await, ExecutionContext, Future, Promise}
+import scala.concurrent.{Await, Promise}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.Success
@@ -141,20 +140,15 @@ class ClientServerIntegrationSpec extends Specification {
       val serverStarted = Promise[Unit]()
 
       val server: Ocpp20JsonServer = new Ocpp20JsonServer(testPort) {
-        def handleConnection(cpSerial: String, remote: Ocpp20JsonServer.OutgoingEndpoint): CsmsRequestHandler =
-
-          new CsmsRequestHandler {
-
-            def apply[REQ <: CsmsRequest, RES <: CsmsResponse](req: REQ)
-              (implicit reqRes: CsmsReqRes[REQ, RES], ec: ExecutionContext): Future[RES] = {
+        def handleConnection(cpSerial: String, remote: Ocpp20JsonServer.OutgoingEndpoint): CsmsRequestHandler = {
+          req: CsmsRequest =>
 
               req match {
                 case BootNotificationRequest(cs, r) =>
-                  Future.successful(testResponse.asInstanceOf[RES])
+                  testResponse
                 case _ =>
-                  Future.failed(OcppException(PayloadErrorCode.InternalError, s"Unexpected request in test server: $req"))
+                  throw OcppException(PayloadErrorCode.InternalError, s"Unexpected request in test server: $req")
               }
-            }
           }
 
         override def onStart(): Unit = {
@@ -172,15 +166,8 @@ class ClientServerIntegrationSpec extends Specification {
           testSerial,
           new URI(s"http://127.0.0.1:$testPort/")
         ) {
-
-            new CsRequestHandler {
-
-              def apply[REQ <: CsRequest, RES <: CsResponse](req: REQ)
-                (implicit reqRes: CsReqRes[REQ, RES], ec: ExecutionContext): Future[RES] = {
-
-                Future.failed(OcppException(PayloadErrorCode.InternalError, "No incoming charge point request expected in this test"))
-              }
-            }
+            _: CsRequest =>
+              throw OcppException(PayloadErrorCode.InternalError, "No incoming charging station request expected in this test")
           }
 
         Await.result(client.send(testRequest), 1.second) mustEqual testResponse

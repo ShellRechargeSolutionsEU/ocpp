@@ -4,6 +4,7 @@ package api
 
 import messages.{ReqRes, Request, Response}
 import messages.v1x._
+import messages.v20._
 
 import scala.language.{higherKinds, implicitConversions}
 import scala.concurrent.{ExecutionContext, Future}
@@ -105,5 +106,23 @@ object RequestHandler {
         implicit reqRes: CentralSystemReqRes[REQ, RES],
         ec: ExecutionContext
       ): Future[RES] = Future(cs.apply(req))
+    }
+
+  implicit def fromCsSyncFunction(f: CsRequest => CsResponse): RequestHandler[CsRequest, CsResponse, CsReqRes] =
+    new RequestHandler[CsRequest, CsResponse, CsReqRes] {
+      def apply[REQ <: CsRequest, RES <: CsResponse](req: REQ)(
+        implicit reqRes: CsReqRes[REQ, RES],
+        ec: ExecutionContext
+      ): Future[RES] = Future(f(req).asInstanceOf[RES])
+    }
+
+  implicit def fromCsmsSyncFunction(
+    f: CsmsRequest => CsmsResponse
+  ): RequestHandler[CsmsRequest, CsmsResponse, CsmsReqRes] =
+    new RequestHandler[CsmsRequest, CsmsResponse, CsmsReqRes] {
+      def apply[REQ <: CsmsRequest, RES <: CsmsResponse](req: REQ)(
+        implicit reqRes: CsmsReqRes[REQ, RES],
+        ec: ExecutionContext
+      ): Future[RES] = Future(f(req).asInstanceOf[RES])
     }
 }
