@@ -880,12 +880,6 @@ The contents of this repository are © 2012 - 2018 The New Motion B.V., licensed
 
  * For OCPP 2.0:
 
-   * Clean server interface
-
-   * Test harness
-
-   * Sharing code between 2.0 and 1.x servers
-
    * Update all of the README
 
    * First merge to master at this point?
@@ -898,6 +892,7 @@ The contents of this repository are © 2012 - 2018 The New Motion B.V., licensed
        * Add a ReqRes instance [here](ocpp-messages/src/main/scala/com/thenewmotion/ocpp/messages/v20/ReqRes.scala)
        * Add a Ocpp20Procedure [here](ocpp-json/src/main/scala/com/thenewmotion/ocpp/json/v20/Ocpp20Procedure.scala)
        * Add a JSON schema validation test [here](ocpp-json/src/test/scala/com/thenewmotion/ocpp/json/v20/JsonSchemaValidationSpec.scala)
+       * Add a JSON serialization/deserialization round-trip test [here](ocpp-json/src/test/scala/com/thenewmotion/ocpp/json/v20/SerializationSpec.scala)
 
    * Support for JSON web signatures in the RPC-level encoding
 
