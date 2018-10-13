@@ -33,7 +33,7 @@ trait Ocpp1XConnectionComponent[
 
   this: SrpcComponent =>
 
-  implicit val executionContext: ExecutionContext
+  protected implicit val executionContext: ExecutionContext
 
   trait Ocpp1XConnection extends BaseOcppConnection {
     /** The version of the OCPP protocol used on this connection */

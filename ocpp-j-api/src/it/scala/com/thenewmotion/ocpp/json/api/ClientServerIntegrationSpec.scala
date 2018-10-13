@@ -11,8 +11,6 @@ import scala.concurrent.duration._
 import scala.util.Success
 import org.specs2.mutable.Specification
 import messages.v1x._
-import OcppJsonServer.OutgoingEndpoint
-import server.Ocpp20JsonServer
 import messages.v20._
 
 class ClientServerIntegrationSpec extends Specification {
@@ -29,8 +27,8 @@ class ClientServerIntegrationSpec extends Specification {
         val testResponse = HeartbeatRes(ZonedDateTime.of(2017, 7, 7, 12, 30, 6, 0, ZoneId.of("UTC")))
         val serverStarted = Promise[Unit]()
 
-        val server = new OcppJsonServer(testPort, Version.V16) {
-          def handleConnection(cpSerial: String, remote: OutgoingEndpoint): CentralSystemRequestHandler = {
+        val server = new Ocpp1XJsonServer(testPort, Version.V16) {
+          def handleConnection(cpSerial: String, remote: Ocpp1XJsonServer.OutgoingEndpoint): CentralSystemRequestHandler = {
             (req: CentralSystemReq) =>
               req match {
                 case HeartbeatReq =>
@@ -73,9 +71,9 @@ class ClientServerIntegrationSpec extends Specification {
 
         val clientResponsePromise = Promise[GetLocalListVersionRes]()
 
-        val server = new OcppJsonServer(testPort, Version.V16) {
+        val server = new Ocpp1XJsonServer(testPort, Version.V16) {
 
-          def handleConnection(cpSerial: String, remote: OutgoingEndpoint): CentralSystemRequestHandler = {
+          def handleConnection(cpSerial: String, remote: Ocpp1XJsonServer.OutgoingEndpoint): CentralSystemRequestHandler = {
             (req: CentralSystemReq) =>
               req match {
                 case HeartbeatReq =>
@@ -143,16 +141,21 @@ class ClientServerIntegrationSpec extends Specification {
       val serverStarted = Promise[Unit]()
 
       val server: Ocpp20JsonServer = new Ocpp20JsonServer(testPort) {
-        def handleConnection(cpSerial: String, remote: server.OutgoingEndpoint): CsmsRequestHandler = new CsmsRequestHandler {
-          def apply[REQ <: CsmsRequest, RES <: CsmsResponse](req: REQ)(implicit reqRes: CsmsReqRes[REQ, RES], ec: ExecutionContext): Future[RES] = {
+        def handleConnection(cpSerial: String, remote: Ocpp20JsonServer.OutgoingEndpoint): CsmsRequestHandler =
+
+          new CsmsRequestHandler {
+
+            def apply[REQ <: CsmsRequest, RES <: CsmsResponse](req: REQ)
+              (implicit reqRes: CsmsReqRes[REQ, RES], ec: ExecutionContext): Future[RES] = {
+
               req match {
                 case BootNotificationRequest(cs, r) =>
                   Future.successful(testResponse.asInstanceOf[RES])
                 case _ =>
                   Future.failed(OcppException(PayloadErrorCode.InternalError, s"Unexpected request in test server: $req"))
               }
+            }
           }
-        }
 
         override def onStart(): Unit = {
           serverStarted.complete(Success(()))
@@ -169,12 +172,16 @@ class ClientServerIntegrationSpec extends Specification {
           testSerial,
           new URI(s"http://127.0.0.1:$testPort/")
         ) {
-          new CsRequestHandler {
-            def apply[REQ <: CsRequest, RES <: CsResponse](req: REQ)(implicit reqRes: CsReqRes[REQ, RES], ec: ExecutionContext): Future[RES] = {
-              Future.failed(OcppException(PayloadErrorCode.InternalError, "No incoming charge point request expected in this test"))
+
+            new CsRequestHandler {
+
+              def apply[REQ <: CsRequest, RES <: CsResponse](req: REQ)
+                (implicit reqRes: CsReqRes[REQ, RES], ec: ExecutionContext): Future[RES] = {
+
+                Future.failed(OcppException(PayloadErrorCode.InternalError, "No incoming charge point request expected in this test"))
+              }
             }
           }
-        }
 
         Await.result(client.send(testRequest), 1.second) mustEqual testResponse
       } finally server.stop()

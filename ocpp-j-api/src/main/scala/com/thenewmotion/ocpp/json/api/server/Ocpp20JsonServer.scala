@@ -31,3 +31,7 @@ abstract class Ocpp20JsonServer(listenPort: Int)(implicit ec: ExecutionContext)
   ): BaseConnectionCake = new BaseConnectionCake(connection, chargePointIdentity) with CsmsOcpp20ConnectionComponent
 }
 
+object Ocpp20JsonServer {
+  type OutgoingEndpoint = OutgoingOcppEndpoint[CsRequest, CsResponse, CsReqRes]
+}
+

@@ -6,16 +6,14 @@ import java.time.ZonedDateTime
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.io.Source
-
 import messages.v1x._
 import api._
-import OcppJsonServer.OutgoingEndpoint
 
 object ExampleServerTestApp extends App {
 
-  val server = new OcppJsonServer(2345, Version.V15) {
+  val server = new Ocpp1XJsonServer(2345, Version.V15) {
 
-    override def handleConnection(chargePointIdentity: String, conn: OutgoingEndpoint): CentralSystemRequestHandler = {
+    override def handleConnection(chargePointIdentity: String, conn: Ocpp1XJsonServer.OutgoingEndpoint): CentralSystemRequestHandler = {
 
       conn.onClose.foreach(_ => println(s"Disconnected client $chargePointIdentity"))
 
