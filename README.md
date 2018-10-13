@@ -893,6 +893,11 @@ The contents of this repository are © 2012 - 2018 The New Motion B.V., licensed
    * support new RPC-level error codes
 
    * Message case classes and serializers for all operations
+     * To add a message, you should:
+       * Add Request and Response case classes [here](ocpp-messages/src/main/scala/com/thenewmotion/ocpp/messages/v20/Message.scala)
+       * Add a ReqRes instance [here](ocpp-messages/src/main/scala/com/thenewmotion/ocpp/messages/v20/ReqRes.scala)
+       * Add a Ocpp20Procedure [here](ocpp-json/src/main/scala/com/thenewmotion/ocpp/json/v20/Ocpp20Procedure.scala)
+       * Add a JSON schema validation test [here](ocpp-json/src/test/scala/com/thenewmotion/ocpp/json/v20/JsonSchemaValidationSpec.scala)
 
    * Support for JSON web signatures in the RPC-level encoding
 

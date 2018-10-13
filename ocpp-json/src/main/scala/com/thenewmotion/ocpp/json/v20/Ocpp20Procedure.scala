@@ -2,8 +2,9 @@ package com.thenewmotion.ocpp
 package json
 package v20
 
-import messages.v20.CsmsReqRes.BootNotificationReqRes
 import messages.v20._
+import messages.v20.CsmsReqRes._
+import messages.v20.CsReqRes._
 import org.json4s.JValue
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -22,7 +23,7 @@ abstract class Ocpp20Procedure[
   private val responseManifest: Manifest[RES] = manifest[RES]
 
   val name: String =
-    requestManifest.runtimeClass.getName.replaceAll("Request\\$?$", "")
+    requestManifest.runtimeClass.getSimpleName.replaceAll("Request\\$?$", "")
 
   val reqRes: REQRES[REQ, RES]
 
@@ -55,7 +56,7 @@ object Ocpp20Procedure {
     }
 }
 
-object CsOcpp2Procedure {
+object CsOcpp20Procedure {
   def apply[REQ <: CsRequest : Manifest,
             RES <: CsResponse : Manifest,
             REQRES[_ <: CsRequest, _ <: CsResponse] <: CsReqRes[_, _]](
@@ -65,7 +66,7 @@ object CsOcpp2Procedure {
       Ocpp20Procedure[CsRequest, CsResponse, REQ, RES, REQRES](reqRes)
 }
 
-object CsmsOcpp2Procedure {
+object CsmsOcpp20Procedure {
   def apply[REQ <: CsmsRequest : Manifest,
   RES <: CsmsResponse : Manifest,
   REQRES[_ <: CsmsRequest, _ <: CsmsResponse] <: CsmsReqRes[_, _]](
@@ -94,6 +95,7 @@ object CsOcpp20Procedures extends Ocpp20Procedures[
   CsReqRes
   ] {
   val procedures = List(
+    CsOcpp20Procedure[RequestStartTransactionRequest, RequestStartTransactionResponse, CsReqRes]
   )
 }
 
@@ -103,10 +105,7 @@ object CsmsOcpp20Procedures extends Ocpp20Procedures[
   CsmsReqRes
 ] {
   val procedures = List(
-    CsmsOcpp2Procedure[BootNotificationRequest, BootNotificationResponse, CsmsReqRes](
-      implicitly[Manifest[BootNotificationRequest]],
-      implicitly[Manifest[BootNotificationResponse]],
-      BootNotificationReqRes
-    )
+    CsmsOcpp20Procedure[BootNotificationRequest, BootNotificationResponse, CsmsReqRes],
+    CsmsOcpp20Procedure[HeartbeatRequest, HeartbeatResponse, CsmsReqRes]
   )
 }

@@ -8,6 +8,11 @@ abstract class CsReqRes[REQ <: CsRequest : Manifest, RES <: CsResponse : Manifes
 
 abstract class CsmsReqRes[REQ <: CsmsRequest : Manifest, RES <: CsmsResponse : Manifest] extends ReqResV2[REQ, RES]
 
+object CsReqRes {
+  implicit object RequestStartTransactionReqRes extends CsReqRes[RequestStartTransactionRequest, RequestStartTransactionResponse]
+}
+
 object CsmsReqRes {
   implicit object BootNotificationReqRes extends CsmsReqRes[BootNotificationRequest, BootNotificationResponse]
+  implicit object HeartbeatReqRes extends CsmsReqRes[HeartbeatRequest, HeartbeatResponse]
 }

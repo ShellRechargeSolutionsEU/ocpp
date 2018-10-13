@@ -5,6 +5,7 @@ package api
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.language.higherKinds
+import scala.util.{Failure, Success, Try}
 import messages.v20._
 import json.v20._
 import org.json4s.JValue
@@ -32,6 +33,7 @@ trait Ocpp20ConnectionComponent[
   trait Ocpp20Connection extends BaseOcppConnection {
 
     def incomingProcedures: Ocpp20Procedures[INREQBOUND, OUTRESBOUND, INREQRES]
+
     val outgoingProcedures: Ocpp20Procedures[OUTREQBOUND, INRESBOUND, OUTREQRES]
 
     def onSrpcCall(call: SrpcCall): Future[SrpcResponse] = {
@@ -39,32 +41,46 @@ trait Ocpp20ConnectionComponent[
       ocppProc match {
         case None =>
           // TODO distinguish NotSupported and NotImplemented
-          Future.successful(SrpcCallError(PayloadErrorCode.NotImplemented,
-                                          "This OCPP 2.0 procedure is not yet implemented"))
+          Future.successful(
+            SrpcCallError(
+              PayloadErrorCode.NotImplemented,
+              "This OCPP 2.0 procedure is not yet implemented"
+            )
+          )
         case Some(procedure) =>
           // TODO scalafmt opzetten
           val jsonResponse: Future[JValue] = procedure.reqRes(call.payload) { (req, rr) =>
             Ocpp20ConnectionComponent.this.onRequest(req)(rr)
-          }
+                                                                            }
           jsonResponse
             .map(SrpcCallResult)
             .recover(logIncomingRequestHandlingError(call) andThen requestHandlerErrorToSrpcCallResult)
       }
     }
 
-    def sendRequest[REQ <: OUTREQBOUND, RES <: INRESBOUND](req: REQ)(implicit reqRes: OUTREQRES[REQ, RES]): Future[RES] = {
+    def sendRequest[REQ <: OUTREQBOUND, RES <: INRESBOUND](req: REQ)
+      (implicit reqRes: OUTREQRES[REQ, RES]): Future[RES] = {
       val procedure = outgoingProcedures.procedureByReqRes(reqRes)
       procedure match {
         case None =>
-          throw OcppException(PayloadErrorCode.NotSupported, "This OCPP procedure is not supported")
+          Future.failed(OcppException(PayloadErrorCode.NotSupported, "This OCPP procedure is not supported"))
         case Some(proc) =>
-          val srpcCall = SrpcCall(proc.name, proc.serializeReq(req))
-          srpcConnection.sendCall(srpcCall) map {
+          safeSrpcCall(proc.name, proc.serializeReq(req)) map {
             case SrpcCallResult(payload) =>
               proc.deserializeRes(payload)
             case SrpcCallError(code, description, details) =>
               throw OcppException(code, description)
           }
+      }
+    }
+
+    private def safeSrpcCall(operationName: String, payload: JValue): Future[SrpcResponse] = {
+      val srpcCall = SrpcCall(operationName, payload)
+      Try(srpcConnection.sendCall(srpcCall)) match {
+        case Success(futureResponse) =>
+          futureResponse
+        case Failure(e) =>
+          Future.failed(OcppException(PayloadErrorCode.GenericError, "Failed to obtain response from SRPC layer"))
       }
     }
   }
@@ -92,11 +108,11 @@ trait CsOcpp20ConnectionComponent extends Ocpp20ConnectionComponent[
 
     val outgoingProcedures: Ocpp20Procedures[CsmsRequest, CsmsResponse, CsmsReqRes] = CsmsOcpp20Procedures
 
-    override def sendRequestUntyped(req: CsmsRequest): Future[CsmsResponse] = {
+    override def sendRequestUntyped(req: CsmsRequest): Future[CsmsResponse] =
       req match {
         case r: BootNotificationRequest => sendRequest(r)
+        case h: HeartbeatRequest => sendRequest(h)
       }
-    }
   }
 }
 
@@ -116,11 +132,9 @@ trait CsmsOcpp20ConnectionComponent extends Ocpp20ConnectionComponent[
 
     val outgoingProcedures: Ocpp20Procedures[CsRequest, CsResponse, CsReqRes] = CsOcpp20Procedures
 
-    override def sendRequestUntyped(req: CsRequest): Future[CsResponse] = {
+    override def sendRequestUntyped(req: CsRequest): Future[CsResponse] =
       req match {
-        // TODO zo een request definiëren
-        case _ => sys.error("Er zijn nog helemaal niet zulke requests :->")
+        case r: RequestStartTransactionRequest => sendRequest(r)
       }
-    }
   }
 }

@@ -21,14 +21,20 @@ class JsonSchemaValidationSpec extends Specification with ScalaCheck {
 
   "OCPP 2.0 message serialization" should {
 
-    validateJson[BootNotificationRequest](bootNotificationRequest)
+    validateJson(requestStartTransactionRequest)
+    validateJson(requestStartTransactionResponse)
+
+    validateJson(bootNotificationRequest)
+    validateJson(bootNotificationResponse)
+
+    validateJson(heartbeatRequest)
+    validateJson(heartbeatResponse)
   }
 
   private def validateJson[T <: Message : ClassTag](messageGen: Gen[T]): Fragment = {
 
     val className = classTag[T].runtimeClass.getSimpleName
     val schema = className + ".json"
-    System.err.println(s"Loading schema file $schema")
 
     val jsonSchemaText: String =
       scala.io.Source.fromInputStream({
@@ -39,12 +45,18 @@ class JsonSchemaValidationSpec extends Specification with ScalaCheck {
 
     s"serialize $className according to schema" in {
       forAll(messageGen) { msg =>
-        val json: JsonNode = asJsonNode(Serialization.serialize(msg))
+        val sd = Serialization.serialize(msg)
+        val json: JsonNode = asJsonNode(sd)
         val validationReport = validator.validate(jsonSchema, json)
         if (validationReport.isSuccess) {
           success
         } else {
-          failure(validationReport.asScala.map(_.getMessage).mkString("\n"))
+          failure {
+            "Failed JSON validation:\n\n\t" +
+            validationReport.asScala.map(_.getMessage).mkString("\n") + "\n\n" +
+            "Offending JSON:\n\n\t" +
+            sd
+          }
         }
       }
     }

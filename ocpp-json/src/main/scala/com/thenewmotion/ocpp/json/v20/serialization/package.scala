@@ -9,6 +9,13 @@ package object serialization {
   val ocppSerializers = Seq(
     new EnumerableNameSerializer(BootReason),
     InstantSerializer,
-    new EnumerableNameSerializer(BootNotificationStatus)
+    ChargingRateSerializer,
+    new EnumerableNameSerializer(BootNotificationStatus),
+    new EnumerableNameSerializer(IdTokenType),
+    new EnumerableNameSerializer(ChargingProfilePurpose),
+    new EnumerableNameSerializer(ChargingProfileKind),
+    new EnumerableNameSerializer(RecurrencyKind),
+    new EnumerableNameSerializer(ChargingRateUnit),
+    new EnumerableNameSerializer(RequestStartStopStatus)
   )
 }

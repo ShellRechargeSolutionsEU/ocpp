@@ -20,5 +20,5 @@ object Serialization {
     Extraction.extract[M](json)(formats, manifest[M])
 
   def read[M <: Message : Manifest](s: String): M =
-    deserialize[M](parse(s))
+    deserialize[M](parse(s, useBigDecimalForDouble = true))
 }
