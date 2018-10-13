@@ -172,8 +172,13 @@ abstract class Ocpp20JsonClient private[client] (
 }
 
 object OcppJsonClient {
-  // TODO: a factory method that uses the version negotiation to give 2.0 if
-  // supported and otherwise 1.x?
+  // It would be interesting to have a factory method that uses the version
+  // negotiation to give 2.0 if supported and otherwise 1.x. Library users could
+  // then case match on it to use it type-safely further on.
+  // That would however require a total refactoring of the way we set up client
+  // connections, so that we *first* establish a WebSocket connection and *then*
+  // proceed to build the whole cake on top of it instead of establishing the
+  // WS connection while building the cake.
 
   /**
     * The factory method to create an OcppJsonClient for OCPP 1.2, 1.5 and/or
