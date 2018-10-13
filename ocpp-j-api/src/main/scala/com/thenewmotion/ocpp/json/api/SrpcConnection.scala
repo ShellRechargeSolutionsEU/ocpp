@@ -76,7 +76,7 @@ trait DefaultSrpcComponent extends SrpcComponent {
 
   private[this] val callIdGenerator = CallIdGenerator()
 
-  implicit val executionContext: ExecutionContext
+  protected implicit val executionContext: ExecutionContext
 
   class DefaultSrpcConnection extends SrpcConnection {
 

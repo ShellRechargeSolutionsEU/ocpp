@@ -27,7 +27,7 @@ trait Ocpp20ConnectionComponent[
 
   this: SrpcComponent =>
 
-  implicit val executionContext: ExecutionContext
+  protected implicit val executionContext: ExecutionContext
 
   trait Ocpp20Connection extends BaseOcppConnection {
 

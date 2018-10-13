@@ -142,8 +142,8 @@ class ClientServerIntegrationSpec extends Specification {
       )
       val serverStarted = Promise[Unit]()
 
-      val server = new Ocpp20JsonServer(testPort) {
-        def handleConnection(cpSerial: String, remote: Ocpp20JsonServer.OutgoingEndpoint): CsmsRequestHandler = new CsmsRequestHandler {
+      val server: Ocpp20JsonServer = new Ocpp20JsonServer(testPort) {
+        def handleConnection(cpSerial: String, remote: server.OutgoingEndpoint): CsmsRequestHandler = new CsmsRequestHandler {
           def apply[REQ <: CsmsRequest, RES <: CsmsResponse](req: REQ)(implicit reqRes: CsmsReqRes[REQ, RES], ec: ExecutionContext): Future[RES] = {
               req match {
                 case BootNotificationRequest(cs, r) =>

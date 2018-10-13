@@ -77,7 +77,7 @@ abstract class OcppJsonClient[
       }
     )
 
-    val negotiatedOcppVersion = ocppVersionForWsSubProtocol.getOrElse(
+    val negotiatedOcppVersion: Version = ocppVersionForWsSubProtocol.getOrElse(
       webSocketConnection.subProtocol,
       throw new RuntimeException(s"Unknown protocol ${webSocketConnection.subProtocol} in use for connection")
     )
