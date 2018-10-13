@@ -1,4 +1,4 @@
-# Open Charge Point Protocol for Scala [![Build Status](https://secure.travis-ci.org/NewMotion/ocpp.png)](http://travis-ci.org/NewMotion/ocpp) [![Coverage Status](https://coveralls.io/repos/github/NewMotion/ocpp/badge.svg?branch=master)](https://coveralls.io/github/NewMotion/ocpp?branch=master)
+# Open Charge Point Protocol for Scala [![Build Status](https://secure.travis-ci.org/NewMotion/ocpp.png)](http://travis-ci.org/NewMotion/ocpp) [![Coverage Status](https://coveralls.io/repos/github/NewMotion/ocpp/badge.svg?branch=master)](https://coveralls.io/github/NewMotion/ocpp?branch=master) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/eab36abac62e4e33845a10a1485f35c6)](https://www.codacy.com/app/reinierl/ocpp)
 
 The Open Charge Point Protocol (OCPP) is a network protocol for communication
 between electric vehicle chargers and a central backoffice system. It is
