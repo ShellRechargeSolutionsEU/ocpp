@@ -27,7 +27,10 @@ class ClientServerIntegrationSpec extends Specification {
         val serverStarted = Promise[Unit]()
 
         val server = new Ocpp1XJsonServer(testPort, Version.V16) {
-          def handleConnection(cpSerial: String, remote: Ocpp1XJsonServer.OutgoingEndpoint): CentralSystemRequestHandler = {
+          def handleConnection(
+            cpSerial: String,
+            remote: Ocpp1XJsonServer.OutgoingEndpoint
+          ): CentralSystemRequestHandler = {
             (req: CentralSystemReq) =>
               req match {
                 case HeartbeatReq =>
@@ -72,13 +75,16 @@ class ClientServerIntegrationSpec extends Specification {
 
         val server = new Ocpp1XJsonServer(testPort, Version.V16) {
 
-          def handleConnection(cpSerial: String, remote: Ocpp1XJsonServer.OutgoingEndpoint): CentralSystemRequestHandler = {
+          def handleConnection(
+            cpSerial: String,
+            remote: Ocpp1XJsonServer.OutgoingEndpoint
+          ): CentralSystemRequestHandler = {
             (req: CentralSystemReq) =>
               req match {
                 case HeartbeatReq =>
                   clientResponsePromise.completeWith {
-                                                       remote.send(GetLocalListVersionReq)
-                                                     }
+                    remote.send(GetLocalListVersionReq)
+                  }
 
                   serverTestResponse
                 case _ =>
@@ -115,33 +121,33 @@ class ClientServerIntegrationSpec extends Specification {
         } finally server.stop()
       }
     }
-  }
 
-  "on version 2.0" in {
+    "on version 2.0" in {
 
-    "exchange client-initiated request-response" in {
+      "exchange client-initiated request-response" in {
 
-      val testPort = 34782
-      val testSerial = "testserial"
-      val testRequest = BootNotificationRequest(
-        ChargingStation(
-          serialNumber = None,
-          model = "Lolo 1337",
-          modem = None,
-          vendorName = "Nueva Moción",
-          firmwareVersion = None),
-        BootReason.PowerUp
-      )
-      val testResponse = BootNotificationResponse(
-        Instant.now(),
-        interval = 300,
-        status = BootNotificationStatus.Accepted
-      )
-      val serverStarted = Promise[Unit]()
+        val testPort = 34784
+        val testSerial = "testserial"
+        val testRequest = BootNotificationRequest(
+          ChargingStation(
+            serialNumber = None,
+            model = "Lolo 1337",
+            modem = None,
+            vendorName = "Nueva Moción",
+            firmwareVersion = None
+          ),
+          BootReason.PowerUp
+        )
+        val testResponse = BootNotificationResponse(
+          Instant.now(),
+          interval = 300,
+          status = BootNotificationStatus.Accepted
+        )
+        val serverStarted = Promise[Unit]()
 
-      val server: Ocpp20JsonServer = new Ocpp20JsonServer(testPort) {
-        def handleConnection(cpSerial: String, remote: Ocpp20JsonServer.OutgoingEndpoint): CsmsRequestHandler = {
-          req: CsmsRequest =>
+        val server: Ocpp20JsonServer = new Ocpp20JsonServer(testPort) {
+          def handleConnection(cpSerial: String, remote: Ocpp20JsonServer.OutgoingEndpoint): CsmsRequestHandler = {
+            req: CsmsRequest =>
 
               req match {
                 case BootNotificationRequest(cs, r) =>
@@ -151,27 +157,90 @@ class ClientServerIntegrationSpec extends Specification {
               }
           }
 
-        override def onStart(): Unit = {
-          serverStarted.complete(Success(()))
-          ()
+          override def onStart(): Unit = {
+            serverStarted.complete(Success(()))
+            ()
+          }
         }
+
+        server.start()
+
+        try {
+          Await.result(serverStarted.future, 2.seconds)
+
+          val client = OcppJsonClient.forVersion20(
+            testSerial,
+            new URI(s"http://127.0.0.1:$testPort/")
+          ) {
+              _: CsRequest =>
+                throw OcppException(
+                  PayloadErrorCode.InternalError,
+                  "No incoming charging station request expected in this test"
+                )
+            }
+
+          Await.result(client.send(testRequest), 1.second) mustEqual testResponse
+        } finally server.stop()
       }
 
-      server.start()
+      "exchange server-initiated request-response" in {
 
-      try {
-        Await.result(serverStarted.future, 2.seconds)
+        val testPort = 34785
+        val testSerial = "testserial"
+        val testRequest = RequestStartTransactionRequest(
+          evseId = Some(1),
+          remoteStartId = 1337,
+          idToken = IdToken("04EC2CC2552280", IdTokenType.ISO14443, additionalInfo = None),
+          chargingProfile = None
+        )
+        val testResponse = RequestStartTransactionResponse(
+          status = RequestStartStopStatus.Accepted,
+          transactionId = Some("Gefeliciteerd Olger, de aanhouder wint!")
+        )
+        val serverStarted = Promise[Unit]()
 
-        val client = OcppJsonClient.forVersion20(
-          testSerial,
-          new URI(s"http://127.0.0.1:$testPort/")
-        ) {
-            _: CsRequest =>
-              throw OcppException(PayloadErrorCode.InternalError, "No incoming charging station request expected in this test")
+        val clientResponsePromise = Promise[RequestStartTransactionResponse]()
+
+        val server: Ocpp20JsonServer = new Ocpp20JsonServer(testPort) {
+          def handleConnection(cpSerial: String, remote: Ocpp20JsonServer.OutgoingEndpoint): CsmsRequestHandler = {
+            clientResponsePromise.completeWith {
+              remote.send(testRequest)
+            }
+
+            {
+              req: CsmsRequest =>
+                throw OcppException(PayloadErrorCode.InternalError, s"Unexpected request in test server: $req")
+            }
           }
 
-        Await.result(client.send(testRequest), 1.second) mustEqual testResponse
-      } finally server.stop()
+          override def onStart(): Unit = {
+            serverStarted.complete(Success(()))
+            ()
+          }
+        }
+
+        server.start()
+
+        try {
+          Await.result(serverStarted.future, 2.seconds)
+
+          val client = OcppJsonClient.forVersion20(
+            testSerial,
+            new URI(s"http://127.0.0.1:$testPort/")
+          ) {
+              req: CsRequest =>
+                req match {
+                  case r if r == testRequest =>
+                    testResponse
+
+                  case x =>
+                    throw OcppException(PayloadErrorCode.InternalError, s"Unexpected request in test client: $req")
+                }
+            }
+
+          Await.result(clientResponsePromise.future, 1.second) mustEqual testResponse
+        } finally server.stop()
+      }
     }
   }
 }

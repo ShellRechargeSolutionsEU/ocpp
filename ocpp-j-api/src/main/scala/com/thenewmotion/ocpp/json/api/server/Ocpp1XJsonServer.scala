@@ -29,9 +29,9 @@ abstract class Ocpp1XJsonServer(listenPort: Int, requestedOcppVersion: Version1X
     new BaseConnectionCake(connection, chargePointIdentity)
       with CentralSystemOcpp1XConnectionComponent {
 
-      def ocppConnection: Ocpp1XConnection = defaultCentralSystemOcppConnection
+      lazy val ocppConnection: Ocpp1XConnection = defaultCentralSystemOcppConnection
 
-      def ocppVersion: Version = requestedOcppVersion
+      lazy val ocppVersion: Version = requestedOcppVersion
   }
 }
 

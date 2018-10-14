@@ -60,6 +60,8 @@ abstract class OcppJsonServer[
   protected abstract class BaseConnectionCake(connection: WebSocket, chargePointIdentity: String)
     extends ConnectionCake with DefaultSrpcComponent with SimpleServerWebSocketComponent {
 
+    final protected val executionContext: ExecutionContext = ec
+
     final override val srpcConnection: DefaultSrpcConnection = new DefaultSrpcConnection()
 
     final override val webSocketConnection: SimpleServerWebSocketConnection = new SimpleServerWebSocketConnection {
@@ -79,8 +81,6 @@ abstract class OcppJsonServer[
 
     final def onRequest[REQ <: INREQBOUND, RES <: OUTRESBOUND](req: REQ)(implicit reqRes: INREQRES[REQ, RES]) =
       requestHandler.apply(req)
-
-    final protected val executionContext: ExecutionContext = ec
   }
 
   object connectionMap {

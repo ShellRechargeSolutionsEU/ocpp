@@ -102,7 +102,7 @@ trait CsOcpp20ConnectionComponent extends Ocpp20ConnectionComponent[
   ] {
   self: SrpcComponent =>
 
-  val ocppConnection = new Ocpp20Connection {
+  lazy val ocppConnection = new Ocpp20Connection {
 
     val incomingProcedures: Ocpp20Procedures[CsRequest, CsResponse, CsReqRes] = CsOcpp20Procedures
 
@@ -126,7 +126,7 @@ trait CsmsOcpp20ConnectionComponent extends Ocpp20ConnectionComponent[
   ] {
   self: SrpcComponent =>
 
-  val ocppConnection = new Ocpp20Connection {
+  lazy val ocppConnection = new Ocpp20Connection {
 
     val incomingProcedures: Ocpp20Procedures[CsmsRequest, CsmsResponse, CsmsReqRes] = CsmsOcpp20Procedures
 
