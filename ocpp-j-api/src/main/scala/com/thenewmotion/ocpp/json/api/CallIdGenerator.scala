@@ -1,7 +1,6 @@
 package com.thenewmotion.ocpp.json.api
 
-trait CallIdGenerator extends Iterator[String] {
-  def hasNext = true
+trait CallIdGenerator {
   def next(): String
 }
 
@@ -12,5 +11,5 @@ object CallIdGenerator {
 class AtomicCallIdGenerator extends CallIdGenerator {
   private val id = new java.util.concurrent.atomic.AtomicLong(-1)
 
-  def next() = id.incrementAndGet.toHexString
+  def next(): String = id.incrementAndGet.toHexString
 }
