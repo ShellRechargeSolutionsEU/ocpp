@@ -2,8 +2,6 @@ package com.thenewmotion.ocpp
 package json.api
 
 import org.json4s._
-import org.json4s.native.Serialization
-import org.slf4j.LoggerFactory
 
 /**
  * The lowest layer in the three-layer protocol stack of OCPP-J: WebSocket
@@ -41,25 +39,4 @@ trait WebSocketComponent {
    * Called when the WebSocket connection is disconnected
    */
   def onWebSocketDisconnect(): Unit
-}
-
-class DummyWebSocketComponent extends WebSocketComponent {
-  private[this] val logger = LoggerFactory.getLogger(DummyWebSocketComponent.this.getClass)
-
-  class DummyWebSocketConnection extends WebSocketConnection {
-    def send(msg: JValue) = {
-      val string = Serialization.write(msg)(DefaultFormats)
-      logger.info(s"Sending $string")
-    }
-
-    def close() = {}
-  }
-
-  def webSocketConnection = new DummyWebSocketConnection
-
-  def onError(e: Throwable) = logger.info(s"DummyWebSocketComponent received error {}", e)
-
-  def onMessage(jVal: JValue) = logger.info("DummyWebSocketComponent received message {}", jVal)
-
-  def onWebSocketDisconnect(): Unit = {}
 }
