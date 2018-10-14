@@ -13,11 +13,13 @@ The library is designed with versatility in mind. OCPP comes in 4 versions (1.2,
 OCPP-J), and two roles ("Charge Point" and "Central System"). This library will
 help you with 1.5 and 1.6 over JSON. For 1.2 and 1.5 over SOAP, there is [a
 separate library by NewMotion](https://github.com/NewMotion/ocpp-soap) that
-depends on this one. The groundwork for OCPP 2.0 support is present, but only
-the BootNotification message has been implemented so far.
+depends on this one. Some OCPP 2.0 support is present, but not a full
+implementation yet. The main body of this README will be writing about the OCPP
+1.5 and 1.6 support; for OCPP 2.0 see [here](#ocpp2).
 
-Version 1.2 with WebSocket/JSON and version 1.6 with SOAP/XML are not possible.
-
+Version 2.0 with SOAP/XML is not possible. Version 1.2 with
+WebSocket/JSON and version 1.6 with SOAP/XML are not supported by this
+library.
 
 Users of this library probably want to use different WebSocket libraries for
 different scenarios: a production back-office server with tens of thousands of
@@ -50,7 +52,7 @@ resolvers += "TNM" at "http://nexus.thenewmotion.com/content/groups/public"
 and this to your `build.sbt`:
 
 ```
-libraryDependencies += "com.thenewmotion" %% "ocpp-j-api" % "7.0.0"
+libraryDependencies += "com.thenewmotion" %% "ocpp-j-api" % "8.0.0"
 ```
 
 With Maven, you'd set up the repository in your pom.xml:
@@ -87,8 +89,7 @@ If you look at the code of the example by clicking [here](example-json-client/sr
 you can see how the client API is used:
 
  * A connection is established by creating an instance of `OcppJsonClient`
-   using the `OcppJsonClient.forVersion1x` or `OcppJsonClient.forVersion20`
-   factory methods.
+   using the `OcppJsonClient.forVersion1x` factory method.
    The server endpoint URI, charge point ID and OCPP version to use are passed
    to the  method, followed by a handler for incoming OCPP requests in a
    second parameter list.
@@ -146,7 +147,6 @@ endpoint and off you go, like this:
     connection.send(HeartbeatReq)
 ```
 
-##### OCPP 1.x (1.2, 1.5 and 1.6)
 The set of messages you can send with OCPP 1.x connections is defined in
 [ocpp-messages](ocpp-messages/src/main/scala/com/thenewmotion/ocpp/messages/v1x/Message.scala).
 For every request type, you represent requests as instances of a case class
@@ -197,24 +197,6 @@ enforce the OCPP requirement that you wait for the response before sending the
 next request. A simple way to obey it is chaining the send operations in a `for`
 comprehension, as shown in the example app.
 
-##### OCPP 2.0
-
-For OCPP 2.0, the case classes for requests and responses directly
-reflect the message structures defined in the OCPP 2.0 specification.
-This is done to reduce the cognitive load when comparing message definitions
-in Scala code to the OCPP specification, and because OCPP 2.0 as of now
-has no protocol versions that are similar enough to write code that can
-transparently deal with multiple protocol versions.
-
-The price of giving up the version-independent message case classes is
-that some counterintuitive idiosyncracies of the OCPP specification, like
-starting to count at 1 instead of 0 and using 0 as a sentinel, are now
-inflicted upon unsuspecting Scala developers.
-
-For OCPP 2.0, the message case classes are named `<Operation Name>Request`
-and `<Operation Name>Response`, e.g. `BootNotificationRequest` and
-`BootNotificationResponse`.
-
 #### Error handling
 
 If the remote side responds to your OCPP requests with a `CALLERROR` message
@@ -250,7 +232,7 @@ To put it in a diagram:
                   (your application logic)
 
     +--------------V--------------------^--------------+
-    |     com.thenewmotion.ocpp.messages.{Req, Res}    |
+    |   com.thenewmotion.ocpp.messages.v1x.{Req, Res}  |
     |                                                  |
     |         OcppConnectionComponent layer            |
     |                                                  |
@@ -339,14 +321,14 @@ So now with this background information, the steps to constructing your cake wou
 
  * Create the cake:
 
-      * Do either `new CentralSystemOcppConnectionComponent with DefaultSrpcComponent with MyWebSocketComponent { ... }`
-        or `new ChargePointCentralSystemOcppConnectionComponent with DefaultSrpcComponent with MyWebSocketComponent { ... }`
+      * Do either `new CentralSystemOcpp1XConnectionComponent with DefaultSrpcComponent with MyWebSocketComponent { ... }`
+        or `new ChargePointOcpp1XConnectionComponent with DefaultSrpcComponent with MyWebSocketComponent { ... }`
 
       * Define in it a `val webSocketConnection`, `val srpcConnection` and
         `val ocppConnection`. For `ocppConnection`, use one of the
         `defaultChargePointOcppConnection` and
         `defaultCentralSystemOcppConnection` methods defined by the
-        DefaultOcppConnectionComponent traits. For `val srpcConnection`, use
+        `*Ocpp1XConnectionComponent` traits. For `val srpcConnection`, use
         `new DefaultSrpcConnection`.
 
  * Define all the "(override)" methods shown at the top of the cake to connect
@@ -456,7 +438,7 @@ import scala.concurrent.ExecutionContext
 import org.java_websocket.WebSocket
 import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.WebSocketServer
-import messages._
+import messages.v1x._
 
 abstract class OcppJsonServer(listenPort: Int, ocppVersion: Version)
   extends WebSocketServer(new InetSocketAddress(listenPort)) {
@@ -469,7 +451,7 @@ abstract class OcppJsonServer(listenPort: Int, ocppVersion: Version)
 
   override def onOpen(conn: WebSocket, hndshk: ClientHandshake): Unit = {
 
-    val ocppConnection = new CentralSystemOcppConnectionComponent  with DefaultSrpcComponent with SimpleServerWebSocketComponent {
+    val ocppConnection = new CentralSystemOcpp1XConnectionComponent  with DefaultSrpcComponent with SimpleServerWebSocketComponent {
       override val ocppConnection: DefaultOcppConnection = defaultCentralSystemOcppConnection
 
       override val srpcConnection: DefaultSrpcConnection = new DefaultSrpcConnection()
@@ -507,7 +489,7 @@ simple steps:
   2. Make it extend WebSocketServer, and add `???` implementations of
      its abstract methods
   3. In the `onOpen` method from the `WebSocketServer` abstract class,
-     create a cake with the three layers: `CentralSystemOcppConnectionComponent with DefaultSrpcComponent with SimpleServerWebSOcketComponent`
+     create a cake with the three layers: `CentralSystemOcpp1XConnectionComponent with DefaultSrpcComponent with SimpleServerWebSOcketComponent`
   4. Add `???` implementations of all the abstract methods in the cake
   5. Add actual definitions of the `ocppConnection`, `srpcConnection`
      and `webSocketConnection` members of the three cake layers.
@@ -546,7 +528,7 @@ And then, there is the `ocppVersion` method in `OcppConnectionComponent`
 that will tell it which OCPP version to use to serialize and deserialize
 OCPP messages to JSON. We have to fill in the OCPP version that was
 passed in to the `OcppJsonServer` constructor. To avoid name clashes,
-we rename the argument to `OcppJsonServer`:
+we rename the argument to `requestedOcppVersion`:
 
 ```scala
 abstract class OcppJsonServer(listenPort: Int, requestedOcppVersion: Version)
@@ -688,8 +670,11 @@ we immediately close the WebSocket connection with an error message. If we do
 have a ChargePointIdentity, we proceed to handle the open as we did before. And
 now it should really be done.
 
-In order to save you the typing and bugfixing, an actual tested version
-of the server developed while writing this [is included](ocpp-j-api/src/main/scala/com/thenewmotion/ocpp/json/api/server/OcppJsonServer.scala).
+In order to save you the typing and bugfixing, an actual tested version of the
+server developed while writing this [is
+included](ocpp-j-api/src/main/scala/com/thenewmotion/ocpp/json/api/server/OcppJsonServer.scala).
+With the OCPP 2.0 work though, it has become a bit more involved because it is
+now an abstract class that is extended by 1.x and 2.0 specific classes.
 
 And there is also a small
 [example app](example-json-server/src/main/scala/com/thenewmotion/ocpp/json/example/ExampleServerTestApp.scala)
@@ -708,7 +693,7 @@ If you do not need the connection management provided by the high-level API,
 you can still use the `ocpp-json` module for serializing and deserializing OCPP
 messages that you will send or receive using other libraries.
 
-To do so, call the methods in the [OcppJ](ocpp-json/src/main/scala/com/thenewmotion/ocpp/json/OcppJ.scala)
+To do so, call the methods in the [Serialization](ocpp-json/src/main/scala/com/thenewmotion/ocpp/json/v1x/Serialization.scala)
 object after importing either
 `com.thenewmotion.ocpp.json.v1x.v15.SerializationV15._`
 or `com.thenewmotion.ocpp.json.v1x.v16.SerializationV16._` to select which OCPP
@@ -717,31 +702,139 @@ version to use:
 ```scala
 
     import com.thenewmotion.ocpp.json.OcppJ
-    import com.thenewmotion.ocpp.messages
+    import com.thenewmotion.ocpp.messages.{v1x => messages}
     import com.thenewmotion.ocpp.Version
     import com.thenewmotion.ocpp.json.v16.SerializationV16._
 
-    OcppJ.write(AuthorizeReq(idTag = "ABCDEF012"))
+    OcppJ.write(messages.AuthorizeReq(idTag = "ABCDEF012"))
     // this results in:
     // res6: String = {"idTag":"ABCDEF012"}
 
-    OcppJ.read[AuthorizeReq, Version.V16.type]("""{"idTag":"ABCDEF012"}""")
+    OcppJ.read[messages.AuthorizeReq, Version.V16.type]("""{"idTag":"ABCDEF012"}""")
     // this results in:
     // res10: com.thenewmotion.ocpp.messages.AuthorizeReq = AuthorizeReq(ABCDEF012)
 ```
 
-There are also `serialize` and `deserialize` methods on the `OcppJ` object that
+There are also `serialize` and `deserialize` methods on the `Serialization` object that
 use json4s `JValue`s as the representation of JSON instead of raw `String`s.
 You can use those to build the [SRPC](http://www.gir.fr/ocppjs/ocpp_srpc_spec.shtml)
 messages that are sent over the WebSocket. See [TransportMessage](ocpp-json/src/main/scala/com/thenewmotion/ocpp/json/TransportMessageProtocol.scala)
 and [TransportMessageJsonSerializers](ocpp-json/src/main/scala/com/thenewmotion/ocpp/json/TransportMessageJsonSerializers.scala)
 for how to work with those.
 
+<a name="ocpp2"></a>
+## OCPP 2.0 support
+
+OCPP 2.0 presents a major revision of the OCPP protocol, vastly improving
+authentication and encryption of the connection, and bringing new, more refined
+models of the charging station's configuration and the lifecycle of a charge
+transaction.
+
+This means that it is not possible to write code that will transparently work
+with OCPP 2.0 or other OCPP versions, as is possible with this library when
+using the 1.x versions of OCPP.
+
+You can use this library already to exchange OCPP 2.0 messages, but not all
+message types, error codes, security mechanisms etc added by 2.0 are supported
+yet. We're "glass half full" people, so we'll first explain what works, and then
+move on to explain what still remains to be done.
+
+### What this library offers
+
+#### Creating an OCPP 2.0 connection
+
+Using the `OcppJsonClient.forversion20`, you can create an instance of
+`OcppJsonClient`, more specifically `Ocpp20JsonClient`, that will let you send
+and receive OCPP 2.0 messages.
+
+#### OCPP 2.0 messages
+
+For OCPP 2.0, the message case classes are named `<Operation Name>Request` and
+`<Operation Name>Response`, e.g. `BootNotificationRequest` and
+`BootNotificationResponse`. They live in the
+`com.thenewmotion.ocpp.messages.v20` package. They extend the
+`com.thenewmotion.ocpp.messages.Request` and
+`com.thenewmotion.ocpp.messages.Response` types depending on whether they are
+requests or responses.  They also extend the `CsRequest`, `CsResponse`,
+`CsmsRequest` and `CsmsResponse` types defined in the
+`com.thenewmotion.ocpp.messages.v20` package, depending on which side is
+executing the request. `CsRequest` and `CsResponse` are for operations executed
+by the "Cs" (Charging Station, equivalent to the "Charge Point" of OCPP 1.x);
+`CsmsRequest` and `CsmsResponse` are for operations executed by the "Csms"
+(Charging Station Management System, equivalent to the "Central System" of OCPP
+1.X).
+
+Unlike the 1.5/1.6 message case classes, the OCPP 2.0 case classes for requests
+and responses directly reflect the message structures defined in the OCPP 2.0
+specification.  This is done to reduce the cognitive load when comparing
+message definitions in Scala code to the OCPP specification, and because OCPP
+2.0 as of now has no protocol versions that are similar enough to write code
+that can transparently deal with multiple protocol versions.
+
+The price of giving up the version-independent message case classes is
+that some counterintuitive idiosyncracies of the OCPP specification, like
+starting to count at 1 instead of 0 and using 0 as a sentinel, are now
+inflicted upon unsuspecting Scala developers.
+
+#### Supported operations
+
+Currently the library has message case classes in place for the following
+operations:
+
+Charging Station operations:
+
+ * RequestStartTransaction
+
+Charging Station Management System operations:
+
+ * BootNotification
+ * Heartbeat
+
+### What remains to be done
+
+   * support new RPC-level error codes
+
+     * Although this is actually about SRPC, perhaps the simplest implementation
+       would be in the OCPP layer, where we already distinguish the versions.
+       The Ocpp1XConnectionComponent could filter error codes sent and received
+       and map the ones unsupported by OCPP 1.X to the closest alternative that
+       is supported. That would save us the complexity of multiple SrpcComponent
+       implementations and choosing between them.
+
+   * Message case classes and serializers for all operations
+
+     * To add a message, you should:
+       * Add Request and Response case classes [here](ocpp-messages/src/main/scala/com/thenewmotion/ocpp/messages/v20/Message.scala)
+       * Add a ReqRes instance [here](ocpp-messages/src/main/scala/com/thenewmotion/ocpp/messages/v20/ReqRes.scala)
+       * Add a Ocpp20Procedure [here](ocpp-json/src/main/scala/com/thenewmotion/ocpp/json/v20/Ocpp20Procedure.scala)
+       * Add necessary JSON serializers (e.g. for new `Enumerable`s) [here](ocpp-json/src/main/scala/com/thenewmotion/ocpp/json/v20/serialization)
+       * Add a JSON schema validation test [here](ocpp-json/src/test/scala/com/thenewmotion/ocpp/json/v20/JsonSchemaValidationSpec.scala)
+       * Add a JSON serialization/deserialization round-trip test [here](ocpp-json/src/test/scala/com/thenewmotion/ocpp/json/v20/SerializationSpec.scala)
+
+     * Maybe we can find a way to make it easier to add this messages, or at
+       least make it straightforward so that you can just follow the compiler
+       errors until it compiles and then it also works.
+
+   * Factory method on OcppJsonClient to give caller a 1.x or 2.0 client
+     depending on negotiation with server
+
+   * Similarly on `OcppJsonServer`, create a factory method that lets people
+     create a server with two request handlers, one for 1.x and for 2.0, and
+     let the server negotiate the OCPP version to use with the client.
+
+   * Add support for the 3 security profiles for authenticated encryption
+
+   * Perhaps then add a note that the ready-made server class and app in this
+     library are not intended for production use, do not support the
+     authenticated encryption of the OCPP channel, and are as such insecure.
+
+   * Support for JSON web signatures in the RPC-level encoding
+
 ## Changelog
 
 ### Changes in 9.0.0
 
- - Support for OCPP 2.0 has been added
+ - A start was made with support for OCPP 2.0
 
  - `OcppJsonServer` has now been split into two classes, depending on
    whether you want to serve OCPP 2.0 or OCPP 1.5/1.6:
@@ -876,25 +969,4 @@ The contents of this repository are © 2012 - 2018 The New Motion B.V., licensed
       (https://creativecommons.org/licenses/by-nd/4.0/legalcode).
       ```
 
-## TODOs
 
- * For OCPP 2.0:
-
-   * Update all of the README
-
-   * First merge to master at this point?
-
-   * support new RPC-level error codes
-
-   * Message case classes and serializers for all operations
-     * To add a message, you should:
-       * Add Request and Response case classes [here](ocpp-messages/src/main/scala/com/thenewmotion/ocpp/messages/v20/Message.scala)
-       * Add a ReqRes instance [here](ocpp-messages/src/main/scala/com/thenewmotion/ocpp/messages/v20/ReqRes.scala)
-       * Add a Ocpp20Procedure [here](ocpp-json/src/main/scala/com/thenewmotion/ocpp/json/v20/Ocpp20Procedure.scala)
-       * Add a JSON schema validation test [here](ocpp-json/src/test/scala/com/thenewmotion/ocpp/json/v20/JsonSchemaValidationSpec.scala)
-       * Add a JSON serialization/deserialization round-trip test [here](ocpp-json/src/test/scala/com/thenewmotion/ocpp/json/v20/SerializationSpec.scala)
-
-   * Support for JSON web signatures in the RPC-level encoding
-
-   * Factory method on OcppJsonClient to give caller a 1.x or 2.0 client
-     depending on negotiation with server
