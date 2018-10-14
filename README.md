@@ -551,20 +551,39 @@ whenever a message comes in on the connection. To make this happen, we will need
 a map from `WebSocket` instances that the server gets in its `onMessage` method,
 to the OCPP cake instance that will process messages for that connection.
 
-So let's add this to the `OcppJsonServer` class: link the WebSocket library
-we're using to our OCPP cake.
+So let's add this to the `OcppJsonServer` class: link the WebSocket connections
+we're using to their OCPP cakes.
 
 ```scala
   private type OcppCake = CentralSystemOcppConnectionComponent with DefaultSrpcComponent with SimpleServerWebSocketComponent
 
-  private val ocppConnections: mutable.Map[WebSocket, OcppCake] = mutable.HashMap()
+  object connectionMap {
+    private val ocppConnections: mutable.Map[WebSocket, BaseConnectionCake] =
+      mutable.HashMap[WebSocket, BaseConnectionCake]()
+
+    def put(conn: WebSocket, cake: BaseConnectionCake): Unit = connectionMap.synchronized {
+      ocppConnections.put(conn, cake)
+      ()
+    }
+
+    def remove(conn: WebSocket): Option[BaseConnectionCake] = connectionMap.synchronized {
+      ocppConnections.remove(conn)
+    }
+
+    def get(conn: WebSocket): Option[BaseConnectionCake] = connectionMap.synchronized {
+      ocppConnections.get(conn)
+    }
+  }
 ```
 
-and to fill the map, we add this line at the bottom of `onOpen` in our
+We use a mutable map, wrapped in its own little `object connectionMap`
+that assures thread-safety.
+
+To fill the map, we add this line at the bottom of `onOpen` in our
 `OcppJsonServer`:
 
 ```scala
-ocppConnections.put(conn, ocppConnection)
+connectionMap.put(conn, ocppConnection)
 ```
 
 and as responsible professionals, let's also remove the entry from the map again
@@ -616,18 +635,18 @@ override def onClose(
   reason: IdTag,
   remote: Boolean
 ): Unit = {
-  ocppConnections.remove(conn) foreach { c =>
+  connectionMap.remove(conn) foreach { c =>
     c.feedIncomingDisconnect()
   }
 }
 
 override def onMessage(conn: WebSocket, message: String): Unit =
-  ocppConnections.get(conn) foreach { c =>
+  connectionMap.get(conn) foreach { c =>
     c.feedIncomingMessage(message)
   }
 
 override def onError(conn: WebSocket, ex: Exception): Unit =
-  ocppConnections.get(conn) foreach { c =>
+  connectionMap.get(conn) foreach { c =>
     c.feedIncomingError(ex)
   }
 ```

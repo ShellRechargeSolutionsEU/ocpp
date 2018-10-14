@@ -83,8 +83,23 @@ abstract class OcppJsonServer[
     final protected val executionContext: ExecutionContext = ec
   }
 
-  private val ocppConnections: mutable.Map[WebSocket, BaseConnectionCake] =
-    mutable.HashMap[WebSocket, BaseConnectionCake]()
+  object connectionMap {
+    private val ocppConnections: mutable.Map[WebSocket, BaseConnectionCake] =
+      mutable.HashMap[WebSocket, BaseConnectionCake]()
+
+    def put(conn: WebSocket, cake: BaseConnectionCake) : Unit = connectionMap.synchronized {
+      ocppConnections.put(conn, cake)
+      ()
+    }
+
+    def remove(conn: WebSocket): Option[BaseConnectionCake] = connectionMap.synchronized {
+      ocppConnections.remove(conn)
+    }
+
+    def get(conn: WebSocket): Option[BaseConnectionCake] = connectionMap.synchronized {
+      ocppConnections.get(conn)
+    }
+  }
 
   /**
     * This method should be overridden by the user of this class to define the behavior of the Central System. It will
@@ -118,7 +133,7 @@ abstract class OcppJsonServer[
   private def onOpenWithCPIdentity(conn : WebSocket, chargePointIdentity: String): Unit = {
     val ocppConnection: BaseConnectionCake = newConnectionCake(conn, chargePointIdentity)
 
-    ocppConnections.put(conn, ocppConnection)
+    connectionMap.put(conn, ocppConnection)
     ()
   }
 
@@ -130,18 +145,18 @@ abstract class OcppJsonServer[
     reason: String,
     remote: Boolean
   ): Unit = {
-    ocppConnections.remove(conn) foreach { c =>
+    connectionMap.remove(conn) foreach { c =>
       c.feedIncomingDisconnect()
     }
   }
 
   override def onMessage(conn: WebSocket, message: String): Unit =
-    ocppConnections.get(conn) foreach { c =>
+    connectionMap.get(conn) foreach { c =>
       c.feedIncomingMessage(message)
     }
 
   override def onError(conn: WebSocket, ex: Exception): Unit =
-    ocppConnections.get(conn) foreach { c =>
+    connectionMap.get(conn) foreach { c =>
       c.feedIncomingError(ex)
     }
 }
