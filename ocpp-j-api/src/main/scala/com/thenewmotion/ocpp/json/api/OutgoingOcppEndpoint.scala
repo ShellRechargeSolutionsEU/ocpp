@@ -3,7 +3,6 @@ package json.api
 
 import scala.language.higherKinds
 import scala.concurrent.Future
-import messages.ReqRes
 import messages._
 
 /**

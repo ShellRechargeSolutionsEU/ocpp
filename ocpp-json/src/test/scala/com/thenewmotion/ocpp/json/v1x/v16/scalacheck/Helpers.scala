@@ -11,13 +11,13 @@ import org.scalacheck.Gen
 import Gen._
 import enums.reflection.EnumUtils.Nameable
 import CommonGenerators._
-import messages.{v1x => messages}
-import messages.{ChargingProfilePurpose, UnitOfChargingRate}
+import messages.v1x
+import v1x.{ChargingProfilePurpose, UnitOfChargingRate}
 
 object Helpers {
 
   def transactionIdGen: Gen[Int] = chooseNum(1, 4000)
-  def stopReasonGen: Gen[Option[String]] = enumerableWithDefaultNameGen(messages.StopReason)
+  def stopReasonGen: Gen[Option[String]] = enumerableWithDefaultNameGen(v1x.StopReason)
 
   def txnDataGen: Gen[Option[List[Meter]]] = optionalNonEmptyList(meterGen)
 
@@ -27,7 +27,7 @@ object Helpers {
 
   def idTagInfoGen: Gen[IdTagInfo] =
     for {
-      status <- enumerableNameGen(messages.AuthorizationStatus)
+      status <- enumerableNameGen(v1x.AuthorizationStatus)
       expiryDate <- option(dateTimeGen)
       parentIdTag <- option(idTagGen)
     } yield IdTagInfo(status, expiryDate, parentIdTag)
@@ -52,12 +52,12 @@ object Helpers {
 
   def meterValueGen: Gen[MeterValue] = for {
     value <- alphaNumStr
-    context <- enumerableWithDefaultNameGen(messages.meter.ReadingContext)
-    format <- enumerableWithDefaultNameGen(messages.meter.ValueFormat)
-    measurand <- enumerableWithDefaultNameGen(messages.meter.Measurand)
-    phase <- option(enumerableNameGen(messages.meter.Phase))
-    location <- enumerableWithDefaultNameGen(messages.meter.Location)
-    unit <- enumerableWithDefaultNameGen(messages.meter.UnitOfMeasure)
+    context <- enumerableWithDefaultNameGen(v1x.meter.ReadingContext)
+    format <- enumerableWithDefaultNameGen(v1x.meter.ValueFormat)
+    measurand <- enumerableWithDefaultNameGen(v1x.meter.Measurand)
+    phase <- option(enumerableNameGen(v1x.meter.Phase))
+    location <- enumerableWithDefaultNameGen(v1x.meter.Location)
+    unit <- enumerableWithDefaultNameGen(v1x.meter.UnitOfMeasure)
   } yield MeterValue(value, context, format, measurand, phase, location, unit)
 
 
@@ -142,7 +142,7 @@ object Helpers {
     * @tparam T
     * @return
     */
-  def enumerableWithDefaultNameGen[T <: Nameable](e: messages.EnumerableWithDefault[T]): Gen[Option[String]] =
+  def enumerableWithDefaultNameGen[T <: Nameable](e: v1x.EnumerableWithDefault[T]): Gen[Option[String]] =
     enumerableGen(e) map { value =>
       if (value == e.default)
         None

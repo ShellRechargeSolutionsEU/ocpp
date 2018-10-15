@@ -133,7 +133,7 @@ class ClientServerIntegrationSpec extends Specification {
             serialNumber = None,
             model = "Lolo 1337",
             modem = None,
-            vendorName = "Nueva Moción",
+            vendorName = "Ny Bevegelse",
             firmwareVersion = None
           ),
           BootReason.PowerUp
@@ -224,7 +224,7 @@ class ClientServerIntegrationSpec extends Specification {
         try {
           Await.result(serverStarted.future, 2.seconds)
 
-          val client = OcppJsonClient.forVersion20(
+          OcppJsonClient.forVersion20(
             testSerial,
             new URI(s"http://127.0.0.1:$testPort/")
           ) {

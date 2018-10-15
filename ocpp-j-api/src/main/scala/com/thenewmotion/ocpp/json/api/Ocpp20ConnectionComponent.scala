@@ -2,8 +2,9 @@ package com.thenewmotion.ocpp
 package json
 package api
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import com.thenewmotion.ocpp.messages.ReqRes
+
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
 import scala.util.{Failure, Success, Try}
 import messages.v20._
@@ -13,17 +14,13 @@ import org.json4s.JValue
 /** One roles of the OCPP 2.0 communication protocol: Charging Station (CS) or
   * Charging Station Management System (CSMS)
   */
-sealed trait Side
-case object Cs extends Side
-case object Csms extends Side
-
 trait Ocpp20ConnectionComponent[
   OUTREQBOUND <: Request,
   INRESBOUND <: Response,
-  OUTREQRES[_ <: OUTREQBOUND,_ <: INRESBOUND] <: ReqResV2[_, _],
+  OUTREQRES[_ <: OUTREQBOUND,_ <: INRESBOUND] <: ReqRes[_, _],
   INREQBOUND <: Request,
   OUTRESBOUND <: Response,
-  INREQRES[_ <: INREQBOUND, _ <: OUTRESBOUND] <: ReqResV2[_, _]
+  INREQRES[_ <: INREQBOUND, _ <: OUTRESBOUND] <: ReqRes[_, _]
 ] extends BaseOcppConnectionComponent[OUTREQBOUND, INRESBOUND, OUTREQRES, INREQBOUND, OUTRESBOUND, INREQRES] {
 
   this: SrpcComponent =>
@@ -40,7 +37,6 @@ trait Ocpp20ConnectionComponent[
       val ocppProc = incomingProcedures.procedureByName(call.procedureName)
       ocppProc match {
         case None =>
-          // TODO distinguish NotSupported and NotImplemented
           Future.successful(
             SrpcCallError(
               PayloadErrorCode.NotImplemented,
@@ -48,7 +44,6 @@ trait Ocpp20ConnectionComponent[
             )
           )
         case Some(procedure) =>
-          // TODO scalafmt opzetten
           val jsonResponse: Future[JValue] = procedure.reqRes(call.payload) { (req, rr) =>
             Ocpp20ConnectionComponent.this.onRequest(req)(rr)
                                                                             }

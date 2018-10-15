@@ -14,7 +14,9 @@ sealed trait CentralSystemReqRes[REQ <: CentralSystemReq, RES <: CentralSystemRe
   def applyAsync(req: REQ)(implicit service: CentralSystem, ec: ExecutionContext): Future[RES]
 }
 
-trait ReqResInstances {
+trait ReqResInstances extends ChargePointReqResInstances with CentralSystemReqResInstances
+
+trait ChargePointReqResInstances {
 
   implicit object RemoteStartTransactionReqRes extends ChargePointReqRes[RemoteStartTransactionReq, RemoteStartTransactionRes] {
     def apply(req: RemoteStartTransactionReq)(implicit service: SyncChargePoint) = service.remoteStartTransaction(req)
@@ -195,6 +197,9 @@ trait ReqResInstances {
       case x: TriggerMessageReq => TriggerMessageReqRes.applyAsync(x)
     }
   }
+}
+
+trait CentralSystemReqResInstances {
 
   implicit object AuthorizeReqRes extends CentralSystemReqRes[AuthorizeReq, AuthorizeRes] {
     def apply(req: AuthorizeReq)(implicit service: SyncCentralSystem) = service.authorize(req)

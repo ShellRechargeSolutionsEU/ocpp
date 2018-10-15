@@ -2,6 +2,7 @@ package com.thenewmotion.ocpp
 package json
 package v20
 
+import messages.ReqRes
 import messages.v20._
 import messages.v20.CsmsReqRes._
 import messages.v20.CsReqRes._
@@ -15,7 +16,7 @@ abstract class Ocpp20Procedure[
   RESBOUND <: Response,
   REQ <: REQBOUND : Manifest,
   RES <: RESBOUND : Manifest,
-  REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqResV2[_, _]
+  REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqRes[_, _]
 ] {
 
   private val requestManifest: Manifest[REQ] = manifest[REQ]
@@ -49,10 +50,10 @@ object Ocpp20Procedure {
     RESBOUND <: Response,
     REQ <: REQBOUND : Manifest,
     RES <: RESBOUND : Manifest,
-    REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqResV2[_, _]
-  ](_reqRes: REQRES[REQ, RES]): Ocpp20Procedure[REQBOUND, RESBOUND, REQ, RES, REQRES] =
+    REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqRes[_, _]
+  ](implicit rr: REQRES[REQ, RES]): Ocpp20Procedure[REQBOUND, RESBOUND, REQ, RES, REQRES] =
     new Ocpp20Procedure[REQBOUND, RESBOUND, REQ, RES, REQRES] {
-      val reqRes: REQRES[REQ, RES] = _reqRes
+      val reqRes: REQRES[REQ, RES] = rr
     }
 }
 
@@ -63,7 +64,7 @@ object CsOcpp20Procedure {
     implicit reqRes: REQRES[REQ, RES]
   ):
     Ocpp20Procedure[CsRequest, CsResponse, REQ, RES, REQRES] =
-      Ocpp20Procedure[CsRequest, CsResponse, REQ, RES, REQRES](reqRes)
+      Ocpp20Procedure[CsRequest, CsResponse, REQ, RES, REQRES]
 }
 
 object CsmsOcpp20Procedure {
@@ -73,10 +74,10 @@ object CsmsOcpp20Procedure {
     implicit reqRes: REQRES[REQ, RES]
   ):
   Ocpp20Procedure[CsmsRequest, CsmsResponse, REQ, RES, REQRES] =
-    Ocpp20Procedure[CsmsRequest, CsmsResponse, REQ, RES, REQRES](reqRes)
+    Ocpp20Procedure[CsmsRequest, CsmsResponse, REQ, RES, REQRES]
 }
 
-trait Ocpp20Procedures[REQBOUND <: Request, RESBOUND <: Response, REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqResV2[_, _]] {
+trait Ocpp20Procedures[REQBOUND <: Request, RESBOUND <: Response, REQRES[_ <: REQBOUND, _ <: RESBOUND] <: ReqRes[_, _]] {
 
   type MyProcedure[REQ <: REQBOUND, RES <: RESBOUND] = Ocpp20Procedure[REQBOUND, RESBOUND, REQ, RES, REQRES]
 

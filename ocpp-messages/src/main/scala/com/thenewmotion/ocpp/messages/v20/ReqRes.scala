@@ -2,11 +2,9 @@ package com.thenewmotion.ocpp
 package messages
 package v20
 
-sealed trait ReqResV2[REQ <: Request, RES <: Response] extends ReqRes[REQ, RES]
+abstract class CsReqRes[REQ <: CsRequest, RES <: CsResponse] extends ReqRes[REQ, RES]
 
-abstract class CsReqRes[REQ <: CsRequest : Manifest, RES <: CsResponse : Manifest] extends ReqResV2[REQ, RES]
-
-abstract class CsmsReqRes[REQ <: CsmsRequest : Manifest, RES <: CsmsResponse : Manifest] extends ReqResV2[REQ, RES]
+abstract class CsmsReqRes[REQ <: CsmsRequest, RES <: CsmsResponse] extends ReqRes[REQ, RES]
 
 object CsReqRes {
   implicit object RequestStartTransactionReqRes extends CsReqRes[RequestStartTransactionRequest, RequestStartTransactionResponse]
