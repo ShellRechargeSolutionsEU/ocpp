@@ -3,12 +3,11 @@ package json
 package v1x
 package v16
 
+import scala.concurrent.duration._
 import messages.v1x
 import v1x.{Scope, ConnectorScope, ChargePointStatus, ChargingProfileKind}
 import v1x.OccupancyKind._
 import org.json4s.MappingException
-
-import scala.concurrent.duration._
 
 object SerializationV16 extends SerializationCommon {
 
@@ -522,9 +521,6 @@ object SerializationV16 extends SerializationCommon {
   private def statusFieldsToOcppStatus(status: String, errorCode: String, info: Option[String],
     vendorErrorCode: Option[String]): ChargePointStatus = {
 
-    import RichChargePointStatus.defaultErrorCode
-    import v1x.ChargePointStatus
-
     status match {
       case "Available" => ChargePointStatus.Available(info)
       case "Preparing" => ChargePointStatus.Occupied(Some(Preparing))
@@ -536,10 +532,11 @@ object SerializationV16 extends SerializationCommon {
       case "Reserved" => ChargePointStatus.Reserved(info)
       case "Faulted" =>
         val errorCodeString =
-          if (errorCode == defaultErrorCode)
+          if (errorCode == RichChargePointStatus.defaultErrorCode)
             None
           else
             Some(enumerableFromJsonString(v1x.ChargePointErrorCode, errorCode))
+
         ChargePointStatus.Faulted(errorCodeString, info, vendorErrorCode)
     }
   }
@@ -593,16 +590,12 @@ object SerializationV16 extends SerializationCommon {
 
   private implicit class RichKeyValue(val self: v1x.KeyValue) {
 
-    import self._
-
-    def toV16: ConfigurationEntry = ConfigurationEntry(key, readonly, value)
+    def toV16: ConfigurationEntry = ConfigurationEntry(self.key, self.readonly, self.value)
   }
 
   private implicit class RichConfigurationEntry(self: ConfigurationEntry) {
 
-    import self._
-
-    def fromV16: v1x.KeyValue = v1x.KeyValue(key, readonly, value)
+    def fromV16: v1x.KeyValue = v1x.KeyValue(self.key, self.readonly, self.value)
   }
 
   private implicit class RichAuthListVersion(self: v1x.AuthListVersion) {

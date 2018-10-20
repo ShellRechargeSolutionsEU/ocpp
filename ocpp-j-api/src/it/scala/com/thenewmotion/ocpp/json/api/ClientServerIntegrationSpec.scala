@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import scala.concurrent.{Await, Promise}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.util.{Random, Success}
+import scala.util.Success
 import org.specs2.mutable.Specification
 import messages.v1x._
 import messages.v20._
@@ -24,7 +24,9 @@ class ClientServerIntegrationSpec extends Specification {
   // unlikely that tests fail if this Spec file is run repeatedly in rapid
   // succession, although the chance of that happening is still there :-(
   object testPort {
-    val basePortNumber = new AtomicInteger(1024 + Random.nextInt(20000))
+    val basePortNumber =
+      new AtomicInteger(1024 + java.security.SecureRandom.getInstanceStrong.nextInt(20000))
+
     def apply(): Int = basePortNumber.getAndIncrement()
   }
 
