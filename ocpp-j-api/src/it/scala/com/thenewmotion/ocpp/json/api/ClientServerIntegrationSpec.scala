@@ -4,16 +4,29 @@ package api
 
 import java.net.URI
 import java.time.{Instant, ZoneId, ZonedDateTime}
+import java.util.concurrent.atomic.AtomicInteger
 import scala.concurrent.{Await, Promise}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.util.Success
+import scala.util.{Random, Success}
 import org.specs2.mutable.Specification
 import messages.v1x._
 import messages.v20._
+import org.java_websocket.WebSocket
 
 class ClientServerIntegrationSpec extends Specification {
   sequential
+
+  // we generate incrementing port numbers for successive tests so they're
+  // not using the same port quickly in succession, which leads to strange
+  // errors
+  // also use a random starting point for the incrementing ports so that it is
+  // unlikely that tests fail if this Spec file is run repeatedly in rapid
+  // succession, although the chance of that happening is still there :-(
+  object testPort {
+    val basePortNumber = new AtomicInteger(1024 + Random.nextInt(20000))
+    def apply(): Int = basePortNumber.getAndIncrement()
+  }
 
   "Client and server" should {
 
@@ -21,12 +34,12 @@ class ClientServerIntegrationSpec extends Specification {
 
       "exchange client-initiated request-response" in {
 
-        val testPort = 34782
+        val port = testPort()
         val testSerial = "testserial"
         val testResponse = HeartbeatRes(ZonedDateTime.of(2017, 7, 7, 12, 30, 6, 0, ZoneId.of("UTC")))
         val serverStarted = Promise[Unit]()
 
-        val server = new Ocpp1XJsonServer(testPort, Version.V16) {
+        val server = new Ocpp1XJsonServer(port, Version.V16) {
           def handleConnection(
             cpSerial: String,
             remote: Ocpp1XJsonServer.OutgoingEndpoint
@@ -53,7 +66,7 @@ class ClientServerIntegrationSpec extends Specification {
 
           val client = OcppJsonClient.forVersion1x(
             testSerial,
-            new URI(s"http://127.0.0.1:$testPort/"),
+            new URI(s"http://127.0.0.1:$port/"),
             versions = List(Version.V16)
           ) {
               (req: ChargePointReq) =>
@@ -65,7 +78,7 @@ class ClientServerIntegrationSpec extends Specification {
       }
 
       "exchange server-initiated request-response" in {
-        val testPort = 34783
+        val port = testPort()
         val testSerial = "testserial"
         val serverTestResponse = HeartbeatRes(ZonedDateTime.of(2017, 7, 7, 12, 30, 6, 0, ZoneId.of("UTC")))
         val clientTestResponse = GetLocalListVersionRes(AuthListSupported(42))
@@ -73,7 +86,7 @@ class ClientServerIntegrationSpec extends Specification {
 
         val clientResponsePromise = Promise[GetLocalListVersionRes]()
 
-        val server = new Ocpp1XJsonServer(testPort, Version.V16) {
+        val server = new Ocpp1XJsonServer(port, Version.V16) {
 
           def handleConnection(
             cpSerial: String,
@@ -105,7 +118,7 @@ class ClientServerIntegrationSpec extends Specification {
 
           val client = OcppJsonClient.forVersion1x(
             testSerial,
-            new URI(s"http://127.0.0.1:$testPort/"),
+            new URI(s"http://127.0.0.1:$port/"),
             versions = List(Version.V16)
           ) { (req: ChargePointReq) =>
             req match {
@@ -120,13 +133,119 @@ class ClientServerIntegrationSpec extends Specification {
 
         } finally server.stop()
       }
+
+      "process client-initiated close" in {
+        val port = testPort()
+        val testSerial = "testserial"
+        val serverStarted = Promise[Unit]()
+        val connectionClosedRemotelyForServer = Promise[Boolean]()
+
+        val server = new Ocpp1XJsonServer(port, Version.V16) {
+          def handleConnection(
+            cpSerial: String,
+            remote: Ocpp1XJsonServer.OutgoingEndpoint
+          ): CentralSystemRequestHandler = {
+            (req: CentralSystemReq) =>
+              req match {
+                case _ =>
+                  sys.error(s"Unexpected request in test server: $req"): CentralSystemRes
+              }
+          }
+
+          override def onStart(): Unit = {
+            serverStarted.complete(Success(()))
+            ()
+          }
+
+          override def onClose(conn: WebSocket, code: Int, reason: String, remote: Boolean): Unit = {
+            connectionClosedRemotelyForServer.complete(Success(remote))
+            ()
+          }
+        }
+
+        server.start()
+
+        try {
+          Await.result(serverStarted.future, 2.seconds)
+
+          val client = OcppJsonClient.forVersion1x(
+            testSerial,
+            new URI(s"http://127.0.0.1:$port/"),
+            versions = List(Version.V16)
+          ) {
+              (req: ChargePointReq) =>
+                sys.error("No incoming charge point request expected in this test"): ChargePointRes
+            }
+
+          Await.result(client.close(), 1.second) mustEqual (())
+          Await.result(connectionClosedRemotelyForServer.future, 1.second) must beTrue
+        } finally server.stop()
+      }
+
+      "process server-initiated close" in {
+        val port = testPort()
+        val testSerial = "testserial"
+        val serverTestResponse = HeartbeatRes(ZonedDateTime.of(2017, 7, 7, 12, 30, 6, 0, ZoneId.of("UTC")))
+        val clientTestResponse = GetLocalListVersionRes(AuthListSupported(42))
+        val serverStarted = Promise[Unit]()
+
+        val clientResponsePromise = Promise[GetLocalListVersionRes]()
+
+        val server = new Ocpp1XJsonServer(port, Version.V16) {
+
+          def handleConnection(
+            cpSerial: String,
+            remote: Ocpp1XJsonServer.OutgoingEndpoint
+          ): CentralSystemRequestHandler = {
+            (req: CentralSystemReq) =>
+              req match {
+                case HeartbeatReq =>
+                  clientResponsePromise.completeWith {
+                    remote.send(GetLocalListVersionReq)
+                  }
+
+                  serverTestResponse
+                case _ =>
+                  sys.error(s"Unexpected request to server in test: $req")
+              }
+          }
+
+          override def onStart(): Unit = {
+            serverStarted.complete(Success(()))
+            ()
+          }
+        }
+
+        server.start()
+
+        try {
+          Await.result(serverStarted.future, 2.seconds)
+
+          val client = OcppJsonClient.forVersion1x(
+            testSerial,
+            new URI(s"http://127.0.0.1:$port/"),
+            versions = List(Version.V16)
+          ) { (req: ChargePointReq) =>
+            req match {
+              case GetLocalListVersionReq => GetLocalListVersionRes(AuthListSupported(42))
+              case _ => sys.error(s"Unexpected request to client in test: $req")
+            }
+            }
+
+          client.send(HeartbeatReq)
+
+          Await.result(clientResponsePromise.future, 1.second) mustEqual clientTestResponse
+
+        } finally server.stop()
+
+      }
     }
 
     "on version 2.0" in {
 
       "exchange client-initiated request-response" in {
 
-        val testPort = 34784
+        val port = testPort()
         val testSerial = "testserial"
         val testRequest = BootNotificationRequest(
           ChargingStation(
@@ -145,7 +264,7 @@ class ClientServerIntegrationSpec extends Specification {
         )
         val serverStarted = Promise[Unit]()
 
-        val server: Ocpp20JsonServer = new Ocpp20JsonServer(testPort) {
+        val server: Ocpp20JsonServer = new Ocpp20JsonServer(port) {
           def handleConnection(cpSerial: String, remote: Ocpp20JsonServer.OutgoingEndpoint): CsmsRequestHandler = {
             req: CsmsRequest =>
 
@@ -170,7 +289,7 @@ class ClientServerIntegrationSpec extends Specification {
 
           val client = OcppJsonClient.forVersion20(
             testSerial,
-            new URI(s"http://127.0.0.1:$testPort/")
+            new URI(s"http://127.0.0.1:$port/")
           ) {
               _: CsRequest =>
                 throw OcppException(
@@ -185,27 +304,14 @@ class ClientServerIntegrationSpec extends Specification {
 
       "exchange server-initiated request-response" in {
 
-        val testPort = 34785
+        val port = testPort()
         val testSerial = "testserial"
-        val testRequest = RequestStartTransactionRequest(
-          evseId = Some(1),
-          remoteStartId = 1337,
-          idToken = IdToken("04EC2CC2552280", IdTokenType.ISO14443, additionalInfo = None),
-          chargingProfile = None
-        )
-        val testResponse = RequestStartTransactionResponse(
-          status = RequestStartStopStatus.Accepted,
-          transactionId = Some("Gefeliciteerd Olger, de aanhouder wint!")
-        )
         val serverStarted = Promise[Unit]()
+        val connectionClosedRemotelyForServer = Promise[Boolean]()
 
-        val clientResponsePromise = Promise[RequestStartTransactionResponse]()
-
-        val server: Ocpp20JsonServer = new Ocpp20JsonServer(testPort) {
+        val server: Ocpp20JsonServer = new Ocpp20JsonServer(port) {
           def handleConnection(cpSerial: String, remote: Ocpp20JsonServer.OutgoingEndpoint): CsmsRequestHandler = {
-            clientResponsePromise.completeWith {
-              remote.send(testRequest)
-            }
+            remote.close()
 
             {
               req: CsmsRequest =>
@@ -217,6 +323,11 @@ class ClientServerIntegrationSpec extends Specification {
             serverStarted.complete(Success(()))
             ()
           }
+
+          override def onClose(conn: WebSocket, code: Int, reason: String, remote: Boolean) = {
+            connectionClosedRemotelyForServer.complete(Success(remote))
+            ()
+          }
         }
 
         server.start()
@@ -226,19 +337,13 @@ class ClientServerIntegrationSpec extends Specification {
 
           OcppJsonClient.forVersion20(
             testSerial,
-            new URI(s"http://127.0.0.1:$testPort/")
+            new URI(s"http://127.0.0.1:$port/")
           ) {
-              req: CsRequest =>
-                req match {
-                  case r if r == testRequest =>
-                    testResponse
+            req: CsRequest =>
+              (throw OcppException(PayloadErrorCode.InternalError, s"Unexpected request in test client: $req")): CsResponse
+          }
 
-                  case x =>
-                    throw OcppException(PayloadErrorCode.InternalError, s"Unexpected request in test client: $req")
-                }
-            }
-
-          Await.result(clientResponsePromise.future, 1.second) mustEqual testResponse
+          Await.result(connectionClosedRemotelyForServer.future, 1.second) mustEqual false
         } finally server.stop()
       }
     }
