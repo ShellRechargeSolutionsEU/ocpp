@@ -60,27 +60,26 @@ abstract class OcppJsonClient[
 
     self: OcppConnectionComponent[OUTREQBOUND, INRESBOUND, OUTREQRES, INREQBOUND, OUTRESBOUND, INREQRES] =>
 
-    import SimpleClientWebSocketComponent._
-
     val webSocketConnection = new SimpleClientWebSocketConnection(
       chargerId,
       centralSystemUri,
       authPassword,
       requestedSubProtocols = versionsToRequest.map { version =>
-        wsSubProtocolForOcppVersion.getOrElse(
+        SimpleClientWebSocketComponent.wsSubProtocolForOcppVersion.getOrElse(
           version,
           throw VersionNotSupported(
             "JSON client only supports versions: ",
-            supportedVersions = ocppVersionForWsSubProtocol.values
+            supportedVersions = SimpleClientWebSocketComponent.ocppVersionForWsSubProtocol.values
           )
         )
       }
     )
 
-    val negotiatedOcppVersion: Version = ocppVersionForWsSubProtocol.getOrElse(
-      webSocketConnection.subProtocol,
-      throw new RuntimeException(s"Unknown protocol ${webSocketConnection.subProtocol} in use for connection")
-    )
+    val negotiatedOcppVersion: Version =
+      SimpleClientWebSocketComponent.ocppVersionForWsSubProtocol.getOrElse(
+        webSocketConnection.subProtocol,
+        throw new RuntimeException(s"Unknown protocol ${webSocketConnection.subProtocol} in use for connection")
+      )
 
     val srpcConnection = new DefaultSrpcConnection
   }

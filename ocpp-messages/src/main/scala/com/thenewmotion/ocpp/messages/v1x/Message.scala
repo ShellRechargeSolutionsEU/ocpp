@@ -2,12 +2,10 @@ package com.thenewmotion.ocpp
 package messages
 package v1x
 
-import scala.concurrent.duration._
 import java.net.URI
 import java.time.ZonedDateTime
-
-import enums.reflection.EnumUtils.Enumerable
-import enums.reflection.EnumUtils.Nameable
+import scala.concurrent.duration._
+import enums.reflection.EnumUtils.{Enumerable, Nameable}
 
 sealed trait StopReason extends Nameable
 object StopReason extends EnumerableWithDefault[StopReason] {

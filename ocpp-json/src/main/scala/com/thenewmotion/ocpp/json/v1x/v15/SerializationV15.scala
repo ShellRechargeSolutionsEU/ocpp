@@ -435,10 +435,9 @@ object SerializationV15 extends SerializationCommon {
 
   private implicit class RichChargePointStatus(self: ChargePointStatus) {
 
-    import RichChargePointStatus.defaultErrorCode
-
     def toV15Fields: (String, String, Option[String], Option[String]) = {
-      def simpleStatus(name: String) = (name, defaultErrorCode, self.info, None)
+      def simpleStatus(name: String) =
+        (name, RichChargePointStatus.defaultErrorCode, self.info, None)
 
       self match {
         case ChargePointStatus.Available(_) => simpleStatus("Available")
@@ -446,14 +445,13 @@ object SerializationV15 extends SerializationCommon {
         case ChargePointStatus.Unavailable(_) => simpleStatus("Unavailable")
         case ChargePointStatus.Reserved(_) => simpleStatus("Reserved")
         case ChargePointStatus.Faulted(errCode, inf, vendorErrCode) =>
-          ("Faulted", errCode.map(_.name).getOrElse(defaultErrorCode), inf, vendorErrCode)
+          ("Faulted", errCode.map(_.name).getOrElse(RichChargePointStatus.defaultErrorCode), inf, vendorErrCode)
       }
     }
   }
 
   private def statusFieldsToOcppStatus(status: String, errorCode: String, info: Option[String],
     vendorErrorCode: Option[String]): ChargePointStatus = {
-    import RichChargePointStatus.defaultErrorCode
 
     status match {
       case "Available" => ChargePointStatus.Available(info)
@@ -461,13 +459,16 @@ object SerializationV15 extends SerializationCommon {
       case "Unavailable" => ChargePointStatus.Unavailable(info)
       case "Reserved" => ChargePointStatus.Reserved(info)
       case "Faulted" =>
-        val errorCodeString =
-          if (errorCode == defaultErrorCode)
+        val errorCodeString = errorCode match {
+          case RichChargePointStatus.`defaultErrorCode` =>
             None
-          else if (errorCode == "Mode3Error") // this got renamed in ocpp 1.6 and as we match on the protocol agnostic messages a translation needs to be made
-            Some(enumerableFromJsonString(v1x.ChargePointErrorCode, "EVCommunicationError"))
-          else
-            Some(enumerableFromJsonString(v1x.ChargePointErrorCode, errorCode))
+          case "Mode3Error" =>
+            // this got renamed in ocpp 1.6 and as we match on the protocol agnostic messages a translation needs to be made
+            Some(enumerableFromJsonString (v1x.ChargePointErrorCode, "EVCommunicationError"))
+          case _ =>
+            Some(enumerableFromJsonString (v1x.ChargePointErrorCode, errorCode))
+        }
+
         ChargePointStatus.Faulted(errorCodeString, info, vendorErrorCode)
     }
   }
@@ -479,14 +480,13 @@ object SerializationV15 extends SerializationCommon {
     )
 
     def valueToV15(v: v1x.meter.Value): MeterValue = {
-      import v1x.meter._
       MeterValue(
         value = v.value,
-        measurand = noneIfDefault(Measurand, v.measurand),
-        context = noneIfDefault(ReadingContext, v.context),
-        format = noneIfDefault(ValueFormat, v.format),
-        location = noneIfDefault(Location, v.location),
-        unit = noneIfDefault(UnitOfMeasure, v.unit)
+        measurand = noneIfDefault(v1x.meter.Measurand, v.measurand),
+        context = noneIfDefault(v1x.meter.ReadingContext, v.context),
+        format = noneIfDefault(v1x.meter.ValueFormat, v.format),
+        location = noneIfDefault(v1x.meter.Location, v.location),
+        unit = noneIfDefault(v1x.meter.UnitOfMeasure, v.unit)
       )
     }
   }
@@ -495,29 +495,25 @@ object SerializationV15 extends SerializationCommon {
     v1x.meter.Meter(v15m.timestamp, v15m.values.map(meterValueFromV15))
   }
 
-  private def meterValueFromV15(v15m: MeterValue): v1x.meter.Value = {
-    import v1x.meter._
-    import v15m._
-
-    Value(
-      value = value,
-      measurand = defaultIfNone(Measurand, measurand),
+  private def meterValueFromV15(v15m: MeterValue): v1x.meter.Value =
+    v1x.meter.Value(
+      value = v15m.value,
+      measurand = defaultIfNone(v1x.meter.Measurand, v15m.measurand),
       phase = None,
-      context = defaultIfNone(ReadingContext, context),
-      format = defaultIfNone(ValueFormat, format),
-      location = defaultIfNone(Location, location),
-      unit = unit.fold[UnitOfMeasure](UnitOfMeasure.Wh) { unitString =>
-        UnitOfMeasure.withName(unitString) match {
+      context = defaultIfNone(v1x.meter.ReadingContext, v15m.context),
+      format = defaultIfNone(v1x.meter.ValueFormat, v15m.format),
+      location = defaultIfNone(v1x.meter.Location, v15m.location),
+      unit = v15m.unit.fold[v1x.meter.UnitOfMeasure](v1x.meter.UnitOfMeasure.Wh) { unitString =>
+        v1x.meter.UnitOfMeasure.withName(unitString) match {
           case Some(unitOfMeasure) => unitOfMeasure
           case None => unitString match {
-            case "Amp" => UnitOfMeasure.Amp
-            case "Volt" => UnitOfMeasure.Volt
+            case "Amp" => v1x.meter.UnitOfMeasure.Amp
+            case "Volt" => v1x.meter.UnitOfMeasure.Volt
             case _ => throw new MappingException(s"Value $unitString is not valid for UnitOfMeasure")
           }
         }
       }
     )
-  }
 
   private implicit class BooleanToStatusString(val b: Boolean) extends AnyVal {
     def toStatusString = if (b) "Accepted" else "Rejected"
@@ -533,16 +529,12 @@ object SerializationV15 extends SerializationCommon {
 
   private implicit class RichKeyValue(val self: v1x.KeyValue) {
 
-    import self._
-
-    def toV15: ConfigurationEntry = ConfigurationEntry(key, readonly, value)
+    def toV15: ConfigurationEntry = ConfigurationEntry(self.key, self.readonly, self.value)
   }
 
   private implicit class RichConfigurationEntry(self: ConfigurationEntry) {
 
-    import self._
-
-    def fromV15: v1x.KeyValue = v1x.KeyValue(key, readonly, value)
+    def fromV15: v1x.KeyValue = v1x.KeyValue(self.key, self.readonly, self.value)
   }
 
   private implicit class RichAuthListVersion(self: v1x.AuthListVersion) {

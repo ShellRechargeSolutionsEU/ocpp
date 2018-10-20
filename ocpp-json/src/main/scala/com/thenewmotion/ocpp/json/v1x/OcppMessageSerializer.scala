@@ -28,17 +28,17 @@ trait OcppMessageSerializer[M <: messages.v1x.Message, V <: Version] {
 
 object OcppMessageSerializer {
   def variantFor[M <: messages.v1x.Message, V <: Version, SpecM <: VersionSpecificMessage : Manifest](
-    _to: M => SpecM,
-    _from: SpecM => M): OcppMessageSerializer[M, V] =
+    toF: M => SpecM,
+    fromF: SpecM => M): OcppMessageSerializer[M, V] =
     new OcppMessageSerializer[M, V] {
 
       protected[json] type VersionSpecific = SpecM
 
       protected val manifest: Manifest[SpecM] = implicitly[Manifest[SpecM]]
 
-      protected[json] def to(msg: M): SpecM = _to(msg)
+      protected[json] def to(msg: M): SpecM = toF(msg)
 
-      protected[json] def from(msg: SpecM): M = _from(msg)
+      protected[json] def from(msg: SpecM): M = fromF(msg)
   }
 }
 

@@ -2,11 +2,8 @@ package com.thenewmotion.ocpp
 package json
 
 import java.net.URI
-import java.net.URISyntaxException
-
-import enums.reflection.EnumUtils.Enumerable
-import enums.reflection.EnumUtils.Nameable
-
+import scala.util.{Failure, Success, Try}
+import enums.reflection.EnumUtils.{Enumerable, Nameable}
 import org.json4s.MappingException
 
 private[json] trait SerializationCommon {
@@ -36,9 +33,11 @@ private[json] trait SerializationCommon {
   /**
    * Parses a URI and throws a lift-json MappingException if the syntax is wrong
    */
-  def parseURI(s: String) = try {
+  def parseURI(s: String) = Try {
     new URI(s)
-  } catch {
-    case e: URISyntaxException => throw MappingException(s"Invalid URL $s in OCPP-JSON message", e)
+  } match {
+    case Failure(e: Exception) => throw MappingException(s"Could not parse URL $s in OCPP-JSON message", e)
+    case Failure(e)            => throw e
+    case Success(u)            => u
   }
 }

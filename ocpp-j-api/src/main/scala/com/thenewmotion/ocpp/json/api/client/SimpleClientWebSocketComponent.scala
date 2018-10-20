@@ -13,6 +13,7 @@ import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.protocols.{IProtocol, Protocol}
 import org.json4s._
 import org.slf4j.LoggerFactory
+import SimpleClientWebSocketComponent._
 
 trait SimpleClientWebSocketComponent extends WebSocketComponent {
 
@@ -25,8 +26,6 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
   )(implicit sslContext: javax.net.ssl.SSLContext = javax.net.ssl.SSLContext.getDefault)
     extends WebSocketConnection {
     private val logger = LoggerFactory.getLogger(SimpleClientWebSocketConnection.this.getClass)
-
-    import SimpleClientWebSocketComponent._
 
     private val actualUri = uriWithChargerId(uri, chargerId)
 

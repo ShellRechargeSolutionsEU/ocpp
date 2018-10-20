@@ -3,17 +3,16 @@ package json
 package v1x
 package v16
 
+import scala.reflect.{ClassTag, classTag}
 import org.scalacheck.Gen
 import org.scalacheck.Prop.forAll
 import org.specs2.ScalaCheck
 import org.specs2.mutable.Specification
-
-import scala.reflect.{ClassTag, classTag}
+import scalacheck.MessageGenerators._
+import SerializationV16._
 
 object SerializationV16Spec extends Specification with ScalaCheck {
 
-  import SerializationV16._
-  import scalacheck.MessageGenerators._
 
   "Conversion to/from OCPP 1.6-J format" should {
 
