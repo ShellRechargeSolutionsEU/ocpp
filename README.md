@@ -841,6 +841,9 @@ Charging Station Management System operations:
      create a server with two request handlers, one for 1.x and for 2.0, and
      let the server negotiate the OCPP version to use with the client.
 
+   * Add a mechanism for the library to report standardized security events
+     about the connection
+
    * Add support for the 3 security profiles for authenticated encryption
 
    * Perhaps then add a note that the ready-made server class and app in this
