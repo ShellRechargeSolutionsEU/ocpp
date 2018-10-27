@@ -73,7 +73,7 @@ object VersionFamily {
     ChargePointReqRes
   ]
 
-  implicit object V1XCentralSystemRequest extends CsmsMessageTypesForVersionFamily[
+  implicit object V1XCentralSystemMessages extends CsmsMessageTypesForVersionFamily[
     V1X.type,
     CentralSystemReq,
     CentralSystemRes,
