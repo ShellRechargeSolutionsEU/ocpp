@@ -52,7 +52,7 @@ resolvers += "TNM" at "http://nexus.thenewmotion.com/content/groups/public"
 and this to your `build.sbt`:
 
 ```
-libraryDependencies += "com.thenewmotion" %% "ocpp-j-api" % "9.0.0"
+libraryDependencies += "com.thenewmotion" %% "ocpp-j-api" % "9.0.1"
 ```
 
 With Maven, you'd set up the repository in your pom.xml:
@@ -70,7 +70,7 @@ and add this to your dependencies:
     <dependency>
         <groupId>com.thenewmotion.ocpp</groupId>
         <artifactId>ocpp-j-api_2.11</artifactId>
-        <version>9.0.0</version>
+        <version>9.0.1</version>
     </dependency>
 ```
 
@@ -853,6 +853,12 @@ Charging Station Management System operations:
    * Support for JSON web signatures in the RPC-level encoding
 
 ## Changelog
+
+### Changes in 9.0.1
+
+ - Renamed `com.thenewmotion.ocpp.VersionFamily.V1XCentralSystemRequest` to
+   `com.thenewmotion.ocpp.VersionFamily.V1XCentralSystemMessages` as it should
+   have been named all along.
 
 ### Changes in 9.0.0
 
