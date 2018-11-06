@@ -42,4 +42,34 @@ object MessageGenerators {
   def heartbeatRequest: Gen[HeartbeatRequest] = const(HeartbeatRequest())
 
   def heartbeatResponse: Gen[HeartbeatResponse] = instant.map(HeartbeatResponse)
+
+  def transactionEventRequest: Gen[TransactionEventRequest] = for {
+    eventType <- transactionEvent
+    meterValues <- option(nonEmptyListOf(meterValue))
+    timestamp <- instant
+    triggerReason <- enumerableGen(TriggerReason)
+    seqNo <- chooseNum(0, 12345)
+    offline <- option(oneOf(false, true))
+    numberOfPhasesUsed <- option(chooseNum(1,3))
+    cableMaxCurrent <- option(bigDecimal)
+    reservationId <- option(posNum[Int])
+    transactionData <- transaction
+    evse <- evse
+    idToken <- idToken
+  } yield TransactionEventRequest(
+    eventType,
+    meterValues,
+    timestamp,
+    triggerReason,
+    seqNo,
+    offline,
+    numberOfPhasesUsed,
+    cableMaxCurrent,
+    reservationId,
+    transactionData,
+    evse,
+    idToken
+  )
+
+  //def transactionEventResponse: Gen[TransactionEventResponse]
 }

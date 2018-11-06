@@ -233,73 +233,73 @@ case class SampledValue(
 
 sealed trait ReadingContext extends Nameable
 object ReadingContext extends Enumerable[ReadingContext] {
-  case object `Interruption.Begin` extends ReadingContext
-  case object `Interruption.End` extends ReadingContext
+  case object InterruptionBegin extends ReadingContext { override def name = "Interruption.Begin" }
+  case object InterruptionEnd extends ReadingContext   { override def name = "Interruption.End" }
   case object Other extends ReadingContext
-  case object `Sample.Clock` extends ReadingContext
-  case object `Sample.Periodic` extends ReadingContext
-  case object `Transaction.Begin` extends ReadingContext
-  case object `Transaction.End` extends ReadingContext
+  case object SampleClock extends ReadingContext       { override def name = "Sample.Clock" }
+  case object SamplePeriodic extends ReadingContext    { override def name = "Sample.Periodic" }
+  case object TransactionBegin extends ReadingContext  { override def name = "Transaction.Begin" }
+  case object TransactionEnd extends ReadingContext    { override def name = "Transaction.End" }
   case object Trigger extends ReadingContext
 
   val values = List(
-    `Interruption.Begin`, `Interruption.End`, Other, `Sample.Clock`,
-    `Sample.Periodic`, `Transaction.Begin`, `Transaction.End`, Trigger
+    InterruptionBegin, InterruptionEnd, Other, SampleClock,
+    SamplePeriodic, TransactionBegin, TransactionEnd, Trigger
   )
 }
 
 sealed trait Measurand extends Nameable
 object Measurand extends Enumerable[Measurand] {
-  case object `Current.Export` extends Measurand
-  case object `Current.Import` extends Measurand
-  case object `Current.Offered` extends Measurand
-  case object `Energy.Active.Export.Register` extends Measurand
-  case object `Energy.Active.Import.Register` extends Measurand
-  case object `Energy.Reactive.Export.Register` extends Measurand
-  case object `Energy.Reactive.Import.Register` extends Measurand
-  case object `Energy.Active.Export.Interval` extends Measurand
-  case object `Energy.Active.Import.Interval` extends Measurand
-  case object `Energy.Active.Net` extends Measurand
-  case object `Energy.Reactive.Export.Interval` extends Measurand
-  case object `Energy.Reactive.Import.Interval` extends Measurand
-  case object `Energy.Reactive.Net` extends Measurand
-  case object `Energy.Apparent.Net` extends Measurand
-  case object `Energy.Apparent.Import` extends Measurand
-  case object `Energy.Apparent.Export` extends Measurand
+  case object CurrentExport extends Measurand                { override def name = "Current.Export" }
+  case object CurrentImport extends Measurand                { override def name = "Current.Import" }
+  case object CurrentOffered extends Measurand               { override def name = "Current.Offered" }
+  case object EnergyActiveExportRegister extends Measurand   { override def name = "Energy.Active.Export.Register" }
+  case object EnergyActiveImportRegister extends Measurand   { override def name = "Energy.Active.Import.Register" }
+  case object EnergyReactiveExportRegister extends Measurand { override def name = "Energy.Reactive.Export.Register" }
+  case object EnergyReactiveImportRegister extends Measurand { override def name = "Energy.Reactive.Import.Register" }
+  case object EnergyActiveExportInterval extends Measurand   { override def name = "Energy.Active.Export.Interval" }
+  case object EnergyActiveImportInterval extends Measurand   { override def name = "Energy.Active.Import.Interval" }
+  case object EnergyActiveNet extends Measurand              { override def name = "Energy.Active.Net" }
+  case object EnergyReactiveExportInterval extends Measurand { override def name = "Energy.Reactive.Export.Interval" }
+  case object EnergyReactiveImportInterval extends Measurand { override def name = "Energy.Reactive.Import.Interval" }
+  case object EnergyReactiveNet extends Measurand            { override def name = "Energy.Reactive.Net" }
+  case object EnergyApparentNet extends Measurand            { override def name = "Energy.Apparent.Net" }
+  case object EnergyApparentImport extends Measurand         { override def name = "Energy.Apparent.Import" }
+  case object EnergyApparentExport extends Measurand         { override def name = "Energy.Apparent.Export" }
   case object Frequency extends Measurand
-  case object `Power.Active.Export` extends Measurand
-  case object `Power.Active.Import` extends Measurand
-  case object `Power.Factor` extends Measurand
-  case object `Power.Offered` extends Measurand
-  case object `Power.Reactive.Export` extends Measurand
-  case object `Power.Reactive.Import` extends Measurand
+  case object PowerActiveExport extends Measurand            { override def name = "Power.Active.Export" }
+  case object PowerActiveImport extends Measurand            { override def name = "Power.Active.Import" }
+  case object PowerFactor extends Measurand                  { override def name = "Power.Factor" }
+  case object PowerOffered extends Measurand                 { override def name = "Power.Offered" }
+  case object PowerReactiveExport extends Measurand          { override def name = "Power.Reactive.Export" }
+  case object PowerReactiveImport extends Measurand          { override def name = "Power.Reactive.Import" }
   case object SoC extends Measurand
   case object Voltage extends Measurand
 
   val values = List(
-   `Current.Export` ,
-   `Current.Import` ,
-   `Current.Offered` ,
-   `Energy.Active.Export.Register` ,
-   `Energy.Active.Import.Register` ,
-   `Energy.Reactive.Export.Register` ,
-   `Energy.Reactive.Import.Register` ,
-   `Energy.Active.Export.Interval` ,
-   `Energy.Active.Import.Interval` ,
-   `Energy.Active.Net` ,
-   `Energy.Reactive.Export.Interval` ,
-   `Energy.Reactive.Import.Interval` ,
-   `Energy.Reactive.Net` ,
-   `Energy.Apparent.Net` ,
-   `Energy.Apparent.Import` ,
-   `Energy.Apparent.Export` ,
+   CurrentExport ,
+   CurrentImport ,
+   CurrentOffered ,
+   EnergyActiveExportRegister ,
+   EnergyActiveImportRegister ,
+   EnergyReactiveExportRegister ,
+   EnergyReactiveImportRegister ,
+   EnergyActiveExportInterval ,
+   EnergyActiveImportInterval ,
+   EnergyActiveNet ,
+   EnergyReactiveExportInterval ,
+   EnergyReactiveImportInterval ,
+   EnergyReactiveNet ,
+   EnergyApparentNet ,
+   EnergyApparentImport ,
+   EnergyApparentExport ,
    Frequency ,
-   `Power.Active.Export` ,
-   `Power.Active.Import` ,
-   `Power.Factor` ,
-   `Power.Offered` ,
-   `Power.Reactive.Export` ,
-   `Power.Reactive.Import` ,
+   PowerActiveExport ,
+   PowerActiveImport ,
+   PowerFactor ,
+   PowerOffered ,
+   PowerReactiveExport ,
+   PowerReactiveImport ,
    SoC ,
    Voltage
   )
@@ -353,11 +353,11 @@ object SignatureMethod extends Enumerable[SignatureMethod] {
 sealed trait EncodingMethod extends Nameable
 object EncodingMethod extends Enumerable[EncodingMethod] {
   case object Other extends EncodingMethod
-  case object `DLMS Message` extends EncodingMethod
-  case object `COSEM Protected Data` extends EncodingMethod
+  case object DLMSMessage extends EncodingMethod        { override def name = "DLMS Message" }
+  case object COSEMProtectedData extends EncodingMethod { override def name = "COSEM Protected Data" }
   case object EDL extends EncodingMethod
 
-  val values = List(Other, `DLMS Message`, `COSEM Protected Data`, EDL)
+  val values = List(Other, DLMSMessage, COSEMProtectedData, EDL)
 }
 
 case class UnitOfMeasure(
@@ -480,11 +480,70 @@ object Reason extends Enumerable[Reason] {
 
 case class EVSE(
   id: Int,
-  // so a connectorId is a property of an EVSE!?
-  // *Sigh* Enterpise Architect. Not even once.
   connectorId: Option[Int]
 )
 
 case class TransactionEventResponse(
-
+  totalCost: Option[BigDecimal],
+  chargingPriority: Option[Int],
+  idTokenInfo: Option[IdTokenInfo],
+  updatedPersonalMessage: Option[MessageContent]
 ) extends CsmsResponse
+
+case class IdTokenInfo(
+  status: AuthorizationStatus,
+  cacheExpiryDateTime: Option[Instant],
+  chargingPriority: Option[Int],
+  groupIdToken: Option[GroupIdToken],
+  language1: Option[String],
+  language2: Option[String],
+  personalMessage: Option[MessageContent]
+)
+
+sealed trait AuthorizationStatus extends Nameable
+object AuthorizationStatus extends Enumerable[AuthorizationStatus] {
+  case object Accepted extends AuthorizationStatus
+  case object Blocked extends AuthorizationStatus
+  case object ConcurrentTx extends AuthorizationStatus
+  case object Expired extends AuthorizationStatus
+  case object Invalid extends AuthorizationStatus
+  case object NoCredit extends AuthorizationStatus
+  case object NotAllowedTypeEVSE extends AuthorizationStatus
+  case object NotAtThisLocation extends AuthorizationStatus
+  case object NotAtThisTime extends AuthorizationStatus
+  case object Unknown extends AuthorizationStatus
+
+  val values = List(
+    Accepted,
+    Blocked,
+    ConcurrentTx,
+    Expired,
+    Invalid,
+    NoCredit,
+    NotAllowedTypeEVSE,
+    NotAtThisLocation,
+    NotAtThisTime,
+    Unknown
+  )
+}
+
+case class GroupIdToken(
+  idToken: String,
+  `type`: IdTokenType
+)
+
+case class MessageContent(
+  format: MessageFormat,
+  language: Option[String],
+  content: String
+)
+
+sealed trait MessageFormat extends Nameable
+object MessageFormat extends Enumerable[MessageFormat] {
+  case object ASCII extends MessageFormat
+  case object HTML extends MessageFormat
+  case object URI extends MessageFormat
+  case object UTF8 extends MessageFormat
+
+  val values = List(ASCII, HTML, URI, UTF8)
+}

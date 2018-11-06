@@ -16,6 +16,17 @@ package object serialization {
     new EnumerableNameSerializer(ChargingProfileKind),
     new EnumerableNameSerializer(RecurrencyKind),
     new EnumerableNameSerializer(ChargingRateUnit),
-    new EnumerableNameSerializer(RequestStartStopStatus)
+    new EnumerableNameSerializer(RequestStartStopStatus),
+    new EnumerableNameSerializer(Reason),
+    new EnumerableNameSerializer(TriggerReason),
+    new EnumerableNameSerializer(TransactionEvent),
+    new EnumerableNameSerializer(ReadingContext),
+    new EnumerableNameSerializer(Measurand),
+    new EnumerableNameSerializer(Phase),
+    new EnumerableNameSerializer(Location),
+    new EnumerableNameSerializer(SignatureMethod),
+    new EnumerableNameSerializer(EncodingMethod),
+    new EnumerableNameSerializer(ChargingState),
+    new EnumerableNameSerializer(AuthorizationStatus)
   )
 }
