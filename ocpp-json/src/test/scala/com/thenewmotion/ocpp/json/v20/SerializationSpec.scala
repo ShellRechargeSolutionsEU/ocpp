@@ -21,6 +21,8 @@ class SerializationSpec extends Specification with ScalaCheck {
     testMessage(bootNotificationResponse)
     testMessage(heartbeatRequest)
     testMessage(heartbeatResponse)
+
+    testMessage(transactionEventRequest)
   }
 
   private def testMessage[M <: Message : Manifest](messageGen: Gen[M]): Fragment = {
