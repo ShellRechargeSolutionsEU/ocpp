@@ -8,6 +8,7 @@ abstract class CsmsReqRes[REQ <: CsmsRequest, RES <: CsmsResponse] extends ReqRe
 
 object CsReqRes {
   implicit object RequestStartTransactionReqRes extends CsReqRes[RequestStartTransactionRequest, RequestStartTransactionResponse]
+  implicit object RequestStopTransactionReqRes  extends CsReqRes[RequestStopTransactionRequest , RequestStopTransactionResponse ]
 }
 
 object CsmsReqRes {
