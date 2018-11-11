@@ -54,8 +54,8 @@ object MessageGenerators {
     cableMaxCurrent <- option(bigDecimal)
     reservationId <- option(posNum[Int])
     transactionData <- transaction
-    evse <- evse
-    idToken <- idToken
+    evse <- option(evse)
+    idToken <- option(idToken)
   } yield TransactionEventRequest(
     eventType,
     meterValues,

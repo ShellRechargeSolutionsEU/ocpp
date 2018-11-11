@@ -16,8 +16,8 @@ case class TransactionEventRequest(
   cableMaxCurrent: Option[BigDecimal],
   reservationId: Option[Int],
   transactionData: Transaction,
-  evse: EVSE,
-  idToken: IdToken
+  evse: Option[EVSE],
+  idToken: Option[IdToken]
 ) extends CsmsRequest
 
 sealed trait TransactionEvent extends Nameable
