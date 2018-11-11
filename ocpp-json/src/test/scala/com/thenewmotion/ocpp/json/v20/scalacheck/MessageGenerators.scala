@@ -98,4 +98,10 @@ object MessageGenerators {
     eId <- option(nonEmptyListOf(evseId))
     idTokenI <- idTokenInfo
   } yield AuthorizeResponse(certStat, eId, idTokenI)
+
+  def requestStopTransactionRequest: Gen[RequestStopTransactionRequest] =
+    ocppIdentifierString(36).map(RequestStopTransactionRequest)
+
+  def requestStopTransactionResponse: Gen[RequestStopTransactionResponse] =
+    enumerableGen(RequestStartStopStatus).map(RequestStopTransactionResponse)
 }

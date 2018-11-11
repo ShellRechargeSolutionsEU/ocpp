@@ -124,3 +124,11 @@ object RequestStartStopStatus extends Enumerable[RequestStartStopStatus] {
 
   val values = List(Accepted, Rejected)
 }
+
+case class RequestStopTransactionRequest(
+  transactionId: String
+) extends CsRequest
+
+case class RequestStopTransactionResponse(
+  status: RequestStartStopStatus
+) extends CsResponse
