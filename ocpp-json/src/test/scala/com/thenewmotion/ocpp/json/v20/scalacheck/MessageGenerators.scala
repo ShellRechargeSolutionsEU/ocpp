@@ -81,9 +81,21 @@ object MessageGenerators {
   def statusNotificationRequest: Gen[StatusNotificationRequest] = for {
     timestamp <- instant
     connectorStatus <- enumerableGen(ConnectorStatus)
-    evseId <- chooseNum(0, 100)
+    eId <- evseId
     connectorId <- chooseNum(1, 5)
-  } yield StatusNotificationRequest(timestamp, connectorStatus, evseId, connectorId)
+  } yield StatusNotificationRequest(timestamp, connectorStatus, eId, connectorId)
 
   def statusNotificationResponse: Gen[StatusNotificationResponse] = const(StatusNotificationResponse())
+
+  def authorizeRequest: Gen[AuthorizeRequest] = for {
+    evseIds <- option(nonEmptyListOf(evseId))
+    idT <- idToken
+    ocspReqData <- option(resize(4, nonEmptyListOf(ocspRequestData)))
+  } yield AuthorizeRequest(evseIds, idT, ocspReqData)
+
+  def authorizeResponse: Gen[AuthorizeResponse] = for {
+    certStat <- option(enumerableGen(CertificateStatus))
+    eId <- option(nonEmptyListOf(evseId))
+    idTokenI <- idTokenInfo
+  } yield AuthorizeResponse(certStat, eId, idTokenI)
 }

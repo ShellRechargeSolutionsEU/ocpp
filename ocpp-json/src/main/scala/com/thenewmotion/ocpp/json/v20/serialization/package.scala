@@ -29,6 +29,8 @@ package object serialization {
     new EnumerableNameSerializer(ChargingState),
     new EnumerableNameSerializer(AuthorizationStatus),
     new EnumerableNameSerializer(MessageFormat),
-    new EnumerableNameSerializer(ConnectorStatus)
+    new EnumerableNameSerializer(ConnectorStatus),
+    new EnumerableNameSerializer(HashAlgorithm),
+    new EnumerableNameSerializer(CertificateStatus)
   )
 }

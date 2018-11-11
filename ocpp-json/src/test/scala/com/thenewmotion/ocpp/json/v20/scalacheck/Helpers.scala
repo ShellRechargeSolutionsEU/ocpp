@@ -35,6 +35,8 @@ object Helpers {
   // guess they mean this
   def ocppInteger: Gen[Int] = chooseNum(Int.MinValue, Int.MaxValue)
 
+  def evseId: Gen[Int] = chooseNum(0, 100)
+
   def chargingStation: Gen[ChargingStation] =
     for {
       serialNumber <- option(ocppString(20))
@@ -152,7 +154,7 @@ object Helpers {
   } yield Transaction(id, chargingState, timeSpentCharging, stoppedReason, remoteStartId)
 
   def evse: Gen[EVSE] = for {
-    id <- ocppInteger
+    id <- evseId
     connectorId <- option(ocppInteger)
   } yield EVSE(id, connectorId)
 
@@ -184,4 +186,12 @@ object Helpers {
     lang <- option(language)
     content <- ocppString(512)
   } yield MessageContent(format, lang, content)
+
+  def ocspRequestData: Gen[OCSPRequestData] = for {
+    hashAlgorithm <- enumerableGen(HashAlgorithm)
+    issuerNameHash <- ocppString(128)
+    issuerKeyHash <- ocppString(128)
+    serialNumber <- ocppString(20)
+    responderURL <- option(ocppString(512))
+  } yield OCSPRequestData(hashAlgorithm, issuerNameHash, issuerKeyHash, serialNumber, responderURL)
 }

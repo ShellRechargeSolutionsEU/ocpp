@@ -106,9 +106,10 @@ object CsmsOcpp20Procedures extends Ocpp20Procedures[
   CsmsReqRes
 ] {
   val procedures = List(
+    CsmsOcpp20Procedure[AuthorizeRequest, AuthorizeResponse, CsmsReqRes],
     CsmsOcpp20Procedure[BootNotificationRequest, BootNotificationResponse, CsmsReqRes],
     CsmsOcpp20Procedure[HeartbeatRequest, HeartbeatResponse, CsmsReqRes],
-    CsmsOcpp20Procedure[TransactionEventRequest, TransactionEventResponse, CsmsReqRes],
-    CsmsOcpp20Procedure[StatusNotificationRequest, StatusNotificationResponse, CsmsReqRes]
+    CsmsOcpp20Procedure[StatusNotificationRequest, StatusNotificationResponse, CsmsReqRes],
+    CsmsOcpp20Procedure[TransactionEventRequest, TransactionEventResponse, CsmsReqRes]
   )
 }
