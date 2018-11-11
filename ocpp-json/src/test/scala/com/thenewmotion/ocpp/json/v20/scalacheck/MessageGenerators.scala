@@ -71,5 +71,10 @@ object MessageGenerators {
     idToken
   )
 
-  //def transactionEventResponse: Gen[TransactionEventResponse]
+  def transactionEventResponse: Gen[TransactionEventResponse] = for {
+    totalCost <- option(chooseNum(-20000, 20000).map((i: Int) => BigDecimal(i) / 100))
+    prio <- option(chargingPriority)
+    idTokenInfo <- option(idTokenInfo)
+    updatedMsg <- option(messageContent)
+  } yield TransactionEventResponse(totalCost, prio, idTokenInfo, updatedMsg)
 }

@@ -155,4 +155,33 @@ object Helpers {
     id <- ocppInteger
     connectorId <- option(ocppInteger)
   } yield EVSE(id, connectorId)
+
+  def idTokenInfo: Gen[IdTokenInfo] = for {
+    status <- enumerableGen(AuthorizationStatus)
+    cacheExpiryTime <- option(instant)
+    chargingPriority <- option(chargingPriority)
+    gidT <- option(groupIdToken)
+    lang1 <- option(language)
+    lang2 <- option(language)
+    msg <- option(messageContent)
+  } yield IdTokenInfo(status, cacheExpiryTime, chargingPriority, gidT, lang1, lang2, msg)
+
+  def chargingPriority: Gen[Int] = chooseNum(-9, 9)
+
+  def groupIdToken: Gen[GroupIdToken] = for {
+    idT <- ocppIdentifierString(36)
+    tokenType <- enumerableGen(IdTokenType)
+  } yield GroupIdToken(idT, tokenType)
+
+  // https://tools.ietf.org/html/rfc5646 looks to complicated to start
+  // generating valid things here that cover the range of possibilities.
+  // Also, it seems that 8 characters is too little to fit all valid language
+  // codes in.
+  def language: Gen[String] = ocppString(8)
+
+  def messageContent: Gen[MessageContent] = for {
+    format <- enumerableGen(MessageFormat)
+    lang <- option(language)
+    content <- ocppString(512)
+  } yield MessageContent(format, lang, content)
 }
