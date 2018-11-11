@@ -52,7 +52,7 @@ resolvers += "TNM" at "http://nexus.thenewmotion.com/content/groups/public"
 and this to your `build.sbt`:
 
 ```
-libraryDependencies += "com.thenewmotion" %% "ocpp-j-api" % "9.0.1"
+libraryDependencies += "com.thenewmotion.ocpp" %% "ocpp-j-api" % "9.0.1"
 ```
 
 With Maven, you'd set up the repository in your pom.xml:
