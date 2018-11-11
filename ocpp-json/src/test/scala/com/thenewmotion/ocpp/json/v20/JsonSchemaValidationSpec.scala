@@ -35,6 +35,9 @@ class JsonSchemaValidationSpec extends Specification with ScalaCheck {
 
     validateJson(statusNotificationRequest)
     validateJson(statusNotificationResponse)
+
+    validateJson(authorizeRequest)
+    validateJson(authorizeResponse)
   }
 
   private def validateJson[T <: Message : ClassTag](messageGen: Gen[T]): Fragment = {
