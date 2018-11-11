@@ -201,7 +201,7 @@ case class TransactionEventRequest(
   offline: Option[Boolean],
   numberOfPhasesUsed: Option[Int],
   cableMaxCurrent: Option[BigDecimal],
-  reservationid: Option[Int],
+  reservationId: Option[Int],
   transactionData: Transaction,
   evse: EVSE,
   idToken: IdToken
@@ -413,7 +413,7 @@ case class Transaction(
   chargingState: Option[ChargingState],
   timeSpentCharging: Option[Int],
   stoppedReason: Option[Reason],
-  remoteStartid: Option[Int]
+  remoteStartId: Option[Int]
 )
 
 sealed trait ChargingState extends Nameable

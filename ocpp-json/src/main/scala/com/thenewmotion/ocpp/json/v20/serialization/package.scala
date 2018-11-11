@@ -27,6 +27,7 @@ package object serialization {
     new EnumerableNameSerializer(SignatureMethod),
     new EnumerableNameSerializer(EncodingMethod),
     new EnumerableNameSerializer(ChargingState),
-    new EnumerableNameSerializer(AuthorizationStatus)
+    new EnumerableNameSerializer(AuthorizationStatus),
+    new EnumerableNameSerializer(MessageFormat)
   )
 }
