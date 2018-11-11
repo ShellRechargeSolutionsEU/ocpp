@@ -77,4 +77,13 @@ object MessageGenerators {
     idTokenInfo <- option(idTokenInfo)
     updatedMsg <- option(messageContent)
   } yield TransactionEventResponse(totalCost, prio, idTokenInfo, updatedMsg)
+
+  def statusNotificationRequest: Gen[StatusNotificationRequest] = for {
+    timestamp <- instant
+    connectorStatus <- enumerableGen(ConnectorStatus)
+    evseId <- chooseNum(0, 100)
+    connectorId <- chooseNum(1, 5)
+  } yield StatusNotificationRequest(timestamp, connectorStatus, evseId, connectorId)
+
+  def statusNotificationResponse: Gen[StatusNotificationResponse] = const(StatusNotificationResponse())
 }
