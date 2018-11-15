@@ -14,6 +14,9 @@ import messages.v20.Message
 class SerializationSpec extends Specification with ScalaCheck {
 
   "OCPP 2.0 message serialization and deserialization" should {
+    testMessage(getTransactionStatusRequest)
+    testMessage(getTransactionStatusResponse)
+
     testMessage(requestStartTransactionRequest)
     testMessage(requestStartTransactionResponse)
 

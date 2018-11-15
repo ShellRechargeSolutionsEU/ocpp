@@ -21,6 +21,9 @@ class JsonSchemaValidationSpec extends Specification with ScalaCheck {
 
   "OCPP 2.0 message serialization" should {
 
+    validateJson(getTransactionStatusRequest)
+    validateJson(getTransactionStatusResponse)
+
     validateJson(requestStartTransactionRequest)
     validateJson(requestStartTransactionResponse)
 

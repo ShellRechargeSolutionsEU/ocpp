@@ -11,6 +11,14 @@ import messages.v20._
 
 object MessageGenerators {
 
+  def getTransactionStatusRequest: Gen[GetTransactionStatusRequest] =
+    option(ocppIdentifierString(36)).map(GetTransactionStatusRequest)
+
+  def getTransactionStatusResponse: Gen[GetTransactionStatusResponse] = for {
+    ongoingIndicator <- option(oneOf(true, false))
+    messagesInQueue <- oneOf(true, false)
+  } yield GetTransactionStatusResponse(ongoingIndicator, messagesInQueue)
+
   def requestStartTransactionRequest: Gen[RequestStartTransactionRequest] =
     for {
       // kom maar op met dat laadplein
