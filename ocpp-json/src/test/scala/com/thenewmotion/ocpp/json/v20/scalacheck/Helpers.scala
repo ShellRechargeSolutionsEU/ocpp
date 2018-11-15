@@ -194,4 +194,29 @@ object Helpers {
     serialNumber <- ocppString(20)
     responderURL <- option(ocppString(512))
   } yield OCSPRequestData(hashAlgorithm, issuerNameHash, issuerKeyHash, serialNumber, responderURL)
+
+  def getVariableData: Gen[GetVariableData] = for {
+    attributeType <- option(enumerableGen(Attribute))
+    comp <- component
+    vari <- variable
+  } yield GetVariableData(attributeType, comp, vari)
+
+  def component: Gen[Component] = for {
+    name <- ocppString(50)
+    instance <- option(ocppString(50))
+    evse <- evse
+  } yield Component(name, instance, evse)
+
+  def variable: Gen[Variable] = for {
+    name <- ocppString(50)
+    instance <- option(ocppString(50))
+  } yield Variable(name, instance)
+
+  def getVariableResult: Gen[GetVariableResult] = for {
+    attributeStatus <- enumerableGen(GetVariableStatus)
+    attributeType <- option(enumerableGen(Attribute))
+    attributeValue <- option(ocppString(1000))
+    comp <- component
+    vari <- variable
+  } yield GetVariableResult(attributeStatus, attributeType, attributeValue, comp, vari)
 }
