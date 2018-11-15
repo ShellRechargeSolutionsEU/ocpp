@@ -96,6 +96,7 @@ object CsOcpp20Procedures extends Ocpp20Procedures[
   CsReqRes
   ] {
   val procedures = List(
+    CsOcpp20Procedure[GetTransactionStatusRequest,    GetTransactionStatusResponse   , CsReqRes],
     CsOcpp20Procedure[RequestStartTransactionRequest, RequestStartTransactionResponse, CsReqRes],
     CsOcpp20Procedure[RequestStopTransactionRequest , RequestStopTransactionResponse , CsReqRes]
   )

@@ -360,3 +360,12 @@ object MessageFormat extends Enumerable[MessageFormat] {
 
   val values = List(ASCII, HTML, URI, UTF8)
 }
+
+case class GetTransactionStatusRequest(
+  transactionId: Option[String]
+) extends CsRequest
+
+case class GetTransactionStatusResponse(
+  ongoingIndicator: Option[Boolean],
+  messagesInQueue: Boolean
+) extends CsResponse
