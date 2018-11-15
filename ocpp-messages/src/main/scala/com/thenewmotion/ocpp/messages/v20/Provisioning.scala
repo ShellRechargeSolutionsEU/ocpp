@@ -55,3 +55,54 @@ case object BootNotificationStatus extends Enumerable[BootNotificationStatus] {
   val values = List(Accepted, Pending, Rejected)
 }
 
+case class GetVariablesRequest(
+  getVariableData: List[GetVariableData]
+) extends CsRequest
+
+case class GetVariableData(
+  attributeType: Option[Attribute],
+  component: Component,
+  variable: Variable
+)
+
+case class GetVariablesResponse(
+  getVariableResult: List[GetVariableResult]
+) extends CsResponse
+
+case class GetVariableResult(
+  attributeStatus: GetVariableStatus,
+  attributeType: Option[Attribute],
+  attributeValue: Option[String],
+  component: Component,
+  variable: Variable
+)
+
+sealed trait GetVariableStatus extends Nameable
+object GetVariableStatus extends Enumerable[GetVariableStatus] {
+  case object Accepted extends GetVariableStatus
+  case object Rejected extends GetVariableStatus
+  case object UnknownComponent extends GetVariableStatus
+
+  val values = List(Accepted, Rejected, UnknownComponent)
+}
+
+sealed trait Attribute extends Nameable
+object Attribute extends Enumerable[Attribute] {
+  case object Actual extends Attribute
+  case object Target extends Attribute
+  case object MinSet extends Attribute
+  case object MaxSet extends Attribute
+
+  val values = List(Actual, Target, MinSet, MaxSet)
+}
+
+case class Component(
+  name: String,
+  instance: Option[String],
+  evse: EVSE
+)
+
+case class Variable(
+  name: String,
+  instance: Option[String]
+)

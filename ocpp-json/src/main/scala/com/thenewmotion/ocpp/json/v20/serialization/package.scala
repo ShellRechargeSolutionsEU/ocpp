@@ -31,6 +31,8 @@ package object serialization {
     new EnumerableNameSerializer(MessageFormat),
     new EnumerableNameSerializer(ConnectorStatus),
     new EnumerableNameSerializer(HashAlgorithm),
-    new EnumerableNameSerializer(CertificateStatus)
+    new EnumerableNameSerializer(CertificateStatus),
+    new EnumerableNameSerializer(Attribute),
+    new EnumerableNameSerializer(GetVariableStatus)
   )
 }

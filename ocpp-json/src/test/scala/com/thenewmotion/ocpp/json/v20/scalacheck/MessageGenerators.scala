@@ -19,6 +19,12 @@ object MessageGenerators {
     messagesInQueue <- oneOf(true, false)
   } yield GetTransactionStatusResponse(ongoingIndicator, messagesInQueue)
 
+  def getVariablesRequest: Gen[GetVariablesRequest] =
+    nonEmptyListOf(getVariableData).map(GetVariablesRequest)
+
+  def getVariablesResponse: Gen[GetVariablesResponse] =
+    nonEmptyListOf(getVariableResult).map(GetVariablesResponse)
+
   def requestStartTransactionRequest: Gen[RequestStartTransactionRequest] =
     for {
       // kom maar op met dat laadplein
