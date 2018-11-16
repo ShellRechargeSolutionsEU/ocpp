@@ -14,6 +14,10 @@ import messages.v20.Message
 class SerializationSpec extends Specification with ScalaCheck {
 
   "OCPP 2.0 message serialization and deserialization" should {
+
+    testMessage(getBaseReportRequest)
+    testMessage(getBaseReportResponse)
+
     testMessage(getTransactionStatusRequest)
     testMessage(getTransactionStatusResponse)
 
@@ -25,6 +29,9 @@ class SerializationSpec extends Specification with ScalaCheck {
 
     testMessage(requestStopTransactionRequest)
     testMessage(requestStopTransactionResponse)
+
+    testMessage(sendLocalListRequest)
+    testMessage(sendLocalListResponse)
 
     testMessage(setVariablesRequest)
     testMessage(setVariablesResponse)
