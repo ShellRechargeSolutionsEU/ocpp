@@ -106,3 +106,48 @@ case class Variable(
   name: String,
   instance: Option[String]
 )
+
+case class SetVariablesRequest(
+  setVariableData: List[SetVariableData]
+) extends CsRequest
+
+case class SetVariableData(
+  attributeType: Option[Attribute],
+  attributeValue: String,
+  component: Component,
+  variable: Variable
+)
+
+case class SetVariablesResponse(
+  setVariableResult: List[SetVariableResult]
+) extends CsResponse
+
+case class SetVariableResult(
+  attributeType: Option[Attribute],
+  attributeStatus: SetVariableStatus,
+  component: Component,
+  variable: Variable
+)
+
+sealed trait SetVariableStatus extends Nameable
+object SetVariableStatus extends Enumerable[SetVariableStatus] {
+  case object Accepted extends SetVariableStatus
+  case object Rejected extends SetVariableStatus
+  case object InvalidValue extends SetVariableStatus
+  case object UnknownComponent extends SetVariableStatus
+  case object UnknownVariable extends SetVariableStatus
+  case object NotSupportedAttributeType extends SetVariableStatus
+  case object OutOfRange extends SetVariableStatus
+  case object RebootRequired extends SetVariableStatus
+
+  val values = List(
+    Accepted,
+    Rejected,
+    InvalidValue,
+    UnknownComponent,
+    UnknownVariable,
+    NotSupportedAttributeType,
+    OutOfRange,
+    RebootRequired
+  )
+}

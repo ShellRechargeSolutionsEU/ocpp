@@ -118,4 +118,10 @@ object MessageGenerators {
 
   def requestStopTransactionResponse: Gen[RequestStopTransactionResponse] =
     enumerableGen(RequestStartStopStatus).map(RequestStopTransactionResponse)
+
+  def setVariablesRequest: Gen[SetVariablesRequest] =
+    nonEmptyListOf(setVariableData).map(SetVariablesRequest)
+
+  def setVariablesResponse: Gen[SetVariablesResponse] =
+    nonEmptyListOf(setVariableResult).map(SetVariablesResponse)
 }

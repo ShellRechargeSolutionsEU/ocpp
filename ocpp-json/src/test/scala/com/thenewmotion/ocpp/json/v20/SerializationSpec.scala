@@ -26,6 +26,9 @@ class SerializationSpec extends Specification with ScalaCheck {
     testMessage(requestStopTransactionRequest)
     testMessage(requestStopTransactionResponse)
 
+    testMessage(setVariablesRequest)
+    testMessage(setVariablesResponse)
+
     testMessage(authorizeRequest)
     testMessage(authorizeResponse)
 
