@@ -238,4 +238,35 @@ object Helpers {
     idTokenInfo <- idTokenInfo
     idToken <- idToken
   } yield AuthorizationData(idTokenInfo, idToken)
+
+  def reportData: Gen[ReportData] = for {
+    comp <- component
+    vari <- variable
+    varAttr <- choose(1, 4).flatMap(attrLen => listOfN(attrLen, variableAttribute))
+    characteristics <- option(variableCharacteristics)
+  } yield ReportData(comp, vari, varAttr, characteristics)
+
+  def variableAttribute: Gen[VariableAttribute] = for {
+    t <- enumerableGen(Attribute)
+    value <- ocppString(1000)
+    mutability <- option(enumerableGen(Mutability))
+    persistence <- oneOf(true, false)
+    constant <- oneOf(true, false)
+  } yield VariableAttribute(t, value, mutability, persistence, constant)
+
+  def variableCharacteristics: Gen[VariableCharacteristics] = for {
+    unit <- option(ocppString(16))
+    dataType <- enumerableGen(Data)
+    minLimit <- option(bigDecimal)
+    maxLimit <- option(bigDecimal)
+    valuesList <- option(ocppString(1000))
+    supportsMonitoring <- oneOf(true, false)
+  } yield VariableCharacteristics(
+    unit,
+    dataType,
+    minLimit,
+    maxLimit,
+    valuesList,
+    supportsMonitoring
+  )
 }

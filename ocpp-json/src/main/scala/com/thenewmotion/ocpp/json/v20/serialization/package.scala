@@ -38,6 +38,8 @@ package object serialization {
     new EnumerableNameSerializer(Update),
     new EnumerableNameSerializer(UpdateStatus),
     new EnumerableNameSerializer(ReportBase),
-    new EnumerableNameSerializer(GenericDeviceModelStatus)
+    new EnumerableNameSerializer(GenericDeviceModelStatus),
+    new EnumerableNameSerializer(Mutability),
+    new EnumerableNameSerializer(Data)
   )
 }
