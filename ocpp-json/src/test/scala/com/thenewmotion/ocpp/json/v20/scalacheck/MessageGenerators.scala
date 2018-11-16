@@ -81,6 +81,16 @@ object MessageGenerators {
 
   def heartbeatResponse: Gen[HeartbeatResponse] = instant.map(HeartbeatResponse)
 
+  def notifyReportRequest: Gen[NotifyReportRequest] = for {
+    requestId <- option(ocppInteger)
+    generatedAt <- instant
+    tbc <- oneOf(true, false)
+    seqNo <- ocppInteger
+    reportData <- nonEmptyListOf(reportData)
+  } yield NotifyReportRequest(requestId, generatedAt, tbc, seqNo, reportData)
+
+  def notifyReportResponse: Gen[NotifyReportResponse] = const(NotifyReportResponse())
+
   def transactionEventRequest: Gen[TransactionEventRequest] = for {
     eventType <- transactionEvent
     meterValues <- option(nonEmptyListOf(meterValue))

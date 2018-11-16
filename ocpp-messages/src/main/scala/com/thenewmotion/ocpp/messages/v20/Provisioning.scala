@@ -178,3 +178,69 @@ object GenericDeviceModelStatus extends Enumerable[GenericDeviceModelStatus] {
 
   val values = List(Accepted, Rejected, NotSupported)
 }
+
+case class NotifyReportRequest(
+  requestId: Option[Int],
+  generatedAt: Instant,
+  tbc: Boolean,
+  seqNo: Int,
+  reportData: List[ReportData]
+) extends CsmsRequest
+
+case class ReportData(
+  component: Component,
+  variable: Variable,
+  variableAttribute: List[VariableAttribute],
+  variableCharacteristics: Option[VariableCharacteristics]
+)
+
+case class VariableAttribute(
+  `type`: Attribute,
+  value: String,
+  mutability: Option[Mutability],
+  persistence: Boolean,
+  constant: Boolean
+)
+
+sealed trait Mutability extends Nameable
+object Mutability extends Enumerable[Mutability] {
+  case object ReadOnly  extends Mutability
+  case object WriteOnly extends Mutability
+  case object ReadWrite extends Mutability
+
+  val values = List(ReadOnly, WriteOnly, ReadWrite)
+}
+
+case class VariableCharacteristics(
+  unit: Option[String],
+  dataType: Data,
+  minLimit: Option[BigDecimal],
+  maxLimit: Option[BigDecimal],
+  valuesList: Option[String],
+  supportsMonitoring: Boolean
+)
+
+sealed trait Data extends Nameable
+object Data extends Enumerable[Data] {
+  case object string extends Data
+  case object decimal extends Data
+  case object integer extends Data
+  case object dateTime extends Data
+  case object boolean extends Data
+  case object OptionList extends Data
+  case object SequenceList extends Data
+  case object MemberList extends Data
+
+  val values = List(
+    string,
+    decimal,
+    integer,
+    dateTime,
+    boolean,
+    OptionList,
+    SequenceList,
+    MemberList
+  )
+}
+
+case class NotifyReportResponse() extends CsmsResponse

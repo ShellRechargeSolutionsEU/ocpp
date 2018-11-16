@@ -30,6 +30,9 @@ class JsonSchemaValidationSpec extends Specification with ScalaCheck {
     validateJson(getVariablesRequest)
     validateJson(getVariablesResponse)
 
+    validateJson(notifyReportRequest)
+    validateJson(notifyReportResponse)
+
     validateJson(requestStartTransactionRequest)
     validateJson(requestStartTransactionResponse)
 

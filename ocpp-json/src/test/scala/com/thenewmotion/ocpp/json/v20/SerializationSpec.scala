@@ -24,6 +24,9 @@ class SerializationSpec extends Specification with ScalaCheck {
     testMessage(getVariablesRequest)
     testMessage(getVariablesResponse)
 
+    testMessage(notifyReportRequest)
+    testMessage(notifyReportResponse)
+
     testMessage(requestStartTransactionRequest)
     testMessage(requestStartTransactionResponse)
 
