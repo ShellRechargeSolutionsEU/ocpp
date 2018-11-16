@@ -11,6 +11,14 @@ import messages.v20._
 
 object MessageGenerators {
 
+  def getBaseReportRequest: Gen[GetBaseReportRequest] = for {
+    requestId <- ocppInteger
+    reportBase <- enumerableGen(ReportBase)
+  } yield GetBaseReportRequest(requestId, reportBase)
+
+  def getBaseReportResponse: Gen[GetBaseReportResponse] =
+    enumerableGen(GenericDeviceModelStatus).map(GetBaseReportResponse)
+
   def getTransactionStatusRequest: Gen[GetTransactionStatusRequest] =
     option(ocppIdentifierString(36)).map(GetTransactionStatusRequest)
 
@@ -40,6 +48,22 @@ object MessageGenerators {
       transactionId <- option(ocppIdentifierString(36))
     } yield RequestStartTransactionResponse(status, transactionId)
 
+  def setVariablesRequest: Gen[SetVariablesRequest] =
+    nonEmptyListOf(setVariableData).map(SetVariablesRequest)
+
+  def setVariablesResponse: Gen[SetVariablesResponse] =
+    nonEmptyListOf(setVariableResult).map(SetVariablesResponse)
+
+  def sendLocalListRequest: Gen[SendLocalListRequest] =
+    for {
+      version <- chooseNum(0, 60000)
+      updateType <- enumerableGen(Update)
+      localAuthData <- authorizationData
+    } yield SendLocalListRequest(version, updateType, localAuthData)
+
+  def sendLocalListResponse: Gen[SendLocalListResponse] =
+    enumerableGen(UpdateStatus).map(SendLocalListResponse)
+
   def bootNotificationRequest: Gen[BootNotificationRequest] =
     for {
       chargingStation <- chargingStation
@@ -64,7 +88,7 @@ object MessageGenerators {
     triggerReason <- enumerableGen(TriggerReason)
     seqNo <- chooseNum(0, 12345)
     offline <- option(oneOf(false, true))
-    numberOfPhasesUsed <- option(chooseNum(1,3))
+    numberOfPhasesUsed <- option(chooseNum(1, 3))
     cableMaxCurrent <- option(bigDecimal)
     reservationId <- option(posNum[Int])
     transactionData <- transaction
@@ -118,10 +142,4 @@ object MessageGenerators {
 
   def requestStopTransactionResponse: Gen[RequestStopTransactionResponse] =
     enumerableGen(RequestStartStopStatus).map(RequestStopTransactionResponse)
-
-  def setVariablesRequest: Gen[SetVariablesRequest] =
-    nonEmptyListOf(setVariableData).map(SetVariablesRequest)
-
-  def setVariablesResponse: Gen[SetVariablesResponse] =
-    nonEmptyListOf(setVariableResult).map(SetVariablesResponse)
 }

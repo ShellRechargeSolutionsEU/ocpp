@@ -34,6 +34,10 @@ package object serialization {
     new EnumerableNameSerializer(CertificateStatus),
     new EnumerableNameSerializer(Attribute),
     new EnumerableNameSerializer(GetVariableStatus),
-    new EnumerableNameSerializer(SetVariableStatus)
+    new EnumerableNameSerializer(SetVariableStatus),
+    new EnumerableNameSerializer(Update),
+    new EnumerableNameSerializer(UpdateStatus),
+    new EnumerableNameSerializer(ReportBase),
+    new EnumerableNameSerializer(GenericDeviceModelStatus)
   )
 }

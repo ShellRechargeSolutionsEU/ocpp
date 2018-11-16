@@ -7,10 +7,12 @@ abstract class CsReqRes[REQ <: CsRequest, RES <: CsResponse] extends ReqRes[REQ,
 abstract class CsmsReqRes[REQ <: CsmsRequest, RES <: CsmsResponse] extends ReqRes[REQ, RES]
 
 object CsReqRes {
+  implicit object GetBaseReportReqRes           extends CsReqRes[GetBaseReportRequest          , GetBaseReportResponse          ]
   implicit object GetTransactionStatusReqRes    extends CsReqRes[GetTransactionStatusRequest   , GetTransactionStatusResponse   ]
   implicit object GetVariablesReqRes            extends CsReqRes[GetVariablesRequest           , GetVariablesResponse           ]
   implicit object RequestStartTransactionReqRes extends CsReqRes[RequestStartTransactionRequest, RequestStartTransactionResponse]
   implicit object RequestStopTransactionReqRes  extends CsReqRes[RequestStopTransactionRequest , RequestStopTransactionResponse ]
+  implicit object SendLocalListReqRes           extends CsReqRes[SendLocalListRequest          , SendLocalListResponse          ]
   implicit object SetVariablesReqRes            extends CsReqRes[SetVariablesRequest           , SetVariablesResponse           ]
 }
 

@@ -204,7 +204,7 @@ object Helpers {
   def component: Gen[Component] = for {
     name <- ocppString(50)
     instance <- option(ocppString(50))
-    evse <- evse
+    evse <- option(evse)
   } yield Component(name, instance, evse)
 
   def variable: Gen[Variable] = for {
@@ -233,4 +233,9 @@ object Helpers {
     comp <- component
     vari <- variable
   } yield SetVariableResult(attributeType, attributeStatus, comp, vari)
+
+  def authorizationData: Gen[AuthorizationData] = for {
+    idTokenInfo <- idTokenInfo
+    idToken <- idToken
+  } yield AuthorizationData(idTokenInfo, idToken)
 }

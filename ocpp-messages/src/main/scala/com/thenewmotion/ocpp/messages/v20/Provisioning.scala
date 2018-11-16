@@ -99,7 +99,7 @@ object Attribute extends Enumerable[Attribute] {
 case class Component(
   name: String,
   instance: Option[String],
-  evse: EVSE
+  evse: Option[EVSE]
 )
 
 case class Variable(
@@ -150,4 +150,31 @@ object SetVariableStatus extends Enumerable[SetVariableStatus] {
     OutOfRange,
     RebootRequired
   )
+}
+
+case class GetBaseReportRequest(
+  requestId: Int,
+  reportBase: ReportBase
+) extends CsRequest
+
+sealed trait ReportBase extends Nameable
+object ReportBase extends Enumerable[ReportBase] {
+  case object ConfigurationInventory extends ReportBase
+  case object FullInventory          extends ReportBase
+  case object SummaryInventory       extends ReportBase
+
+  val values = List(ConfigurationInventory, FullInventory, SummaryInventory)
+}
+
+case class GetBaseReportResponse(
+  status: GenericDeviceModelStatus
+) extends CsResponse
+
+sealed trait GenericDeviceModelStatus extends Nameable
+object GenericDeviceModelStatus extends Enumerable[GenericDeviceModelStatus] {
+  case object Accepted     extends GenericDeviceModelStatus
+  case object Rejected     extends GenericDeviceModelStatus
+  case object NotSupported extends GenericDeviceModelStatus
+
+  val values = List(Accepted, Rejected, NotSupported)
 }
