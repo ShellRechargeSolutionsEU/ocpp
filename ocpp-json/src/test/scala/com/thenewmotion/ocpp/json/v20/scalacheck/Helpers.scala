@@ -219,4 +219,18 @@ object Helpers {
     comp <- component
     vari <- variable
   } yield GetVariableResult(attributeStatus, attributeType, attributeValue, comp, vari)
+
+  def setVariableData: Gen[SetVariableData] = for {
+    attributeType <- option(enumerableGen(Attribute))
+    attributeValue <- ocppString(1000)
+    comp <- component
+    vari <- variable
+  } yield SetVariableData(attributeType, attributeValue, comp, vari)
+
+  def setVariableResult: Gen[SetVariableResult] = for {
+    attributeType <- option(enumerableGen(Attribute))
+    attributeStatus <- enumerableGen(SetVariableStatus)
+    comp <- component
+    vari <- variable
+  } yield SetVariableResult(attributeType, attributeStatus, comp, vari)
 }

@@ -99,7 +99,8 @@ object CsOcpp20Procedures extends Ocpp20Procedures[
     CsOcpp20Procedure[GetTransactionStatusRequest   , GetTransactionStatusResponse   , CsReqRes],
     CsOcpp20Procedure[GetVariablesRequest           , GetVariablesResponse           , CsReqRes],
     CsOcpp20Procedure[RequestStartTransactionRequest, RequestStartTransactionResponse, CsReqRes],
-    CsOcpp20Procedure[RequestStopTransactionRequest , RequestStopTransactionResponse , CsReqRes]
+    CsOcpp20Procedure[RequestStopTransactionRequest , RequestStopTransactionResponse , CsReqRes],
+    CsOcpp20Procedure[SetVariablesRequest           , SetVariablesResponse           , CsReqRes]
   )
 }
 

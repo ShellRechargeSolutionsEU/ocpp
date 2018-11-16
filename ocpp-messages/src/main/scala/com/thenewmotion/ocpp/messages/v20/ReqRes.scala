@@ -11,6 +11,7 @@ object CsReqRes {
   implicit object GetVariablesReqRes            extends CsReqRes[GetVariablesRequest           , GetVariablesResponse           ]
   implicit object RequestStartTransactionReqRes extends CsReqRes[RequestStartTransactionRequest, RequestStartTransactionResponse]
   implicit object RequestStopTransactionReqRes  extends CsReqRes[RequestStopTransactionRequest , RequestStopTransactionResponse ]
+  implicit object SetVariablesReqRes            extends CsReqRes[SetVariablesRequest           , SetVariablesResponse           ]
 }
 
 object CsmsReqRes {

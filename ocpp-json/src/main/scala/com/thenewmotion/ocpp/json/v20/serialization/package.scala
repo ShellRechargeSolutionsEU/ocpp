@@ -33,6 +33,7 @@ package object serialization {
     new EnumerableNameSerializer(HashAlgorithm),
     new EnumerableNameSerializer(CertificateStatus),
     new EnumerableNameSerializer(Attribute),
-    new EnumerableNameSerializer(GetVariableStatus)
+    new EnumerableNameSerializer(GetVariableStatus),
+    new EnumerableNameSerializer(SetVariableStatus)
   )
 }
