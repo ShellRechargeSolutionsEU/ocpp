@@ -105,11 +105,12 @@ trait CsOcpp20ConnectionComponent extends Ocpp20ConnectionComponent[
 
     override def sendRequestUntyped(req: CsmsRequest): Future[CsmsResponse] =
       req match {
-        case a: AuthorizeRequest          => sendRequest(a)
+        case r: AuthorizeRequest          => sendRequest(r)
         case r: BootNotificationRequest   => sendRequest(r)
-        case h: HeartbeatRequest          => sendRequest(h)
-        case s: StatusNotificationRequest => sendRequest(s)
-        case t: TransactionEventRequest   => sendRequest(t)
+        case r: HeartbeatRequest          => sendRequest(r)
+        case r: NotifyReportRequest       => sendRequest(r)
+        case r: StatusNotificationRequest => sendRequest(r)
+        case r: TransactionEventRequest   => sendRequest(r)
       }
   }
 }
@@ -132,8 +133,13 @@ trait CsmsOcpp20ConnectionComponent extends Ocpp20ConnectionComponent[
 
     override def sendRequestUntyped(req: CsRequest): Future[CsResponse] =
       req match {
+        case r: GetBaseReportRequest           => sendRequest(r)
+        case r: GetTransactionStatusRequest    => sendRequest(r)
+        case r: GetVariablesRequest            => sendRequest(r)
         case r: RequestStartTransactionRequest => sendRequest(r)
         case r: RequestStopTransactionRequest  => sendRequest(r)
+        case r: SendLocalListRequest           => sendRequest(r)
+        case r: SetVariablesRequest            => sendRequest(r)
       }
   }
 }
