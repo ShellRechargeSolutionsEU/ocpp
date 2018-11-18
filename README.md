@@ -5,8 +5,17 @@ between electric vehicle chargers and a central backoffice system. It is
 developed by the Open Charge Alliance (OCA). You can find more details on the
 [official website of the OCA](http://openchargealliance.org/).
 
+## Functionality
+
 This library is the implementation of OCPP developed and used by NewMotion, one
 of Europe's largest Electric Vehicle Charge Point Operators.
+
+This library only implements the network protocol. That is, it provides data
+types for the OCPP messages, remote procedure call using those request and
+response messages, and error reporting about those remote procedure calls. It
+does _not_ provide any actual handling of the message contents. For an actual
+app speaking OCPP using this library, see
+[docile-charge-point](https://github.com/NewMotion/docile-charge-point).
 
 The library is designed with versatility in mind. OCPP comes in 4 versions (1.2,
 1.5, 1.6 and 2.0), two transport variants (SOAP/XML aka OCPP-S and WebSocket/JSON aka
@@ -706,6 +715,13 @@ GetConfiguration request back to the client. To run it, you do:
 $ sbt "project example-json-server" run
 ```
 
+There is also an [OCPP 2.0 version of this server](example-json-server-20/src/main/scala/com/thenewmotion/ocpp/json/example/ExampleServerTestApp.scala).
+You can run it with:
+
+```
+$ sbt "project example-json-server-20" run
+```
+
 ### Just serializing
 
 If you do not need the connection management provided by the high-level API,
@@ -802,12 +818,21 @@ operations:
 
 Charging Station operations:
 
+ * GetBaseReport
+ * GetTransactionStatus
+ * GetVariables
  * RequestStartTransaction
+ * RequestStopTransaction
+ * SendLocalList
+ * SetVariables
 
 Charging Station Management System operations:
 
+ * Authorize
  * BootNotification
  * Heartbeat
+ * StatusNotification
+ * TransactionEvent
 
 ### What remains to be done
 
@@ -853,6 +878,12 @@ Charging Station Management System operations:
    * Support for JSON web signatures in the RPC-level encoding
 
 ## Changelog
+
+### Changes in 9.1.0
+
+ - Added more OCPP 2.0 messages
+
+ - Added an OCPP 2.0 example server app
 
 ### Changes in 9.0.1
 
