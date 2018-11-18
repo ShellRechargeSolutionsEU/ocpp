@@ -66,6 +66,17 @@ val exampleJsonServer =
       publish := {}
     )
 
+val exampleJsonServer20 =
+  module("example-json-server-20")
+    .dependsOn(json, ocppJApi)
+    .settings(
+      libraryDependencies += slf4jSimple,
+      outputStrategy in run := Some(StdoutOutput),
+      connectInput in run := true,
+      coverageExcludedPackages := ".*",
+      publish := {}
+    )
+
 enablePlugins(OssLibPlugin)
 
 publish := {}
