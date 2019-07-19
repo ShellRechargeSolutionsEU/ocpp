@@ -89,7 +89,7 @@ trait Ocpp1XConnectionComponent[
         case None =>
           Future.failed(OcppException(
             PayloadErrorCode.NotSupported,
-            s"Operation not supported at version this version of OCPP"
+            s"Operation is not supported for this version of OCPP"
           ))
       }
     }
