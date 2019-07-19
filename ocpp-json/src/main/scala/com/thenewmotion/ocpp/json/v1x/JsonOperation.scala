@@ -238,6 +238,7 @@ object JsonOperations {
     val cancelReservationJsonOp = jsonOp[CancelReservationReq, CancelReservationRes](CancelReservation)
     val changeAvailabilityJsonOp = jsonOp[ChangeAvailabilityReq, ChangeAvailabilityRes](ChangeAvailability)
     val changeConfigurationJsonOp = jsonOp[ChangeConfigurationReq, ChangeConfigurationRes](ChangeConfiguration)
+    val chargePointDataTransferJsonOp = jsonOp[ChargePointDataTransferReq, ChargePointDataTransferRes](DataTransfer)
     val clearCacheJsonOp = jsonOp[ClearCacheReq.type, ClearCacheRes](ClearCache)
     val getConfigurationJsonOp = jsonOp[GetConfigurationReq, GetConfigurationRes](GetConfiguration)
     val getDiagnosticsJsonOp = jsonOp[GetDiagnosticsReq, GetDiagnosticsRes](GetDiagnostics)
@@ -254,6 +255,7 @@ object JsonOperations {
       cancelReservationJsonOp,
       changeAvailabilityJsonOp,
       changeConfigurationJsonOp,
+      chargePointDataTransferJsonOp,
       clearCacheJsonOp,
       getConfigurationJsonOp,
       getDiagnosticsJsonOp,
@@ -271,6 +273,7 @@ object JsonOperations {
       case CancelReservationReqRes => cancelReservationJsonOp
       case ChangeAvailabilityReqRes => changeAvailabilityJsonOp
       case ChangeConfigurationReqRes => changeConfigurationJsonOp
+      case ChargePointDataTransferReqRes => chargePointDataTransferJsonOp
       case ClearCacheReqRes => clearCacheJsonOp
       case GetConfigurationReqRes => getConfigurationJsonOp
       case GetDiagnosticsReqRes => getDiagnosticsJsonOp
@@ -301,6 +304,7 @@ object JsonOperations {
     val changeAvailabilityJsonOp = jsonOp[ChangeAvailabilityReq, ChangeAvailabilityRes](ChangeAvailability)
     val changeConfigurationJsonOp = jsonOp[ChangeConfigurationReq, ChangeConfigurationRes](ChangeConfiguration)
     val clearCacheJsonOp = jsonOp[ClearCacheReq.type, ClearCacheRes](ClearCache)
+    val chargePointDataTransferJsonOp = jsonOp[ChargePointDataTransferReq, ChargePointDataTransferRes](DataTransfer)
     val getConfigurationJsonOp = jsonOp[GetConfigurationReq, GetConfigurationRes](GetConfiguration)
     val getDiagnosticsJsonOp = jsonOp[GetDiagnosticsReq, GetDiagnosticsRes](GetDiagnostics)
     val getLocalListVersionJsonOp = jsonOp[GetLocalListVersionReq.type, GetLocalListVersionRes](GetLocalListVersion)
@@ -320,6 +324,7 @@ object JsonOperations {
       cancelReservationJsonOp,
       changeAvailabilityJsonOp,
       changeConfigurationJsonOp,
+      chargePointDataTransferJsonOp,
       clearCacheJsonOp,
       getConfigurationJsonOp,
       getDiagnosticsJsonOp,
@@ -341,6 +346,7 @@ object JsonOperations {
       case CancelReservationReqRes => cancelReservationJsonOp
       case ChangeAvailabilityReqRes => changeAvailabilityJsonOp
       case ChangeConfigurationReqRes => changeConfigurationJsonOp
+      case ChargePointDataTransferReqRes => chargePointDataTransferJsonOp
       case ClearCacheReqRes => clearCacheJsonOp
       case GetConfigurationReqRes => getConfigurationJsonOp
       case GetDiagnosticsReqRes => getDiagnosticsJsonOp

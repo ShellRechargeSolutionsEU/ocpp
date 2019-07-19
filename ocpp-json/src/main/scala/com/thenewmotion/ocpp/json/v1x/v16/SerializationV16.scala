@@ -460,6 +460,19 @@ object SerializationV16 extends SerializationCommon {
     )
   )
 
+  implicit val ChargePointDataTransferReqV16Variant = OcppMessageSerializer.variantFor[v1x.ChargePointDataTransferReq, Version.V16.type, DataTransferReq](
+    (msg: v1x.ChargePointDataTransferReq) => DataTransferReq(msg.vendorId, msg.messageId, msg.data),
+    (msg: DataTransferReq) => v1x.ChargePointDataTransferReq(msg.vendorId, msg.messageId, msg.data)
+  )
+
+  implicit val ChargePointDataTransferResV16Variant = OcppMessageSerializer.variantFor[v1x.ChargePointDataTransferRes, Version.V16.type, DataTransferRes](
+    (msg: v1x.ChargePointDataTransferRes) => DataTransferRes(msg.status.name, msg.data),
+    (msg: DataTransferRes) => v1x.ChargePointDataTransferRes(
+      enumerableFromJsonString(v1x.DataTransferStatus, msg.status),
+      msg.data
+    )
+  )
+
   implicit val GetCompositeScheduleResV16Variant = OcppMessageSerializer.variantFor[v1x.GetCompositeScheduleRes, Version.V16.type, GetCompositeScheduleRes](
     (msg: v1x.GetCompositeScheduleRes) => msg.toV16,
     (msg: GetCompositeScheduleRes) => v1x.GetCompositeScheduleRes(compositeStatusFromV16(msg))

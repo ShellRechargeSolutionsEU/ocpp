@@ -310,6 +310,19 @@ object SerializationV15 extends SerializationCommon {
     )
   )
 
+  implicit val ChargePointDataTransferReqV15Variant = OcppMessageSerializer.variantFor[v1x.ChargePointDataTransferReq, Version.V15.type, DataTransferReq](
+    (msg: v1x.ChargePointDataTransferReq) => DataTransferReq(msg.vendorId, msg.messageId, msg.data),
+    (msg: DataTransferReq) => v1x.ChargePointDataTransferReq(msg.vendorId, msg.messageId, msg.data)
+  )
+
+  implicit val ChargePointDataTransferResV15Variant = OcppMessageSerializer.variantFor[v1x.ChargePointDataTransferRes, Version.V15.type, DataTransferRes](
+    (msg: v1x.ChargePointDataTransferRes) => DataTransferRes(msg.status.name, msg.data),
+    (msg: DataTransferRes) => v1x.ChargePointDataTransferRes(
+      enumerableFromJsonString(v1x.DataTransferStatus, msg.status),
+      msg.data
+    )
+  )
+
   implicit val ClearCacheReqV15Variant = OcppMessageSerializer.variantFor[v1x.ClearCacheReq.type, Version.V15.type, ClearCacheReq](
     (_: v1x.ClearCacheReq.type) => ClearCacheReq(),
     (_: ClearCacheReq) => v1x.ClearCacheReq
