@@ -55,14 +55,6 @@ class Ocpp1XConnectionSpec extends Specification with Mockito {
         }
       }
 
-      "responding with a NotSupported error for recognized but unsupported operations" in new TestScope {
-        val result = chargePointConnectionV16.onSrpcCall(srpcNotSupportedOperationReq)
-
-        Await.result(result, 1.second) must beLike {
-          case SrpcCallError(errCode, _, _) => errCode mustEqual PayloadErrorCode.NotSupported
-        }
-      }
-
       "responding with a NotSupported error for requests for the wrong version of OCPP" in new TestScope {
         val result = chargePointConnectionV15.onSrpcCall(srpcTriggerMessageReq)
 
@@ -101,7 +93,7 @@ class Ocpp1XConnectionSpec extends Specification with Mockito {
         ) must beEqualTo(expectedError)
       }
 
-      "returning a failed future when a request is sent for the wrong verson of OCPP" in new TestScope {
+      "returning a failed future when a request is sent for the wrong version of OCPP" in new TestScope {
         val v16Message = TriggerMessageReq(MessageTriggerWithoutScope.Heartbeat)
 
         val result = centralSystemConnectionV15.ocppConnection.sendRequest(v16Message)
@@ -187,12 +179,6 @@ class Ocpp1XConnectionSpec extends Specification with Mockito {
 
     val srpcNonexistentOperationReq =
       SrpcCall("WorldDomination", "complete" -> 1)
-
-    val srpcNotSupportedOperationReq =
-      SrpcCall(
-        "DataTransfer",
-        ("vendorId" -> "TheNewMotion") ~ ("messageId" -> "GaKoffieHalen") ~ ("data" -> "met suiker, zonder melk")
-      )
 
     val srpcTriggerMessageReq =
       SrpcCall("TriggerMessage", "requestMessage" -> "Heartbeat")

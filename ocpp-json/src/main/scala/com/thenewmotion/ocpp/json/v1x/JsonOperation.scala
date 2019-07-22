@@ -10,7 +10,7 @@ import enums.reflection.EnumUtils.{Enumerable, Nameable}
 import org.json4s._
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.language.{existentials, higherKinds}
+import scala.language.higherKinds
 
 /**
  * A grouping of all the things you need to process JSON-encoded OCPP messages for a certain operation.
