@@ -882,7 +882,7 @@ Charging Station Management System operations:
 ### Changes in 9.2.1
 
  - Remove a Scala 2.13 build until dependencies are fixed
- 
+
 ### Changes in 9.2.0
 
  - Added support for `v1x.ChargePointDataTransferReq` and `v1x.ChargePointDataTransferRes` to
