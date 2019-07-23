@@ -16,6 +16,7 @@ import org.java_websocket.protocols.{IProtocol, Protocol}
 import messages._
 import OcppJsonServer._
 import VersionFamily.{CsMessageTypesForVersionFamily, CsmsMessageTypesForVersionFamily}
+import org.java_websocket.extensions.IExtension
 
 /**
   * A simple server implementation to show how this library can be used in servers.
@@ -39,7 +40,7 @@ abstract class OcppJsonServer[
   extends WebSocketServer(
     new InetSocketAddress(listenPort),
     Collections.singletonList[Draft](new Draft_6455(
-      Collections.emptyList(),
+      Collections.emptyList[IExtension](),
       Collections.singletonList[IProtocol](new Protocol(protosForVersions(requestedOcppVersion)))
     ))
   ){

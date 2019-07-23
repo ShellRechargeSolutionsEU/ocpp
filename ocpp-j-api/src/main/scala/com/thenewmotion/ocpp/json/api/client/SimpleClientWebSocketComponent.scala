@@ -120,7 +120,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
       logger.debug(s"Connecting using uri: $actualUri")
       if (uri.getScheme == "wss") {
         logger.debug(s"Using SSLContext protocol: ${sslContext.getProtocol}")
-        client.setSocket(sslContext.getSocketFactory.createSocket)
+        client.setSocketFactory(sslContext.getSocketFactory)
       }
       client.connect()
     }
