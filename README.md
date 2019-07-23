@@ -879,6 +879,15 @@ Charging Station Management System operations:
 
 ## Changelog
 
+### Changes in 9.2.0
+
+ - Added support for `v1x.ChargePointDataTransferReq` and `v1x.ChargePointDataTransferRes` to
+  `com.thenewmotion.ocpp.json.v1x.v15.SerializationV15` and `com.thenewmotion.ocpp.json.v1x.v16.SerializationV16`
+
+ - Add a Scala 2.13 build
+ 
+ - Add OpenJDK 8 and 11 builds
+  
 ### Changes in 9.1.0
 
  - Added more OCPP 2.0 messages
