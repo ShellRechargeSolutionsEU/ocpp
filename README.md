@@ -61,7 +61,7 @@ resolvers += "TNM" at "http://nexus.thenewmotion.com/content/groups/public"
 and this to your `build.sbt`:
 
 ```
-libraryDependencies += "com.thenewmotion.ocpp" %% "ocpp-j-api" % "9.0.1"
+libraryDependencies += "com.thenewmotion.ocpp" %% "ocpp-j-api" % "9.2.1"
 ```
 
 With Maven, you'd set up the repository in your pom.xml:
@@ -79,7 +79,7 @@ and add this to your dependencies:
     <dependency>
         <groupId>com.thenewmotion.ocpp</groupId>
         <artifactId>ocpp-j-api_2.11</artifactId>
-        <version>9.0.1</version>
+        <version>9.2.1</version>
     </dependency>
 ```
 
@@ -889,9 +889,9 @@ Charging Station Management System operations:
   `com.thenewmotion.ocpp.json.v1x.v15.SerializationV15` and `com.thenewmotion.ocpp.json.v1x.v16.SerializationV16`
 
  - Add a Scala 2.13 build
- 
+
  - Add OpenJDK 8 and 11 builds
-  
+
 ### Changes in 9.1.0
 
  - Added more OCPP 2.0 messages
