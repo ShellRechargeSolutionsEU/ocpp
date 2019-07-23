@@ -22,14 +22,14 @@ class OcppMessageSerializationSpec extends Specification {
     "deserialize all message types" in {
 
       for (testMsg <- testMsgs) yield {
-        withJsonFromFile(testMsg.jsonFileBase) { (messageAST: JValue) =>
+        withJsonFromFile(testMsg.jsonFileBase) { messageAST: JValue =>
           Serialization.deserialize(messageAST)(testMsg.versionVariant) mustEqual testMsg.msg
         }
       }
     }
 
     "read StartTransaction requests with a local time in them" in {
-      withJsonFromFile("starttransaction.localtime.request") { (messageAST: JValue) =>
+      withJsonFromFile("starttransaction.localtime.request") { messageAST: JValue =>
         Serialization.deserialize[StartTransactionReq, Version.V15.type](messageAST) mustEqual TestMsgs.startTransactionReqWithLocalTime
       }
     }
@@ -39,7 +39,7 @@ class OcppMessageSerializationSpec extends Specification {
 
     "serialize messages of all types" in {
       for (testMsg <- testMsgs) yield {
-        withJsonFromFile(testMsg.jsonFileBase) { (messageAST: JValue) =>
+        withJsonFromFile(testMsg.jsonFileBase) { messageAST: JValue =>
           testMsg.serialize must beEqualToJson(messageAST)
         }
       }
@@ -149,7 +149,11 @@ class OcppMessageSerializationSpec extends Specification {
     TestableMsg.forFile(TestMsgs.reserveNowReq, "reservenow.request"),
     TestableMsg.forFile(TestMsgs.reserveNowRes, "reservenow.response"),
     TestableMsg.forFile(TestMsgs.cancelReservationReq, "cancelreservation.request"),
-    TestableMsg.forFile(TestMsgs.cancelReservationRes, "cancelreservation.response")
+    TestableMsg.forFile(TestMsgs.cancelReservationRes, "cancelreservation.response"),
+    TestableMsg.forFile(TestMsgs.centralSystemDataTransferReq, "centralsystemdatatransfer.request"),
+    TestableMsg.forFile(TestMsgs.centralSystemDataTransferRes, "centralsystemdatatransfer.response"),
+    TestableMsg.forFile(TestMsgs.chargePointDataTransferReq, "chargepointdatatransfer.request"),
+    TestableMsg.forFile(TestMsgs.chargePointDataTransferRes, "chargepointdatatransfer.response")
   )
 
   private object TestMsgs {
@@ -362,6 +366,11 @@ class OcppMessageSerializationSpec extends Specification {
 
     val cancelReservationReq = CancelReservationReq(42)
     val cancelReservationRes = CancelReservationRes(accepted = true)
+
+    val centralSystemDataTransferReq = CentralSystemDataTransferReq("com.vendor", Some("pi"), Some("3.14159265359"))
+    val centralSystemDataTransferRes = CentralSystemDataTransferRes(DataTransferStatus.Accepted)
+    val chargePointDataTransferReq = ChargePointDataTransferReq("com.vendor", Some("pi"), Some("3.14159265359"))
+    val chargePointDataTransferRes = ChargePointDataTransferRes(DataTransferStatus.Accepted)
   }
 
   private def utcDateTime(year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int) =
