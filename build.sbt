@@ -8,7 +8,7 @@ val slf4jApi = "org.slf4j" % "slf4j-api" % slf4jV
 val slf4jSimple = "org.slf4j" % "slf4j-simple" % slf4jV
 val specs2 = "org.specs2" %% "specs2-core" % specs2V % "it,test"
 val specs2Mock = "org.specs2" %% "specs2-mock" % specs2V % "test"
-val enumUtils = "com.thenewmotion" %% "enum-utils" % "0.2.1"
+val enumUtils = "com.thenewmotion" %% "enum-utils" % "0.3-SNAPSHOT"
 val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.14.0" % "test"
 val specs2ScalaCheck = "org.specs2" %% "specs2-scalacheck" % specs2V % "test"
 val json4sjackson = "org.json4s" %% "json4s-jackson" % json4sV % "test"
@@ -77,7 +77,7 @@ val exampleJsonServer20 =
       publish := {}
     )
 
-crossScalaVersions := Seq("2.11.12", "2.12.8")
+crossScalaVersions := Seq(tnm.ScalaVersion.curr, tnm.ScalaVersion.prev, tnm.ScalaVersion.aged)
 
 enablePlugins(OssLibPlugin)
 
