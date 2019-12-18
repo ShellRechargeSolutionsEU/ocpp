@@ -1,5 +1,5 @@
 val json4sV = "3.6.7"
-val specs2V = "4.6.0"
+val specs2V = "4.8.1"
 val slf4jV = "1.7.26"
 
 val json4sNative = "org.json4s" %% "json4s-native" % json4sV
@@ -8,7 +8,7 @@ val slf4jApi = "org.slf4j" % "slf4j-api" % slf4jV
 val slf4jSimple = "org.slf4j" % "slf4j-simple" % slf4jV
 val specs2 = "org.specs2" %% "specs2-core" % specs2V % "it,test"
 val specs2Mock = "org.specs2" %% "specs2-mock" % specs2V % "test"
-val enumUtils = "com.thenewmotion" %% "enum-utils" % "0.3-SNAPSHOT"
+val enumUtils = "com.thenewmotion" %% "enum-utils" % "0.3"
 val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.14.0" % "test"
 val specs2ScalaCheck = "org.specs2" %% "specs2-scalacheck" % specs2V % "test"
 val json4sjackson = "org.json4s" %% "json4s-jackson" % json4sV % "test"
