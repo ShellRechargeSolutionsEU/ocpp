@@ -14,7 +14,7 @@ import org.json4s.jackson.JsonMethods._
 import scala.collection.JavaConverters._
 import scala.reflect.{ClassTag, classTag}
 
-object JsonSchemaValidationSpec extends Specification with ScalaCheck {
+class JsonSchemaValidationSpec extends Specification with ScalaCheck {
 
   import SerializationV16._
   import scalacheck.MessageGenerators._

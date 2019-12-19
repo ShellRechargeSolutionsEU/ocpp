@@ -11,9 +11,7 @@ import org.specs2.mutable.Specification
 import scalacheck.MessageGenerators._
 import SerializationV16._
 
-object SerializationV16Spec extends Specification with ScalaCheck {
-
-
+class SerializationV16Spec extends Specification with ScalaCheck {
   "Conversion to/from OCPP 1.6-J format" should {
 
     testMessageClass(bootNotificationReq)(BootNotificationReqV16Variant)
