@@ -1,6 +1,6 @@
 val json4sV = "3.6.7"
 val specs2V = "4.8.1"
-val slf4jV = "1.7.26"
+val slf4jV = "1.7.30"
 
 val json4sNative = "org.json4s" %% "json4s-native" % json4sV
 val javaWebSocket = "org.java-websocket" % "Java-WebSocket" % "1.4.0"
@@ -9,12 +9,12 @@ val slf4jSimple = "org.slf4j" % "slf4j-simple" % slf4jV
 val specs2 = "org.specs2" %% "specs2-core" % specs2V % "it,test"
 val specs2Mock = "org.specs2" %% "specs2-mock" % specs2V % "test"
 val enumUtils = "com.thenewmotion" %% "enum-utils" % "0.3"
-val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.14.0" % "test"
+val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.14.3" % "test"
 val specs2ScalaCheck = "org.specs2" %% "specs2-scalacheck" % specs2V % "test"
 val json4sjackson = "org.json4s" %% "json4s-jackson" % json4sV % "test"
-val jsonSchemaValidator = "com.github.java-json-tools" % "json-schema-validator" % "2.2.10" % "test"
-val mockServer = "org.mock-server" % "mockserver-client-java" % "5.6.1" % "test"
-val mockServerNetty = "org.mock-server" % "mockserver-netty" % "5.6.1"  % "test"
+val jsonSchemaValidator = "com.github.java-json-tools" % "json-schema-validator" % "2.2.11" % "test"
+val mockServer = "org.mock-server" % "mockserver-client-java" % "5.8.0" % "test"
+val mockServerNetty = "org.mock-server" % "mockserver-netty" % "5.8.0"  % "test"
 
 def module(name: String) = Project(name, file(name))
   .enablePlugins(OssLibPlugin)
