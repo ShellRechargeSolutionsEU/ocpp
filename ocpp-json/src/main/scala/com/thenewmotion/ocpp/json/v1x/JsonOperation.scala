@@ -49,8 +49,11 @@ class JsonOperation[
   def serializeRes(res: RES): JValue = resSerializer.serialize(res)
   def deserializeRes(jval: JValue): RES = resSerializer.deserialize(jval)
 
-  def reqRes(reqJson: JValue)(f: (REQ, REQRES[REQ, RES]) => Future[RES])(implicit ec: ExecutionContext): Future[JValue] =
-    f(deserializeReq(reqJson), reqRes).map(serializeRes)
+  def reqRes(reqJson: JValue)(f: (REQ, REQRES[REQ, RES]) => Future[RES])(implicit ec: ExecutionContext): Future[JValue] = {
+    Future.fromTry(scala.util.Try(deserializeReq(reqJson))).flatMap { request =>
+      f(request, reqRes).map(serializeRes)
+    }
+  }
 }
 
 /**
