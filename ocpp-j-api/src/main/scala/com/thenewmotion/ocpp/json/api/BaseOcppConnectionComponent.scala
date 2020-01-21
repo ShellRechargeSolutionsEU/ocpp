@@ -52,8 +52,7 @@ trait BaseOcppConnectionComponent[
 
     protected def logIncomingRequestHandlingError(call: SrpcCall): PartialFunction[Throwable, Throwable] = {
       case e: Throwable =>
-        logger.warn("Exception processing OCPP request {}: {} {}",
-                    call.procedureName, e.getClass.getSimpleName, e.getMessage)
+        logger.warn(s"Exception processing OCPP request ${call.procedureName}:", e)
         e
     }
   }
