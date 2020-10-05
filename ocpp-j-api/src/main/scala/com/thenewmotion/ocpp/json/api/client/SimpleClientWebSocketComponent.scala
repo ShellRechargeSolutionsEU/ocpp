@@ -30,7 +30,7 @@ trait SimpleClientWebSocketComponent extends WebSocketComponent {
     private val actualUri = uriWithChargerId(uri, chargerId)
 
     private val headers: java.util.Map[String, String] =
-      authPassword.map(password => authHeader -> s"Basic: ${toBase64String(chargerId, password)}")
+      authPassword.map(password => authHeader -> s"Basic ${toBase64String(chargerId, password)}")
        .toMap.asJava
 
     import org.java_websocket.client.WebSocketClient
