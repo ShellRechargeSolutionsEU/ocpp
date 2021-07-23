@@ -51,29 +51,13 @@ won't get too many dependencies dragged in. Those are:
                      the transport variant used
 
 So if you want to use the high-level OCPP-J connection interface, and you're
-using SBT, you can declare the dependency by adding this to your `plugins.sbt`:
-
-```
-resolvers += "TNM" at "http://nexus.thenewmotion.com/content/groups/public"
-
-```
-
-and this to your `build.sbt`:
+using SBT, you can declare the dependency by adding this this to your `build.sbt` after publishing the library:
 
 ```
 libraryDependencies += "com.thenewmotion.ocpp" %% "ocpp-j-api" % "9.2.2"
 ```
 
-With Maven, you'd set up the repository in your pom.xml:
-```xml
-    <repository>
-        <id>thenewmotion</id>
-        <name>The New Motion Repository</name>
-        <url>http://nexus.thenewmotion.com/content/repositories/releases-public</url>
-    </repository>
-```
-
-and add this to your dependencies:
+With Maven, add this to your dependencies:
 
 ```xml
     <dependency>
