@@ -8,7 +8,6 @@ val slf4jApi = "org.slf4j" % "slf4j-api" % slf4jV
 val slf4jSimple = "org.slf4j" % "slf4j-simple" % slf4jV
 val specs2 = "org.specs2" %% "specs2-core" % specs2V % "it,test"
 val specs2Mock = "org.specs2" %% "specs2-mock" % specs2V % "test"
-val enumUtils = "com.thenewmotion" %% "enum-utils" % "0.3"
 val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.14.3" % "test"
 val specs2ScalaCheck = "org.specs2" %% "specs2-scalacheck" % specs2V % "test"
 val json4sjackson = "org.json4s" %% "json4s-jackson" % json4sV % "test"
@@ -17,7 +16,6 @@ val mockServer = "org.mock-server" % "mockserver-client-java" % "5.8.0" % "test"
 val mockServerNetty = "org.mock-server" % "mockserver-netty" % "5.8.0"  % "test"
 
 def module(name: String) = Project(name, file(name))
-  .enablePlugins(OssLibPlugin)
   .configs(IntegrationTest)
   .settings(
     organization := "com.thenewmotion.ocpp",
@@ -26,7 +24,6 @@ def module(name: String) = Project(name, file(name))
   )
 
 val messages = module("ocpp-messages")
-  .settings(libraryDependencies += enumUtils)
 
 val json = module("ocpp-json")
   .dependsOn(messages)
@@ -77,8 +74,6 @@ val exampleJsonServer20 =
       publish := {}
     )
 
-crossScalaVersions := Seq(tnm.ScalaVersion.curr, tnm.ScalaVersion.prev, tnm.ScalaVersion.aged)
-
-enablePlugins(OssLibPlugin)
+crossScalaVersions := Seq("2.13.1", "2.12.10", "2.11.12")
 
 publish := {}
