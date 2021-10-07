@@ -5,6 +5,11 @@ between electric vehicle chargers and a central backoffice system. It is
 developed by the Open Charge Alliance (OCA). You can find more details on the
 [official website of the OCA](http://openchargealliance.org/).
 
+## Note to open source users
+Open source users of this library will want to use the
+[IHomer fork](https://github.com/IHomer/scala-ocpp/) which is more actively
+supported and published to Maven Central.
+
 ## Functionality
 
 This library is the implementation of OCPP developed and used by NewMotion, one
